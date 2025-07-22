@@ -39,24 +39,34 @@ end
 function _extract_subexpression!(expr::Expression, root::Int)
     n = length(expr.nodes)
     # The whole subexpression is continuous in the tape
-    first_out = findfirst((root+1):n) do i
-        return expr.nodes[i].parent < root
+    first_out = first_value = last_value = nothing
+    for i in root:n
+        node = expr.nodes[i]
+        if i != root && node.parent < root
+            first_out = i
+            break
+        end
+        index = node.index
+        if node.type == NODE_VALUE
+            if isnothing(first_value)
+                first_value = node.index
+                last_value = first_value
+            else
+                last_value = node.index
+            end
+            index -= first_value - 1
+        end
+        expr.nodes[i] = Node(node.type, index, i == root ? -1 : node.parent - root + 1)
     end
     if isnothing(first_out)
         I = root:n
     else
-        I = root .+ (0:(first_out-1))
-    end
-    first_value = findfirst(I) do i
-        return expr.nodes[i].type == NODE_VALUE
+        I = root:(first_out-1)
     end
     if isnothing(first_value)
         V = nothing
     else
-        last_value = findlast(I) do i
-            return expr.nodes[i].type == NODE_VALUE
-        end
-        V = expr.nodes[I[first_value]].index:expr.nodes[I[last_value]].index
+        V = first_value:last_value
     end
     if !isnothing(first_out)
         for i in (last(I)+1):n
@@ -129,9 +139,12 @@ function parse_expression(
                         if val isa Tuple{Expression,Int}
                             __expr, __node = val
                             if _expr === __expr && __node > first(I)
-                                @assert __node > last(I)
-                                data.cache[key] =
-                                    (__expr, __node - length(I) + 1)
+                                if __node <= last(I)
+                                    data.cache[key] = (data.expressions[subexpr.value], __node - first(I) + 1)
+                                else
+                                    data.cache[key] =
+                                        (__expr, __node - length(I) + 1)
+                                end
                             end
                         end
                     end

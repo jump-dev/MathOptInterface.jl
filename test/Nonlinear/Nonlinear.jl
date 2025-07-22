@@ -1452,6 +1452,7 @@ function test_extract_subexpression()
     sub = MOI.ScalarNonlinearFunction(:^, Any[x, 3])
     f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
     expr = Nonlinear.parse_expression(model, f)
+    display(expr.nodes)
     @test expr == Nonlinear.Expression(
         [
             Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
@@ -1462,9 +1463,9 @@ function test_extract_subexpression()
     )
     expected_sub = Nonlinear.Expression(
         [
-            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 4, 1)
-            Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 2)
-            Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 2)
+            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 4, -1)
+            Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1)
+            Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 1)
         ],
         [3.0],
     )
@@ -1511,10 +1512,10 @@ function test_extract_subexpression()
         expected_sub,
         Nonlinear.Expression(
             [
-                Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, 1),
-                Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 3),
-                Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 3),
-                Nonlinear.Node(Nonlinear.NODE_VALUE, 2, 3),
+                Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 1),
+                Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 2, 1),
             ],
             [2.0, 1.0],
         ),
