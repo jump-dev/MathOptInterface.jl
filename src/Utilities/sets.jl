@@ -184,7 +184,7 @@ function trimap(row::Integer, column::Integer)
 end
 
 """
-    inverse_trimap(row::Integer, column::Integer)
+    inverse_trimap(index::Integer)
 
 Convert between the linear index of a
 [`MathOptInterface.AbstractSymmetricMatrixSetTriangle`] to the row and column
