@@ -2683,7 +2683,7 @@ end
 )
 
 """
-    ConstraintConflictStatus()
+    ConstraintConflictStatus(conflict_index = 1)
 
 A constraint attribute to query the [`ConflictParticipationStatusCode`](@ref)
 indicating whether the constraint participates in the conflict.
@@ -2692,6 +2692,12 @@ indicating whether the constraint participates in the conflict.
 
 The optimizer may return multiple conflicts. See [`ConflictCount`](@ref)
 for querying the number of conflicts found.
+
+If the solver does not have a conflict because the
+`conflict_index` is beyond the available solutions (whose number is indicated by
+the [`ConflictCount`](@ref) attribute), then
+`MOI.check_result_index_bounds(model, ConstraintConflictStatus(conflict_index))`
+will throw a [`ResultIndexBoundsError`](@ref).
 
 ## Implementation
 
@@ -2708,6 +2714,14 @@ end
 
 function attribute_value_type(::ConstraintConflictStatus)
     return ConflictParticipationStatusCode
+end
+
+function check_result_index_bounds(model::ModelLike, attr::ConstraintConflictStatus)
+    result_count = get(model, ConflictCount())
+    if !(1 <= attr.result_index <= result_count)
+        throw(ResultIndexBoundsError(attr, result_count))
+    end
+    return
 end
 
 """
