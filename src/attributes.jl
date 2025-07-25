@@ -1845,6 +1845,16 @@ struct ConflictStatus <: AbstractModelAttribute end
 attribute_value_type(::ConflictStatus) = ConflictStatusCode
 
 """
+    ConflictCount()
+
+An [`AbstractModelAttribute`](@ref) for the number of conflicts found by the
+solver in the most recent call to [`compute_conflict!`](@ref).
+"""
+struct ConflictCount <: AbstractModelAttribute end
+
+attribute_value_type(::ConflictCount) = Int
+
+"""
     ListOfVariableAttributesSet()
 
 An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractVariableAttribute}`
@@ -2673,15 +2683,45 @@ end
 )
 
 """
-    ConstraintConflictStatus()
+    ConstraintConflictStatus(conflict_index = 1)
 
 A constraint attribute to query the [`ConflictParticipationStatusCode`](@ref)
 indicating whether the constraint participates in the conflict.
+
+## `conflict_index`
+
+The optimizer may return multiple conflicts. See [`ConflictCount`](@ref)
+for querying the number of conflicts found.
+
+If the solver does not have a conflict because the
+`conflict_index` is beyond the available solutions (whose number is indicated by
+the [`ConflictCount`](@ref) attribute), then
+`MOI.check_result_index_bounds(model, ConstraintConflictStatus(conflict_index))`
+will throw a [`ResultIndexBoundsError`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ConstraintConflictStatus, ::MOI.ConstraintIndex)::T
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
-struct ConstraintConflictStatus <: AbstractConstraintAttribute end
+struct ConstraintConflictStatus <: AbstractConstraintAttribute
+    conflict_index::Int
+    ConstraintConflictStatus(conflict_index = 1) = new(conflict_index)
+end
 
 function attribute_value_type(::ConstraintConflictStatus)
     return ConflictParticipationStatusCode
+end
+
+function check_result_index_bounds(model::ModelLike, attr::ConstraintConflictStatus)
+    result_count = get(model, ConflictCount())
+    if !(1 <= attr.result_index <= result_count)
+        throw(ResultIndexBoundsError(attr, result_count))
+    end
+    return
 end
 
 """
