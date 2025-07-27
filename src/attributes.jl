@@ -218,6 +218,48 @@ function Base.showerror(io::IO, err::ResultIndexBoundsError)
 end
 
 """
+    struct ConflictIndexBoundsError{AttrType} <: Exception
+        attr::AttrType
+        conflict_count::Int
+    end
+
+An error indicating that the requested attribute `attr` could not be retrieved,
+because the solver returned too few conflicts compared to what was requested.
+For instance, the user tries to retrieve `ConstraintConflictStatus(2)` when
+only one conflict is available, or when the model is feasible.
+
+See also: [`check_conflict_index_bounds`](@ref).
+"""
+struct ConflictIndexBoundsError{AttrType} <: Exception
+    attr::AttrType
+    conflict_count::Int
+end
+
+"""
+    check_conflict_index_bounds(model::ModelLike, attr)
+
+This function checks whether enough conflicts are available in the `model` for
+the requested `attr`, using its `conflict_index` field. If the model
+does not have sufficient conflicts to answer the query, it throws a
+[`ConflictIndexBoundsError`](@ref).
+"""
+function check_conflict_index_bounds(model::ModelLike, attr)
+    conflict_count = get(model, ConflictCount())
+    if !(1 <= attr.conflict_index <= conflict_count)
+        throw(ConflictIndexBoundsError(attr, conflict_count))
+    end
+    return
+end
+
+function Base.showerror(io::IO, err::ConflictIndexBoundsError)
+    return print(
+        io,
+        "Conflict index of attribute $(err.attr) out of bounds. There are " *
+        "currently $(err.conflict_count) conflict(s) in the model.",
+    )
+end
+
+"""
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
 
 Return a `Bool` indicating whether `model` supports the submittable `sub`.
@@ -2716,10 +2758,13 @@ function attribute_value_type(::ConstraintConflictStatus)
     return ConflictParticipationStatusCode
 end
 
-function check_result_index_bounds(model::ModelLike, attr::ConstraintConflictStatus)
-    result_count = get(model, ConflictCount())
-    if !(1 <= attr.result_index <= result_count)
-        throw(ResultIndexBoundsError(attr, result_count))
+function check_conflict_index_bounds(
+    model::ModelLike,
+    attr::ConstraintConflictStatus,
+)
+    conflict_count = get(model, ConflictCount())
+    if !(1 <= attr.conflict_index <= conflict_count)
+        throw(ConflictIndexBoundsError(attr, conflict_count))
     end
     return
 end
@@ -3273,6 +3318,7 @@ function is_set_by_optimize(
         RawSolver,
         ResultCount,
         ConflictStatus,
+        ConflictCount,
         ConstraintConflictStatus,
         TerminationStatus,
         RawStatusString,

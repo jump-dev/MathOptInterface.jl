@@ -126,7 +126,10 @@ function MockOptimizer(
         false,
         MOI.COMPUTE_CONFLICT_NOT_CALLED,
         0,
-        Dict{MOI.ConstraintIndex,Dict{Int,MOI.ConflictParticipationStatusCode}}(),
+        Dict{
+            MOI.ConstraintIndex,
+            Dict{Int,MOI.ConflictParticipationStatusCode},
+        }(),
         # Basis status
         Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
         Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}(),
@@ -304,6 +307,13 @@ function MOI.set(
     return
 end
 
+MOI.get(mock::MockOptimizer, ::MOI.ConflictCount) = mock.conflict_count
+
+function MOI.set(mock::MockOptimizer, ::MOI.ConflictCount, x)
+    mock.conflict_count = x
+    return
+end
+
 function MOI.set(
     mock::MockOptimizer,
     ::MOI.ConflictStatus,
@@ -456,7 +466,6 @@ function MOI.set(
     value,
 )
     _safe_set_result(mock.constraint_conflict_status, attr, idx, value)
-    # mock.constraint_conflict_status[xor_index(idx)] = value
     return
 end
 
@@ -729,11 +738,10 @@ function MOI.get(
     attr::MOI.ConstraintConflictStatus,
     idx::MOI.ConstraintIndex,
 )
-    MOI.check_result_index_bounds(mock, attr)
+    MOI.check_conflict_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
-    # return mock.constraint_conflict_status[xor_index(idx)]
     return _safe_get_result(
-        mock.variable_basis_status,
+        mock.constraint_conflict_status,
         attr,
         idx,
         "conflict status",
@@ -750,6 +758,9 @@ function _safe_set_result(
     if !haskey(dict, xored)
         dict[xored] = V()
     end
+    if hasproperty(attr, :conflict_index)
+        return dict[xored][attr.conflict_index] = value
+    end
     return dict[xored][attr.result_index] = value
 end
 
@@ -764,11 +775,16 @@ function _safe_get_result(
     if result_to_value === nothing
         error("No mock $name is set for ", index_name, " `", index, "`.")
     end
-    value = get(result_to_value, attr.result_index, nothing)
+    data_index = if hasproperty(attr, :conflict_index)
+        attr.conflict_index
+    else
+        attr.result_index
+    end
+    value = get(result_to_value, data_index, nothing)
     if value === nothing
         error(
             "No mock $name is set for $(index_name) `$(index)` at result " *
-            "index `$(attr.result_index)`.",
+            "index `$(data_index)`.",
         )
     end
     return value
@@ -1066,24 +1082,16 @@ function mock_optimize!(
     for ((F, S), result) in constraint_basis_status
         indices = MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
         for (i, ci) in enumerate(indices)
-            MOI.set(
-                mock,
-                MOI.ConstraintBasisStatus(),
-                ci,
-                result,
-            )
+            MOI.set(mock, MOI.ConstraintBasisStatus(), ci, result[i])
         end
     end
-    for con_conflict_pair in constraint_conflict_status
-        F, S = con_conflict_pair.first
+    if length(constraint_conflict_status) > 0
+        MOI.set(mock, MOI.ConflictCount(), 1)
+    end
+    for ((F, S), result) in constraint_conflict_status
         indices = MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
         for (i, ci) in enumerate(indices)
-            MOI.set(
-                mock,
-                MOI.ConstraintConflictStatus(),
-                ci,
-                con_conflict_pair.second[i],
-            )
+            MOI.set(mock, MOI.ConstraintConflictStatus(), ci, result[i])
         end
     end
     if length(variable_basis_status) > 0

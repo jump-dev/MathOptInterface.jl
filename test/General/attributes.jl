@@ -71,6 +71,7 @@ function test_attributes_integration_compute_conflict_1()
     @test MOI.get(optimizer, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+    MOI.set(optimizer, MOI.ConflictCount(), 1)
     MOI.set(
         optimizer,
         MOI.ConstraintConflictStatus(),
@@ -97,9 +98,23 @@ function test_attributes_integration_compute_conflict_1()
     )
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConflictCount()) == 1
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c1) ==
           MOI.NOT_IN_CONFLICT
     @test MOI.get(model, MOI.ConstraintConflictStatus(), c2) == MOI.IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(1), c1) ==
+          MOI.NOT_IN_CONFLICT
+    @test MOI.get(model, MOI.ConstraintConflictStatus(1), c2) == MOI.IN_CONFLICT
+    @test_throws MOI.ConflictIndexBoundsError MOI.get(
+        model,
+        MOI.ConstraintConflictStatus(2),
+        c1,
+    )
+    @test_throws MOI.ConflictIndexBoundsError MOI.get(
+        model,
+        MOI.ConstraintConflictStatus(2),
+        c2,
+    )
 end
 
 MOI.Utilities.@model(
@@ -127,8 +142,10 @@ function test_attributes_integration_compute_conflict_2()
     @test MOI.get(optimizer, MOI.ConflictStatus()) ==
           MOI.COMPUTE_CONFLICT_NOT_CALLED
     MOI.set(optimizer, MOI.ConflictStatus(), MOI.CONFLICT_FOUND)
+    MOI.set(optimizer, MOI.ConflictCount(), 1)
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
+    @test MOI.get(model, MOI.ConflictCount()) == 1
     @test_throws ArgumentError MOI.get(model, MOI.ConstraintConflictStatus(), c)
 end
 
