@@ -2758,17 +2758,6 @@ function attribute_value_type(::ConstraintConflictStatus)
     return ConflictParticipationStatusCode
 end
 
-function check_conflict_index_bounds(
-    model::ModelLike,
-    attr::ConstraintConflictStatus,
-)
-    conflict_count = get(model, ConflictCount())
-    if !(1 <= attr.conflict_index <= conflict_count)
-        throw(ConflictIndexBoundsError(attr, conflict_count))
-    end
-    return
-end
-
 """
     UserDefinedFunction(name::Symbol, arity::Int) <: AbstractModelAttribute
 
