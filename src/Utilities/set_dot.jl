@@ -56,7 +56,7 @@ function set_dot(
     return triangle_dot(x, y, MOI.side_dimension(set), 0)
 end
 
-function MOI.Utilities.set_dot(
+function set_dot(
     x::AbstractVector,
     y::AbstractVector,
     set::MOI.HermitianPositiveSemidefiniteConeTriangle,
