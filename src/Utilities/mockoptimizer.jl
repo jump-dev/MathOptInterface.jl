@@ -65,9 +65,10 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike,T} <: MOI.AbstractOptimizer
     # Constraint conflicts
     compute_conflict_called::Bool
     conflict_status::MOI.ConflictStatusCode
+    conflict_count::Int
     constraint_conflict_status::Dict{
         MOI.ConstraintIndex,
-        MOI.ConflictParticipationStatusCode,
+        Dict{Int,MOI.ConflictParticipationStatusCode},
     }
     # Basis status
     constraint_basis_status::Dict{
@@ -124,7 +125,11 @@ function MockOptimizer(
         #
         false,
         MOI.COMPUTE_CONFLICT_NOT_CALLED,
-        Dict{MOI.ConstraintIndex,MOI.ConflictParticipationStatusCode}(),
+        0,
+        Dict{
+            MOI.ConstraintIndex,
+            Dict{Int,MOI.ConflictParticipationStatusCode},
+        }(),
         # Basis status
         Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
         Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}(),
@@ -302,6 +307,13 @@ function MOI.set(
     return
 end
 
+MOI.get(mock::MockOptimizer, ::MOI.ConflictCount) = mock.conflict_count
+
+function MOI.set(mock::MockOptimizer, ::MOI.ConflictCount, x)
+    mock.conflict_count = x
+    return
+end
+
 function MOI.set(
     mock::MockOptimizer,
     ::MOI.ConflictStatus,
@@ -449,11 +461,11 @@ end
 
 function MOI.set(
     mock::MockOptimizer,
-    ::MOI.ConstraintConflictStatus,
+    attr::MOI.ConstraintConflictStatus,
     idx::MOI.ConstraintIndex,
     value,
 )
-    mock.constraint_conflict_status[xor_index(idx)] = value
+    _safe_set_result(mock.constraint_conflict_status, attr, idx, value)
     return
 end
 
@@ -723,11 +735,17 @@ end
 
 function MOI.get(
     mock::MockOptimizer,
-    ::MOI.ConstraintConflictStatus,
+    attr::MOI.ConstraintConflictStatus,
     idx::MOI.ConstraintIndex,
 )
+    MOI.check_conflict_index_bounds(mock, attr)
     MOI.throw_if_not_valid(mock, idx)
-    return mock.constraint_conflict_status[xor_index(idx)]
+    return _safe_get_result(
+        mock.constraint_conflict_status,
+        attr,
+        idx,
+        "conflict status",
+    )
 end
 
 function _safe_set_result(
@@ -739,6 +757,9 @@ function _safe_set_result(
     xored = xor_index(index)
     if !haskey(dict, xored)
         dict[xored] = V()
+    end
+    if hasproperty(attr, :conflict_index)
+        return dict[xored][attr.conflict_index] = value
     end
     return dict[xored][attr.result_index] = value
 end
@@ -754,11 +775,16 @@ function _safe_get_result(
     if result_to_value === nothing
         error("No mock $name is set for ", index_name, " `", index, "`.")
     end
-    value = get(result_to_value, attr.result_index, nothing)
+    data_index = if hasproperty(attr, :conflict_index)
+        attr.conflict_index
+    else
+        attr.result_index
+    end
+    value = get(result_to_value, data_index, nothing)
     if value === nothing
         error(
             "No mock $name is set for $(index_name) `$(index)` at result " *
-            "index `$(attr.result_index)`.",
+            "index `$(data_index)`.",
         )
     end
     return value
@@ -996,10 +1022,10 @@ end
             <:Vector,
         }
         dual_status::MOI.ResultStatusCode,
-        constraint_duals::Pair{Tuple{DataTypeDataType},<:Vector}...;
-        constraint_basis_status = Pair{Tuple{DataTypeDataType},<:Vector}[],
+        constraint_duals::Pair{Tuple{DataType,DataType},<:Vector}...;
+        constraint_basis_status = Pair{Tuple{DataType,DataType},<:Vector}[],
         variable_basis_status = MOI.BasisStatusCode[],
-        constraint_conflict_status = Pair{Tuple{Type,Type},<:Vector}[],
+        constraint_conflict_status = Pair{Tuple{DataType,DataType},<:Vector}[],
     )
 
 Fake the result of a call to `optimize!` in the mock optimizer by storing the
@@ -1053,28 +1079,19 @@ function mock_optimize!(
     MOI.set(mock, MOI.ResultCount(), 1)
     _set_mock_primal(mock, primal)
     _set_mock_dual(mock, dual_status_constraint_duals...)
-    for con_basis_pair in constraint_basis_status
-        F, S = con_basis_pair.first
+    for ((F, S), result) in constraint_basis_status
         indices = MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
         for (i, ci) in enumerate(indices)
-            MOI.set(
-                mock,
-                MOI.ConstraintBasisStatus(),
-                ci,
-                con_basis_pair.second[i],
-            )
+            MOI.set(mock, MOI.ConstraintBasisStatus(), ci, result[i])
         end
     end
-    for con_conflict_pair in constraint_conflict_status
-        F, S = con_conflict_pair.first
+    if length(constraint_conflict_status) > 0
+        MOI.set(mock, MOI.ConflictCount(), 1)
+    end
+    for ((F, S), result) in constraint_conflict_status
         indices = MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
         for (i, ci) in enumerate(indices)
-            MOI.set(
-                mock,
-                MOI.ConstraintConflictStatus(),
-                ci,
-                con_conflict_pair.second[i],
-            )
+            MOI.set(mock, MOI.ConstraintConflictStatus(), ci, result[i])
         end
     end
     if length(variable_basis_status) > 0

@@ -300,6 +300,16 @@ function test_errors_ResultIndexBoundsError()
           " bounds. There are currently 0 solution(s) in the model."
 end
 
+function test_errors_ConflictIndexBoundsError()
+    @test sprint(
+        showerror,
+        MOI.ConflictIndexBoundsError(MOI.ConstraintConflictStatus(1), 0),
+    ) ==
+          "Conflict index of attribute " *
+          "MathOptInterface.ConstraintConflictStatus(1) out of bounds. " *
+          "There are currently 0 conflict(s) in the model."
+end
+
 function test_errors_InvalidCalbackUsage()
     @test sprint(
         showerror,

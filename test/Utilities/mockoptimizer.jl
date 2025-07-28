@@ -158,8 +158,8 @@ function test_conflict_access()
     c = MOI.add_constraint(mock, 1fx + fy, MOI.LessThan(1))
     MOI.set(mock, MOI.ConstraintConflictStatus(), cx, MOI.NOT_IN_CONFLICT)
     MOI.set(mock, MOI.ConstraintConflictStatus(), c, MOI.IN_CONFLICT)
+    MOI.set(mock, MOI.ConflictCount(), 1)
     MOI.compute_conflict!(mock)
-
     @test MOI.get(mock, MOI.ConstraintConflictStatus(), cx) ==
           MOI.NOT_IN_CONFLICT
     @test MOI.get(mock, MOI.ConstraintConflictStatus(), c) == MOI.IN_CONFLICT
