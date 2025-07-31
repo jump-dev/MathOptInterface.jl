@@ -88,6 +88,7 @@ function test_failing_models()
             joinpath(@__DIR__, "failing_models", filename),
         )
     end
+    return
 end
 
 function test_empty_row_name()
@@ -1672,6 +1673,33 @@ function test_duplicate_coefficient()
     f = MOI.get(dest, MOI.ConstraintFunction(), c)
     @test isapprox(f, 2.0 * x)
     @test MOI.get(dest, MOI.ConstraintSet(), c) == MOI.EqualTo(1.0)
+    return
+end
+
+function test_issue_2792()
+    src = """
+    NAME
+    ROWS
+     N  OBJ       \$t3       0
+    COLUMNS
+        x         OBJ       2
+    RHS
+        rhs       OBJ       -3
+    BOUNDS
+     LO bounds    x         1
+     PL bounds    x
+    ENDATA
+    """
+    model = MPS.Model()
+    read!(IOBuffer(src), model)
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(dest, model)
+    @test MOI.get(dest, MOI.ListOfConstraintTypesPresent()) ==
+          [(MOI.VariableIndex, MOI.GreaterThan{Float64})]
+    x = only(MOI.get(dest, MOI.ListOfVariableIndices()))
+    F = MOI.get(dest, MOI.ObjectiveFunctionType())
+    f = MOI.get(dest, MOI.ObjectiveFunction{F}())
+    @test isapprox(f, 2.0 * x + 3.0)
     return
 end
 
