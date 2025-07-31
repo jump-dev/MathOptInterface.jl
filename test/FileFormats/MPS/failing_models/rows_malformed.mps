@@ -1,5 +1,5 @@
 NAME
 ROWS
- N  c         d
+ N
 COLUMNS
 ENDATA
