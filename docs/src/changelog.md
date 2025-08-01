@@ -7,6 +7,19 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.42.1 (August 1, 2025)
+
+### Fixed
+
+ - Fixed reading MPS models with extra ROWS fields (#2793)
+
+### Other
+
+ - Added more packages to solver-tests.yml (#2785)
+ - Added a test to MPS reader that duplicate entries are summed (#2787)
+ - Fixed docstring of `inverse_trimap` (#2790)
+ - Removed useless prefix in `set_dot` (#2791)
+
 ## v1.42.0 (July 10, 2025)
 
 ### Added
