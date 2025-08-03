@@ -1891,6 +1891,14 @@ attribute_value_type(::ConflictStatus) = ConflictStatusCode
 
 An [`AbstractModelAttribute`](@ref) for the number of conflicts found by the
 solver in the most recent call to [`compute_conflict!`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ConflictCount)::Int
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
 struct ConflictCount <: AbstractModelAttribute end
 
@@ -2745,7 +2753,11 @@ will throw a [`ResultIndexBoundsError`](@ref).
 
 Optimizers should implement the following methods:
 ```julia
-MOI.get(::Optimizer, ::MOI.ConstraintConflictStatus, ::MOI.ConstraintIndex)::T
+MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintConflictStatus,
+    ::MOI.ConstraintIndex,
+)::ConflictParticipationStatusCode
 ```
 They should not implement [`set`](@ref) or [`supports`](@ref).
 """
