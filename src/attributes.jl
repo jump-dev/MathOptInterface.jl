@@ -218,6 +218,48 @@ function Base.showerror(io::IO, err::ResultIndexBoundsError)
 end
 
 """
+    struct ConflictIndexBoundsError{AttrType} <: Exception
+        attr::AttrType
+        conflict_count::Int
+    end
+
+An error indicating that the requested attribute `attr` could not be retrieved,
+because the solver returned too few conflicts compared to what was requested.
+For instance, the user tries to retrieve `ConstraintConflictStatus(2)` when
+only one conflict is available, or when the model is feasible.
+
+See also: [`check_conflict_index_bounds`](@ref).
+"""
+struct ConflictIndexBoundsError{AttrType} <: Exception
+    attr::AttrType
+    conflict_count::Int
+end
+
+"""
+    check_conflict_index_bounds(model::ModelLike, attr)
+
+This function checks whether enough conflicts are available in the `model` for
+the requested `attr`, using its `conflict_index` field. If the model
+does not have sufficient conflicts to answer the query, it throws a
+[`ConflictIndexBoundsError`](@ref).
+"""
+function check_conflict_index_bounds(model::ModelLike, attr)
+    conflict_count = get(model, ConflictCount())
+    if !(1 <= attr.conflict_index <= conflict_count)
+        throw(ConflictIndexBoundsError(attr, conflict_count))
+    end
+    return
+end
+
+function Base.showerror(io::IO, err::ConflictIndexBoundsError)
+    return print(
+        io,
+        "Conflict index of attribute $(err.attr) out of bounds. There are " *
+        "currently $(err.conflict_count) conflict(s) in the model.",
+    )
+end
+
+"""
     supports(model::ModelLike, sub::AbstractSubmittable)::Bool
 
 Return a `Bool` indicating whether `model` supports the submittable `sub`.
@@ -1845,6 +1887,24 @@ struct ConflictStatus <: AbstractModelAttribute end
 attribute_value_type(::ConflictStatus) = ConflictStatusCode
 
 """
+    ConflictCount()
+
+An [`AbstractModelAttribute`](@ref) for the number of conflicts found by the
+solver in the most recent call to [`compute_conflict!`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(::Optimizer, ::MOI.ConflictCount)::Int
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
+"""
+struct ConflictCount <: AbstractModelAttribute end
+
+attribute_value_type(::ConflictCount) = Int
+
+"""
     ListOfVariableAttributesSet()
 
 An [`AbstractModelAttribute`](@ref) for the `Vector{AbstractVariableAttribute}`
@@ -2673,12 +2733,38 @@ end
 )
 
 """
-    ConstraintConflictStatus()
+    ConstraintConflictStatus(conflict_index = 1)
 
 A constraint attribute to query the [`ConflictParticipationStatusCode`](@ref)
 indicating whether the constraint participates in the conflict.
+
+## `conflict_index`
+
+The optimizer may return multiple conflicts. See [`ConflictCount`](@ref)
+for querying the number of conflicts found.
+
+If the solver does not have a conflict because the
+`conflict_index` is beyond the available solutions (whose number is indicated by
+the [`ConflictCount`](@ref) attribute), then
+`MOI.check_result_index_bounds(model, ConstraintConflictStatus(conflict_index))`
+will throw a [`ResultIndexBoundsError`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```julia
+MOI.get(
+    ::Optimizer,
+    ::MOI.ConstraintConflictStatus,
+    ::MOI.ConstraintIndex,
+)::ConflictParticipationStatusCode
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
 """
-struct ConstraintConflictStatus <: AbstractConstraintAttribute end
+struct ConstraintConflictStatus <: AbstractConstraintAttribute
+    conflict_index::Int
+    ConstraintConflictStatus(conflict_index = 1) = new(conflict_index)
+end
 
 function attribute_value_type(::ConstraintConflictStatus)
     return ConflictParticipationStatusCode
@@ -3233,6 +3319,7 @@ function is_set_by_optimize(
         RawSolver,
         ResultCount,
         ConflictStatus,
+        ConflictCount,
         ConstraintConflictStatus,
         TerminationStatus,
         RawStatusString,
