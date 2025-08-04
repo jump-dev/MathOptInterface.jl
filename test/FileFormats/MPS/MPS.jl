@@ -1703,6 +1703,16 @@ function test_issue_2792()
     return
 end
 
+function test_issue_2797_tab()
+    @test MPS.line_to_items("a b") == ["a", "b"]
+    @test MPS.line_to_items(" a b") == ["a", "b"]
+    @test MPS.line_to_items("a\tb") == ["a", "b"]
+    @test MPS.line_to_items("a\tb") == ["a", "b"]
+    @test MPS.line_to_items("a\t b") == ["a", "b"]
+    @test MPS.line_to_items(" a \t b      c ") == ["a", "b", "c"]
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()

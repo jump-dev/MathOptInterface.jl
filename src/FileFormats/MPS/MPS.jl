@@ -1160,7 +1160,14 @@ function Headers(s::AbstractString)
 end
 
 function line_to_items(line)
-    items = split(line, " "; keepempty = false)
+    # Split on any whitespace characters. We can't split only on `' '` because
+    # at least one models in MIPLIB has `\t` as a separator.
+    #
+    # This decision assumes that we are parsing a free MPS file, where
+    # whitespace is disallowed in names. If this ever becomes a problem, we
+    # could change to the fixed MPS format, where the files are split at the
+    # usual offsets.
+    items = split(line, r"\s"; keepempty = false)
     return String.(items)
 end
 
