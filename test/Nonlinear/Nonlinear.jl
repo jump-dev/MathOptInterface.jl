@@ -1167,13 +1167,13 @@ function test_scalar_nonlinear_function_parse_scalarquadraticfunction()
         MOI.ScalarQuadraticFunction(qterms, terms, 0.0) => :(0.0),
         MOI.ScalarQuadraticFunction(qterms, terms, 1.0) => :(1.0),
         MOI.ScalarQuadraticFunction(qterms, [aterm], 0.0) => :(2.0 * $x),
-        (1.0 * x * x + 1.0 * x + 1.0) => :($x * $x + $x + 1),
-        (1.0 * x * x + 1.0 * x) => :($x * $x + $x),
-        (1.0 * x * x + 2.0 * x) => :($x * $x + 2.0 * $x),
-        (2.0 * x * x + 2.0 * x) => :(2.0 * $x * $x + 2.0 * $x),
-        (1.0 * x * x) => :($x * $x),
+        (1.0 * x * x + 1.0 * x + 1.0) => :($x^2 + $x + 1),
+        (1.0 * x * x + 1.0 * x) => :($x^2 + $x),
+        (1.0 * x * x + 2.0 * x) => :($x^2 + 2.0 * $x),
+        (2.0 * x * x + 2.0 * x) => :(2.0 * $x^2 + 2.0 * $x),
+        (1.0 * x * x) => :($x^2),
         (1.5 * x * x + 2.5 * x * y + 3.5 * x + 2.0) =>
-            :(1.5 * $x * $x + 2.5 * $x * $y + 3.5 * $x + 2.0),
+            :(1.5 * $x^2 + 2.5 * $x * $y + 3.5 * $x + 2.0),
     )
         nlp_model = MOI.Nonlinear.Model()
         f1 = MOI.Nonlinear.add_expression(nlp_model, f)

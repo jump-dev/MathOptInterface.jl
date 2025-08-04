@@ -345,18 +345,40 @@ function parse_expression(
     x::MOI.ScalarQuadraticTerm,
     parent_index::Int,
 )
-    id_mul = data.operators.multivariate_operator_to_id[:*]
-    push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id_mul, parent_index))
-    mul_parent = length(expr.nodes)
-    coef = x.coefficient
+    # There are four cases:
+    #   (1): 1 * x * x  -->  ^(x, 2)
+    #   (2): a * x * x  -->  *(a, ^(x, 2))
+    #   (3): a * x * y  -->  *(a, x, y)
+    #   (4): 1 * x * y  -->  *(x, y)
     if x.variable_1 == x.variable_2
-        coef /= 2
+        # Case (1): 1 * x * x  -->  ^(x, 2)
+        # Case (2): a * x * x  -->  *(a, ^(x, 2))
+        coef = x.coefficient / 2
+        parent = parent_index
+        if !isone(coef)
+            id = data.operators.multivariate_operator_to_id[:*]
+            push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent_index))
+            parent = length(expr.nodes)
+            parse_expression(data, expr, coef, parent)
+            parent
+        end
+        id = data.operators.multivariate_operator_to_id[:^]
+        push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent))
+        pow_parent = length(expr.nodes)
+        parse_expression(data, expr, x.variable_1, pow_parent)
+        parse_expression(data, expr, 2, pow_parent)
+    else
+        # Case (3): a * x * y  -->  *(a, x, y)
+        # Case (4): 1 * x * y  -->  *(x, y)
+        id_mul = data.operators.multivariate_operator_to_id[:*]
+        push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id_mul, parent_index))
+        mul_parent = length(expr.nodes)
+        if !isone(x.coefficient)
+            parse_expression(data, expr, x.coefficient, mul_parent)
+        end
+        parse_expression(data, expr, x.variable_1, mul_parent)
+        parse_expression(data, expr, x.variable_2, mul_parent)
     end
-    if !isone(coef)
-        parse_expression(data, expr, coef, mul_parent)
-    end
-    parse_expression(data, expr, x.variable_1, mul_parent)
-    parse_expression(data, expr, x.variable_2, mul_parent)
     return
 end
 
