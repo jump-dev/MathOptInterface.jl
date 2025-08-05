@@ -319,6 +319,12 @@ function MOI.set(
     ::MOI.ConflictStatus,
     value::MOI.ConflictStatusCode,
 )
+    if value == MOI.CONFLICT_FOUND && mock.conflict_count == 0
+        # A backwards compatible change for JuMP, which set MOI.ConflictStatus
+        # in its tests without setting MOI.ConflictCount (because the test was
+        # writte prior to the introduction of MOI.ConflictCount).
+        mock.conflict_count = 1
+    end
     mock.conflict_status = value
     return
 end
