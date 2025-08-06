@@ -179,7 +179,6 @@ function MOI.modify(
         bridge.vector_constraint,
         MOI.MultirowChange(change.variable, [(1, change.new_coefficient)]),
     )
-    @show @__LINE__
     return
 end
 
