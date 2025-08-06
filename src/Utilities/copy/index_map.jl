@@ -20,6 +20,9 @@ struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
         typeof(CleverDicts.index_to_key),
     }
     con_map::DoubleDicts.IndexDoubleDict
+    # This field is experimental and may be removed in a future release. Do not
+    # access it directly; use `map_indices` instead.
+    nl_cache::IdDict{MOI.ScalarNonlinearFunction,MOI.ScalarNonlinearFunction}
 end
 
 """
@@ -30,7 +33,8 @@ The dictionary-like object returned by [`MOI.copy_to`](@ref).
 function IndexMap()
     var_map = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}()
     con_map = DoubleDicts.IndexDoubleDict()
-    return IndexMap(var_map, con_map)
+    nl_cache = IdDict{MOI.ScalarNonlinearFunction,MOI.ScalarNonlinearFunction}()
+    return IndexMap(var_map, con_map, nl_cache)
 end
 
 function _identity_constraints_map(
@@ -120,4 +124,22 @@ function map_indices(map::IndexMap, x::X)::X where {X<:_OnlyVariableIndices}
         return x
     end
     return map_indices(Base.Fix1(getindex, map), x)
+end
+
+# Common subexpressions, i.e., `MOI.ScalarNonlinearFunction` objects that are
+# shared between functions, are mapped only once, and the mapped functions
+# share the corresponding mapped subexpressions.
+function map_indices(map::IndexMap, f::MOI.ScalarNonlinearFunction)
+    if CleverDicts.is_identity(map.var_map)
+        return f
+    end
+    return map_indices(Base.Fix1(getindex, map), f, map.nl_cache)
+end
+
+function map_indices(map::IndexMap, f::MOI.VectorNonlinearFunction)
+    if CleverDicts.is_identity(map.var_map)
+        return f
+    end
+    rows = MOI.ScalarNonlinearFunction[map_indices(map, row) for row in f.rows]
+    return MOI.VectorNonlinearFunction(rows)
 end
