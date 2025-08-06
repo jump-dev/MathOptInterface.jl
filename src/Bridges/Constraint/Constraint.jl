@@ -137,6 +137,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, ToVectorQuadraticBridge{T})
     MOI.Bridges.add_bridge(model, VectorFunctionizeBridge{T})
     MOI.Bridges.add_bridge(model, VectorizeBridge{T})
+    MOI.Bridges.add_bridge(model, IntervalToHyperRectangleBridge{T})
     MOI.Bridges.add_bridge(model, VectorSlackBridge{T})
     MOI.Bridges.add_bridge(model, ZeroOneBridge{T})
     return
