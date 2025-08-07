@@ -22,8 +22,6 @@
 # If present, the tests run only those submodules defined above. `General` is
 # not a submodule, but it runs all of the top-level tests in MOI.
 
-import Test
-
 # This file gets called first. If it doesn't crash, all is well.
 include("issue980.jl")
 
@@ -33,6 +31,19 @@ MODULES_TO_TEST = get(
     "General;Benchmarks;Bridges;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
 )
 
+"""
+    include_with_method_redefinition_check(jl_filename)
+
+This function runs `include(jl_filename)` with an additional check that there
+are no `WARNING: Method definition foo in module Foo overwritten` warnings.
+
+It does this by piping `stderr` to a file, and then parsing the file.
+
+One consequence is that `stderr` is not printed until the _end_ of this
+function. Thus, some warnings may appear in the wrong place.
+
+This function requires Julia to be started with `--warn-overwrite=true`.
+"""
 function include_with_method_redefinition_check(jl_filename)
     stderr_filename = tempname()
     open(stderr_filename, "w") do io
