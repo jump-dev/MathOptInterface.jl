@@ -2056,6 +2056,13 @@ function test_ToScalarQuadraticBridge_used()
         model,
         MOI.Bridges.Constraint.VectorizeBridge{Float64},
     )
+    @test MOI.Bridges.bridging_cost(model, F, S) == 3.0
+    @test MOI.Bridges.bridge_type(model, F, S) <:
+          MOI.Bridges.Constraint.LessToIntervalBridge{Float64}
+    MOI.Bridges.remove_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToIntervalBridge{Float64},
+    )
     @test MOI.Bridges.bridging_cost(model, F, S) == 10.0
     @test MOI.Bridges.bridge_type(model, F, S) <:
           MOI.Bridges.Constraint.ToScalarQuadraticBridge{Float64}
