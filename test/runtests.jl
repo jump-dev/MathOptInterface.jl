@@ -40,11 +40,8 @@ function include_with_method_redefinition_check(jl_filename)
     end
     contents = read(stderr_filename, String)
     print(stderr, contents)
-    warnings = findall(
-        r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n",
-        contents,
-    )
-    if isempty(warnings)
+    regex = r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n"
+    if match(regex, contents) !== nothing
         error("Found overwritten method")
     end
     return
