@@ -51,7 +51,7 @@ function include_with_method_redefinition_check(jl_filename)
 end
 
 for submodule in split(MODULES_TO_TEST, ";")
-    include_with_method_redefinition_check("$submodule/runtests")
+    include_with_method_redefinition_check("$(submodule)/runtests.jl")
     GC.gc()  # Force GC run here to reduce memory pressure
 end
 
