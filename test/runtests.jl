@@ -22,6 +22,8 @@
 # If present, the tests run only those submodules defined above. `General` is
 # not a submodule, but it runs all of the top-level tests in MOI.
 
+import Test
+
 # This file gets called first. If it doesn't crash, all is well.
 include("issue980.jl")
 
@@ -32,7 +34,14 @@ MODULES_TO_TEST = get(
 )
 
 for submodule in split(MODULES_TO_TEST, ";")
-    include("$(submodule)/runtests.jl")
+    # This `test_nowarn` checks for warnings that get thrown when we include a
+    # method twice by mistake:
+    #   WARNING: Method definition test_foo() in module TestFoo
+    # These warnings are thrown only if Julia is started with
+    #   julia --warn-overwrite=yes
+    # The entire test file is run, and then the warnings are checked on exit
+    # from `include()`.
+    Test.@test_nowarn include("$(submodule)/runtests.jl")
     GC.gc()  # Force GC run here to reduce memory pressure
 end
 
