@@ -1938,7 +1938,7 @@ end
 
 struct CustomScalarSet <: MOI.AbstractScalarSet end
 
-function test_wrong_coefficient()
+function test_wrong_coefficient_1()
     for (S, T) in [(Complex{Float64}, Float64), (Float64, Int)]
         model = MOI.Utilities.Model{T}()
         bridged = MOI.Bridges.full_bridge_optimizer(model, T)
@@ -2253,7 +2253,7 @@ function test_issue_2696()
     return
 end
 
-function test_wrong_coefficient()
+function test_wrong_coefficient_2()
     model = MOI.instantiate(
         MOI.Utilities.Model{Float64},
         with_bridge_type = Float64,
