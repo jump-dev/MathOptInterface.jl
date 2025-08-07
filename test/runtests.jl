@@ -31,8 +31,36 @@ MODULES_TO_TEST = get(
     "General;Benchmarks;Bridges;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
 )
 
+"""
+    include_with_method_redefinition_check(jl_filename)
+
+This function runs `include(jl_filename)` with an additional check that there
+are no `WARNING: Method definition foo in module Foo overwritten` warnings.
+
+It does this by piping `stderr` to a file, and then parsing the file.
+
+One consequence is that `stderr` is not printed until the _end_ of this
+function. Thus, some warnings may appear in the wrong place.
+
+This function requires Julia to be started with `--warn-overwrite=true`.
+"""
+function include_with_method_redefinition_check(jl_filename)
+    stderr_filename = tempname()
+    open(stderr_filename, "w") do io
+        return redirect_stderr(() -> include(jl_filename), io)
+    end
+    contents = read(stderr_filename, String)
+    print(stderr, contents)
+    regex =
+        r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n"
+    if match(regex, contents) !== nothing
+        error("Found overwritten method")
+    end
+    return
+end
+
 for submodule in split(MODULES_TO_TEST, ";")
-    include("$(submodule)/runtests.jl")
+    include_with_method_redefinition_check("$(submodule)/runtests.jl")
     GC.gc()  # Force GC run here to reduce memory pressure
 end
 

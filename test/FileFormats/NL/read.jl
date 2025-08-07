@@ -955,7 +955,7 @@ function test_binary_parse_x()
     return
 end
 
-function test_parse_d()
+function test_binary_parse_d()
     model = NL._CacheModel()
     model.is_binary = true
     io = IOBuffer()
