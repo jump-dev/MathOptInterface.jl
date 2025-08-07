@@ -98,22 +98,13 @@ function test_print_active_bridges()
  |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Zeros
  * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.Interval{Float64}
  |  bridged by:
- |   MOIB.Constraint.SplitIntervalBridge{Float64, MOI.ScalarAffineFunction{Float64}, MOI.Interval{Float64}, MOI.GreaterThan{Float64}, MOI.LessThan{Float64}}
+ |   MOIB.Constraint.IntervalToHyperRectangleBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.ScalarAffineFunction{Float64}}
  |  may introduce:
- |   * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.GreaterThan{Float64}
+ |   * Unsupported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.HyperRectangle{Float64}
  |   |  bridged by:
- |   |   MOIB.Constraint.VectorizeBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.Nonnegatives, MOI.ScalarAffineFunction{Float64}}
+ |   |   MOIB.Constraint.SplitHyperRectangleBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.VectorAffineFunction{Float64}}
  |   |  may introduce:
  |   |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonnegatives
- |   * Unsupported constraint: MOI.ScalarAffineFunction{Float64}-in-MOI.LessThan{Float64}
- |   |  bridged by:
- |   |   MOIB.Constraint.VectorizeBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.Nonpositives, MOI.ScalarAffineFunction{Float64}}
- |   |  may introduce:
- |   |   * Unsupported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonpositives
- |   |   |  bridged by:
- |   |   |   MOIB.Constraint.NonposToNonnegBridge{Float64, MOI.VectorAffineFunction{Float64}, MOI.VectorAffineFunction{Float64}}
- |   |   |  may introduce:
- |   |   |   * Supported constraint: MOI.VectorAffineFunction{Float64}-in-MOI.Nonnegatives
  * Unsupported constraint: MOI.ScalarQuadraticFunction{Float64}-in-MOI.LessThan{Float64}
  |  bridged by:
  |   MOIB.Constraint.QuadtoSOCBridge{Float64}
