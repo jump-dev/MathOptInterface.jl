@@ -33,15 +33,25 @@ MODULES_TO_TEST = get(
     "General;Benchmarks;Bridges;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
 )
 
+function include_with_method_redefinition_check(jl_filename)
+    stderr_filename = tempname()
+    open(stderr_filename, "w") do io
+        return redirect_stderr(() -> include(jl_filename), io)
+    end
+    contents = read(stderr_filename, String)
+    print(stderr, contents)
+    warnings = findall(
+        r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n",
+        contents,
+    )
+    if isempty(warnings)
+        error("Found overwritten method")
+    end
+    return
+end
+
 for submodule in split(MODULES_TO_TEST, ";")
-    # This `test_nowarn` checks for warnings that get thrown when we include a
-    # method twice by mistake:
-    #   WARNING: Method definition test_foo() in module TestFoo
-    # These warnings are thrown only if Julia is started with
-    #   julia --warn-overwrite=yes
-    # The entire test file is run, and then the warnings are checked on exit
-    # from `include()`.
-    Test.@test_nowarn include("$(submodule)/runtests.jl")
+    include_with_method_redefinition_check("$submodule/runtests")
     GC.gc()  # Force GC run here to reduce memory pressure
 end
 
