@@ -116,14 +116,14 @@ function test_runtests(T)
     return
 end
 
-function test_modify_ScalarCoefficientChange()
-    inner = MOI.Utilities.Model{Float64}()
-    model = MOI.Bridges.Constraint.IntervalToHyperRectangle{Float64}(inner)
+function test_modify_ScalarCoefficientChange(T)
+    inner = MOI.Utilities.Model{T}()
+    model = MOI.Bridges.Constraint.IntervalToHyperRectangle{T}(inner)
     x = MOI.add_variable(model)
-    c = MOI.add_constraint(model, 1.0 * x, MOI.Interval(0.0, 1.0))
-    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), 1.0 * x)
-    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 2.0))
-    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), 2.0 * x)
+    c = MOI.add_constraint(model, T(1) * x, MOI.Interval(T(0), T(1)))
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), T(1) * x)
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, T(2)))
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), T(2) * x)
     return
 end
 
