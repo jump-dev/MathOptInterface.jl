@@ -1444,14 +1444,15 @@ end
 function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
     if length(items) < 2
         error("Malformed ROWS line: $(join(items, " "))")
-    elseif length(items) > 2
-        # We could throw an error here, but it seems like other solvers just
-        # happily ignore the extra fields.
-        #
-        # See https://github.com/jump-dev/MathOptInterface.jl/issues/2792
-        #
-        # Oscar dislikes the poorly standardized nature of MPS.
     end
+    # if length(items) > 2
+    #     We could throw an error here, but it seems like other solvers just
+    #     happily ignore the extra fields.
+    #
+    #     See https://github.com/jump-dev/MathOptInterface.jl/issues/2792
+    #
+    #     Oscar dislikes the poorly standardized nature of MPS.
+    # end
     sense, name = Sense(items[1]), items[2]
     if haskey(data.name_to_row, name)
         error("Duplicate row encountered: $(join(items, " ")).")
