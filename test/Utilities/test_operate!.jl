@@ -696,6 +696,17 @@ function test_operate_coefficients_functions()
     return
 end
 
+function test_operate_int32()
+    x = MOI.VariableIndex(1)
+    y = one(Int32) * x
+    @test y isa MOI.ScalarAffineFunction{Int32}
+    q1 = MOI.Utilities.operate(*, Int32, x, x)
+    q2 = MOI.Utilities.operate(*, Int32, y, x)
+    @test q1 isa MOI.ScalarQuadraticFunction{Int32}
+    @test isapprox(q1, q2)
+    return
+end
+
 end  # module
 
 TestOperate.runtests()
