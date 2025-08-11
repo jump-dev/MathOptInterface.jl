@@ -442,7 +442,7 @@ function operate(
     f::MOI.ScalarAffineFunction{T},
     g::MOI.ScalarQuadraticFunction{T},
 ) where {T<:Number}
-    return MOI.ScalarQuadraticFunction(
+    return MOI.ScalarQuadraticFunction{T}(
         operate_terms(-, g.quadratic_terms),
         vcat(f.terms, operate_terms(-, g.affine_terms)),
         f.constant .- g.constant,
@@ -569,9 +569,9 @@ function operate(
     f::MOI.VectorAffineFunction{T},
     g::MOI.VectorQuadraticFunction{T},
 ) where {T<:Number}
-    return MOI.VectorQuadraticFunction(
+    return MOI.VectorQuadraticFunction{T}(
         operate_terms(-, g.quadratic_terms),
-        [f.terms; operate_terms(-, g.affine_terms)],
+        MOI.VectorAffineTerm{T}[f.terms; operate_terms(-, g.affine_terms)],
         f.constants .- g.constants,
     )
 end
@@ -762,7 +762,7 @@ function operate(
         end
     end
     constant = f.constant * g.constant
-    return MOI.ScalarQuadraticFunction(quad_terms, aff_terms, constant)
+    return MOI.ScalarQuadraticFunction{T}(quad_terms, aff_terms, constant)
 end
 
 function operate(
@@ -771,8 +771,8 @@ function operate(
     f::MOI.VariableIndex,
     g::MOI.VariableIndex,
 ) where {T<:Number}
-    return MOI.ScalarQuadraticFunction(
-        [MOI.ScalarQuadraticTerm(f == g ? 2one(T) : one(T), f, g)],
+    return MOI.ScalarQuadraticFunction{T}(
+        [MOI.ScalarQuadraticTerm{T}(f == g ? T(2) : one(T), f, g)],
         MOI.ScalarAffineTerm{T}[],
         zero(T),
     )
@@ -784,20 +784,15 @@ function operate(
     f::MOI.ScalarAffineFunction{T},
     g::MOI.VariableIndex,
 ) where {T<:Number}
-    if iszero(f.constant)
-        aff_terms = MOI.ScalarAffineTerm{T}[]
-    else
-        aff_terms = [MOI.ScalarAffineTerm(f.constant, g)]
+    aff_terms = MOI.ScalarAffineTerm{T}[]
+    if !iszero(f.constant)
+        push!(aff_terms, MOI.ScalarAffineTerm{T}(f.constant, g))
     end
-    quad_terms = map(
-        t -> MOI.ScalarQuadraticTerm(
-            t.variable == g ? 2t.coefficient : t.coefficient,
-            t.variable,
-            g,
-        ),
-        f.terms,
-    )
-    return MOI.ScalarQuadraticFunction(quad_terms, aff_terms, zero(T))
+    quad_terms = map(f.terms) do t
+        scale = t.variable == g ? T(2) : one(T)
+        return MOI.ScalarQuadraticTerm{T}(scale * t.coefficient, t.variable, g)
+    end
+    return MOI.ScalarQuadraticFunction{T}(quad_terms, aff_terms, zero(T))
 end
 
 ### 3d: operate(::typeof(*), ::Type{T}, ::Diagonal{T}, ::F)
@@ -935,7 +930,7 @@ function operate(
     fill_vector(aterms, T, 0, 0, fill_terms, number_of_affine_terms, f...)
     constants = zeros(T, sum(f -> output_dim(T, f), f))
     fill_vector(constants, T, 0, 0, fill_constant, output_dim, f...)
-    return MOI.VectorAffineFunction(aterms, constants)
+    return MOI.VectorAffineFunction{T}(aterms, constants)
 end
 
 function operate(
@@ -960,7 +955,7 @@ function operate(
     fill_vector(qterms, T, 0, 0, fill_terms, number_of_quadratic_terms, f...)
     constants = zeros(T, sum(f -> output_dim(T, f), f))
     fill_vector(constants, T, 0, 0, fill_constant, output_dim, f...)
-    return MOI.VectorQuadraticFunction(qterms, aterms, constants)
+    return MOI.VectorQuadraticFunction{T}(qterms, aterms, constants)
 end
 
 function operate(
