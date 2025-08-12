@@ -95,7 +95,10 @@ _upper(::MOI.ZeroOne, ::Type{T}) where {T} = one(T)
 
 function _dual_objective_value(
     model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:Union{MOI.ZeroOne,MOI.Interval}},
+    ci::MOI.ConstraintIndex{
+        <:MOI.AbstractScalarFunction,
+        <:Union{MOI.ZeroOne,MOI.Interval},
+    },
     ::Type{T},
     result_index::Integer,
 ) where {T}
