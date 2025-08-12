@@ -345,6 +345,7 @@ function test_runtests()
         [z, 2.0 * x * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2.0))
         z in ZeroOne()
         """,
+        no_bridge_used = true,
     )
     return
 end
