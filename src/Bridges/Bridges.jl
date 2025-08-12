@@ -309,7 +309,9 @@ function _runtests(
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
     model = _bridged_model(Bridge{eltype}, inner)
     input_fn(model)
-    _check_bridged(model; no_bridge_used)
+    @testset "Bridge used" begin
+        _check_bridged(model; no_bridge_used)
+    end
     final_touch(model)
     # Should be able to call final_touch multiple times.
     final_touch(model)
