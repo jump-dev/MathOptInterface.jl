@@ -88,9 +88,14 @@ function _dual_objective_value(
     )
 end
 
+_lower(set::MOI.Interval, ::Type) = set.lower
+_upper(set::MOI.Interval, ::Type) = set.upper
+_lower(::MOI.ZeroOne, ::Type{T}) where {T} = zero(T)
+_upper(::MOI.ZeroOne, ::Type{T}) where {T} = one(T)
+
 function _dual_objective_value(
     model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:MOI.Interval},
+    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:Union{MOI.ZeroOne,MOI.Interval}},
     ::Type{T},
     result_index::Integer,
 ) where {T}
@@ -100,10 +105,10 @@ function _dual_objective_value(
     if dual < zero(dual)
         # The dual is negative so it is in the dual of the MOI.LessThan cone
         # hence the upper bound of the Interval set is tight
-        constant -= set.upper
+        constant -= _upper(set, T)
     else
         # the lower bound is tight
-        constant -= set.lower
+        constant -= _lower(set, T)
     end
     return set_dot(constant, dual, set)
 end
