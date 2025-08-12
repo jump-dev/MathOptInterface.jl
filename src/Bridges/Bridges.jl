@@ -309,8 +309,9 @@ function _test_dual(
     dual,
     model_eltype,
 )
-    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{model_eltype}())
-    model = _bridged_model(Bridge{model_eltype}, inner)
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
+    mock = MOI.Utilities.MockOptimizer(inner)
+    model = _bridged_model(Bridge{model_eltype}, mock)
     input_fn(model)
     final_touch(model)
     # Should be able to call final_touch multiple times.
@@ -335,13 +336,13 @@ function _test_dual(
         MOI.DualObjectiveValue(),
         model_eltype,
     )
-    inner_dual = MOI.Utilities.get_fallback(
-        inner,
+    mock_dual = MOI.Utilities.get_fallback(
+        mock,
         MOI.DualObjectiveValue(),
         model_eltype,
     )
     # Need `atol` in case one of them is zero and the other one almost zero
-    Test.@test model_dual ≈ inner_dual atol = 1e-6
+    Test.@test model_dual ≈ mock_dual atol = 1e-6
 end
 
 function _runtests(
