@@ -79,7 +79,7 @@ julia> MOI.Bridges.runtests(
            """,
        )
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   29     29  0.0s
+Bridges.runtests |   30     30  0.0s
 ```
 
 There are a number of other useful keyword arguments.
@@ -123,5 +123,5 @@ Subject to:
 ScalarAffineFunction{Int64}-in-LessThan{Int64}
  (0) - (1) x <= (-1)
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   29     29  0.0s
+Bridges.runtests |   30     30  0.0s
 ```
