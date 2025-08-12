@@ -47,11 +47,15 @@ function MOI.supports_constraint(
     return true
 end
 
+MOI.supports(::Model, ::MOI.ObjectiveFunction) = false
+
 function MOI.supports(
-    ::Model,
-    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}},
-)
-    return false
+    ::Model{T},
+    ::MOI.ObjectiveFunction{
+        <:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T}},
+    },
+) where {T}
+    return true
 end
 
 """

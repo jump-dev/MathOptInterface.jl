@@ -99,6 +99,21 @@ function MOI.supports_constraint(
     return false
 end
 
+MOI.supports(::Model, ::MOI.ObjectiveFunction) = false
+
+function MOI.supports(
+    ::Model{T},
+    ::MOI.ObjectiveFunction{
+        <:Union{
+            MOI.VariableIndex,
+            MOI.ScalarAffineFunction{T},
+            MOI.ScalarQuadraticFunction{T},
+        },
+    },
+) where {T}
+    return true
+end
+
 @enum(
     QuadraticFormat,
     kQuadraticFormatCPLEX,

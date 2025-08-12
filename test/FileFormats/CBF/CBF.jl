@@ -692,10 +692,20 @@ function test_roundtrip_DualExponentialCone()
     return
 end
 
-function test_supports_quadratic_objective()
+function test_unsupported_objectives()
     model = CBF.Model()
-    F = MOI.ScalarQuadraticFunction{Float64}
-    @test !MOI.supports(model, MOI.ObjectiveFunction{F}())
+    for (F, ret) in [
+        MOI.VariableIndex => true,
+        MOI.ScalarAffineFunction{Float64} => true,
+        MOI.ScalarQuadraticFunction{Float64} => false,
+        MOI.ScalarNonlinearFunction => false,
+        MOI.VectorOfVariables => false,
+        MOI.VectorAffineFunction{Float64} => false,
+        MOI.VectorQuadraticFunction{Float64} => false,
+        MOI.VectorNonlinearFunction => false,
+    ]
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}()) == ret
+    end
     return
 end
 

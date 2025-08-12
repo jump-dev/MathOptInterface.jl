@@ -1377,6 +1377,23 @@ function test_unsupported_variable_types()
     return
 end
 
+function test_unsupported_objectives()
+    model = NL.Model()
+    for (F, ret) in [
+        MOI.VariableIndex => true,
+        MOI.ScalarAffineFunction{Float64} => true,
+        MOI.ScalarQuadraticFunction{Float64} => true,
+        MOI.ScalarNonlinearFunction => true,
+        MOI.VectorOfVariables => false,
+        MOI.VectorAffineFunction{Float64} => false,
+        MOI.VectorQuadraticFunction{Float64} => false,
+        MOI.VectorNonlinearFunction => false,
+    ]
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}()) == ret
+    end
+    return
+end
+
 end
 
 TestNLModel.runtests()
