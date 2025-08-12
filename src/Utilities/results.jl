@@ -88,9 +88,17 @@ function _dual_objective_value(
     )
 end
 
+_lower(set::MOI.Interval, ::Type) = set.lower
+_upper(set::MOI.Interval, ::Type) = set.upper
+_lower(::MOI.ZeroOne, ::Type{T}) where {T} = zero(T)
+_upper(::MOI.ZeroOne, ::Type{T}) where {T} = one(T)
+
 function _dual_objective_value(
     model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:MOI.Interval},
+    ci::MOI.ConstraintIndex{
+        <:MOI.AbstractScalarFunction,
+        <:Union{MOI.ZeroOne,MOI.Interval},
+    },
     ::Type{T},
     result_index::Integer,
 ) where {T}
@@ -100,10 +108,10 @@ function _dual_objective_value(
     if dual < zero(dual)
         # The dual is negative so it is in the dual of the MOI.LessThan cone
         # hence the upper bound of the Interval set is tight
-        constant -= set.upper
+        constant -= _upper(set, T)
     else
         # the lower bound is tight
-        constant -= set.lower
+        constant -= _lower(set, T)
     end
     return set_dot(constant, dual, set)
 end
@@ -119,14 +127,26 @@ function _dual_objective_value(
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
     constant = map(eachindex(func_constant)) do i
-        return func_constant[i] - if dual[i] < zero(dual[i])
-            # The dual is negative so it is in the dual of the MOI.LessThan cone
-            # hence the upper bound of the Interval set is tight
-            set.upper[i]
+        constant = func_constant[i]
+        if isfinite(set.upper[i])
+            if isfinite(set.lower[i])
+                if dual[i] < zero(dual[i])
+                    # The dual is negative so it is in the dual of the MOI.LessThan cone
+                    # hence the upper bound of the Interval set is tight
+                    constant -= set.upper[i]
+                else
+                    # the lower bound is tight
+                    constant -= set.lower[i]
+                end
+            else
+                constant -= set.upper[i]
+            end
         else
-            # the lower bound is tight
-            set.lower[i]
+            if isfinite(set.lower[i])
+                constant -= set.lower[i]
+            end
         end
+        return constant
     end
     return set_dot(constant, dual, set)
 end
