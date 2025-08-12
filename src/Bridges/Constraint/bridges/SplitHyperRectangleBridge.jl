@@ -229,7 +229,7 @@ function MOI.set(
     set = bridge.set
     new_values = vcat(
         T[max(T(0), v) for (v, l) in zip(values, set.lower) if isfinite(l)],
-        T[min(T(0), v) for (v, u) in zip(values, set.upper) if isfinite(u)],
+        T[max(T(0), -v) for (v, u) in zip(values, set.upper) if isfinite(u)],
     )
     MOI.set(model, attr, bridge.ci, new_values)
     return
@@ -255,7 +255,7 @@ function MOI.get(
     for (i, u) in enumerate(bridge.set.upper)
         if isfinite(u)
             row += 1
-            ret[i] += values[row]
+            ret[i] -= values[row]
         end
     end
     return ret
