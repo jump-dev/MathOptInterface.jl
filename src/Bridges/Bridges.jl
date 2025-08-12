@@ -283,7 +283,7 @@ julia> MOI.Bridges.runtests(
            end,
        )
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   32     32  0.8s
+Bridges.runtests |   33     33  0.8s
 ```
 """
 function runtests(args...; kwargs...)
