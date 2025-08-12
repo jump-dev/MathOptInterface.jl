@@ -403,7 +403,7 @@ function test_example_A_integer_coefficients()
 end
 
 function test_unsupported_objectives()
-    model = MPS.Model()
+    model = SDPA.Model()
     for (F, ret) in [
         MOI.VariableIndex => false,
         MOI.ScalarAffineFunction{Float64} => true,
