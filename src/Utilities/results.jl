@@ -119,14 +119,26 @@ function _dual_objective_value(
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
     constant = map(eachindex(func_constant)) do i
-        return func_constant[i] - if dual[i] < zero(dual[i])
-            # The dual is negative so it is in the dual of the MOI.LessThan cone
-            # hence the upper bound of the Interval set is tight
-            set.upper[i]
+        constant = func_constant[i]
+        if isfinite(set.upper[i])
+            if isfinite(set.lower[i])
+                if dual[i] < zero(dual[i])
+                    # The dual is negative so it is in the dual of the MOI.LessThan cone
+                    # hence the upper bound of the Interval set is tight
+                    constant -= set.upper[i]
+                else
+                    # the lower bound is tight
+                    constant -= set.lower[i]
+                end
+            else
+                constant -= set.upper[i]
+            end
         else
-            # the lower bound is tight
-            set.lower[i]
+            if isfinite(set.lower[i])
+                constant -= set.lower[i]
+            end
         end
+        return constant
     end
     return set_dot(constant, dual, set)
 end
