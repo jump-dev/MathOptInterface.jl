@@ -402,6 +402,23 @@ function test_example_A_integer_coefficients()
     return
 end
 
+function test_unsupported_objectives()
+    model = SDPA.Model()
+    for (F, ret) in [
+        MOI.VariableIndex => false,
+        MOI.ScalarAffineFunction{Float64} => true,
+        MOI.ScalarQuadraticFunction{Float64} => false,
+        MOI.ScalarNonlinearFunction => false,
+        MOI.VectorOfVariables => false,
+        MOI.VectorAffineFunction{Float64} => false,
+        MOI.VectorQuadraticFunction{Float64} => false,
+        MOI.VectorNonlinearFunction => false,
+    ]
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}()) == ret
+    end
+    return
+end
+
 end  # module
 
 TestSDPA.runtests()

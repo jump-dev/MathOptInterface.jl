@@ -1189,6 +1189,23 @@ function test_int_round_trip()
     return
 end
 
+function test_unsupported_objectives()
+    model = LP.Model()
+    for (F, ret) in [
+        MOI.VariableIndex => true,
+        MOI.ScalarAffineFunction{Float64} => true,
+        MOI.ScalarQuadraticFunction{Float64} => true,
+        MOI.ScalarNonlinearFunction => false,
+        MOI.VectorOfVariables => false,
+        MOI.VectorAffineFunction{Float64} => false,
+        MOI.VectorQuadraticFunction{Float64} => false,
+        MOI.VectorNonlinearFunction => false,
+    ]
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}()) == ret
+    end
+    return
+end
+
 end  # module
 
 TestLP.runtests()

@@ -1610,6 +1610,23 @@ function test_AAA_int()
     return
 end
 
+function test_unsupported_objectives()
+    model = MOF.Model()
+    for (F, ret) in [
+        MOI.VariableIndex => true,
+        MOI.ScalarAffineFunction{Float64} => true,
+        MOI.ScalarQuadraticFunction{Float64} => true,
+        MOI.ScalarNonlinearFunction => true,
+        MOI.VectorOfVariables => true,
+        MOI.VectorAffineFunction{Float64} => true,
+        MOI.VectorQuadraticFunction{Float64} => true,
+        MOI.VectorNonlinearFunction => true,
+    ]
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}()) == ret
+    end
+    return
+end
+
 end
 
 TestMOF.runtests()

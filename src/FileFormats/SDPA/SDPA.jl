@@ -39,15 +39,13 @@ function MOI.supports_constraint(
     return true
 end
 
-function MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.VariableIndex})
-    return false
-end
+MOI.supports(::Model, ::MOI.ObjectiveFunction) = false
 
 function MOI.supports(
     ::Model{T},
-    ::MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{T}},
+    ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}},
 ) where {T}
-    return false
+    return true
 end
 
 struct Options end
