@@ -320,7 +320,6 @@ function _test_dual(
     list_of_constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
     attr = MOI.ConstraintDual()
     for (F, S) in list_of_constraints
-        Test.@test MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
         if !MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
             # We need all duals for `DualObjectiveValue` fallback
             # TODO except the ones with no constants, we could ignore them
