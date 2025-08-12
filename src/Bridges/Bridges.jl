@@ -303,16 +303,21 @@ function _runtests(
     model_eltype = eltype,
     print_inner_model::Bool = false,
     cannot_unbridge::Bool = false,
+    no_bridge_used::Bool = false,
 )
     # Load model and bridge it
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
     model = _bridged_model(Bridge{eltype}, inner)
     input_fn(model)
+    _check_bridged(model; no_bridge_used)
     final_touch(model)
     # Should be able to call final_touch multiple times.
     final_touch(model)
     if print_inner_model
         print(inner)
+    end
+    if no_bridge_used
+        return
     end
     Test.@testset "Test outer bridged model appears like the input" begin       # COV_EXCL_LINE
         test =
@@ -510,6 +515,13 @@ function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
         Test.@test set_objective_function_type(B) <: MOI.AbstractFunction
     end
     return
+end
+
+function _check_bridged(model; no_bridge_used)
+    unused = isempty(MOI.Bridges.Variable.bridges(model)) &&
+        isempty(MOI.Bridges.Constraint.bridges(model)) &&
+        isempty(MOI.Bridges.Objective.bridges(model))
+    Test.@test unused == no_bridge_used
 end
 
 """
