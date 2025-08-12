@@ -331,8 +331,16 @@ function _test_dual(
             MOI.set(model, MOI.ConstraintDual(), ci, _fake_start(dual, set))
         end
     end
-    model_dual = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), model_eltype)
-    inner_dual = MOI.Utilities.get_fallback(inner, MOI.DualObjectiveValue(), model_eltype)
+    model_dual = MOI.Utilities.get_fallback(
+        model,
+        MOI.DualObjectiveValue(),
+        model_eltype,
+    )
+    inner_dual = MOI.Utilities.get_fallback(
+        inner,
+        MOI.DualObjectiveValue(),
+        model_eltype,
+    )
     # Need `atol` in case one of them is zero and the other one almost zero
     Test.@test model_dual ≈ inner_dual atol = 1e-6
 end

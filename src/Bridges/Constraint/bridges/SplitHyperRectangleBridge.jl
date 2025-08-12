@@ -174,7 +174,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart,MOI.ConstraintDual},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{<:SplitHyperRectangleBridge{T,G}},
 ) where {T,G}
     return MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.Nonnegatives})
