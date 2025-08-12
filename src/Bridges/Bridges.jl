@@ -336,11 +336,8 @@ function _test_dual(
         MOI.DualObjectiveValue(),
         model_eltype,
     )
-    mock_dual = MOI.Utilities.get_fallback(
-        mock,
-        MOI.DualObjectiveValue(),
-        model_eltype,
-    )
+    mock_dual =
+        MOI.Utilities.get_fallback(mock, MOI.DualObjectiveValue(), model_eltype)
     # Need `atol` in case one of them is zero and the other one almost zero
     Test.@test model_dual ≈ mock_dual atol = 1e-6
 end
