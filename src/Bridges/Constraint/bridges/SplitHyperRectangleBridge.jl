@@ -255,7 +255,7 @@ function MOI.get(
     for (i, u) in enumerate(bridge.set.upper)
         if isfinite(u)
             row += 1
-            ret[i] += values[row]
+            ret[i] -= values[row]
         end
     end
     return ret
