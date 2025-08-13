@@ -115,6 +115,7 @@ function test_runtests_all_free_rows()
     x = MOI.add_variable(model)
     f = MOI.Utilities.operate(vcat, Float64, 1.0 * x)
     c = MOI.add_constraint(model, f, MOI.HyperRectangle([-Inf], [Inf]))
+    @test MOI.get(model, MOI.ConstraintDual(), c) == [0.0]
     @test_throws(
         MOI.GetAttributeNotAllowed{MOI.ConstraintPrimal},
         MOI.get(model, MOI.ConstraintPrimal(), c)
