@@ -309,7 +309,7 @@ function _runtests(
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
     model = _bridged_model(Bridge{eltype}, inner)
     input_fn(model)
-    @testset "Bridge used" begin
+    Test.@testset "Bridge used" begin
         _check_bridged(model; no_bridge_used)
     end
     final_touch(model)
@@ -524,6 +524,7 @@ function _check_bridged(model; no_bridge_used)
         isempty(MOI.Bridges.Constraint.bridges(model)) &&
         isempty(MOI.Bridges.Objective.bridges(model))
     Test.@test unused == no_bridge_used
+    return
 end
 
 """
