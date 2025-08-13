@@ -12,9 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
  - Added [`ConflictCount`](@ref) and `conflict_index` to
-   [`ConstraintConflictStatus`](@rref) (#2775), (#2800), (#2801)
+   [`ConstraintConflictStatus`](@ref) (#2775), (#2800), (#2801)
  - Added [`Bridges.Constraint.IntervalToHyperRectangleBridge`](@ref) (#2754),
-   (#2806)
+   (#2806), (#2809)
 
 ### Fixed
 
@@ -23,11 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed parsing `x * x` as `x^2` in `Nonlinear.Model` (#2799)
  - Fixed a bug in [`Utilities.operate`](@ref) with quadratic outputs when a
    `Integer` coefficient differs from the machine `Integer` (#2807)
+ - Fixed `MOI.supports` of `MOI.ObjectiveFunction` in all file formats (#2814)
+ - Fixed free rows in [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref) (#2815)
 
 ### Other
 
  - Added an OPF benchmark (#2739)
  - Updated to DataStructures@0.19 (#2796)
+ - Filter `identity_bridge.jl` out from `runtests` (#2812)
 
 ## v1.42.1 (August 1, 2025)
 
