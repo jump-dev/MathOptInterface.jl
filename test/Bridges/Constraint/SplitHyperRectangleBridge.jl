@@ -99,6 +99,30 @@ function test_runtests_free_row()
     return
 end
 
+function test_runtests_all_free_rows()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SplitHyperRectangleBridge,
+        """
+        variables: x
+        [x] in HyperRectangle([-Inf], [Inf])
+        """,
+        """
+        variables: x
+        """,
+    )
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.SplitHyperRectangle{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.Utilities.operate(vcat, Float64, 1.0 * x)
+    c = MOI.add_constraint(model, f, MOI.HyperRectangle([-Inf], [Inf]))
+    @test MOI.get(model, MOI.ConstraintDual(), c) == [0.0]
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.ConstraintPrimal},
+        MOI.get(model, MOI.ConstraintPrimal(), c)
+    )
+    return
+end
+
 function test_basic_HyperRectangle()
     model = MOI.Bridges.Constraint.SplitHyperRectangle{Float64}(
         MOI.Utilities.Model{Float64}(),
