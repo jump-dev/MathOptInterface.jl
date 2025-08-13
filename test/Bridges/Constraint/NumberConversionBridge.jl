@@ -104,6 +104,7 @@ function test_runtests()
         variables: x
         ::Float64: [x, x] in Zeros(2)
         """,
+        no_bridge_used = true,
     )
     # VectorAffineFunction
     MOI.Bridges.runtests(
