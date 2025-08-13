@@ -35,7 +35,7 @@ mutable struct SplitHyperRectangleBridge{T,G,F} <: AbstractBridge
         ci::Union{Nothing,MOI.ConstraintIndex{G,MOI.Nonnegatives}},
         set::MOI.HyperRectangle{T},
         free_rows::F,
-    )
+    ) where {T,G,F}
         return new{T,G,F}(ci, set, free_rows, nothing, nothing)
     end
 end
