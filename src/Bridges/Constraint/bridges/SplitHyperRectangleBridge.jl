@@ -30,6 +30,14 @@ mutable struct SplitHyperRectangleBridge{T,G,F} <: AbstractBridge
     free_rows::F
     free_primal_start::Union{Nothing,Vector{T}}
     free_dual_start::Union{Nothing,Vector{T}}
+
+    function SplitHyperRectangleBridge{T,G,F}(
+        ci::Union{Nothing,MOI.ConstraintIndex{G,MOI.Nonnegatives}},
+        set::MOI.HyperRectangle{T},
+        free_rows::F,
+    )
+        return new{T,G,F}(ci, set, free_rows, nothing, nothing)
+    end
 end
 
 const SplitHyperRectangle{T,OT<:MOI.ModelLike} =
@@ -70,17 +78,11 @@ function bridge_constraint(
         end
     end
     if length(free_rows) == N
-        return SplitHyperRectangleBridge{T,G,F}(nothing, s, f, nothing, nothing)
+        return SplitHyperRectangleBridge{T,G,F}(nothing, s, f)
     end
     g = MOI.Utilities.vectorize(g_vec[rows_to_keep])
     ci = MOI.add_constraint(model, g, MOI.Nonnegatives(MOI.output_dimension(g)))
-    return SplitHyperRectangleBridge{T,G,F}(
-        ci,
-        s,
-        scalars[free_rows],
-        nothing,
-        nothing,
-    )
+    return SplitHyperRectangleBridge{T,G,F}(ci, s, scalars[free_rows])
 end
 
 function MOI.supports_constraint(
@@ -229,7 +231,7 @@ end
 # evaluating the primal of the free rows. Throw an error instead.
 function _get_free_start(
     ::SplitHyperRectangleBridge,
-    attr::MOI.ConstraintPrimal
+    attr::MOI.ConstraintPrimal,
 )
     return throw(MOI.GetAttributeNotAllowed(attr))
 end
