@@ -1463,6 +1463,35 @@ function test_BridgeRequiresFiniteDomainError()
     return
 end
 
+MOI.Utilities.@model(
+    Model2817,
+    (),
+    (),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (),
+    (),
+    (MOI.VectorAffineFunction,)
+);
+
+function MOI.supports_constraint(
+    ::Model2817,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    return false
+end
+
+function test_issue_2817()
+    model = MOI.Bridges.full_bridge_optimizer(Model2817{Float64}(), Float64);
+    x, _ = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0));
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, x)
+    @test MOI.is_empty(model)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
