@@ -152,9 +152,10 @@ function MOI.get(
 end
 
 function MOI.is_empty(model::StructOfConstraints)
-    return mapreduce_constraints(&, model, true) do constrs
+    ret = mapreduce_constraints(&, model, true) do constrs
         return constrs === nothing || MOI.is_empty(constrs)
     end
+    return something(ret, true)
 end
 
 function MOI.empty!(model::StructOfConstraints)

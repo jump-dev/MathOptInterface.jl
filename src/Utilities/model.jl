@@ -369,10 +369,10 @@ end
 function MOI.get(
     model::AbstractModel{T},
     attr::MOI.ListOfConstraintTypesPresent,
-) where {T}
+)::Vector{Tuple{Type,Type}} where {T}
     return vcat(
-        MOI.get(model.constraints, attr)::Vector{Tuple{Type,Type}},
-        MOI.get(model.variables, attr)::Vector{Tuple{Type,Type}},
+        MOI.get(model.constraints, attr),
+        MOI.get(model.variables, attr),
     )
 end
 
