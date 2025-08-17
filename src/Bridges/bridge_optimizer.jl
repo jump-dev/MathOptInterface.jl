@@ -506,18 +506,30 @@ function _delete_variables_in_vector_of_variables_constraint(
     end
 end
 
+"""
+    _delete_variables_in_variables_constraints(
+        b::AbstractBridgeOptimizer,
+        vis::Vector{MOI.VariableIndex},
+    )
+
+!!! warning
+    There's a lot of subtle logic in this function.
+"""
 function _delete_variables_in_variables_constraints(
     b::AbstractBridgeOptimizer,
     vis::Vector{MOI.VariableIndex},
 )
     c_map = Constraint.bridges(b)::Constraint.Map
-    # Delete all `MOI.VariableIndex` constraints of these variables.
+    # First, we need to delete any scalar constraints associated with these
+    # variables.
+    #
+    # x in S_s --> [x] in S_v
     for vi in vis
-        # If a bridged `VariableIndex` constraints creates a second one,
-        # then we will delete the second one when deleting the first one hence we
-        # should not delete it again in this loop.
-        # For this, we reverse the order so that we encounter the first one first
-        # and we won't delete the second one since `MOI.is_valid(b, ci)` will be `false`.
+        # If a bridged `VariableIndex` constraints creates a second one, then we
+        # will delete the second one when deleting the first one hence we should
+        # not delete it again in this loop. For this, we reverse the order so
+        # that we encounter the first one first and we won't delete the second
+        # one since `MOI.is_valid(b, ci)` will be `false`.
         for ci in Iterators.reverse(Constraint.variable_constraints(c_map, vi))
             if MOI.is_valid(b, ci)
                 MOI.delete(b, ci)
