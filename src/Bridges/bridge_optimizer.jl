@@ -542,8 +542,9 @@ end
 
 Return `true` if `ci` was added by one of the bridges in `c_map`.
 
-For performance reasons, we store the `ListOfConstraintIndices{F,S}` in `cache`,
-so that we don't have to keep lopping through the bridges.
+For performance reasons, we store the index values associated with
+`MOI.ListOfConstraintIndices{F,S}` in `cache` so that we don't have to keep
+looping through the bridges.
 """
 function _is_added_by_bridge(
     c_map,
