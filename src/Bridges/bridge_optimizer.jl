@@ -490,7 +490,7 @@ function MOI.is_valid(
             # by luck/enumeration.
             #
             # The main place that this is problematic is when we come to delete
-            # constraints, and particular VariableIndex constraints, because we
+            # constraints, and in particular VariableIndex constraints, because we
             # triviallly have their `.value` field from the `.value` of the
             # VariableIndex.
             #
