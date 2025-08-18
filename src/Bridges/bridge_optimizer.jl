@@ -554,7 +554,10 @@ function _is_added_by_bridge(
     ret = get!(cache, (F, S)) do
         set = Set{Int64}()
         for bridge in values(c_map)
-            for ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
+            for ci in MOI.get(
+                bridge,
+                MOI.ListOfConstraintIndices{F,S}(),
+            )
                 push!(set, ci.value)
             end
         end
