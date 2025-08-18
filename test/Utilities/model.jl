@@ -617,6 +617,16 @@ function test_struct_of_constraints_by_set_types()
     return
 end
 
+MOI.Utilities.@model(EmptyModel, (), (), (), (), (), (), (), ())
+
+function test_empty_model()
+    model = EmptyModel{Float64}()
+    @test MOI.is_empty(model)
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) ==
+          Tuple{Type,Type}[]
+    return
+end
+
 end  # module
 
 TestModel.runtests()
