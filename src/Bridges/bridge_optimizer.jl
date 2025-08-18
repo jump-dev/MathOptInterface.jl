@@ -476,6 +476,7 @@ function MOI.is_valid(
             v_map = Variable.bridges(b)::Variable.Map
             return MOI.is_valid(v_map, ci)
         else
+            # This has the potential to be a false positive. see #2817
             return haskey(Constraint.bridges(b), ci)
         end
     else
@@ -506,6 +507,17 @@ function _delete_variables_in_vector_of_variables_constraint(
     end
 end
 
+function _is_added_by_bridge(c_map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+    for (i, bridge) in c_map
+        if i == ci
+            continue
+        elseif ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
+            return true
+        end
+    end
+    return false
+end
+
 """
     _delete_variables_in_variables_constraints(
         b::AbstractBridgeOptimizer,
@@ -520,10 +532,18 @@ function _delete_variables_in_variables_constraints(
     vis::Vector{MOI.VariableIndex},
 )
     c_map = Constraint.bridges(b)::Constraint.Map
-    # First, we need to delete any scalar constraints associated with these
-    # variables.
+    # The point of this function is to delete constraints associated with the
+    # variables in `vis`.
     #
-    # x in S_s --> [x] in S_v
+    # There are two problematic cases:
+    #
+    # 1. A VariableIndex bridged to a VectorOfVariables equivalent. For example,
+    #    x in Interval --> [x] in HyperRectangle
+    # 2. A VectorOfVariables bridged to a VariableIndex equivalent. For example,
+    #    [x] in Nonnegatives --> x in GreaterThan
+    #
+    # First, we need to delete scalar constraints, UNLESS they were added by a
+    # different constraint bridge.
     for vi in vis
         # If a bridged `VariableIndex` constraints creates a second one, then we
         # will delete the second one when deleting the first one hence we should
@@ -531,7 +551,7 @@ function _delete_variables_in_variables_constraints(
         # that we encounter the first one first and we won't delete the second
         # one since `MOI.is_valid(b, ci)` will be `false`.
         for ci in Iterators.reverse(Constraint.variable_constraints(c_map, vi))
-            if MOI.is_valid(b, ci)
+            if MOI.is_valid(b, ci) && !_is_added_by_bridge(c_map, ci)
                 MOI.delete(b, ci)
             end
         end
