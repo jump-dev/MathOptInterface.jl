@@ -517,17 +517,17 @@ function _delete_variables_in_vector_of_variables_constraint(
     func = MOI.get(b, MOI.ConstraintFunction(), ci)
     if vis == func.variables
         MOI.delete(b, ci)
-        return
-    end
-    variables = copy(func.variables)
-    for vi in vis
-        i = findfirst(isequal(vi), variables)
-        if i === nothing
-            continue
-        elseif MOI.supports_dimension_update(S)
-            call_in_context(MOI.delete, b, ci, IndexInVector(i))
-        else
-            MOI.Utilities.throw_delete_variable_in_vov(vi)
+    else
+        variables = copy(func.variables)
+        for vi in vis
+            i = findfirst(isequal(vi), variables)
+            if i !== nothing
+                if MOI.supports_dimension_update(S)
+                    call_in_context(MOI.delete, b, ci, IndexInVector(i))
+                else
+                    MOI.Utilities.throw_delete_variable_in_vov(vi)
+                end
+            end
         end
     end
     return
@@ -536,7 +536,7 @@ end
 """
     _is_added_by_bridge(
         c_map,
-        cache::Dict{Any,Any},
+        cache::Dict{Any,Set{Int64}},
         ci::MOI.ConstraintIndex{F,S},
     ) where {F,S}
 
@@ -547,17 +547,19 @@ so that we don't have to keep lopping through the bridges.
 """
 function _is_added_by_bridge(
     c_map,
-    cache::Dict{Any,Any},
+    cache::Dict{Any,Set{Int64}},
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     ret = get!(cache, (F, S)) do
-        list = MOI.ConstraintIndex{F,S}[]
+        set = Set{Int64}()
         for bridge in values(c_map)
-            append!(list, MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}()))
+            for ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
+                push!(set, ci.value)
+            end
         end
-        return list
-    end
-    return ci in ret
+        return set
+    end::Set{Int64}
+    return ci.value in ret
 end
 
 """
@@ -585,7 +587,7 @@ function _delete_variables_in_variables_constraints(
     vis::Vector{MOI.VariableIndex},
 )
     c_map = Constraint.bridges(b)::Constraint.Map
-    cache = Dict{Any,Any}()
+    cache = Dict{Any,Set{Int64}}()
     for vi in vis
         for ci in Constraint.variable_constraints(c_map, vi)
             if !_is_added_by_bridge(c_map, cache, ci)
