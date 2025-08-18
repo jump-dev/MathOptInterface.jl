@@ -1492,6 +1492,35 @@ function test_issue_2817()
     return
 end
 
+MOI.Utilities.@model(
+    Model2817b,
+    (),
+    (MOI.LessThan,),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+);
+
+function MOI.supports_constraint(
+    ::Model2817b,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    return false
+end
+
+function test_issue_2817b()
+    model = MOI.instantiate(Model2817b{Float64}; with_bridge_type = Float64)
+    y, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    MOI.delete(model, y)
+    @test !MOI.is_valid(model, y[1])
+    @test MOI.is_empty(model)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
