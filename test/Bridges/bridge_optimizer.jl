@@ -1537,7 +1537,7 @@ end
 MOI.Utilities.@model(
     Model2817c,
     (),
-    (MOI.GreaterThan, MOI.LessThan,),
+    (MOI.GreaterThan, MOI.LessThan),
     (),
     (),
     (),
