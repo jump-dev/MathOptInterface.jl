@@ -1758,10 +1758,10 @@ function MOI.get(
 end
 
 function _get_variable_if_equivalent(b, x)
-    return _get_variable_if_equivalent(bridged_variable_function(b, x))
+    return _get_variable_if_equivalent(bridged_variable_function(b, x), x)
 end
 
-function _get_variable_if_equivalent(f::MOI.ScalarAffineFunction)
+function _get_variable_if_equivalent(f::MOI.ScalarAffineFunction, x)
     if length(f.terms) == 1
         term = only(f.terms)
         if isone(term.coefficient)
@@ -1858,6 +1858,9 @@ function MOI.get(
     end
     vi_bridged = get(b.name_to_var, name, nothing)
     MOI.Utilities.throw_if_multiple_with_name(vi_bridged, name)
+    if _get_variable_if_equivalent(b, vi_bridged) !== nothing
+        return vi_bridged
+    end
     return MOI.Utilities.check_type_and_multiple_names(
         MOI.VariableIndex,
         vi_bridged,
