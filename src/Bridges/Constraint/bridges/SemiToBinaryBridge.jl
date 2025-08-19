@@ -179,7 +179,6 @@ function MOI.delete(model::MOI.ModelLike, bridge::SemiToBinaryBridge)
     end
     MOI.delete(model, bridge.upper_bound_index)
     MOI.delete(model, bridge.lower_bound_index)
-    MOI.delete(model, bridge.binary_constraint_index)
     MOI.delete(model, bridge.binary_variable)
     return
 end

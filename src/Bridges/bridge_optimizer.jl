@@ -476,6 +476,32 @@ function MOI.is_valid(
             v_map = Variable.bridges(b)::Variable.Map
             return MOI.is_valid(v_map, ci)
         else
+            # This return value has the potential to be a false positive: it
+            # doesn't discriminate between constraints that the user added, and
+            # constraints that a bridge added that were themselves bridged.
+            #
+            # "Fixing" this particular call has a number of wide reaching
+            # effects because bridges need this to be "true" so that they can
+            # query attributes of the constraint from `b`.
+            #
+            # In most cases a false positive doesn't matter, because we really
+            # do support querying stuff about it. And also the user needs some
+            # way of obtaining the correct index, which they won't have except
+            # by luck/enumeration.
+            #
+            # The main place that this is problematic is when we come to delete
+            # constraints, and in particular VariableIndex constraints, because we
+            # triviallly have their `.value` field from the `.value` of the
+            # VariableIndex.
+            #
+            # Instead of fixing everything though, we implement some extra
+            # checks when deleting, and we leave the false-positive as-is for
+            # now. If you, future reader, hit this comment while debugging, we
+            # might need to revisit this decision.
+            #
+            # x-ref https://github.com/jump-dev/MathOptInterface.jl/issues/2696
+            # x-ref https://github.com/jump-dev/MathOptInterface.jl/issues/2817
+            # x-ref https://github.com/jump-dev/MathOptInterface.jl/pull/2818
             return haskey(Constraint.bridges(b), ci)
         end
     else
@@ -489,10 +515,10 @@ function _delete_variables_in_vector_of_variables_constraint(
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
 ) where {S}
     func = MOI.get(b, MOI.ConstraintFunction(), ci)
-    variables = copy(func.variables)
-    if vis == variables
+    if vis == func.variables
         MOI.delete(b, ci)
     else
+        variables = copy(func.variables)
         for vi in vis
             i = findfirst(isequal(vi), variables)
             if i !== nothing
@@ -504,34 +530,81 @@ function _delete_variables_in_vector_of_variables_constraint(
             end
         end
     end
+    return
 end
 
+"""
+    _is_added_by_bridge(
+        c_map,
+        cache::Dict{Any,Set{Int64}},
+        ci::MOI.ConstraintIndex{F,S},
+    ) where {F,S}
+
+Return `true` if `ci` was added by one of the bridges in `c_map`.
+
+For performance reasons, we store the index values associated with
+`MOI.ListOfConstraintIndices{F,S}` in `cache` so that we don't have to keep
+looping through the bridges.
+"""
+function _is_added_by_bridge(
+    c_map,
+    cache::Dict{Any,Set{Int64}},
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
+    ret = get!(cache, (F, S)) do
+        set = Set{Int64}()
+        for bridge in values(c_map)
+            for ci in MOI.get(
+                bridge,
+                MOI.ListOfConstraintIndices{F,S}(),
+            )
+                push!(set, ci.value)
+            end
+        end
+        return set
+    end::Set{Int64}
+    return ci.value in ret
+end
+
+"""
+    _delete_variables_in_variables_constraints(
+        b::AbstractBridgeOptimizer,
+        vis::Vector{MOI.VariableIndex},
+    )
+
+The point of this function is to delete constraints associated with the
+variables in `vis`.
+
+## Warning
+
+Because of the false positive potential in
+`is_valid(::AbstractBridgeOptimizer, MOI.ConstraintIndex)`, we need to ensure
+that we delete constraints only if they were not added by a different constraint
+bridge, otherwise when we come to delete the parent constraint we'll hit a
+runtime error where we have already deleted part of the bridged constraint.
+
+x-ref https://github.com/jump-dev/MathOptInterface.jl/issues/2817
+x-ref https://github.com/jump-dev/MathOptInterface.jl/pull/2818
+"""
 function _delete_variables_in_variables_constraints(
     b::AbstractBridgeOptimizer,
     vis::Vector{MOI.VariableIndex},
 )
     c_map = Constraint.bridges(b)::Constraint.Map
-    # Delete all `MOI.VectorOfVariables` constraints of these variables.
-    # We reverse for the same reason as for `VariableIndex` below.
-    # As the iterators are lazy, when the inner bridge constraint is deleted,
-    # it won't be part of the iteration.
-    for ci in
-        Iterators.reverse(Constraint.vector_of_variables_constraints(c_map))
-        _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
-    end
-    # Delete all `MOI.VariableIndex` constraints of these variables.
+    cache = Dict{Any,Set{Int64}}()
     for vi in vis
-        # If a bridged `VariableIndex` constraints creates a second one,
-        # then we will delete the second one when deleting the first one hence we
-        # should not delete it again in this loop.
-        # For this, we reverse the order so that we encounter the first one first
-        # and we won't delete the second one since `MOI.is_valid(b, ci)` will be `false`.
-        for ci in Iterators.reverse(Constraint.variable_constraints(c_map, vi))
-            if MOI.is_valid(b, ci)
+        for ci in Constraint.variable_constraints(c_map, vi)
+            if !_is_added_by_bridge(c_map, cache, ci)
                 MOI.delete(b, ci)
             end
         end
     end
+    for ci in Constraint.vector_of_variables_constraints(c_map)
+        if !_is_added_by_bridge(c_map, cache, ci)
+            _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
+        end
+    end
+    return
 end
 
 function _delete_variables_in_bridged_objective(
