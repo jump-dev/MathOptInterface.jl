@@ -595,6 +595,7 @@ function test_double_deletion_scalar()
     @test !MOI.Bridges.is_bridged(model, b2.constraint)
     MOI.delete(model, x)
     @test !MOI.is_valid(model, x)
+    @test MOI.is_empty(model)
     return
 end
 
@@ -614,6 +615,7 @@ function test_double_deletion_vector()
     @test !MOI.Bridges.is_bridged(model, b2.constraint)
     MOI.delete(model, x)
     @test all(vi -> !MOI.is_valid(model, vi), x)
+    @test MOI.is_empty(model)
     return
 end
 
@@ -1464,7 +1466,7 @@ function test_BridgeRequiresFiniteDomainError()
 end
 
 MOI.Utilities.@model(
-    Model2817,
+    Model2817a,
     (),
     (),
     (MOI.Nonnegatives,),
@@ -1476,19 +1478,26 @@ MOI.Utilities.@model(
 );
 
 function MOI.supports_constraint(
-    ::Model2817,
+    ::Model2817a,
     ::Type{MOI.VariableIndex},
     ::Type{S},
 ) where {S<:MOI.AbstractScalarSet}
     return false
 end
 
-function test_issue_2817()
-    model = MOI.Bridges.full_bridge_optimizer(Model2817{Float64}(), Float64);
-    x, _ = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0));
+function test_issue_2817a()
+    inner = Model2817a{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64);
+    x, c = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0));
+    @test isa(
+        model.constraint_map[c],
+        MOI.Bridges.Constraint.IntervalToHyperRectangleBridge,
+    )
     MOI.delete(model, x)
     @test !MOI.is_valid(model, x)
     @test MOI.is_empty(model)
+    @test MOI.is_empty(inner)
+    @test isempty(model.constraint_map)
     return
 end
 
@@ -1513,11 +1522,51 @@ function MOI.supports_constraint(
 end
 
 function test_issue_2817b()
-    model = MOI.instantiate(Model2817b{Float64}; with_bridge_type = Float64)
-    y, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
-    MOI.delete(model, y)
-    @test !MOI.is_valid(model, y[1])
+    inner = Model2817b{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64);
+    x, c = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    @test isa(model.constraint_map[c], MOI.Bridges.Constraint.ScalarizeBridge)
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, x[1])
     @test MOI.is_empty(model)
+    @test MOI.is_empty(inner)
+    @test isempty(model.constraint_map)
+    return
+end
+
+MOI.Utilities.@model(
+    Model2817c,
+    (),
+    (MOI.GreaterThan, MOI.LessThan,),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+);
+
+function MOI.supports_constraint(
+    ::Model2817c,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+) where {S<:Union{MOI.ZeroOne,MOI.Semiinteger,MOI.Semicontinuous}}
+    return false
+end
+
+function test_issue_2817c()
+    inner = Model2817c{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64);
+    x, c = MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0))
+    @test isa(
+        model.constraint_map[c],
+        MOI.Bridges.Constraint.SemiToBinaryBridge,
+    )
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, x)
+    @test MOI.is_empty(model)
+    @test MOI.is_empty(inner)
+    @test isempty(model.constraint_map)
     return
 end
 
