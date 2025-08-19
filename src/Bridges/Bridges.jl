@@ -283,7 +283,7 @@ julia> MOI.Bridges.runtests(
            end,
        )
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   32     32  0.8s
+Bridges.runtests |   33     33  0.8s
 ```
 """
 function runtests(args...; kwargs...)
@@ -444,7 +444,7 @@ julia> MOI.Bridges.runtests(
            \"\"\",
        )
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   32     32  0.0s
+Bridges.runtests |   33     33  0.0s
 ```
 """
 function runtests(
@@ -520,7 +520,8 @@ function _general_bridge_tests(bridge::B) where {B<:AbstractBridge}
 end
 
 function _check_bridged(model; no_bridge_used)
-    unused = isempty(MOI.Bridges.Variable.bridges(model)) &&
+    unused =
+        isempty(MOI.Bridges.Variable.bridges(model)) &&
         isempty(MOI.Bridges.Constraint.bridges(model)) &&
         isempty(MOI.Bridges.Objective.bridges(model))
     Test.@test unused == no_bridge_used

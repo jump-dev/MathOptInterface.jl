@@ -103,7 +103,8 @@ function test_runtests()
         """
         variables: x
         maxobjective: [x]
-        """,
+        """;
+        no_bridge_used = true,
     )
     return
 end
