@@ -1759,7 +1759,7 @@ end
 
 function _get_variable_if_equivalent(
     b::AbstractBridgeOptimizer,
-    x::VariableIndex,
+    x::MOI.VariableIndex,
 )
     return _get_variable_if_equivalent(bridged_variable_function(b, x), x)
 end
