@@ -1761,6 +1761,8 @@ function _get_variable_if_equivalent(b, x)
     return _get_variable_if_equivalent(bridged_variable_function(b, x), x)
 end
 
+_get_variable_if_equivalent(b, ::Nothing) = nothing
+
 function _get_variable_if_equivalent(f::MOI.ScalarAffineFunction, x)
     if length(f.terms) == 1
         term = only(f.terms)
