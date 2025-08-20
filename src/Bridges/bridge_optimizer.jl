@@ -1757,13 +1757,19 @@ function MOI.get(
     end
 end
 
-function _get_variable_if_equivalent(b, x)
+function _get_variable_if_equivalent(
+    b::AbstractBridgeOptimizer,
+    x::VariableIndex,
+)
     return _get_variable_if_equivalent(bridged_variable_function(b, x), x)
 end
 
-_get_variable_if_equivalent(b, ::Nothing) = nothing
+_get_variable_if_equivalent(::AbstractBridgeOptimizer, ::Nothing) = nothing
 
-function _get_variable_if_equivalent(f::MOI.ScalarAffineFunction, x)
+function _get_variable_if_equivalent(
+    f::MOI.ScalarAffineFunction,
+    x::MOI.VariableIndex,
+)
     if length(f.terms) == 1
         term = only(f.terms)
         if isone(term.coefficient)
