@@ -7,6 +7,33 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.43.0 (August 21, 2025)
+
+### Added
+
+ - Added [`ConflictCount`](@ref) and `conflict_index` to
+   [`ConstraintConflictStatus`](@ref) (#2775), (#2800), (#2801)
+ - Added [`Bridges.Constraint.IntervalToHyperRectangleBridge`](@ref) (#2754),
+   (#2806), (#2809)
+
+### Fixed
+
+ - Fixed the MPS reader to support any whitespace as a field separator (#2798)
+ - Fixed tests with duplicate names and added a CI test (#2804), (#2805)
+ - Fixed parsing `x * x` as `x^2` in `Nonlinear.Model` (#2799)
+ - Fixed a bug in [`Utilities.operate`](@ref) with quadratic outputs when a
+   `Integer` coefficient differs from the machine `Integer` (#2807)
+ - Fixed `MOI.supports` of `MOI.ObjectiveFunction` in all file formats (#2814)
+ - Fixed free rows in [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref) (#2816)
+ - Fixed deleting a variable with constraint bridges (#2818)
+ - Fixed `Utilities.AbstractModel` with no constraints (#2819)
+
+### Other
+
+ - Added an OPF benchmark (#2739)
+ - Updated to DataStructures@0.19 (#2796)
+ - Filter `identity_bridge.jl` out from `runtests` (#2812)
+
 ## v1.42.1 (August 1, 2025)
 
 ### Fixed
