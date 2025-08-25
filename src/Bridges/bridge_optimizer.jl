@@ -1751,6 +1751,10 @@ function MOI.get(
     vi::MOI.VariableIndex,
 )
     if is_bridged(b, vi)
+        bridge_ = bridge(b, vi)
+        if MOI.supports(b, MOI.VariableName(), typeof(bridge_))
+            return MOI.get(b, MOI.VariableName(), bridge_)
+        end
         return get(b.var_to_name, vi, "")
     else
         return MOI.get(b.model, attr, vi)
@@ -1764,8 +1768,13 @@ function MOI.set(
     name::String,
 )
     if is_bridged(b, vi)
-        b.var_to_name[vi] = name
-        b.name_to_var = nothing # Invalidate the name map.
+        bridge_ = bridge(b, vi)
+        if MOI.supports(b, MOI.VariableName(), typeof(bridge_))
+            MOI.set(b, MOI.VariableName(), bridge_, name)
+        else
+            b.var_to_name[vi] = name
+            b.name_to_var = nothing # Invalidate the name map.
+        end
     else
         MOI.set(b.model, attr, vi, name)
     end
