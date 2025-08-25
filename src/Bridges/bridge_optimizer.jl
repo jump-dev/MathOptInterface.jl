@@ -1757,6 +1757,28 @@ function MOI.get(
     end
 end
 
+function _get_variable_if_equivalent(
+    b::AbstractBridgeOptimizer,
+    x::MOI.VariableIndex,
+)
+    return _get_variable_if_equivalent(bridged_variable_function(b, x), x)
+end
+
+_get_variable_if_equivalent(::AbstractBridgeOptimizer, ::Nothing) = nothing
+
+function _get_variable_if_equivalent(
+    f::MOI.ScalarAffineFunction,
+    x::MOI.VariableIndex,
+)
+    if length(f.terms) == 1
+        term = only(f.terms)
+        if isone(term.coefficient)
+            return term.variable
+        end
+    end
+    return nothing
+end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.VariableName,
@@ -1766,6 +1788,11 @@ function MOI.set(
     if is_bridged(b, vi)
         b.var_to_name[vi] = name
         b.name_to_var = nothing # Invalidate the name map.
+        # Set the internal variable name iff the bridged variable is equivalent
+        # to `y := 1 * x`.
+        if (x = _get_variable_if_equivalent(b, vi)) !== nothing
+            MOI.set(b.model, attr, x, name)
+        end
     else
         MOI.set(b.model, attr, vi, name)
     end
@@ -1839,6 +1866,9 @@ function MOI.get(
     end
     vi_bridged = get(b.name_to_var, name, nothing)
     MOI.Utilities.throw_if_multiple_with_name(vi_bridged, name)
+    if _get_variable_if_equivalent(b, vi_bridged) !== nothing
+        return vi_bridged
+    end
     return MOI.Utilities.check_type_and_multiple_names(
         MOI.VariableIndex,
         vi_bridged,
