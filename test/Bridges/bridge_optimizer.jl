@@ -1570,6 +1570,28 @@ function test_issue_2817c()
     return
 end
 
+function test_issue_2762_success()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.ParameterToEqualTo{Float64}(inner)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+    MOI.set(model, MOI.VariableName(), p, "p")
+    @test MOI.get(model, MOI.VariableName(), p) == "p"
+    x = only(MOI.get(inner, MOI.ListOfVariableIndices()))
+    @test MOI.get(inner, MOI.VariableName(), x) == "p"
+    return
+end
+
+function test_issue_2762_fail()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(inner)
+    y, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(2))
+    MOI.set(model, MOI.VariableName(), y[1], "y1")
+    @test MOI.get(model, MOI.VariableName(), y[1]) == "y1"
+    x = MOI.get(inner, MOI.ListOfVariableIndices())
+    @test all(isempty, MOI.get(inner, MOI.VariableName(), x))
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

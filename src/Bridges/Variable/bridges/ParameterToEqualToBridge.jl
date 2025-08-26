@@ -58,3 +58,29 @@ function MOI.Bridges.inverse_adjoint_map_function(
 )
     return f
 end
+
+function MOI.supports(
+    ::MOI.ModelLike,
+    ::MOI.VariableName,
+    ::Type{<:ParameterToEqualToBridge},
+)
+    return true
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.VariableName,
+    bridge::ParameterToEqualToBridge,
+)
+    return MOI.get(model, attr, bridge.variable)
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.VariableName,
+    bridge::ParameterToEqualToBridge,
+    name::String,
+)
+    MOI.set(model, attr, bridge.variable, name)
+    return
+end
