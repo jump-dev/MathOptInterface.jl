@@ -26,6 +26,27 @@ Return the scalar product between a number `x` of the set `set` and a number
 """
 set_dot(x, y, ::MOI.AbstractScalarSet) = LinearAlgebra.dot(x, y)
 
+function set_dot(
+    x::Real,
+    y::Real,
+    set::Union{MOI.EqualTo,MOI.GreaterThan,MOI.LessThan},
+)
+    return (x - MOI.constant(set)) * y
+end
+
+function set_dot(
+    x::Real,
+    y::Real,
+    set::MOI.Interval,
+)
+    if isfinite(set.lower) && (!isfinite(set.upper) || y > zero(y))
+        return (x - set.lower) * y
+    elseif isfinite(upper) && (!isfinite(set.lower) || y < zero(y))
+        return (x - set.upper) * y
+    end
+    return x * y
+end
+
 function triangle_dot(
     x::AbstractVector{S},
     y::AbstractVector{T},
@@ -84,6 +105,24 @@ function set_dot(
     set::MOI.LogDetConeTriangle,
 )
     return x[1] * y[1] + x[2] * y[2] + triangle_dot(x, y, set.side_dimension, 2)
+end
+
+function set_dot(
+    x::AbstractVector{A},
+    y::AbstractVector{B},
+    set::MOI.HyperRectangle{C},
+) where {A,B,C}
+    ret = zero(promote_type(A, B, C))
+    for (xi, yi, li, ui) in zip(x, y, set.lower, set.upper)
+        if isfinite(li) && (!isfinite(ui) || yi > zero(yi))
+            ret += (xi - li) * yi
+        elseif isfinite(upper) && (!isfinite(li) || yi < zero(yi))
+            ret += (xi - ui) * yi
+        else
+            ret += xi * yi
+        end
+    end
+    return ret
 end
 
 """
