@@ -206,7 +206,7 @@ function acyclic_coloring(g::UndirectedGraph)
     firstVisitToTree = fill(_Edge(0, 0, 0), _num_edges(g))
     color = fill(0, _num_vertices(g))
     # disjoint set forest of edges in the graph
-    S = DataStructures.IntDisjointSets(_num_edges(g))
+    S = DataStructures.IntDisjointSet(_num_edges(g))
     @inbounds for v in 1:_num_vertices(g)
         n_neighbor = _num_neighbors(v, g)
         start_neighbor = _start_neighbors(v, g)
