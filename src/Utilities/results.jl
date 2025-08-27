@@ -88,6 +88,26 @@ function _dual_objective_value(
     )
 end
 
+"""
+Given lower <= f(x) <= upper [dual], return the expression to be multiplied by
+the dual variable. This is one of the following cases:
+
+ 1. f(x) - lower: if `lower > -Inf` and the lower bound is binding (either no
+    `upper` or `dual > 0`)
+ 2. f(x) - upper: if `upper < Inf` and the upper bound is binding (either no
+    `lower` or `dual < 0`)
+ 3. f(x): if `lower = -Inf` and `upper = Inf` or `dual = 0`
+"""
+function _constant_minus_bound(constant, lower, upper, dual)
+    if isfinite(lower) && (!isfinite(upper) || dual > zero(dual))
+        return constant - lower
+    elseif isfinite(upper) && (!isfinite(lower) || dual < zero(dual))
+        return constant - upper
+    else
+        return constant
+    end
+end
+
 function _dual_objective_value(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:MOI.Interval},
@@ -97,14 +117,7 @@ function _dual_objective_value(
     constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
-    if dual < zero(dual)
-        # The dual is negative so it is in the dual of the MOI.LessThan cone
-        # hence the upper bound of the Interval set is tight
-        constant -= set.upper
-    else
-        # the lower bound is tight
-        constant -= set.lower
-    end
+    constant = _constant_minus_bound(constant, set.lower, set.upper, dual)
     return set_dot(constant, dual, set)
 end
 
@@ -118,17 +131,10 @@ function _dual_objective_value(
         MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
     set = MOI.get(model, MOI.ConstraintSet(), ci)
     dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
-    constant = map(eachindex(func_constant)) do i
-        return func_constant[i] - if dual[i] < zero(dual[i])
-            # The dual is negative so it is in the dual of the MOI.LessThan cone
-            # hence the upper bound of the Interval set is tight
-            set.upper[i]
-        else
-            # the lower bound is tight
-            set.lower[i]
-        end
+    constants = map(enumerate(func_constant)) do (i, c)
+        return _constant_minus_bound(c, set.lower[i], set.upper[i], dual[i])
     end
-    return set_dot(constant, dual, set)
+    return set_dot(constants, dual, set)
 end
 
 function _dual_objective_value(
