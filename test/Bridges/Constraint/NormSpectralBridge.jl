@@ -197,7 +197,7 @@ function test_NormNuclear()
             mock,
             var_primal,
             (MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}) =>
-                [[1.0]],
+                [1.0],
             (
                 MOI.VectorAffineFunction{Float64},
                 MOI.PositiveSemidefiniteConeTriangle,

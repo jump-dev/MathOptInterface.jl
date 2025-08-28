@@ -52,112 +52,6 @@ end
 
 # MOI.DualObjectiveValue
 
-function _constraint_constant(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{
-        <:MOI.AbstractVectorFunction,
-        <:MOI.AbstractVectorSet,
-    },
-    ::Type{T},
-) where {T}
-    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
-end
-
-function _constraint_constant(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{
-        <:MOI.AbstractScalarFunction,
-        <:MOI.AbstractScalarSet,
-    },
-    ::Type{T},
-) where {T}
-    return MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T) -
-           MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
-end
-
-function _dual_objective_value(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex,
-    ::Type{T},
-    result_index::Integer,
-) where {T}
-    return set_dot(
-        _constraint_constant(model, ci, T),
-        MOI.get(model, MOI.ConstraintDual(result_index), ci),
-        MOI.get(model, MOI.ConstraintSet(), ci),
-    )
-end
-
-"""
-Given lower <= f(x) <= upper [dual], return the expression to be multiplied by
-the dual variable. This is one of the following cases:
-
- 1. f(x) - lower: if `lower > -Inf` and the lower bound is binding (either no
-    `upper` or `dual > 0`)
- 2. f(x) - upper: if `upper < Inf` and the upper bound is binding (either no
-    `lower` or `dual < 0`)
- 3. f(x): if `lower = -Inf` and `upper = Inf` or `dual = 0`
-"""
-function _constant_minus_bound(constant, lower, upper, dual)
-    if isfinite(lower) && (!isfinite(upper) || dual > zero(dual))
-        return constant - lower
-    elseif isfinite(upper) && (!isfinite(lower) || dual < zero(dual))
-        return constant - upper
-    else
-        return constant
-    end
-end
-
-function _dual_objective_value(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractScalarFunction,<:MOI.Interval},
-    ::Type{T},
-    result_index::Integer,
-) where {T}
-    constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
-    set = MOI.get(model, MOI.ConstraintSet(), ci)
-    dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
-    constant = _constant_minus_bound(constant, set.lower, set.upper, dual)
-    return set_dot(constant, dual, set)
-end
-
-function _dual_objective_value(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{<:MOI.AbstractVectorFunction,<:MOI.HyperRectangle},
-    ::Type{T},
-    result_index::Integer,
-) where {T}
-    func_constant =
-        MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
-    set = MOI.get(model, MOI.ConstraintSet(), ci)
-    dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
-    constants = map(enumerate(func_constant)) do (i, c)
-        return _constant_minus_bound(c, set.lower[i], set.upper[i], dual[i])
-    end
-    return set_dot(constants, dual, set)
-end
-
-function _dual_objective_value(
-    model::MOI.ModelLike,
-    ::Type{F},
-    ::Type{S},
-    ::Type{T},
-    result_index::Integer,
-) where {T,F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    value = zero(T)
-    if F == variable_function_type(S) && !_has_constant(S)
-        return value # Shortcut
-    end
-    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        value += _dual_objective_value(model, ci, T, result_index)
-    end
-    return value
-end
-
-_has_constant(::Type{<:MOI.AbstractScalarSet}) = true
-_has_constant(::Type{<:MOI.AbstractVectorSet}) = false
-_has_constant(::Type{<:MOI.HyperRectangle}) = true
-
 """
     get_fallback(
         model::MOI.ModelLike,
@@ -190,6 +84,72 @@ function get_fallback(
         value += MOI.constant(f, T)
     end
     return value::T
+end
+
+function _dual_objective_value(
+    model::MOI.ModelLike,
+    ::Type{F},
+    ::Type{S},
+    ::Type{T},
+    result_index::Integer,
+)::T where {T,F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    value = zero(T)
+    if F == variable_function_type(S) && !_variable_set_in_dual_objective(S)
+        # Early return. This is a constraint like x in R_+, so no contribution
+        # appears in the dual objective.
+        return value
+    end
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
+        set = MOI.get(model, MOI.ConstraintSet(), ci)
+        dual = MOI.get(model, MOI.ConstraintDual(result_index), ci)
+        value += _dual_objective_dot(constant, dual, set)
+    end
+    return value
+end
+
+_variable_set_in_dual_objective(::Type{<:MOI.AbstractSet}) = false
+
+_variable_set_in_dual_objective(::Type{<:MOI.EqualTo}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.GreaterThan}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.LessThan}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.Interval}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.HyperRectangle}) = true
+
+_dual_objective_dot(x, y, set) = set_dot(x, y, set)
+
+_dual_objective_dot(x, y, set::MOI.EqualTo) = (x - set.value) * y
+
+_dual_objective_dot(x, y, set::MOI.LessThan) = (x - set.upper) * y
+
+_dual_objective_dot(x, y, set::MOI.GreaterThan) = (x - set.lower) * y
+
+function _dual_objective_dot(x, y, set::MOI.Interval)
+    if isfinite(set.lower) && (!isfinite(set.upper) || y > zero(y))
+        return (x - set.lower) * y
+    elseif isfinite(set.upper) && (!isfinite(set.lower) || y < zero(y))
+        return (x - set.upper) * y
+    end
+    return x * y
+end
+
+function _dual_objective_dot(x, y, set::MOI.HyperRectangle)
+    @assert length(x) == length(y) == MOI.dimension(set)
+    ret = zero(eltype(x))
+    for (xi, yi, li, ui) in zip(x, y, set.lower, set.upper)
+        if isfinite(li) && (!isfinite(ui) || yi > zero(yi))
+            ret += (xi - li) * yi
+        elseif isfinite(ui) && (!isfinite(li) || yi < zero(yi))
+            ret += (xi - ui) * yi
+        else
+            ret += xi * yi
+        end
+    end
+    return ret
 end
 
 # MOI.ConstraintPrimal
