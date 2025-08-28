@@ -51,6 +51,57 @@ function _test_hyperrectangle(T)
     return
 end
 
+function test_dual_objective_value_open_interval_Interval_variable_index()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.MockOptimizer(
+        inner;
+        eval_variable_constraint_dual = false,
+    )
+    # -Inf <= x[1] <= Inf
+    # -Inf <= x[2] <= 2.1
+    # -2.2 <= x[3] <= Inf
+    # -2.3 <= x[4] <= 2.4
+    x = MOI.add_variables(model, 4)
+    set = MOI.Interval.([-Inf, -Inf, -2.2, -2.3], [Inf, 2.1, Inf, 2.4])
+    c = MOI.add_constraint.(model, x, set)
+    for (dual, obj) in [
+        [0.0, 0.0, 0.0, 0.0] => 0.0,
+        # d[1]
+        [-2.0, 0.0, 0.0, 0.0] => 0.0,
+        [-1.0, 0.0, 0.0, 0.0] => 0.0,
+        [1.0, 0.0, 0.0, 0.0] => 0.0,
+        [2.0, 0.0, 0.0, 0.0] => 0.0,
+        # d[2]: -(-2.1) = 2.1
+        [0.0, -2.0, 0.0, 0.0] => -4.2,
+        [0.0, -1.0, 0.0, 0.0] => -2.1,
+        [0.0, 1.0, 0.0, 0.0] => 2.1,
+        [0.0, 2.0, 0.0, 0.0] => 4.2,
+        # d[3]: -(- -2.2) = -2.2
+        [0.0, 0.0, -2.0, 0.0] => 4.4,
+        [0.0, 0.0, -1.0, 0.0] => 2.2,
+        [0.0, 0.0, 1.0, 0.0] => -2.2,
+        [0.0, 0.0, 2.0, 0.0] => -4.4,
+        # d[4]: -(- -2.3) = -2.3
+        # d[4]: -(- 2.4) = 2.4
+        [0.0, 0.0, 0.0, -2.0] => -4.8,
+        [0.0, 0.0, 0.0, -1.0] => -2.4,
+        [0.0, 0.0, 0.0, 1.0] => -2.3,
+        [0.0, 0.0, 0.0, 2.0] => -4.6,
+        #
+        [1.0, 1.0, 1.0, 1.0] => -2.4,
+        [-1.0, -1.0, -1.0, -1.0] => -2.3,
+    ]
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set.(model, MOI.ConstraintDual(), c, dual)
+        d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
+        @test isapprox(d, obj)
+        MOI.set.(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+        d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
+        @test isapprox(d, -obj)
+    end
+    return
+end
+
 function test_dual_objective_value_open_interval_Interval()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = MOI.Utilities.MockOptimizer(inner)
@@ -93,7 +144,58 @@ function test_dual_objective_value_open_interval_Interval()
         MOI.set.(model, MOI.ConstraintDual(), c, dual)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, obj)
-        MOI.set.(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+        d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
+        @test isapprox(d, -obj)
+    end
+    return
+end
+
+function test_dual_objective_value_open_interval_Hyperrectangle_variable_index()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.MockOptimizer(
+        inner;
+        eval_variable_constraint_dual = false,
+    )
+    # -Inf <= x[1] <= Inf
+    # -Inf <= x[2] <= 2.1
+    # -2.2 <= x[3] <= Inf
+    # -2.3 <= x[4] <= 2.4
+    x = MOI.add_variables(model, 4)
+    set = MOI.HyperRectangle([-Inf, -Inf, -2.2, -2.3], [Inf, 2.1, Inf, 2.4])
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
+    for (dual, obj) in [
+        [0.0, 0.0, 0.0, 0.0] => 0.0,
+        # d[1]
+        [-2.0, 0.0, 0.0, 0.0] => 0.0,
+        [-1.0, 0.0, 0.0, 0.0] => 0.0,
+        [1.0, 0.0, 0.0, 0.0] => 0.0,
+        [2.0, 0.0, 0.0, 0.0] => 0.0,
+        # d[2]: -(-2.1) = 2.1
+        [0.0, -2.0, 0.0, 0.0] => -4.2,
+        [0.0, -1.0, 0.0, 0.0] => -2.1,
+        [0.0, 1.0, 0.0, 0.0] => 2.1,
+        [0.0, 2.0, 0.0, 0.0] => 4.2,
+        # d[3]: -(- -2.2) = -2.2
+        [0.0, 0.0, -2.0, 0.0] => 4.4,
+        [0.0, 0.0, -1.0, 0.0] => 2.2,
+        [0.0, 0.0, 1.0, 0.0] => -2.2,
+        [0.0, 0.0, 2.0, 0.0] => -4.4,
+        # d[4]: -(- -2.3) = -2.3
+        # d[4]: -(- 2.4) = 2.4
+        [0.0, 0.0, 0.0, -2.0] => -4.8,
+        [0.0, 0.0, 0.0, -1.0] => -2.4,
+        [0.0, 0.0, 0.0, 1.0] => -2.3,
+        [0.0, 0.0, 0.0, 2.0] => -4.6,
+        #
+        [1.0, 1.0, 1.0, 1.0] => -2.4,
+        [-1.0, -1.0, -1.0, -1.0] => -2.3,
+    ]
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ConstraintDual(), c, dual)
+        d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
+        @test isapprox(d, obj)
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, -obj)
     end
