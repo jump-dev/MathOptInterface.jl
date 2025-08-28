@@ -86,10 +86,6 @@ function get_fallback(
     return value::T
 end
 
-_has_constant(::Type{<:MOI.AbstractScalarSet}) = true
-_has_constant(::Type{<:MOI.AbstractVectorSet}) = false
-_has_constant(::Type{<:MOI.HyperRectangle}) = true
-
 function _dual_objective_value(
     model::MOI.ModelLike,
     ::Type{F},
@@ -98,8 +94,10 @@ function _dual_objective_value(
     result_index::Integer,
 )::T where {T,F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     value = zero(T)
-    if F == variable_function_type(S) && !_has_constant(S)
-        return value # Shortcut
+    if F == variable_function_type(S) && !_variable_set_in_dual_objective(S)
+        # Early return. This is a constraint like x in R_+, so no contribution
+        # appears in the dual objective.
+        return value
     end
     for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         constant = MOI.constant(MOI.get(model, MOI.ConstraintFunction(), ci), T)
@@ -109,6 +107,18 @@ function _dual_objective_value(
     end
     return value
 end
+
+_variable_set_in_dual_objective(::Type{<:MOI.AbstractSet}) = false
+
+_variable_set_in_dual_objective(::Type{<:MOI.EqualTo}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.GreaterThan}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.LessThan}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.Interval}) = true
+
+_variable_set_in_dual_objective(::Type{<:MOI.HyperRectangle}) = true
 
 _dual_objective_dot(x, y, set) = set_dot(x, y, set)
 
