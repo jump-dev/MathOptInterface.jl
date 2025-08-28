@@ -121,7 +121,7 @@ _dual_objective_dot(x, y, set::MOI.GreaterThan) = (x - set.lower) * y
 function _dual_objective_dot(x, y, set::MOI.Interval)
     if isfinite(set.lower) && (!isfinite(set.upper) || y > zero(y))
         return (x - set.lower) * y
-    elseif isfinite(upper) && (!isfinite(set.lower) || y < zero(y))
+    elseif isfinite(set.upper) && (!isfinite(set.lower) || y < zero(y))
         return (x - set.upper) * y
     end
     return x * y
@@ -133,7 +133,7 @@ function _dual_objective_dot(x, y, set::MOI.HyperRectangle)
     for (xi, yi, li, ui) in zip(x, y, set.lower, set.upper)
         if isfinite(li) && (!isfinite(ui) || yi > zero(yi))
             ret += (xi - li) * yi
-        elseif isfinite(upper) && (!isfinite(li) || yi < zero(yi))
+        elseif isfinite(ui) && (!isfinite(li) || yi < zero(yi))
             ret += (xi - ui) * yi
         else
             ret += xi * yi
