@@ -7,6 +7,18 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.44.0 (September 3, 2025)
+
+### Added
+
+ - Added support for [`VariableName`](@ref) in variable bridges (#2822)
+
+### Fixed
+
+ - Fixed use of deprecated `IntDisjointSets` (#2824)
+ - Fixed `Utilities.get_fallback` for [`DualObjectiveValue`](@ref) with open
+   intervals (#2823) (#2826)
+
 ## v1.43.0 (August 21, 2025)
 
 ### Added
