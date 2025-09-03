@@ -191,7 +191,7 @@ function _IntDisjointSet(n)
     @static if isdefined(DataStructures, :IntDisjointSet)
         return DataStructures.IntDisjointSet(n)
     else
-        return DataStructures.IntDisjointSets(n)
+        return DataStructures.IntDisjointSets(n)                 # COV_EXCL_LINE
     end
 end
 
