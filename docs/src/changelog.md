@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
- - Fixed use of deprecated `IntDisjointSets` (#2824)
+ - Fixed use of deprecated `IntDisjointSets` (#2824), (#2828)
  - Fixed `Utilities.get_fallback` for [`DualObjectiveValue`](@ref) with open
    intervals (#2823) (#2826)
 
