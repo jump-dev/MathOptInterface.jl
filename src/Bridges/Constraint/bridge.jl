@@ -19,7 +19,6 @@ additionally implement:
 """
 abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
-@nospecialize
 """
     MOI.supports_constraint(
         BT::Type{<:AbstractBridge},
@@ -37,13 +36,12 @@ Return a `Bool` indicating whether the bridges of type `BT` support bridging
    constraint types that the bridge implements.
 """
 function MOI.supports_constraint(
-    ::Type{<:AbstractBridge},
-    ::Type{<:MOI.AbstractFunction},
-    ::Type{<:MOI.AbstractSet},
+    @nospecialize(BT::Type{<:AbstractBridge}),
+    @nospecialize(F::Type{<:MOI.AbstractFunction}),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
 )
     return false
 end
-@specialize
 
 """
     concrete_bridge_type(

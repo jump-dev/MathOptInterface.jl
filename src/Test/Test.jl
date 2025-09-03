@@ -499,17 +499,15 @@ function _test_attribute_value_type(
     return
 end
 
-@nospecialize
 function _test_attribute_value_type(
-    model::MOI.ModelLike,
-    attribute::MOI.AbstractConstraintAttribute,
-    ci::MOI.ConstraintIndex,
+    @nospecialize(model::MOI.ModelLike),
+    @nospecialize(attribute::MOI.AbstractConstraintAttribute),
+    @nospecialize(ci::MOI.ConstraintIndex),
 )
     T = MOI.attribute_value_type(attribute)
     @test @inferred(T, MOI.get(model, attribute, ci)) isa T
     return
 end
-@specialize
 
 function _test_attribute_value_type(
     model::MOI.ModelLike,

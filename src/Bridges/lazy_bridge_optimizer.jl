@@ -149,46 +149,45 @@ function _reset_bridge_graph(b::LazyBridgeOptimizer)
     return
 end
 
-@nospecialize
 """
     _variable_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
 
 Return the list of `VariableNode` that would be added if `BT` is used in `b`.
 """
 function _variable_nodes(
-    b::LazyBridgeOptimizer,
-    ::Type{BT},
-) where {BT<:AbstractBridge}
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)
     return map(added_constrained_variable_types(BT)) do (S,)
         return node(b, S)::VariableNode
     end
 end
-@specialize
 
-@nospecialize
 """
     _constraint_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
 
 Return the list of `ConstraintNode` that would be added if `BT` is used in `b`.
 """
 function _constraint_nodes(
-    b::LazyBridgeOptimizer,
-    ::Type{BT},
-) where {BT<:AbstractBridge}
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)
     return ConstraintNode[
         node(b, F, S) for (F, S) in added_constraint_types(BT)
     ]
 end
-@specialize
 
-@nospecialize
 """
     _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
 
 Return the `Edge` or `ObjectiveEdge` in the hyper-graph associated with the
 bridge `BT`, where `index` is the index of `BT` in the list of bridges.
 """
-function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
+function _edge(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(index::Int),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)
     return Edge(
         index,
         _variable_nodes(b, BT),
@@ -196,7 +195,6 @@ function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
         bridging_cost(BT),
     )
 end
-@specialize
 
 # Method for objective bridges because they produce ObjectiveEdge.
 function _edge(
@@ -310,9 +308,9 @@ end
 Return the `ConstraintNode` associated with constraint `F`-in-`S` in `b`.
 """
 function node(
-    b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(F::Type{<:MOI.AbstractFunction}),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
 )
     # If we support the constraint type, the node is 0.
     if MOI.supports_constraint(b.model, F, S)
@@ -382,14 +380,12 @@ function _bridge_types(
     return b.variable_bridge_types
 end
 
-@nospecialize
 function _bridge_types(
-    b::LazyBridgeOptimizer,
-    ::Type{<:Constraint.AbstractBridge},
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:Constraint.AbstractBridge}),
 )
     return b.constraint_bridge_types
 end
-@specialize
 
 function _bridge_types(
     b::LazyBridgeOptimizer,
@@ -398,20 +394,21 @@ function _bridge_types(
     return b.objective_bridge_types
 end
 
-@nospecialize
 """
     add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
 Enable the use of the bridges of type `BT` by `b`.
 """
-function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function add_bridge(
+    @nospecialize(b::LazyBridgeOptimizer), 
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)
     if !has_bridge(b, BT)
         push!(_bridge_types(b, BT), BT)
         _reset_bridge_graph(b)
     end
     return
 end
-@specialize
 
 """
     remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
@@ -432,16 +429,17 @@ function remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     return
 end
 
-@nospecialize
 """
     has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
 Return a `Bool` indicating whether the bridges of type `BT` are used by `b`.
 """
-function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})::Bool
+function has_bridge(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)::Bool
     return findfirst(isequal(BT), _bridge_types(b, BT)) !== nothing
 end
-@specialize
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
 function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractScalarSet})

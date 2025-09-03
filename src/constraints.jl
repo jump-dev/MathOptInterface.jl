@@ -4,7 +4,6 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-@nospecialize
 """
     supports_constraint(
         model::ModelLike,
@@ -19,13 +18,12 @@ supported in specific circumstances, for example, `F`-in-`S` constraints cannot 
 combined with another type of constraint, it should still return `true`.
 """
 function supports_constraint(
-    ::ModelLike,
-    ::Type{<:AbstractFunction},
-    ::Type{<:AbstractSet},
+    @nospecialize(::ModelLike),
+    @nospecialize(F::Type{<:AbstractFunction}),
+    @nospecialize(S::Type{<:AbstractSet}),
 )
     return false
 end
-@specialize
 
 """
     struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <: UnsupportedError
