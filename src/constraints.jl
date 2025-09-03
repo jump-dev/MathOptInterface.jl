@@ -4,6 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+@nospecialize
 """
     supports_constraint(
         model::ModelLike,
@@ -24,6 +25,7 @@ function supports_constraint(
 )
     return false
 end
+@specialize
 
 """
     struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <: UnsupportedError

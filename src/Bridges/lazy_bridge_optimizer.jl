@@ -149,6 +149,7 @@ function _reset_bridge_graph(b::LazyBridgeOptimizer)
     return
 end
 
+@nospecialize
 """
     _variable_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
 
@@ -162,7 +163,9 @@ function _variable_nodes(
         return node(b, S)::VariableNode
     end
 end
+@specialize
 
+@nospecialize
 """
     _constraint_nodes(b::LazyBridgeOptimizer, ::Type{BT}) where {BT}
 
@@ -176,7 +179,9 @@ function _constraint_nodes(
         node(b, F, S) for (F, S) in added_constraint_types(BT)
     ]
 end
+@specialize
 
+@nospecialize
 """
     _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
 
@@ -191,6 +196,7 @@ function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
         bridging_cost(BT),
     )
 end
+@specialize
 
 # Method for objective bridges because they produce ObjectiveEdge.
 function _edge(
@@ -376,12 +382,14 @@ function _bridge_types(
     return b.variable_bridge_types
 end
 
+@nospecialize
 function _bridge_types(
     b::LazyBridgeOptimizer,
     ::Type{<:Constraint.AbstractBridge},
 )
     return b.constraint_bridge_types
 end
+@specialize
 
 function _bridge_types(
     b::LazyBridgeOptimizer,
@@ -390,6 +398,7 @@ function _bridge_types(
     return b.objective_bridge_types
 end
 
+@nospecialize
 """
     add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
@@ -402,6 +411,7 @@ function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     end
     return
 end
+@specialize
 
 """
     remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
@@ -422,14 +432,16 @@ function remove_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
     return
 end
 
+@nospecialize
 """
     has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
 
 Return a `Bool` indicating whether the bridges of type `BT` are used by `b`.
 """
-function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})::Bool
     return findfirst(isequal(BT), _bridge_types(b, BT)) !== nothing
 end
+@specialize
 
 # It only bridges when the constraint is not supporting, hence the name "Lazy"
 function is_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractScalarSet})

@@ -302,6 +302,7 @@ function MOI.is_valid(model::AbstractModel, ci::MOI.ConstraintIndex)
     return MOI.is_valid(constraints(model, ci), ci)
 end
 
+@nospecialize
 function MOI.supports_constraint(
     model::AbstractModel,
     ::Type{F},
@@ -309,6 +310,7 @@ function MOI.supports_constraint(
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     return MOI.supports_constraint(model.constraints, F, S)
 end
+@specialize
 
 function MOI.add_constraint(
     model::AbstractModel,

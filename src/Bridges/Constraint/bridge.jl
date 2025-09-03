@@ -19,6 +19,7 @@ additionally implement:
 """
 abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
+@nospecialize
 """
     MOI.supports_constraint(
         BT::Type{<:AbstractBridge},
@@ -42,6 +43,7 @@ function MOI.supports_constraint(
 )
     return false
 end
+@specialize
 
 """
     concrete_bridge_type(
