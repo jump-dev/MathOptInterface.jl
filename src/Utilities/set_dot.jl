@@ -222,7 +222,7 @@ function triangle_dot(
     elseif is_diagonal_vectorized_index(x.index - offset)
         return one(T)
     else
-        return 2one(T)
+        return T(2)
     end
 end
 
