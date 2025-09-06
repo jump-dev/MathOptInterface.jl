@@ -156,7 +156,7 @@ Return the list of `VariableNode` that would be added if `BT` is used in `b`.
 """
 function _variable_nodes(
     @nospecialize(b::LazyBridgeOptimizer),
-    @nospecialize(BT::Type{<:AbstractBridge}),
+    @nospecialize(BT),
 )
     return map(added_constrained_variable_types(BT)) do (S,)
         return node(b, S)::VariableNode
@@ -170,7 +170,7 @@ Return the list of `ConstraintNode` that would be added if `BT` is used in `b`.
 """
 function _constraint_nodes(
     @nospecialize(b::LazyBridgeOptimizer),
-    @nospecialize(BT::Type{<:AbstractBridge}),
+    @nospecialize(BT),
 )
     return ConstraintNode[
         node(b, F, S) for (F, S) in added_constraint_types(BT)
@@ -251,7 +251,10 @@ end
 
 Return the `VariableNode` associated with set `S` in `b`.
 """
-function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+function node(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
+)
     # If we support the set, the node is 0.
     if (
         S <: MOI.AbstractScalarSet &&
@@ -400,7 +403,7 @@ end
 Enable the use of the bridges of type `BT` by `b`.
 """
 function add_bridge(
-    @nospecialize(b::LazyBridgeOptimizer), 
+    @nospecialize(b::LazyBridgeOptimizer),
     @nospecialize(BT::Type{<:AbstractBridge}),
 )
     if !has_bridge(b, BT)
