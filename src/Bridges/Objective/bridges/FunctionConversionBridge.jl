@@ -174,6 +174,34 @@ const Quadratize{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadratizeBridge{T},OT}
 
 """
+    NonlinearizeBridge{T,G} <: FunctionConversionBridge{T,MOI.ScalarNonlinearFunction,G}
+
+`NonlinearizeBridge` implements the following reformulations:
+
+ * ``\\min\\{x^\\top \\mathbf{𝑄} x + a^\\top x + b\\}`` into ``\\min\\{f(x)\\}``
+ * ``\\max\\{x^\\top \\mathbf{𝑄} x + a^\\top x + b\\}`` into ``\\max\\{f(x)\\}``
+
+where `f(x)` is a `MOI.ScalarNonlinearFunction`.
+
+## Source node
+
+`NonlinearizeBridge` supports:
+
+ * [`MOI.ObjectiveFunction{G}`](@ref)
+
+## Target nodes
+
+`NonlinearizeBridge` creates:
+
+ * One objective node: [`MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}`](@ref)
+"""
+const NonlinearizeBridge{T,G} =
+    FunctionConversionBridge{T,MOI.ScalarNonlinearFunction,G}
+
+const Nonlinearize{T,OT<:MOI.ModelLike} =
+    SingleBridgeOptimizer{NonlinearizeBridge{T},OT}
+
+"""
     VectorFunctionizeBridge{T,G} <: FunctionConversionBridge{T,MOI.VectorAffineFunction{T},G}
 
 `VectorFunctionizeBridge` implements the following reformulations:
