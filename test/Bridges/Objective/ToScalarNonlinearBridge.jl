@@ -4,7 +4,7 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-module TestObjectiveNonlinearize
+module TestObjectiveToScalarNonlinear
 
 using Test
 
@@ -25,7 +25,7 @@ include("../utilities.jl")
 
 function test_solve_singlevariable_obj()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
-    model = MOI.Bridges.Objective.Nonlinearize{Float64}(mock)
+    model = MOI.Bridges.Objective.ToScalarNonlinear{Float64}(mock)
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock::MOI.Utilities.MockOptimizer) ->
@@ -60,7 +60,7 @@ end
 
 function test_solve_result_index()
     mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
-    model = MOI.Bridges.Objective.Nonlinearize{Float64}(mock)
+    model = MOI.Bridges.Objective.ToScalarNonlinear{Float64}(mock)
     MOI.Utilities.set_mock_optimize!(
         mock,
         (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
@@ -83,7 +83,7 @@ end
 
 function test_runtests()
     MOI.Bridges.runtests(
-        MOI.Bridges.Objective.NonlinearizeBridge,
+        MOI.Bridges.Objective.ToScalarNonlinearBridge,
         model -> begin
             x = MOI.add_variable(model)
             aff = MOI.ScalarAffineFunction(
@@ -118,7 +118,7 @@ function test_runtests()
         end,
     )
     MOI.Bridges.runtests(
-        MOI.Bridges.Objective.NonlinearizeBridge,
+        MOI.Bridges.Objective.ToScalarNonlinearBridge,
         model -> begin
             x = MOI.add_variable(model)
             aff = MOI.ScalarAffineFunction(
@@ -157,4 +157,4 @@ end
 
 end  # module
 
-TestObjectiveNonlinearize.runtests()
+TestObjectiveToScalarNonlinear.runtests()
