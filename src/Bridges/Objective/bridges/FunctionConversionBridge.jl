@@ -14,7 +14,7 @@
 
 for these pairs of functions:
 
- * [`MOI.ScalarAffineFunction`](@ref)` to [`MOI.ScalarQuadraticFunction`](@ref)
+ * [`MOI.ScalarAffineFunction`](@ref) to [`MOI.ScalarQuadraticFunction`](@ref)
  * [`MOI.ScalarQuadraticFunction`](@ref)  to [`MOI.ScalarNonlinearFunction`](@ref)
  * [`MOI.VectorAffineFunction`](@ref) to [`MOI.VectorQuadraticFunction`](@ref)
 

@@ -188,6 +188,7 @@ end
 
 function test_print_active_bridges_objective_unsupported()
     model = MOI.Bridges.full_bridge_optimizer(Model{Float64}(), Float64)
+    MOI.Bridges.remove_bridge(model, MOI.Bridges.Objective.NonlinearizeBridge{Float64}) # Otherwise, Int would be bridged to Nonlinear.
     F = MOI.ScalarAffineFunction{Int}
     @test_throws(
         MOI.UnsupportedAttribute{MOI.ObjectiveFunction{F}},
