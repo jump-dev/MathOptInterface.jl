@@ -525,7 +525,10 @@ function test_complex_objective()
             MOI.Utilities.Model{Float64}(),
             Float64,
         )
-        MOI.Bridges.remove_bridge(dest, MOI.Bridges.Objective.NonlinearizeBridge{Float64}) # Otherwise, would be bridged to Nonlinear. 
+        MOI.Bridges.remove_bridge(
+            dest,
+            MOI.Bridges.Objective.NonlinearizeBridge{Float64},
+        ) # Otherwise, would be bridged to Nonlinear. 
         @test_throws MOI.UnsupportedAttribute(attr) MOI.copy_to(dest, model)
     end
     return

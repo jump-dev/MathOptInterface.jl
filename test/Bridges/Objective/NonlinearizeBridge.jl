@@ -33,7 +33,9 @@ function test_solve_singlevariable_obj()
     )
     MOI.Test.test_objective_ObjectiveFunction_duplicate_terms(
         model,
-        MOI.Test.Config(;exclude = Any[MOI.DualObjectiveValue, MOI.ConstraintDual, ]),
+        MOI.Test.Config(;
+            exclude = Any[MOI.DualObjectiveValue, MOI.ConstraintDual],
+        ),
     )
     @test MOI.get(mock, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarNonlinearFunction
@@ -43,7 +45,7 @@ function test_solve_singlevariable_obj()
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
     vis = MOI.get(model, MOI.ListOfVariableIndices())
     func = 3.0 * vis[1] + 0.0
-    
+
     @test MOI.get(
         model,
         MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
@@ -69,7 +71,12 @@ function test_solve_result_index()
             (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
-    MOI.Test.test_solve_result_index(model, MOI.Test.Config(;exclude = Any[MOI.DualObjectiveValue, MOI.ConstraintDual, ]))
+    MOI.Test.test_solve_result_index(
+        model,
+        MOI.Test.Config(;
+            exclude = Any[MOI.DualObjectiveValue, MOI.ConstraintDual],
+        ),
+    )
 
     return
 end
@@ -77,31 +84,71 @@ end
 function test_runtests()
     MOI.Bridges.runtests(
         MOI.Bridges.Objective.NonlinearizeBridge,
-        model -> begin 
+        model -> begin
             x = MOI.add_variable(model)
-            aff = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0], [x]), 1.0)
-            MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), aff)
+            aff = MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.([2.0], [x]),
+                1.0,
+            )
+            MOI.set(
+                model,
+                MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+                aff,
+            )
             MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         end,
         model -> begin
             x = MOI.add_variable(model)
-            exp = MOI.ScalarNonlinearFunction(:+, [MOI.ScalarNonlinearFunction(:*, [2.0, MOI.VariableIndex(1)]), 1.0])
-            MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), exp)
+            exp = MOI.ScalarNonlinearFunction(
+                :+,
+                [
+                    MOI.ScalarNonlinearFunction(
+                        :*,
+                        [2.0, MOI.VariableIndex(1)],
+                    ),
+                    1.0,
+                ],
+            )
+            MOI.set(
+                model,
+                MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
+                exp,
+            )
             MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         end,
     )
     MOI.Bridges.runtests(
         MOI.Bridges.Objective.NonlinearizeBridge,
-        model -> begin 
+        model -> begin
             x = MOI.add_variable(model)
-            aff = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.([2.0], [x]), 1.0)
-            MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(), aff)
+            aff = MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.([2.0], [x]),
+                1.0,
+            )
+            MOI.set(
+                model,
+                MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+                aff,
+            )
             MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
         end,
         model -> begin
             x = MOI.add_variable(model)
-            exp = MOI.ScalarNonlinearFunction(:+, [MOI.ScalarNonlinearFunction(:*, [2.0, MOI.VariableIndex(1)]), 1.0])
-            MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), exp)
+            exp = MOI.ScalarNonlinearFunction(
+                :+,
+                [
+                    MOI.ScalarNonlinearFunction(
+                        :*,
+                        [2.0, MOI.VariableIndex(1)],
+                    ),
+                    1.0,
+                ],
+            )
+            MOI.set(
+                model,
+                MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
+                exp,
+            )
             MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
         end,
     )
