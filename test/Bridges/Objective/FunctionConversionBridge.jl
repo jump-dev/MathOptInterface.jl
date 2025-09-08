@@ -28,6 +28,13 @@ struct VariableDifference <: MOI.AbstractScalarFunction
     y::MOI.VariableIndex
 end
 
+function MOI.Utilities.is_coefficient_type(
+    ::Type{VariableDifference},
+    ::Type{T},
+) where {T}
+    return true
+end
+
 function MOI.Bridges.Constraint.conversion_cost(
     ::Type{<:MOI.ScalarAffineFunction},
     ::Type{VariableDifference},
