@@ -364,6 +364,20 @@ function test_approx_convert(T = Float64)
     return
 end
 
+function test_supports_ScalarNonlinearFunction()
+    for T in (Int, Float64)
+        model = MOI.instantiate(MOI.Utilities.Model{T}; with_bridge_type = T)
+        for (F, flag) in [
+            MOI.ScalarNonlinearFunction => true,
+            MOI.ScalarAffineFunction{Float64} => (T == Float64),
+            MOI.ScalarAffineFunction{Int} => (T == Int),
+        ]
+            @test MOI.supports_constraint(model, F, MOI.EqualTo{T}) == flag
+        end
+    end
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()

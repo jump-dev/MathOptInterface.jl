@@ -45,7 +45,8 @@ function supports_objective_function(
     ::Type{<:FunctionConversionBridge{T,F}},
     ::Type{G},
 ) where {T,F,G<:MOI.AbstractFunction}
-    return isfinite(MOI.Bridges.Constraint.conversion_cost(F, G))
+    return MOI.Utilities.is_coefficient_type(G, T) &&
+           isfinite(MOI.Bridges.Constraint.conversion_cost(F, G))
 end
 
 function MOI.Bridges.bridging_cost(
