@@ -269,8 +269,8 @@ function conversion_cost(
     ::Type{
         <:Union{
             MOI.VariableIndex,
-            MOI.ScalarAffineFunction,
-            MOI.ScalarQuadraticFunction,
+            MOI.ScalarAffineFunction{Float64},
+            MOI.ScalarQuadraticFunction{Float64},
         },
     },
 )
