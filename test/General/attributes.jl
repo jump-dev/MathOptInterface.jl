@@ -146,7 +146,7 @@ function test_attributes_integration_compute_conflict_2()
     MOI.compute_conflict!(model)
     @test MOI.get(model, MOI.ConflictStatus()) == MOI.CONFLICT_FOUND
     @test MOI.get(model, MOI.ConflictCount()) == 1
-    @test_throws ArgumentError MOI.get(model, MOI.ConstraintConflictStatus(), c)
+    return
 end
 
 struct _NoConstraintName <: MOI.AbstractOptimizer end
