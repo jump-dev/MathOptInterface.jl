@@ -1744,6 +1744,27 @@ function MOI.set(
     return throw(MOI.SettingVariableIndexNotAllowed())
 end
 
+function MOI.get(
+    model::AbstractBridgeOptimizer,
+    attr::MOI.ConstraintConflictStatus,
+    bridge::AbstractBridge,
+)
+    ret = MOI.NOT_IN_CONFLICT
+    for (F, S) in MOI.Bridges.added_constraint_types(typeof(bridge))
+        for ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
+            status = MOI.get(model, attr, ci)
+            if status == MOI.IN_CONFLICT
+                return status
+            elseif status == MOI.MAYBE_IN_CONFLICT
+                ret = status
+            # elseif status == MOI.NOT_IN_CONFLICT
+            # Nothing to do here.
+            end
+        end
+    end
+    return ret
+end
+
 ## Getting and Setting names
 function MOI.get(
     b::AbstractBridgeOptimizer,
