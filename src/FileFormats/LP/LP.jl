@@ -809,7 +809,7 @@ function _parse_section(
             cache.constraint_name = "R$(cache.num_constraints)"
         end
     end
-    if cache.indicator === nothing
+    if cache.indicator === nothing && occursin("->", line)
         if (m = match(r"\s*(.+?)\s*=\s*(0|1)\s*->(.+)", line)) !== nothing
             z = _get_variable_from_name(model, cache, String(m[1]))
             cond = m[2] == "0" ? MOI.ACTIVATE_ON_ZERO : MOI.ACTIVATE_ON_ONE
