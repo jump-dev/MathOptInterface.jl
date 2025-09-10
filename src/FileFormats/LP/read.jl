@@ -617,9 +617,13 @@ function _parse_optional_name(state::LexerState, cache::Cache)
     return nothing
 end
 
-# OBJECTIVE --> [NAME] EXPRESSION
+# OBJECTIVE --> [NAME] [EXPRESSION]
 function _parse_objective(state::LexerState, cache::Cache)
     _ = _parse_optional_name(state, cache)
+    _skip_newlines(state)
+    if _next_token_is(state, _TOKEN_KEYWORD)
+        return  # A line like `obj:\nsubject to`
+    end
     f = _parse_expression(state, cache)
     MOI.set(cache.model, MOI.ObjectiveFunction{typeof(f)}(), f)
     return
