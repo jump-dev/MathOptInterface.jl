@@ -29,7 +29,7 @@ them here: http://lpsolve.sourceforge.net
 function Base.read!(io::IO, model::Model{T}) where {T}
     if !MOI.is_empty(model)
         error("Cannot read in file because model is not empty.")
-    end 
+    end
     state = LexerState(io)
     cache = Cache(model)
     keyword = :UNKNOWN
@@ -215,6 +215,7 @@ function Base.read(state::LexerState, ::Type{Token})
 end
 
 _is_idenfifier(c::Char) = !(isspace(c) || c in ('+', '-', '*', '^', ':'))
+_is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
 function Base.peek(state::LexerState, ::Type{Token}, n::Int = 1)
     @assert n >= 1
@@ -240,7 +241,7 @@ function _peek_inner(state::LexerState)
             end
         elseif isdigit(c) || (c == '-' && isdigit(peek(state, Char))) # Number
             buf = IOBuffer()
-            while (c = peek(state, Char)) !== nothing && (isdigit(c) || c in ['.', 'e', 'E', '+', '-'])
+            while (c = peek(state, Char)) !== nothing && _is_number(c)
                 write(buf, c)
                 read(state, Char)
             end
@@ -391,7 +392,7 @@ function _parse_quad_term(
         return _parse_quad_term(state, cache, prefix)
     elseif _next_token_is(state, _TOKEN_SUBTRACTION)
         read(state, Token)
-        return _parse_quad_term(state, cache,  -prefix)
+        return _parse_quad_term(state, cache, -prefix)
     end
     coef = prefix
     if _next_token_is(state, _TOKEN_NUMBER)
@@ -532,7 +533,6 @@ function _add_to_expression!(
     MOI.Utilities.operate!(+, T, f, x)
     return
 end
-
 
 # EXPRESSION :=
 #   TERM (("+" | "-") TERM)*
@@ -679,8 +679,8 @@ function _parse_bound(state, cache)
     x = _parse_variable(state, cache)
     _add_bound(cache, x, lhs_set)
     if _next_token_is(state, _TOKEN_GREATER_THAN) ||
-        _next_token_is(state, _TOKEN_LESS_THAN) ||
-        _next_token_is(state, _TOKEN_EQUAL_TO)  # `a op x op b`
+       _next_token_is(state, _TOKEN_LESS_THAN) ||
+       _next_token_is(state, _TOKEN_EQUAL_TO)  # `a op x op b`
         # We don't add MOI.Interval constraints to follow JuMP's convention of
         # separate bounds.
         rhs_set = _parse_set_suffix(state, cache)
@@ -696,6 +696,9 @@ end
 # The newline character is required.
 function _parse_sos_constraint(state::LexerState, cache::Cache{T}) where {T}
     t = read(state, Token) # Si
+    if !(t.value == "S1" || t.value == "S2")
+        throw(UnexpectedToken(t))
+    end
     _expect(read(state, Token), _TOKEN_COLON)
     _expect(read(state, Token), _TOKEN_COLON)
     f, w = MOI.VectorOfVariables(MOI.VariableIndex[]), T[]
@@ -715,18 +718,16 @@ function _parse_sos_constraint(state::LexerState, cache::Cache{T}) where {T}
 end
 
 function _is_sos_constraint(state)
-    t = peek(state, Token, 1)
-    return t.kind == _TOKEN_IDENTIFIER &&
-       (t.value == "S1" || t.value == "S2") &&
-       _next_token_is(state, _TOKEN_COLON, 2) &&
-       _next_token_is(state, _TOKEN_COLON, 3)
+    return _next_token_is(state, _TOKEN_IDENTIFIER, 1) &&
+           _next_token_is(state, _TOKEN_COLON, 2) &&
+           _next_token_is(state, _TOKEN_COLON, 3)
 end
 
 function _is_indicator_constraint(state)
     return _next_token_is(state, _TOKEN_IDENTIFIER, 1) &&
-       _next_token_is(state, _TOKEN_EQUAL_TO, 2) &&
-       _next_token_is(state, _TOKEN_NUMBER, 3) &&
-       _next_token_is(state, _TOKEN_IMPLIES, 4)
+           _next_token_is(state, _TOKEN_EQUAL_TO, 2) &&
+           _next_token_is(state, _TOKEN_NUMBER, 3) &&
+           _next_token_is(state, _TOKEN_IMPLIES, 4)
 end
 
 # INDICATOR_CONSTRAINT :=
