@@ -133,6 +133,7 @@ const _KEYWORDS = Dict(
     _TOKEN_LESS_THAN,
     _TOKEN_EQUAL_TO,
     _TOKEN_COLON,
+    _TOKEN_IMPLIES,
     _TOKEN_NEWLINE,
     _TOKEN_UNKNOWN,
 )
@@ -270,8 +271,11 @@ function _peek_inner(state::LexerState)
             end
             return Token(_TOKEN_IDENTIFIER, val)
         elseif (op = get(_OPERATORS, c, nothing)) !== nothing
-            read(state, Char)
-            if c in ('<', '>', '=') && peek(state, Char) == '='
+            read(state, Char) # Skip c
+            if c == '-' && peek(state, Char) == '>'
+                read(state, Char)
+                return Token(_TOKEN_IMPLIES, "->")
+            elseif c in ('<', '>', '=') && peek(state, Char) == '='
                 read(state, Char)  # Allow <=, >=, and ==
             end
             return Token(op, string(c))
@@ -718,14 +722,52 @@ function _is_sos_constraint(state)
        _next_token_is(state, _TOKEN_COLON, 3)
 end
 
+function _is_indicator_constraint(state)
+    return _next_token_is(state, _TOKEN_IDENTIFIER, 1) &&
+       _next_token_is(state, _TOKEN_EQUAL_TO, 2) &&
+       _next_token_is(state, _TOKEN_NUMBER, 3) &&
+       _next_token_is(state, _TOKEN_IMPLIES, 4)
+end
+
+# INDICATOR_CONSTRAINT :=
+#   IDENTIFIER "=" "0" "->" EXPRESSION SET_SUFFIX
+#   | IDENTIFIER "=" "1" "->" EXPRESSION SET_SUFFIX
+function _parse_indicator_constraint(
+    state::LexerState,
+    cache::Cache{T},
+) where {T}
+    z = _parse_variable(state, cache)
+    _expect(read(state, Token), _TOKEN_EQUAL_TO)
+    t = read(state, Token)
+    _expect(t, _TOKEN_NUMBER)
+    indicator = if t.value == "0"
+        MOI.ACTIVATE_ON_ZERO
+    elseif t.value == "1"
+        MOI.ACTIVATE_ON_ONE
+    else
+        throw(UnexpectedToken(t))
+    end
+    _expect(read(state, Token), _TOKEN_IMPLIES)
+    f = _parse_expression(state, cache)
+    set = _parse_set_suffix(state, cache)
+    return MOI.add_constraint(
+        cache.model,
+        MOI.Utilities.operate(vcat, T, z, f),
+        MOI.Indicator{indicator}(set),
+    )
+end
+
 # CONSTRAINT :=
 #   [NAME] EXPRESSION SET_SUFFIX
 #   | [NAME] SOS_CONSTRAINT
+#   | [NAME] INDICATOR_CONSTRAINT
 function _parse_constraint(state::LexerState, cache::Cache)
     name = _parse_optional_name(state, cache)
     # Check if this is an SOS constraint
     c = if _is_sos_constraint(state)
         _parse_sos_constraint(state, cache)
+    elseif _is_indicator_constraint(state)
+        _parse_indicator_constraint(state, cache)
     else
         f = _parse_expression(state, cache)
         set = _parse_set_suffix(state, cache)
