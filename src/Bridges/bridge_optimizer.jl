@@ -368,6 +368,11 @@ function MOI.optimize!(b::AbstractBridgeOptimizer)
     return
 end
 
+function MOI.compute_conflict!(b::AbstractBridgeOptimizer)
+    MOI.compute_conflict!(b.model)
+    return
+end
+
 function MOI.is_empty(b::AbstractBridgeOptimizer)
     return isempty(Variable.bridges(b)) &&
            isempty(Constraint.bridges(b)) &&
@@ -1745,7 +1750,7 @@ function MOI.set(
 end
 
 function MOI.get(
-    model::AbstractBridgeOptimizer,
+    model::MOI.ModelLike,
     attr::MOI.ConstraintConflictStatus,
     bridge::AbstractBridge,
 )
@@ -1757,8 +1762,6 @@ function MOI.get(
                 return status
             elseif status == MOI.MAYBE_IN_CONFLICT
                 ret = status
-            # elseif status == MOI.NOT_IN_CONFLICT
-            # Nothing to do here.
             end
         end
     end

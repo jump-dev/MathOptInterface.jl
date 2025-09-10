@@ -53,7 +53,7 @@ end
 
 # Needed to avoid an ambiguity with the getter for MOI.Constraint.AbstractBridge
 function MOI.get(
-    model::MOI.Bridges.AbstractBridgeOptimizer,
+    model::MOI.ModelLike,
     attr::MOI.ConstraintConflictStatus,
     bridge::AbstractFunctionConversionBridge,
 )
@@ -65,8 +65,6 @@ function MOI.get(
                 return status
             elseif status == MOI.MAYBE_IN_CONFLICT
                 ret = status
-            # elseif status == MOI.NOT_IN_CONFLICT
-            # Nothing to do here.
             end
         end
     end
@@ -191,6 +189,7 @@ function invariant_under_function_conversion(
         MOI.ConstraintPrimalStart,
         MOI.ConstraintDual,
         MOI.ConstraintDualStart,
+        MOI.ConstraintConflictStatus,
     },
 )
     return true

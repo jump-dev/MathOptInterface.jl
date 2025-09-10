@@ -378,6 +378,22 @@ function test_supports_ScalarNonlinearFunction()
     return
 end
 
+function test_issue_2838()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    for ret in (MOI.NOT_IN_CONFLICT, MOI.IN_CONFLICT, MOI.MAYBE_IN_CONFLICT)
+        MOI.set(inner, MOI.ConflictCount(), 1)
+        MOI.set(inner, MOI.ConstraintConflictStatus(), ci, ret)
+        MOI.compute_conflict!(model)
+        @test MOI.get(model, MOI.ConstraintConflictStatus(), c) == ret
+    end
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()
