@@ -607,7 +607,3 @@ function bridging_cost(b::LazyBridgeOptimizer, args...)
 end
 
 recursive_model(b::LazyBridgeOptimizer) = b
-
-function MOI.compute_conflict!(model::LazyBridgeOptimizer)
-    return MOI.compute_conflict!(model.model)
-end

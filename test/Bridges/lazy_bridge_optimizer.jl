@@ -2288,6 +2288,46 @@ function test_wrong_coefficient_2()
     return
 end
 
+MOI.Utilities.@model(
+    Model2838,
+    (),
+    (MOI.GreaterThan,),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
+
+function test_issue_2838()
+    inner = MOI.Utilities.MockOptimizer(Model2838{Float64}())
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, Float64, (1.0 * x)...)
+    c = MOI.add_constraint(model, f, MOI.Nonnegatives(2))
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}
+    ci = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
+    function cmp(a, b)
+        if a == MOI.IN_CONFLICT || b == MOI.IN_CONFLICT
+            return MOI.IN_CONFLICT
+        elseif a == MOI.MAYBE_IN_CONFLICT || b == MOI.MAYBE_IN_CONFLICT
+            return MOI.MAYBE_IN_CONFLICT
+        else
+            return MOI.NOT_IN_CONFLICT
+        end
+    end
+    list = (MOI.NOT_IN_CONFLICT, MOI.IN_CONFLICT, MOI.MAYBE_IN_CONFLICT)
+    for a in list, b in list
+        MOI.set(inner, MOI.ConflictCount(), 1)
+        MOI.set(inner, MOI.ConstraintConflictStatus(), ci[1], a)
+        MOI.set(inner, MOI.ConstraintConflictStatus(), ci[2], b)
+        MOI.compute_conflict!(model)
+        @test MOI.get(model, MOI.ConstraintConflictStatus(), c) == cmp(a, b)
+    end
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()

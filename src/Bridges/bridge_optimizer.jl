@@ -368,6 +368,11 @@ function MOI.optimize!(b::AbstractBridgeOptimizer)
     return
 end
 
+function MOI.compute_conflict!(b::AbstractBridgeOptimizer)
+    MOI.compute_conflict!(b.model)
+    return
+end
+
 function MOI.is_empty(b::AbstractBridgeOptimizer)
     return isempty(Variable.bridges(b)) &&
            isempty(Constraint.bridges(b)) &&
@@ -1742,6 +1747,25 @@ function MOI.set(
     ::MOI.VariableIndex,
 )
     return throw(MOI.SettingVariableIndexNotAllowed())
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintConflictStatus,
+    bridge::AbstractBridge,
+)
+    ret = MOI.NOT_IN_CONFLICT
+    for (F, S) in MOI.Bridges.added_constraint_types(typeof(bridge))
+        for ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
+            status = MOI.get(model, attr, ci)
+            if status == MOI.IN_CONFLICT
+                return status
+            elseif status == MOI.MAYBE_IN_CONFLICT
+                ret = status
+            end
+        end
+    end
+    return ret
 end
 
 ## Getting and Setting names
