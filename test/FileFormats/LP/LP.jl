@@ -1423,7 +1423,7 @@ function test_parse_set_prefix()
         state = LP.LexerState(io)
         @test LP._parse_set_prefix(state, cache) == set
     end
-    for input in ["-> 1"]
+    for input in ["1 ->"]
         io = IOBuffer(input)
         seekstart(io)
         state = LP.LexerState(io)
