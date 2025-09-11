@@ -446,7 +446,7 @@ function test_read_invalid()
     for filename in filter(f -> startswith(f, "invalid_"), readdir(models))
         model = LP.Model()
         @test_throws(
-            LP.UnexpectedToken,
+            LP.ParseError,
             MOI.read_from_file(model, joinpath(models, filename)),
         )
     end
@@ -459,7 +459,7 @@ function test_read_unexpected_line()
     print(io, line)
     seekstart(io)
     model = LP.Model()
-    @test_throws LP.UnexpectedToken read!(io, model)
+    @test_throws LP.ParseError read!(io, model)
     return
 end
 
@@ -611,10 +611,16 @@ end
 function test_read_maximum_length_error()
     filename = joinpath(@__DIR__, "models", "model2.lp")
     model = LP.Model(; maximum_length = 1)
-    @test_throws(
-        ErrorException("Name exceeds maximum length: V4"),
-        MOI.read_from_file(model, filename),
-    )
+    contents = try
+        MOI.read_from_file(model, filename)
+    catch err
+        sprint(showerror, err)
+    end
+    @test contents == """
+    Error parsing LP file on line 2:
+    obj: - 2 - 1 V4 + 1 V5 + 3 + 2 - 0.5
+                 ^
+    Name (V4) exceeds maximum length (1)"""
     return
 end
 
@@ -1097,7 +1103,7 @@ function test_invalid_token_in_sos()
         sprint(showerror, err)
     end
     @test contents == """
-    Error parsing LP file. Got an unexpected token on line 5:
+    Error parsing LP file on line 5:
     c11: S1:: x 1.0 y 2.0
                 ^
     We expected this token to be the symbol `:`"""
@@ -1114,7 +1120,7 @@ function test_unable_to_parse_bound()
     end
     """)
     model = LP.Model()
-    @test_throws LP.UnexpectedToken read!(io, model)
+    @test_throws LP.ParseError read!(io, model)
     return
 end
 
@@ -1229,7 +1235,7 @@ function test_subject_to_name()
         seekstart(io)
         model = MOI.FileFormats.LP.Model()
         if err
-            @test_throws LP.UnexpectedToken read!(io, model)
+            @test_throws LP.ParseError read!(io, model)
         else
             read!(io, model)
             out = IOBuffer()
@@ -1243,7 +1249,7 @@ function test_subject_to_name()
 end
 
 function test_parse_variable()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     for input in [
         "x",
         "X",
@@ -1256,21 +1262,21 @@ function test_parse_variable()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         x = LP._parse_variable(state, cache)
         @test cache.variable_name_to_index[input] == x
     end
     for input in ["2", "2x", ".x"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
-        @test_throws LP.UnexpectedToken LP._parse_variable(state, cache)
+        state = LP._LexerState(io)
+        @test_throws LP.ParseError LP._parse_variable(state, cache)
     end
     return
 end
 
 function test_parse_number()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     for (input, result) in [
         "1" => 1.0,
         "02" => 2.0,
@@ -1295,20 +1301,20 @@ function test_parse_number()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         @test LP._parse_number(state, cache) == result
     end
     for input in ["x", "abc", "ten", "1.1.1", "1eE1"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
-        @test_throws LP.UnexpectedToken LP._parse_number(state, cache)
+        state = LP._LexerState(io)
+        @test_throws LP.ParseError LP._parse_number(state, cache)
     end
     return
 end
 
 function test_parse_quad_term()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     # Diagonal
     for (input, coef) in [
         "x * x" => 2.0,
@@ -1326,7 +1332,7 @@ function test_parse_quad_term()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         term = LP._parse_quad_term(state, cache, 1.0)
         x = cache.variable_name_to_index["x"]
         @test term == MOI.ScalarQuadraticTerm(coef, x, x)
@@ -1349,7 +1355,7 @@ function test_parse_quad_term()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         term = LP._parse_quad_term(state, cache, 1.0)
         x = cache.variable_name_to_index["x"]
         y = cache.variable_name_to_index["y"]
@@ -1361,14 +1367,14 @@ function test_parse_quad_term()
     for input in ["x^", "x^x", "x^0", "x^1", "x^3", "x * 2 * x"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
-        @test_throws LP.UnexpectedToken LP._parse_quad_term(state, cache, -1.0)
+        state = LP._LexerState(io)
+        @test_throws LP.ParseError LP._parse_quad_term(state, cache, -1.0)
     end
     return
 end
 
 function test_parse_term()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     for (input, coef) in [
         "x" => 1.0,
         "+ x" => 1.0,
@@ -1383,7 +1389,7 @@ function test_parse_term()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         term = LP._parse_term(state, cache, 1.0)
         x = cache.variable_name_to_index["x"]
         @test term == MOI.ScalarAffineTerm(coef, x)
@@ -1394,20 +1400,20 @@ function test_parse_term()
     for input in ["subject to", ">= 1"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
-        @test_throws LP.UnexpectedToken LP._parse_term(state, cache, 1.0)
+        state = LP._LexerState(io)
+        @test_throws LP.ParseError LP._parse_term(state, cache, 1.0)
     end
     return
 end
 
 function test_parse_quad_expression()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     for input in ["x^2", "[ x^2 ]/", "[ x^2 ]/3"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         @test_throws(
-            LP.UnexpectedToken,
+            LP.ParseError,
             LP._parse_quad_expression(state, cache, 1.0),
         )
     end
@@ -1415,7 +1421,7 @@ function test_parse_quad_expression()
 end
 
 function test_parse_set_prefix()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     for (input, set) in [
         "1.0 <=" => MOI.GreaterThan(1.0),
         "1.0 <" => MOI.GreaterThan(1.0),
@@ -1429,20 +1435,20 @@ function test_parse_set_prefix()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         @test LP._parse_set_prefix(state, cache) == set
     end
     for input in ["1 ->"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
-        @test_throws LP.UnexpectedToken LP._parse_set_prefix(state, cache)
+        state = LP._LexerState(io)
+        @test_throws LP.ParseError LP._parse_set_prefix(state, cache)
     end
     return
 end
 
 function test_parse_set_sufffix()
-    cache = LP.Cache(LP.Model{Float64}())
+    cache = LP._ReadCache(LP.Model{Float64}())
     for (input, set) in [
         "free" => nothing,
         "Free" => nothing,
@@ -1458,14 +1464,14 @@ function test_parse_set_sufffix()
     ]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
+        state = LP._LexerState(io)
         @test LP._parse_set_suffix(state, cache) == set
     end
     for input in ["-> 1"]
         io = IOBuffer(input)
         seekstart(io)
-        state = LP.LexerState(io)
-        @test_throws LP.UnexpectedToken LP._parse_set_suffix(state, cache)
+        state = LP._LexerState(io)
+        @test_throws LP.ParseError LP._parse_set_suffix(state, cache)
     end
     return
 end
