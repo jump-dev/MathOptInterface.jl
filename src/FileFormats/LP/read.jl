@@ -284,7 +284,7 @@ function _throw_parse_error(state::_LexerState, token::_Token, msg::String)
     line = String(read(state.io, 2 * offset))
     i = something(findprev('\n', line, offset-1), 0)
     j = something(findnext('\n', line, offset), length(line) + 1)
-    extract = replace(line[(i+1):(j-1)], '\r' => '')
+    extract = replace(line[(i+1):(j-1)], "\r" => "")
     help = string(extract, "\n", " "^(offset - i + - 1), "^\n", msg)
     return throw(ParseError(state.line, help))
 end
