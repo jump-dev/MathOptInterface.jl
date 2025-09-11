@@ -279,7 +279,7 @@ struct ParseError <: Exception
 end
 
 function _throw_parse_error(state::_LexerState, token::_Token, msg::String)
-    offset = min(20, token.pos)
+    offset = min(40, token.pos)
     seek(state.io, token.pos - offset)
     line = String(read(state.io, 2 * offset))
     i = something(findprev('\n', line, offset-1), 0)
