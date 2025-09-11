@@ -279,12 +279,13 @@ struct ParseError <: Exception
 end
 
 function _throw_parse_error(state::_LexerState, token::_Token, msg::String)
-    offset = min(40, token.pos)
+    offset = min(20, token.pos)
     seek(state.io, token.pos - offset)
     line = String(read(state.io, 2 * offset))
     i = something(findprev('\n', line, offset-1), 0)
     j = something(findnext('\n', line, offset), length(line) + 1)
-    help = string(line[(i+1):(j-1)], "\n", " "^(offset - i + - 1), "^\n", msg)
+    extract = replace(line[(i+1):(j-1)], '\r' => '')
+    help = string(extract, "\n", " "^(offset - i + - 1), "^\n", msg)
     return throw(ParseError(state.line, help))
 end
 
