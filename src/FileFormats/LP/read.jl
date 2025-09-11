@@ -255,7 +255,7 @@ function _throw_unexpected_token(state::LexerState, token::Token, msg::String)
     line = String(read(state.io, 2 * offset))
     i = something(findprev('\n', line, offset-1), 0)
     j = something(findnext('\n', line, offset), length(line) + 1)
-    help = string(line[i+1:j-1], "\n", " "^(offset - i + - 1), "^\n", msg)
+    help = string(line[(i+1):(j-1)], "\n", " "^(offset - i + - 1), "^\n", msg)
     return throw(UnexpectedToken(token, state.line, help))
 end
 
@@ -293,7 +293,7 @@ end
 
 function Base.read(state::LexerState, ::Type{Token})
     token = peek(state, Token, 1)
-    if isempty(state.peek_tokens)        
+    if isempty(state.peek_tokens)
         _throw_unexpected_token(
             state,
             Token(_TOKEN_UNKNOWN, "EOF", position(state.io)),
@@ -627,7 +627,7 @@ function _parse_term(
     return _throw_unexpected_token(
         state,
         token,
-        "Got $(_KIND_TO_MSG[token.kind]), But we expected this to be a new term in the expression.",
+        "Got $(_KIND_TO_MSG[token.kind]), but we expected this to be a new term in the expression.",
     )
 end
 
@@ -883,11 +883,7 @@ function _parse_indicator_constraint(
     elseif t.value == "1"
         MOI.ACTIVATE_ON_ONE
     else
-        _throw_unexpected_token(
-            state,
-            t,
-            "This must be either `= 0` or `= 1`.",
-        )
+        _throw_unexpected_token(state, t, "This must be either `= 0` or `= 1`.")
     end
     _ = read(state, Token, _TOKEN_IMPLIES)
     f = _parse_expression(state, cache)
