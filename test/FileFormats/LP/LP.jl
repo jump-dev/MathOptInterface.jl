@@ -1091,7 +1091,16 @@ function test_invalid_token_in_sos()
         """,
     )
     seekstart(io)
-    @test_throws LP.UnexpectedToken read!(io, model)
+    contents = try
+        read!(io, model)
+    catch err
+        sprint(showerror, err)
+    end
+    @test contents == """
+    Error parsing LP file. Got an unexpected token on line 5:
+    c11: S1:: x 1.0 y 2.0
+                ^
+    We expected this token to be the symbol `:`"""
     return
 end
 

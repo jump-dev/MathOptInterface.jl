@@ -64,10 +64,23 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             _parse_bound(state, cache)
         elseif keyword == :SOS
             _parse_constraint(state, cache)
+        elseif keyword == :END
+            _throw_unexpected_token(
+                state,
+                token,
+                "No file contents are allowed after `end`.",
+            )
         else
-            throw(UnexpectedToken(token))
+            _throw_unexpected_token(
+                state,
+                token,
+                "Parsing this section is not supported by the current reader.",
+            )
         end
     end
+    # if keyword != :END
+    #     TODO(odow): decide if we should throw an error here.
+    # end
     for x in cache.variable_with_default_bound
         MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
     end
@@ -141,6 +154,27 @@ const _KEYWORDS = Dict(
     _TOKEN_NEWLINE,
     _TOKEN_UNKNOWN,
 )
+
+const _KIND_TO_MSG = Dict{_TokenKind,String}(
+    _TOKEN_KEYWORD => "a keyword",
+    _TOKEN_IDENTIFIER => "a variable name",
+    _TOKEN_NUMBER => "a number",
+    _TOKEN_ADDITION => "the symbol `+`",
+    _TOKEN_SUBTRACTION => "the symbol `-`",
+    _TOKEN_MULTIPLICATION => "the symbol `*`",
+    _TOKEN_DIVISION => "the symbol `/`",
+    _TOKEN_EXPONENT => "the symbol `^`",
+    _TOKEN_OPEN_BRACKET => "the symbol `[`",
+    _TOKEN_CLOSE_BRACKET => "the symbol `]`",
+    _TOKEN_GREATER_THAN => "the symbol `>=`",
+    _TOKEN_LESS_THAN => "the symbol `<=`",
+    _TOKEN_EQUAL_TO => "the symbol `==`",
+    _TOKEN_COLON => "the symbol `:`",
+    _TOKEN_IMPLIES => "the symbol `->`",
+    _TOKEN_NEWLINE => "a new line",
+    _TOKEN_UNKNOWN => "some unknown symbol",
+)
+
 """
     const _OPERATORS::Dict{Char,_TokenKind}
 
@@ -175,28 +209,7 @@ unprocessed value.
 struct Token
     kind::_TokenKind
     value::Union{Nothing,String}
-end
-
-"""
-    struct UnexpectedToken <: Exception
-        token::Token
-    end
-
-This error is thrown when we encounter an unexpected token when parsing the LP
-file. No other information is available.
-
-TODO: we could improve this by storing line information or other context to help
-the user diagnose the problem.
-"""
-struct UnexpectedToken <: Exception
-    token::Token
-end
-
-function _expect(token::Token, kind::_TokenKind)
-    if token.kind != kind
-        throw(UnexpectedToken(token))
-    end
-    return token
+    pos::Int
 end
 
 """
@@ -216,9 +229,53 @@ It stores:
 """
 mutable struct LexerState
     io::IO
+    line::Int
     peek_char::Union{Nothing,Char}
     peek_tokens::Vector{Token}
-    LexerState(io::IO) = new(io, nothing, Token[])
+    LexerState(io::IO) = new(io, 1, nothing, Token[])
+end
+
+"""
+    struct UnexpectedToken <: Exception
+        token::Token
+    end
+
+This error is thrown when we encounter an unexpected token when parsing the LP
+file. No other information is available.
+"""
+struct UnexpectedToken <: Exception
+    token::Token
+    line::Int
+    msg::String
+end
+
+function _throw_unexpected_token(state::LexerState, token::Token, msg::String)
+    offset = min(40, token.pos)
+    seek(state.io, token.pos - offset)
+    line = String(read(state.io, 2 * offset))
+    i = something(findprev('\n', line, offset-1), 0)
+    j = something(findnext('\n', line, offset), length(line) + 1)
+    help = string(line[i+1:j-1], "\n", " "^(offset - i + - 1), "^\n", msg)
+    return throw(UnexpectedToken(token, state.line, help))
+end
+
+function Base.showerror(io::IO, err::UnexpectedToken)
+    return print(
+        io,
+        "Error parsing LP file. Got an unexpected token on line $(err.line):\n",
+        err.msg,
+    )
+end
+
+function _expect(state::LexerState, token::Token, kind::_TokenKind)
+    if token.kind != kind
+        _throw_unexpected_token(
+            state,
+            token,
+            string("We expected this token to be ", _KIND_TO_MSG[kind]),
+        )
+    end
+    return token
 end
 
 function Base.peek(state::LexerState, ::Type{Char})
@@ -236,8 +293,12 @@ end
 
 function Base.read(state::LexerState, ::Type{Token})
     token = peek(state, Token, 1)
-    if isempty(state.peek_tokens)
-        throw(UnexpectedToken(Token(_TOKEN_UNKNOWN, "EOF")))
+    if isempty(state.peek_tokens)        
+        _throw_unexpected_token(
+            state,
+            Token(_TOKEN_UNKNOWN, "EOF", position(state.io)),
+            "Unexpected end to the file. We weren't finished yet.",
+        )
     end
     popfirst!(state.peek_tokens)
     return token
@@ -245,7 +306,7 @@ end
 
 function Base.read(state::LexerState, ::Type{Token}, kind::_TokenKind)
     token = read(state, Token)
-    return _expect(token, kind)
+    return _expect(state, token, kind)
 end
 
 # We're a bit more relaxed than typical, allowing any letter or digit, not just
@@ -274,9 +335,11 @@ end
 
 function _peek_inner(state::LexerState)
     while (c = peek(state, Char)) !== nothing
+        pos = position(state.io)
         if c == '\n'
+            state.line += 1
             _ = read(state, Char)
-            return Token(_TOKEN_NEWLINE, nothing)
+            return Token(_TOKEN_NEWLINE, nothing, pos)
         elseif isspace(c)  # Whitespace
             _ = read(state, Char)
         elseif c == '\\'  # Comment: backslash until newline
@@ -288,7 +351,7 @@ function _peek_inner(state::LexerState)
                 write(buf, c)
                 _ = read(state, Char)
             end
-            return Token(_TOKEN_NUMBER, String(take!(buf)))
+            return Token(_TOKEN_NUMBER, String(take!(buf)), pos)
         elseif _is_starting_identifier(c)  # Identifier / keyword
             buf = IOBuffer()
             while (c = peek(state, Char)) !== nothing && _is_identifier(c)
@@ -301,33 +364,37 @@ function _peek_inner(state::LexerState)
                 t = peek(state, Token)
                 if t.kind == _TOKEN_IDENTIFIER && lowercase(t.value) == "to"
                     _ = read(state, Token)  # Skip "to"
-                    return Token(_TOKEN_KEYWORD, "CONSTRAINTS")
+                    return Token(_TOKEN_KEYWORD, "CONSTRAINTS", pos)
                 end
             elseif l_val == "such"
                 t = peek(state, Token)
                 if t.kind == _TOKEN_IDENTIFIER && lowercase(t.value) == "that"
                     _ = read(state, Token)  # Skip "such"
-                    return Token(_TOKEN_KEYWORD, "CONSTRAINTS")
+                    return Token(_TOKEN_KEYWORD, "CONSTRAINTS", pos)
                 end
             end
             if (kw = get(_KEYWORDS, l_val, nothing)) !== nothing
-                return Token(_TOKEN_KEYWORD, string(kw))
+                return Token(_TOKEN_KEYWORD, string(kw), pos)
             end
-            return Token(_TOKEN_IDENTIFIER, val)
+            return Token(_TOKEN_IDENTIFIER, val, pos)
         elseif (op = get(_OPERATORS, c, nothing)) !== nothing
             _ = read(state, Char) # Skip c
             if c == '-' && peek(state, Char) == '>'
                 _ = read(state, Char)
-                return Token(_TOKEN_IMPLIES, nothing)
+                return Token(_TOKEN_IMPLIES, nothing, pos)
             elseif c == '=' && peek(state, Char) in ('<', '>')
                 c = read(state, Char) # Allow =< and => as <= and >=
-                return Token(_OPERATORS[c], nothing)
+                return Token(_OPERATORS[c], nothing, pos)
             elseif c in ('<', '>', '=') && peek(state, Char) == '='
                 _ = read(state, Char)  # Allow <=, >=, and ==
             end
-            return Token(op, nothing)
+            return Token(op, nothing, pos)
         else
-            throw(UnexpectedToken(Token(_TOKEN_UNKNOWN, "$c")))
+            _throw_unexpected_token(
+                state,
+                Token(_TOKEN_UNKNOWN, "$c", pos),
+                "This character is not supported an LP file.",
+            )
         end
     end
     return
@@ -391,13 +458,21 @@ function _parse_number(state::LexerState, cache::Cache{T})::T where {T}
         if v == "inf" || v == "infinity"
             return typemax(T)
         else
-            throw(UnexpectedToken(token))
+            _throw_unexpected_token(
+                state,
+                token,
+                "We expected this to be a number.",
+            )
         end
     end
-    _expect(token, _TOKEN_NUMBER)
+    _expect(state, token, _TOKEN_NUMBER)
     ret = tryparse(T, token.value)
     if ret === nothing
-        throw(UnexpectedToken(token))
+        _throw_unexpected_token(
+            state,
+            token,
+            "We expected this to be a number.",
+        )
     end
     return ret
 end
@@ -435,7 +510,7 @@ function _parse_quad_term(
         _skip_newlines(state)
         n = read(state, Token, _TOKEN_NUMBER)
         if n.value != "2"
-            throw(UnexpectedToken(n))
+            _throw_unexpected_token(state, n, "Only `^ 2` is supported.")
         end
         return MOI.ScalarQuadraticTerm(T(2) * coef, x1, x1)
     end
@@ -471,7 +546,11 @@ function _parse_quad_expression(
             _ = read(state, Token)
             break
         else
-            return throw(UnexpectedToken(p))
+            _throw_unexpected_token(
+                state,
+                p,
+                "We expected this to be a ] to end the quadratic expresssion.",
+            )
         end
     end
     _skip_newlines(state)
@@ -480,7 +559,11 @@ function _parse_quad_expression(
         # Must be /2
         n = read(state, Token, _TOKEN_NUMBER)
         if n.value != "2"
-            throw(UnexpectedToken(n))
+            _throw_unexpected_token(
+                state,
+                n,
+                "The only supported value here is `] / 2`.",
+            )
         end
         for (i, term) in enumerate(f.quadratic_terms)
             f.quadratic_terms[i] = MOI.ScalarQuadraticTerm(
@@ -530,7 +613,9 @@ function _parse_term(
             _ = read(state, Token, _TOKEN_MULTIPLICATION)
             x = _parse_variable(state, cache)
             return MOI.ScalarAffineTerm(coef, x)
-        else
+        elseif _next_token_is(state, _TOKEN_NEWLINE) ||
+               _next_token_is(state, _TOKEN_ADDITION) ||
+               _next_token_is(state, _TOKEN_SUBTRACTION)
             # NUMBER
             return coef
         end
@@ -538,7 +623,12 @@ function _parse_term(
         # QUADRATIC_EXPRESSION
         return _parse_quad_expression(state, cache, prefix)
     end
-    return throw(UnexpectedToken(peek(state, Token)))
+    token = peek(state, Token)
+    return _throw_unexpected_token(
+        state,
+        token,
+        "Got $(_KIND_TO_MSG[token.kind]), But we expected this to be a new term in the expression.",
+    )
 end
 
 function _add_to_expression!(f::MOI.ScalarQuadraticFunction{T}, x::T) where {T}
@@ -611,7 +701,11 @@ function _parse_set_suffix(state, cache)
         rhs = _parse_number(state, cache)
         return MOI.EqualTo(rhs)
     else
-        throw(UnexpectedToken(p))
+        _throw_unexpected_token(
+            state,
+            p,
+            "We expected this to be an inequality like `>=`, `<=` ,or `==`.",
+        )
     end
 end
 
@@ -633,7 +727,11 @@ function _parse_set_prefix(state, cache)
     elseif p.kind == _TOKEN_EQUAL_TO
         return MOI.EqualTo(lhs)
     else
-        throw(UnexpectedToken(p))
+        _throw_unexpected_token(
+            state,
+            p,
+            "We expected this to be an inequality like `>=`, `<=` ,or `==`.",
+        )
     end
 end
 
@@ -731,12 +829,24 @@ end
 function _parse_sos_constraint(state::LexerState, cache::Cache{T}) where {T}
     t = read(state, Token, _TOKEN_IDENTIFIER) # Si
     if !(t.value == "S1" || t.value == "S2")
-        throw(UnexpectedToken(t))
+        _throw_unexpected_token(
+            state,
+            t,
+            "This must be either `S1` for SOS-I or `S2` for SOS-II.",
+        )
     end
     _ = read(state, Token, _TOKEN_COLON)
     _ = read(state, Token, _TOKEN_COLON)
     f, w = MOI.VectorOfVariables(MOI.VariableIndex[]), T[]
     while true
+        if _next_token_is(state, _TOKEN_NEWLINE)
+            t = peek(state, Token)
+            _throw_unexpected_token(
+                state,
+                t,
+                "SOS constraints cannot be spread across lines.",
+            )
+        end
         push!(f.variables, _parse_variable(state, cache))
         _ = read(state, Token, _TOKEN_COLON)
         push!(w, _parse_number(state, cache))
@@ -773,7 +883,11 @@ function _parse_indicator_constraint(
     elseif t.value == "1"
         MOI.ACTIVATE_ON_ONE
     else
-        throw(UnexpectedToken(t))
+        _throw_unexpected_token(
+            state,
+            t,
+            "This must be either `= 0` or `= 1`.",
+        )
     end
     _ = read(state, Token, _TOKEN_IMPLIES)
     f = _parse_expression(state, cache)
