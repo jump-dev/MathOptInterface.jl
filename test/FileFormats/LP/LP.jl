@@ -1202,6 +1202,236 @@ function test_unsupported_objectives()
     return
 end
 
+function test_subject_to_name()
+    for (case, err) in [
+        "subject to" => false,
+        "Subject To" => false,
+        "such that" => false,
+        "Such That" => false,
+        "st" => false,
+        "s.t." => false,
+        "subject that" => true,
+        "subject\nto" => true,
+        "s. t." => true,
+        "such to" => true,
+    ]
+        io = IOBuffer("Minimize\nobj: x\n$case\n2x == 1\nBounds\nx free\nEnd")
+        seekstart(io)
+        model = MOI.FileFormats.LP.Model()
+        if err
+            @test_throws LP.UnexpectedToken read!(io, model)
+        else
+            read!(io, model)
+            out = IOBuffer()
+            write(out, model)
+            seekstart(out)
+            file = read(out, String)
+            @test occursin("subject to\nc1: 2 x = 1\n", file)
+        end
+    end
+    return
+end
+
+function test_parse_number()
+    cache = LP.Cache(LP.Model{Float64}())
+    for (input, result) in [
+        "1" => 1.0,
+        "02" => 2.0,
+        "- 1" => -1.0,
+        "- -1" => 1.0,
+        "+ 1" => 1.0,
+        "+ -1" => -1.0,
+        "- + 1" => -1.0,
+        "+ + 1" => 1.0,
+        "+ - + 1" => -1.0,
+        "+ - + -1" => 1.0,
+        "inf" => Inf,
+        "-inf" => -Inf,
+        "- inf" => - Inf,
+        "iNf" => Inf,
+        "iNfinitY" => Inf,
+        "infinity" => Inf,
+        "1.23e+01" => 12.3,
+        "1.23e-1" => 0.123,
+        "1.23E-1" => 0.123,
+        "1.23E+3" => 1230.0,
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test LP._parse_number(state, cache) == result
+    end
+    for input in ["x", "abc", "ten"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws LP.UnexpectedToken LP._parse_number(state, cache)
+    end
+    return
+end
+
+function test_parse_quad_term()
+    cache = LP.Cache(LP.Model{Float64}())
+    # Diagonal
+    for (input, coef) in [
+        "x * x" => 2.0,
+        "\nx * x" => 2.0,
+        "x\n * x" => 2.0,
+        "x * \n x" => 2.0,
+        "x^2" => 2.0,
+        "x ^ 2" => 2.0,
+        "+ x * x" => 2.0,
+        "+ 2 * x * x" => 4.0,
+        "- x * x" => -2.0,
+        "- 2 * x * x" => -4.0,
+        "-2 x * x" => -4.0,
+        "2.2 x * x" => 4.4,
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        term = LP._parse_quad_term(state, cache, 1.0)
+        x = cache.variable_name_to_index["x"]
+        @test term == MOI.ScalarQuadraticTerm(coef, x, x)
+        seekstart(io)
+        term = LP._parse_quad_term(state, cache, -1.0)
+        @test term == MOI.ScalarQuadraticTerm(-coef, x, x)
+    end
+    # Off-diagonal
+    for (input, coef) in [
+        "x * y" => 1.0,
+        "\nx * y" => 1.0,
+        "x\n * y" => 1.0,
+        "x * \n y" => 1.0,
+        "+ x * y" => 1.0,
+        "+ 2 * x * y" => 2.0,
+        "- x * y" => -1.0,
+        "- 2 * x * y" => -2.0,
+        "2.2 * x * y" => 2.2,
+        "2.2 x * y" => 2.2,
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        term = LP._parse_quad_term(state, cache, 1.0)
+        x = cache.variable_name_to_index["x"]
+        y = cache.variable_name_to_index["y"]
+        @test term == MOI.ScalarQuadraticTerm(coef, x, y)
+        seekstart(io)
+        term = LP._parse_quad_term(state, cache, -1.0)
+        @test term == MOI.ScalarQuadraticTerm(-coef, x, y)
+    end
+    for input in ["x^", "x^x", "x^0", "x^1", "x^3", "x * 2 * x"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws LP.UnexpectedToken LP._parse_quad_term(state, cache, -1.0)
+    end
+    return
+end
+
+function test_parse_term()
+    cache = LP.Cache(LP.Model{Float64}())
+    for (input, coef) in [
+        "x" => 1.0,
+        "+ x" => 1.0,
+        "- x" => -1.0,
+        "- -x" => 1.0,
+        "+ -x" => -1.0,
+        "2.0 x" => 2.0,
+        "3.0 x" => 3.0,
+        "2.0 * x" => 2.0,
+        "3.2 * x" => 3.2,
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        term = LP._parse_term(state, cache, 1.0)
+        x = cache.variable_name_to_index["x"]
+        @test term == MOI.ScalarAffineTerm(coef, x)
+        seekstart(io)
+        term = LP._parse_term(state, cache, -1.0)
+        @test term == MOI.ScalarAffineTerm(-coef, x)
+    end
+    for input in ["subject to", ">= 1"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws LP.UnexpectedToken LP._parse_term(state, cache, 1.0)
+    end
+    return
+end
+
+function test_parse_quad_expression()
+    cache = LP.Cache(LP.Model{Float64}())
+    for input in ["x^2", "[ x^2 ]/", "[ x^2 ]/3"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws(
+            LP.UnexpectedToken,
+            LP._parse_quad_expression(state, cache, 1.0),
+        )
+    end
+    return
+end
+
+function test_parse_set_prefix()
+    cache = LP.Cache(LP.Model{Float64}())
+    for (input, set) in [
+        "1.0 <=" => MOI.GreaterThan(1.0),
+        "1.0 <" => MOI.GreaterThan(1.0),
+        "1.0 >=" => MOI.LessThan(1.0),
+        "1.0 >" => MOI.LessThan(1.0),
+        "1.0 ==" => MOI.EqualTo(1.0),
+        "1.0 =" => MOI.EqualTo(1.0),
+        # Theirs not to reason why, theirs but to do and
+        "1.0 =<" => MOI.GreaterThan(1.0),
+        "1.0 =>" => MOI.LessThan(1.0),
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test LP._parse_set_prefix(state, cache) == set
+    end
+    for input in ["-> 1"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws LP.UnexpectedToken LP._parse_set_prefix(state, cache)
+    end
+    return
+end
+
+function test_parse_set_sufffix()
+    cache = LP.Cache(LP.Model{Float64}())
+    for (input, set) in [
+        "free" => nothing,
+        "Free" => nothing,
+        ">= 1.0" => MOI.GreaterThan(1.0),
+        "> 1.0" => MOI.GreaterThan(1.0),
+        "<= 1.0" => MOI.LessThan(1.0),
+        "< 1.0" => MOI.LessThan(1.0),
+        "== 1.0" => MOI.EqualTo(1.0),
+        "= 1.0" => MOI.EqualTo(1.0),
+        # Theirs not to reason why, theirs but to do and
+        "=< 1.0" => MOI.LessThan(1.0),
+        "=> 1.0" => MOI.GreaterThan(1.0),
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test LP._parse_set_suffix(state, cache) == set
+    end
+    for input in ["-> 1"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws LP.UnexpectedToken LP._parse_set_suffix(state, cache)
+    end
+    return
+end
+
 end  # module
 
 TestLP.runtests()
