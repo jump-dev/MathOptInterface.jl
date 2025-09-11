@@ -1210,6 +1210,7 @@ function test_subject_to_name()
         "Such That" => false,
         "st" => false,
         "s.t." => false,
+        "st." => false,
         "subject that" => true,
         "subject\nto" => true,
         "s. t." => true,
@@ -1228,6 +1229,33 @@ function test_subject_to_name()
             file = read(out, String)
             @test occursin("subject to\nc1: 2 x = 1\n", file)
         end
+    end
+    return
+end
+
+function test_parse_variable()
+    cache = LP.Cache(LP.Model{Float64}())
+    for input in [
+        "x",
+        "X",
+        "e",
+        "abc!\"D",
+        "π",
+        "𝔼1π!~a",
+        "x!\"#\$%&()/,.;?@_`'{}|~",
+        "aAc2",
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        x = LP._parse_variable(state, cache)
+        @test cache.variable_name_to_index[input] == x
+    end
+    for input in ["2", "2x", ".x"]
+        io = IOBuffer(input)
+        seekstart(io)
+        state = LP.LexerState(io)
+        @test_throws LP.UnexpectedToken LP._parse_variable(state, cache)
     end
     return
 end
@@ -1338,6 +1366,7 @@ function test_parse_term()
         "- x" => -1.0,
         "- -x" => 1.0,
         "+ -x" => -1.0,
+        "2x" => 2.0,
         "2.0 x" => 2.0,
         "3.0 x" => 3.0,
         "2.0 * x" => 2.0,

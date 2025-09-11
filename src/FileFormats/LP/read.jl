@@ -23,8 +23,11 @@ end
 Read `io` in the LP file format and store the result in `model`.
 
 This reader attempts to follow the CPLEX LP format, because others like the
-lpsolve version are very...flexible...in how they accept input. Read more about
-them here: http://lpsolve.sourceforge.net
+lpsolve version are very...flexible...in how they accept input.
+
+Read more about the format here:
+ * http://lpsolve.sourceforge.net
+ * https://web.mit.edu/lpsolve/doc/CPLEX-format.htm
 """
 function Base.read!(io::IO, model::Model{T}) where {T}
     if !MOI.is_empty(model)
@@ -98,6 +101,7 @@ const _KEYWORDS = Dict(
     "such that" => :CONSTRAINTS,
     "st" => :CONSTRAINTS,
     "s.t." => :CONSTRAINTS,
+    "st." => :CONSTRAINTS,
     # BOUNDS
     "bounds" => :BOUNDS,
     "bound" => :BOUNDS,
@@ -244,7 +248,16 @@ function Base.read(state::LexerState, ::Type{Token}, kind::_TokenKind)
     return _expect(token, kind)
 end
 
-_is_idenfifier(c::Char) = !(isspace(c) || c in ('+', '-', '*', '^', ':'))
+# We're a bit more relaxed than typical, allowing any letter or digit, not just
+# ASCII.
+function _is_identifier(c::Char)
+    return isletter(c) || isdigit(c) || c in "!\"#\$%&()/,.;?@_`'{}|~"
+end
+
+function _is_starting_identifier(c::Char)
+    return isletter(c) || c in "!\"#\$%&(),;?@_`'{}|~"
+end
+
 _is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
 function Base.peek(state::LexerState, ::Type{Token}, n::Int = 1)
@@ -276,9 +289,9 @@ function _peek_inner(state::LexerState)
                 read(state, Char)
             end
             return Token(_TOKEN_NUMBER, String(take!(buf)))
-        elseif isletter(c) || c == '_'  # Identifier / keyword
+        elseif _is_starting_identifier(c)  # Identifier / keyword
             buf = IOBuffer()
-            while (c = peek(state, Char)) !== nothing && _is_idenfifier(c)
+            while (c = peek(state, Char)) !== nothing && _is_identifier(c)
                 write(buf, c)
                 read(state, Char)
             end
@@ -382,7 +395,11 @@ function _parse_number(state::LexerState, cache::Cache{T})::T where {T}
         end
     end
     _expect(token, _TOKEN_NUMBER)
-    return parse(T, token.value)
+    ret = tryparse(T, token.value)
+    if ret === nothing
+        throw(UnexpectedToken(token))
+    end
+    return ret
 end
 
 # QUAD_TERM :=
