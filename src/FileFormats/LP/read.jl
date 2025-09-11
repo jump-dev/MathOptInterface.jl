@@ -275,10 +275,10 @@ end
 function _peek_inner(state::LexerState)
     while (c = peek(state, Char)) !== nothing
         if c == '\n'
-            read(state, Char)
-            return Token(_TOKEN_NEWLINE, "\n")
+            _ = read(state, Char)
+            return Token(_TOKEN_NEWLINE, nothing)
         elseif isspace(c)  # Whitespace
-            read(state, Char)
+            _ = read(state, Char)
         elseif c == '\\'  # Comment: backslash until newline
             while (c = read(state, Char)) !== nothing && c != '\n'
             end
@@ -286,14 +286,14 @@ function _peek_inner(state::LexerState)
             buf = IOBuffer()
             while (c = peek(state, Char)) !== nothing && _is_number(c)
                 write(buf, c)
-                read(state, Char)
+                _ = read(state, Char)
             end
             return Token(_TOKEN_NUMBER, String(take!(buf)))
         elseif _is_starting_identifier(c)  # Identifier / keyword
             buf = IOBuffer()
             while (c = peek(state, Char)) !== nothing && _is_identifier(c)
                 write(buf, c)
-                read(state, Char)
+                _ = read(state, Char)
             end
             val = String(take!(buf))
             l_val = lowercase(val)
@@ -315,17 +315,17 @@ function _peek_inner(state::LexerState)
             end
             return Token(_TOKEN_IDENTIFIER, val)
         elseif (op = get(_OPERATORS, c, nothing)) !== nothing
-            read(state, Char) # Skip c
+            _ = read(state, Char) # Skip c
             if c == '-' && peek(state, Char) == '>'
-                read(state, Char)
-                return Token(_TOKEN_IMPLIES, "->")
+                _ = read(state, Char)
+                return Token(_TOKEN_IMPLIES, nothing)
             elseif c == '=' && peek(state, Char) in ('<', '>')
                 c = read(state, Char) # Allow =< and => as <= and >=
-                return Token(_OPERATORS[c], string(c))
+                return Token(_OPERATORS[c], nothing)
             elseif c in ('<', '>', '=') && peek(state, Char) == '='
                 _ = read(state, Char)  # Allow <=, >=, and ==
             end
-            return Token(op, string(c))
+            return Token(op, nothing)
         else
             throw(UnexpectedToken(Token(_TOKEN_UNKNOWN, "$c")))
         end

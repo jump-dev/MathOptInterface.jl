@@ -1289,7 +1289,7 @@ function test_parse_number()
         state = LP.LexerState(io)
         @test LP._parse_number(state, cache) == result
     end
-    for input in ["x", "abc", "ten"]
+    for input in ["x", "abc", "ten", "1.1.1", "1eE1"]
         io = IOBuffer(input)
         seekstart(io)
         state = LP.LexerState(io)
