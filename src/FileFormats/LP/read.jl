@@ -29,6 +29,13 @@ struct _ReadCache{T}
     end
 end
 
+function _read_newline_or_eof(state)
+    if (p = peek(state, _Token)) !== nothing
+        _ = read(state, _Token, _TOKEN_NEWLINE)
+    end
+    return
+end
+
 """
     Base.read!(io::IO, model::FileFormats.LP.Model)
 
@@ -53,10 +60,9 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         if token.kind == _TOKEN_KEYWORD
             _ = read(state, _Token)
             keyword = Symbol(token.value)
-            continue
+            _read_newline_or_eof(state)
         elseif token.kind == _TOKEN_NEWLINE
-            _ = read(state, _Token)
-            continue
+            _ = read(state, _Token, _TOKEN_NEWLINE)
         elseif keyword == :MINIMIZE
             MOI.set(cache.model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
             _parse_objective(state, cache)
@@ -347,6 +353,15 @@ end
 
 _is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
+# We want an efficient way to check if `test.value` is a case-insensitive
+# version of `target`. Thsi is run for every identifier, so it needs to be fast.
+function _compare_case_insenstive(test::_Token, target::String)
+    if test.kind != _TOKEN_IDENTIFIER || length(test.value) != length(target)
+        return false
+    end
+    return all(lowercase(a) == b for (a, b) in zip(test.value, target))
+end
+
 function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
     @assert n >= 1
     while length(state.peek_tokens) < n
@@ -355,6 +370,23 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
             return nothing
         end
         push!(state.peek_tokens, token)
+        if _compare_case_insenstive(token, "subject")
+            t = _peek_inner(state)
+            if _compare_case_insenstive(t, "to")
+                state.peek_tokens[end] =
+                    _Token(_TOKEN_KEYWORD, "CONSTRAINTS", token.pos)
+            else
+                push!(state.peek_tokens, t)
+            end
+        elseif _compare_case_insenstive(token, "such")
+            t = _peek_inner(state)
+            if _compare_case_insenstive(t, "that")
+                state.peek_tokens[end] =
+                    _Token(_TOKEN_KEYWORD, "CONSTRAINTS", token.pos)
+            else
+                push!(state.peek_tokens, t)
+            end
+        end
     end
     return state.peek_tokens[n]
 end
@@ -369,7 +401,8 @@ function _peek_inner(state::_LexerState)
         elseif isspace(c)  # Whitespace
             _ = read(state, Char)
         elseif c == '\\'  # Comment: backslash until newline
-            while (c = read(state, Char)) !== nothing && c != '\n'
+            while (c = peek(state, Char)) !== nothing && c != '\n'
+                _ = read(state, Char)
             end
         elseif isdigit(c) || (c == '-' && isdigit(peek(state, Char))) # Number
             buf = IOBuffer()
@@ -385,21 +418,7 @@ function _peek_inner(state::_LexerState)
                 _ = read(state, Char)
             end
             val = String(take!(buf))
-            l_val = lowercase(val)
-            if l_val == "subject"
-                t = peek(state, _Token)
-                if t.kind == _TOKEN_IDENTIFIER && lowercase(t.value) == "to"
-                    _ = read(state, _Token)  # Skip "to"
-                    return _Token(_TOKEN_KEYWORD, "CONSTRAINTS", pos)
-                end
-            elseif l_val == "such"
-                t = peek(state, _Token)
-                if t.kind == _TOKEN_IDENTIFIER && lowercase(t.value) == "that"
-                    _ = read(state, _Token)  # Skip "such"
-                    return _Token(_TOKEN_KEYWORD, "CONSTRAINTS", pos)
-                end
-            end
-            if (kw = get(_KEYWORDS, l_val, nothing)) !== nothing
+            if (kw = get(_KEYWORDS, lowercase(val), nothing)) !== nothing
                 return _Token(_TOKEN_KEYWORD, string(kw), pos)
             end
             return _Token(_TOKEN_IDENTIFIER, val, pos)
@@ -579,7 +598,12 @@ function _parse_quad_expression(
             )
         end
     end
-    _skip_newlines(state)
+    while _next_token_is(state, _TOKEN_NEWLINE)
+        if _next_token_is(state, _TOKEN_KEYWORD, 2)
+            break
+        end
+        _ = read(state, _Token, _TOKEN_NEWLINE)
+    end
     if _next_token_is(state, _TOKEN_DIVISION)
         _ = read(state, _Token) # /
         # Must be /2
@@ -691,6 +715,9 @@ function _parse_expression(state::_LexerState, cache::_ReadCache{T}) where {T}
             p = read(state, _Token)
             _add_to_expression!(f, _parse_term(state, cache, -one(T)))
         elseif p.kind == _TOKEN_NEWLINE
+            if _next_token_is(state, _TOKEN_KEYWORD, 2)
+                break
+            end
             _ = read(state, _Token)
         else
             break
@@ -782,6 +809,7 @@ function _parse_objective(state::_LexerState, cache::_ReadCache)
     end
     f = _parse_expression(state, cache)
     MOI.set(cache.model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    _read_newline_or_eof(state)
     return
 end
 
@@ -828,6 +856,7 @@ function _parse_bound(state, cache)
         x = _parse_variable(state, cache)
         set = _parse_set_suffix(state, cache)
         _add_bound(cache, x, set)
+        _read_newline_or_eof(state)
         return
     end
     # `a op x` or `a op x op b`
@@ -842,6 +871,7 @@ function _parse_bound(state, cache)
         rhs_set = _parse_set_suffix(state, cache)
         _add_bound(cache, x, rhs_set)
     end
+    _read_newline_or_eof(state)
     return
 end
 
@@ -852,10 +882,11 @@ function _is_sos_constraint(state)
 end
 
 # SOS_CONSTRAINT :=
-#   [NAME] S1:: (IDENTIFIER:NUMBER)+ \n
-#   | [NAME] S2:: (IDENTIFIER:NUMBER)+ \n
+#   [NAME] S1:: (IDENTIFIER:NUMBER)+
+#   | [NAME] S2:: (IDENTIFIER:NUMBER)+
 #
-# The newline character is required.
+# New lines are not supported within the line.
+# Terminating new lines are handled in _parse_constraint
 function _parse_sos_constraint(
     state::_LexerState,
     cache::_ReadCache{T},
@@ -904,6 +935,8 @@ end
 # INDICATOR_CONSTRAINT :=
 #   IDENTIFIER "=" "0" "->" EXPRESSION SET_SUFFIX
 #   | IDENTIFIER "=" "1" "->" EXPRESSION SET_SUFFIX
+#
+# Terminating new lines are handled in _parse_constraint
 function _parse_indicator_constraint(
     state::_LexerState,
     cache::_ReadCache{T},
@@ -929,9 +962,9 @@ function _parse_indicator_constraint(
 end
 
 # CONSTRAINT :=
-#   [NAME] EXPRESSION SET_SUFFIX
-#   | [NAME] SOS_CONSTRAINT
-#   | [NAME] INDICATOR_CONSTRAINT
+#   [NAME] EXPRESSION SET_SUFFIX \n
+#   | [NAME] SOS_CONSTRAINT \n
+#   | [NAME] INDICATOR_CONSTRAINT \n
 function _parse_constraint(state::_LexerState, cache::_ReadCache)
     name = _parse_optional_name(state, cache)
     # Check if this is an SOS constraint
@@ -947,5 +980,6 @@ function _parse_constraint(state::_LexerState, cache::_ReadCache)
     if name !== nothing
         MOI.set(cache.model, MOI.ConstraintName(), c, name)
     end
+    _read_newline_or_eof(state)
     return
 end

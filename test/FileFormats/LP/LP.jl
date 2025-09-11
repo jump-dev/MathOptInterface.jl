@@ -589,7 +589,7 @@ function test_read_objective_sense()
     )
     for (sense, result) in cases
         model = LP.Model()
-        io = IOBuffer("$sense x")
+        io = IOBuffer("$sense\nx")
         seekstart(io)
         read!(io, model)
         @test MOI.get(model, MOI.ObjectiveSense()) == result
@@ -1472,6 +1472,84 @@ function test_parse_set_sufffix()
         seekstart(io)
         state = LP._LexerState(io)
         @test_throws LP.ParseError LP._parse_set_suffix(state, cache)
+    end
+    return
+end
+
+function test_new_line_edge_cases()
+    target = "minimize\nobj: 1 x + 1 y\nsubject to\nc: 1 x <= 1\nBounds\nx >= 0\ny >= 0\nEnd\n"
+    for input in [
+        # Good
+        "minimize\nobj: x + y\nsubject to\nc: x <= 1\nend",
+        # Blank lines at the start
+        "\n\nminimize\nobj: x + y\nsubject to\nc: x <= 1\nend",
+        # Blank lines after minimize
+        "minimize\n\n\nobj: x + y\nsubject to\nc: x <= 1\nend",
+        # Blank lines between obj: and expression
+        "minimize\nobj:\n\nx + y\nsubject to\nc: x <= 1\nend",
+        # Blank lines throughout objective expression
+        "minimize\nobj:\nx \n+ \ny\nsubject to\nc: x <= 1\nend",
+        # Blank lines after objective expression
+        "minimize\nobj: x + y\n\nsubject to\nc: x <= 1\nend",
+        # Blank lines after subject to
+        "minimize\nobj: x + y\nsubject to\n\n\nc: x <= 1\nend",
+        # Blank lines in constraint
+        "minimize\nobj: x + y\nsubject to\nc:\nx\n<=\n1\nend",
+        # Blank lines around end
+        "minimize\nobj: x + y\nsubject to\nc: x <= 1\n\nend\n\n\n",
+        # Comment before newline
+        "minimize\\comment\nobj: x + y\nsubject to\nc: x <= 1\nend",
+        "minimize\nobj: x + y\\comment\nsubject to\nc: x <= 1\nend",
+        "minimize\nobj: x + y\nsubject to\\comment\nc: x <= 1\nend",
+        "minimize\nobj: x + y\nsubject to\nc: x <= 1\\comment\nend",
+        "minimize\nobj: x + y\nsubject to\nc: x <= 1\nend\\comment",
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        model = LP.Model()
+        MOI.read!(io, model)
+        @test sprint(MOI.write, model) == target
+    end
+    return
+end
+
+function test_new_line_edge_cases_sos()
+    target = "minimize\nobj: 1 x + 1 y\nsubject to\nBounds\nx >= 0\ny >= 0\nSOS\nc: S1:: x:1.0 y:2.0\nEnd\n"
+    for input in [
+        "minimize\nobj: x + y\nsubject to\nc: S1:: x:1 y:2\nend",
+        "minimize\nobj: x + y\nsubject to\nc: S1:: x:1 y:2\n\nend",
+        "minimize\nobj: x + y\nsubject to\n\nc: S1:: x:1 y:2\n\nend",
+        "minimize\nobj: x + y\nsubject to\n\nc: S1:: x:1 y:2\\comment\nend",
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        model = LP.Model()
+        MOI.read!(io, model)
+        @test sprint(MOI.write, model) == target
+    end
+    return
+end
+
+function test_new_line_edge_case_fails()
+    for input in [
+        # No newline between objective sense and objective
+        "minimize x",
+        "maximize x",
+        "maximize c: x",
+        # No new line between objective and subject to
+        "maximize\nobj: x subject to",
+        # No new line between subject to and constraint
+        "maximize\nobj: x\nsubject to c: x >= 0",
+        # No new line between multiple constraints
+        "maximize\nobj: x\nsubject to\nc: x >= 0 x <= 1",
+        # New lines in bounds section
+        "maximize\nobj: x\nsubject to\nbounds x >= 0\bx <= 1",
+        "maximize\nobj: x\nsubject to\nbounds\nx >= 0 x <= 1",
+    ]
+        io = IOBuffer(input)
+        seekstart(io)
+        model = LP.Model()
+        @test_throws LP.ParseError MOI.read!(io, model)
     end
     return
 end
