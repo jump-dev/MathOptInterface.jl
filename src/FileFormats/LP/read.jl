@@ -106,9 +106,10 @@ function Base.read!(io::IO, model::Model{T}) where {T}
     return
 end
 
-
-# We want an efficient way to check if `test.value` is a case-insensitive
-# version of `target`. This is run for every identifier, so it needs to be fast.
+# We want an efficient way to check if `test` is a case-insensitive version of
+# `target`. We won't want `lowercase(test) == target` because this involves
+# allocating a new string, and we check many identifiers to see if they are
+# keywords.
 function _compare_case_insenstive(test::String, target::String)
     if length(test) != length(target)
         return false
