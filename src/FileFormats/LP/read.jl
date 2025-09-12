@@ -138,7 +138,7 @@ every identifier.
 This function tries to be a little cleverer and doesn't allocate.
 """
 function _case_insenstive_identifier_to_keyword(input::String)
-    if !(3 <= length(input) <= 8)
+    if !(2 <= length(input) <= 8)
         return nothing  # identifiers outside these lengths are not recognized
     elseif _compare_case_insenstive(input, 'm', _MAXIMIZE_KEYWORDS)
         return "MAXIMIZE"
