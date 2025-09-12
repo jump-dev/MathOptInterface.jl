@@ -515,7 +515,7 @@ function _parse_number(state::_LexerState, cache::_ReadCache{T})::T where {T}
     elseif token.kind == _TOKEN_SUBTRACTION
         return -_parse_number(state, cache)
     elseif token.kind == _TOKEN_IDENTIFIER
-        if _compare_case_insenstive(token, 'i', ("inf", "infinity"))
+        if _compare_case_insenstive(token.value, 'i', ("inf", "infinity"))
             return typemax(T)
         end
         _throw_parse_error(state, token, "We expected this to be a number.")
