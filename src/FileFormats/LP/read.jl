@@ -248,8 +248,8 @@ struct _Token
 end
 
 """
-    mutable struct _LexerState
-        io::IO
+    mutable struct _LexerState{O<:IO}
+        io::O
         line::Int
         peek_char::Union{Nothing,Char}
         peek_tokens::Vector{_Token}
@@ -263,12 +263,12 @@ A struct that is used to manage state when lexing. It stores:
  * `peek_char`: the next `Char` in the `io`
  * `peek_tokens`: the list of upcoming tokens that we have already peeked
 """
-mutable struct _LexerState
-    io::IO
+mutable struct _LexerState{O<:IO}
+    io::O
     line::Int
     peek_char::Union{Nothing,Char}
     peek_tokens::Vector{_Token}
-    _LexerState(io::IO) = new(io, 1, nothing, _Token[])
+    _LexerState(io::IO) = new{typeof(io)}(io, 1, nothing, _Token[])
 end
 
 """
