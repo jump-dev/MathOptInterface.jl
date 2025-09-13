@@ -106,52 +106,63 @@ function Base.read!(io::IO, model::Model{T}) where {T}
     return
 end
 
+# We want an efficient way to check if `test` is a case-insensitive version of
+# `target`. We won't want `lowercase(test) == target` because this involves
+# allocating a new string, and we check many identifiers to see if they are
+# keywords.
+function _compare_case_insenstive(test::String, target::String)
+    if length(test) != length(target)
+        return false
+    end
+    return all(lowercase(a) == b for (a, b) in zip(test, target))
+end
+
+function _compare_case_insenstive(input::String, c::Char, args)
+    if lowercase(first(input)) != c
+        return false
+    end
+    return any(_compare_case_insenstive(input, arg) for arg in args)
+end
+
+const _MAXIMIZE_KEYWORDS = ("max", "maximize", "maximise", "maximum")
+const _MINIMIZE_KEYWORDS = ("min", "minimize", "minimise", "minimum")
+
 """
-    const _KEYWORDS::Dict{String,Symbol}
+    _case_insenstive_identifier_to_keyword(input::String)
 
-The LP file format is very permissive in what it allows users to call the
-various sections. Here is a dictionary that maps possible user words
-(normalized to lowercase, even though users can use mixed case) to the section.
+We need to check if identifiers are case insensitive keywords.
 
-If you find new spellings for the section names, add them here.
+An obvious way to do this is something like `dict[lowercase(identifier)]`, but
+this involves a moderately expensive `lowercase` operation and a dict lookup for
+every identifier.
 
-Special handling is needed in the lexer for the keywords that contain spaces.
+This function tries to be a little cleverer and doesn't allocate.
 """
-const _KEYWORDS = Dict(
-    # MAXIMIZE
-    "max" => :MAXIMIZE,
-    "maximize" => :MAXIMIZE,
-    "maximise" => :MAXIMIZE,
-    "maximum" => :MAXIMIZE,
-    # MINIMIZE
-    "min" => :MINIMIZE,
-    "minimize" => :MINIMIZE,
-    "minimise" => :MINIMIZE,
-    "minimum" => :MINIMIZE,
-    # CONSTRAINTS
-    "subject to" => :CONSTRAINTS,
-    "such that" => :CONSTRAINTS,
-    "st" => :CONSTRAINTS,
-    "s.t." => :CONSTRAINTS,
-    "st." => :CONSTRAINTS,
-    # BOUNDS
-    "bounds" => :BOUNDS,
-    "bound" => :BOUNDS,
-    # INTEGER
-    "gen" => :INTEGER,
-    "general" => :INTEGER,
-    "generals" => :INTEGER,
-    "integer" => :INTEGER,
-    "integers" => :INTEGER,
-    # BINARY
-    "bin" => :BINARY,
-    "binary" => :BINARY,
-    "binaries" => :BINARY,
-    # SOS
-    "sos" => :SOS,
-    # END
-    "end" => :END,
-)
+function _case_insenstive_identifier_to_keyword(input::String)
+    if !(2 <= length(input) <= 8)
+        return nothing  # identifiers outside these lengths are not recognized
+    elseif _compare_case_insenstive(input, 'm', _MAXIMIZE_KEYWORDS)
+        return "MAXIMIZE"
+    elseif _compare_case_insenstive(input, 'm', _MINIMIZE_KEYWORDS)
+        return "MINIMIZE"
+    elseif _compare_case_insenstive(input, 's', ("st", "s.t.", "st."))
+        # `subject to` and `such that` handled in `peek`
+        return "CONSTRAINTS"
+    elseif _compare_case_insenstive(input, "sos")
+        return "SOS"
+    elseif _compare_case_insenstive(input, 'b', ("bound", "bounds"))
+        return "BOUNDS"
+    elseif _compare_case_insenstive(input, 'g', ("gen", "general", "generals"))
+        return "INTEGER"
+    elseif _compare_case_insenstive(input, 'i', ("integer", "integers"))
+        return "INTEGER"
+    elseif _compare_case_insenstive(input, 'b', ("bin", "binary", "binaries"))
+        return "BINARY"
+    elseif _compare_case_insenstive(input, "end")
+        return "END"
+    end
+    return nothing
+end
 
 """
     _TokenKind
@@ -245,6 +256,13 @@ struct _Token
     kind::_TokenKind
     value::Union{Nothing,String}
     pos::Int
+end
+
+function _compare_case_insenstive(test::_Token, target::String)
+    if test.kind != _TOKEN_IDENTIFIER
+        return false
+    end
+    return _compare_case_insenstive(test.value, target)
 end
 
 """
@@ -353,15 +371,6 @@ end
 
 _is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
-# We want an efficient way to check if `test.value` is a case-insensitive
-# version of `target`. Thsi is run for every identifier, so it needs to be fast.
-function _compare_case_insenstive(test::_Token, target::String)
-    if test.kind != _TOKEN_IDENTIFIER || length(test.value) != length(target)
-        return false
-    end
-    return all(lowercase(a) == b for (a, b) in zip(test.value, target))
-end
-
 function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
     @assert n >= 1
     while length(state.peek_tokens) < n
@@ -418,8 +427,8 @@ function _peek_inner(state::_LexerState)
                 _ = read(state, Char)
             end
             val = String(take!(buf))
-            if (kw = get(_KEYWORDS, lowercase(val), nothing)) !== nothing
-                return _Token(_TOKEN_KEYWORD, string(kw), pos)
+            if (kw = _case_insenstive_identifier_to_keyword(val)) !== nothing
+                return _Token(_TOKEN_KEYWORD, kw, pos)
             end
             return _Token(_TOKEN_IDENTIFIER, val, pos)
         elseif (op = get(_OPERATORS, c, nothing)) !== nothing
@@ -507,12 +516,10 @@ function _parse_number(state::_LexerState, cache::_ReadCache{T})::T where {T}
     elseif token.kind == _TOKEN_SUBTRACTION
         return -_parse_number(state, cache)
     elseif token.kind == _TOKEN_IDENTIFIER
-        v = lowercase(token.value)
-        if v == "inf" || v == "infinity"
+        if _compare_case_insenstive(token.value, 'i', ("inf", "infinity"))
             return typemax(T)
-        else
-            _throw_parse_error(state, token, "We expected this to be a number.")
         end
+        _throw_parse_error(state, token, "We expected this to be a number.")
     end
     _expect(state, token, _TOKEN_NUMBER)
     ret = tryparse(T, token.value)
@@ -740,7 +747,7 @@ end
 function _parse_set_suffix(state, cache)
     _skip_newlines(state)
     p = read(state, _Token)
-    if p.kind == _TOKEN_IDENTIFIER && lowercase(p.value) == "free"
+    if _compare_case_insenstive(p, "free")
         return nothing
     end
     _skip_newlines(state)
