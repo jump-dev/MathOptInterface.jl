@@ -1613,6 +1613,40 @@ function test_parse_newline_in_objective_expression()
     return
 end
 
+function test_parse_subject_eof()
+    io = IOBuffer("maximize\nobj:\nsubject")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "subject")
+    @test x isa MOI.VariableIndex
+    return
+end
+
+function test_parse_expr_eof()
+    io = IOBuffer("maximize\nobj: x + 2\n")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    f = 1.0 * x + 2.0
+    g = MOI.get(model, MOI.ObjectiveFunction{typeof(f)}())
+    @test isapprox(f, g)
+    return
+end
+
+function test_parse_quadratic_expr_eof()
+    io = IOBuffer("maximize\nobj: [x * x]\n")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    f = 1.0 * x * x
+    g = MOI.get(model, MOI.ObjectiveFunction{typeof(f)}())
+    @test isapprox(f, g)
+    return
+end
+
 end  # module
 
 TestLP.runtests()

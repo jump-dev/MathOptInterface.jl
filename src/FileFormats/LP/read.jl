@@ -664,7 +664,7 @@ function _parse_quad_expression(
         end
     end
     t = _next_non_newline(state)
-    if t.kind == _TOKEN_DIVISION
+    if t !== nothing && t.kind == _TOKEN_DIVISION
         _skip_newlines(state)
         _ = read(state, _Token, _TOKEN_DIVISION) # /
         # Must be /2
@@ -729,7 +729,10 @@ function _parse_term(
             # This could either be NUMBER \nEND-OF-TERM, or it could be a term
             # split by a new line, like `2\nx`.
             t = _next_non_newline(state)
-            if t.kind == _TOKEN_MULTIPLICATION
+            if t === nothing
+                # NUMBER
+                return coef
+            elseif t.kind == _TOKEN_MULTIPLICATION
                 # NUMBER \n * [\n] IDENTIFIER
                 _skip_newlines(state)
                 _ = read(state, _Token, _TOKEN_MULTIPLICATION)
