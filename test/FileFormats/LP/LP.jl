@@ -1554,6 +1554,99 @@ function test_new_line_edge_case_fails()
     return
 end
 
+function test_parse_keyword_edge_cases_identifier_is_keyword()
+    for name in ["max", "min", "st", "such", "bounds", "obj", "free"]
+        io = IOBuffer("""
+        maximize
+        obj: $name
+        subject to
+        $name <= 1
+        bounds
+        $name free
+        end
+        """)
+        seekstart(io)
+        model = LP.Model()
+        MOI.read!(io, model)
+        x = only(MOI.get(model, MOI.ListOfVariableIndices()))
+        @test MOI.get(model, MOI.VariableName(), x) == name
+    end
+    return
+end
+
+function test_parse_keyword_subject_to_errors()
+    for line in ["subject", "subject too", "subject to a:"]
+        io = IOBuffer("""
+        maximize
+        obj: x
+        $line
+        x <= 1
+        bounds
+        x free
+        end
+        """)
+        seekstart(io)
+        model = LP.Model()
+        @test_throws LP.ParseError MOI.read!(io, model)
+    end
+    return
+end
+
+function test_parse_newline_in_objective_expression()
+    for obj in ["2 x", "\n2 x", "2\nx", "2*\nx", "2\n*x", "2\n\n*\n\n\nx\n"]
+        io = IOBuffer("""
+        maximize
+        obj: $obj
+        subject to
+        bounds
+        x free
+        end
+        """)
+        seekstart(io)
+        model = LP.Model()
+        MOI.read!(io, model)
+        x = MOI.get(model, MOI.VariableIndex, "x")
+        f = 2.0 * x
+        g = MOI.get(model, MOI.ObjectiveFunction{typeof(f)}())
+        @test isapprox(f, g)
+    end
+    return
+end
+
+function test_parse_subject_eof()
+    io = IOBuffer("maximize\nobj:\nsubject")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "subject")
+    @test x isa MOI.VariableIndex
+    return
+end
+
+function test_parse_expr_eof()
+    io = IOBuffer("maximize\nobj: x + 2\n")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    f = 1.0 * x + 2.0
+    g = MOI.get(model, MOI.ObjectiveFunction{typeof(f)}())
+    @test isapprox(f, g)
+    return
+end
+
+function test_parse_quadratic_expr_eof()
+    io = IOBuffer("maximize\nobj: [x * x]\n")
+    seekstart(io)
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "x")
+    f = 1.0 * x * x
+    g = MOI.get(model, MOI.ObjectiveFunction{typeof(f)}())
+    @test isapprox(f, g)
+    return
+end
+
 end  # module
 
 TestLP.runtests()

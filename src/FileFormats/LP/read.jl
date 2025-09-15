@@ -280,13 +280,15 @@ A struct that is used to manage state when lexing. It stores:
    error message to the user on a parse error
  * `peek_char`: the next `Char` in the `io`
  * `peek_tokens`: the list of upcoming tokens that we have already peeked
+ * `current_token`: the most recent token that we have `read`
 """
 mutable struct _LexerState{O<:IO}
     io::O
     line::Int
     peek_char::Union{Nothing,Char}
     peek_tokens::Vector{_Token}
-    _LexerState(io::IO) = new{typeof(io)}(io, 1, nothing, _Token[])
+    current_token::Union{Nothing,_Token}
+    _LexerState(io::IO) = new{typeof(io)}(io, 1, nothing, _Token[], nothing)
 end
 
 """
@@ -351,6 +353,7 @@ function Base.read(state::_LexerState, ::Type{_Token})
         )
     end
     popfirst!(state.peek_tokens)
+    state.current_token = token
     return token
 end
 
@@ -371,6 +374,16 @@ end
 
 _is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
+_nothing_or_newline(::Nothing) = true
+_nothing_or_newline(t::_Token) = t.kind == _TOKEN_NEWLINE
+
+function _prior_token(state::_LexerState)
+    if length(state.peek_tokens) <= 1
+        return state.current_token
+    end
+    return state.peek_tokens[end-1]
+end
+
 function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
     @assert n >= 1
     while length(state.peek_tokens) < n
@@ -379,22 +392,58 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
             return nothing
         end
         push!(state.peek_tokens, token)
-        if _compare_case_insenstive(token, "subject")
+        if token.kind != _TOKEN_IDENTIFIER
+            continue
+        end
+        # Here we have a _TOKEN_IDENTIFIER. But if it is not preceeded by a
+        # _TOKEN_NEWLINE, it cannot be a _TOKEN_KEYWORD.
+        if !_nothing_or_newline(_prior_token(state))
+            continue
+        end
+        # It might be a _TOKEN_KEYWORD.
+        (kw = _case_insenstive_identifier_to_keyword(token.value))
+        if kw !== nothing
+            # The token matches a single word keyword. All keywords are followed
+            # by a new line, or an EOF.
             t = _peek_inner(state)
-            if _compare_case_insenstive(t, "to")
+            if _nothing_or_newline(t)
+                state.peek_tokens[end] = _Token(_TOKEN_KEYWORD, kw, token.pos)
+            end
+            if t !== nothing
+                push!(state.peek_tokens, t)
+            end
+            continue
+        end
+        # There are two keyword that contain whitespace: `subject to` and
+        # `such that`
+        for (a, b) in ("subject" => "to", "such" => "that")
+            if !_compare_case_insenstive(token, a)
+                continue
+            end
+            # This _might_ be `subject to`, or it might just be a variable
+            # named `subject`, like `obj:\n subject\n`.
+            token_b = _peek_inner(state)
+            if token_b === nothing
+                # The next token is EOF. Nothing to do here.
+                break
+            elseif !_compare_case_insenstive(token_b, b)
+                # The second token doesn't match. Store `token_b` and break
+                push!(state.peek_tokens, token_b)
+                break
+            end
+            # We have something that matches (a, b), but a TOKEN_KEYWORD needs
+            # to be followed by a new line.
+            token_nl = _peek_inner(state)
+            if _nothing_or_newline(token_nl)
                 state.peek_tokens[end] =
                     _Token(_TOKEN_KEYWORD, "CONSTRAINTS", token.pos)
             else
-                push!(state.peek_tokens, t)
+                push!(state.peek_tokens, token_b)
             end
-        elseif _compare_case_insenstive(token, "such")
-            t = _peek_inner(state)
-            if _compare_case_insenstive(t, "that")
-                state.peek_tokens[end] =
-                    _Token(_TOKEN_KEYWORD, "CONSTRAINTS", token.pos)
-            else
-                push!(state.peek_tokens, t)
+            if token_nl !== nothing
+                push!(state.peek_tokens, token_nl)
             end
+            break
         end
     end
     return state.peek_tokens[n]
@@ -426,11 +475,7 @@ function _peek_inner(state::_LexerState)
                 write(buf, c)
                 _ = read(state, Char)
             end
-            val = String(take!(buf))
-            if (kw = _case_insenstive_identifier_to_keyword(val)) !== nothing
-                return _Token(_TOKEN_KEYWORD, kw, pos)
-            end
-            return _Token(_TOKEN_IDENTIFIER, val, pos)
+            return _Token(_TOKEN_IDENTIFIER, String(take!(buf)), pos)
         elseif (op = get(_OPERATORS, c, nothing)) !== nothing
             _ = read(state, Char) # Skip c
             if c == '-' && peek(state, Char) == '>'
@@ -471,6 +516,19 @@ function _skip_newlines(state::_LexerState)
         _ = read(state, _Token, _TOKEN_NEWLINE)
     end
     return
+end
+
+function _next_non_newline(state::_LexerState)
+    n = 1
+    while true
+        t = peek(state, _Token, n)
+        if t === nothing
+            return nothing
+        elseif t.kind != _TOKEN_NEWLINE
+            return t
+        end
+        n += 1
+    end
 end
 
 # IDENTIFIER := "string"
@@ -605,14 +663,10 @@ function _parse_quad_expression(
             )
         end
     end
-    while _next_token_is(state, _TOKEN_NEWLINE)
-        if _next_token_is(state, _TOKEN_KEYWORD, 2)
-            break
-        end
-        _ = read(state, _Token, _TOKEN_NEWLINE)
-    end
-    if _next_token_is(state, _TOKEN_DIVISION)
-        _ = read(state, _Token) # /
+    t = _next_non_newline(state)
+    if t !== nothing && t.kind == _TOKEN_DIVISION
+        _skip_newlines(state)
+        _ = read(state, _Token, _TOKEN_DIVISION) # /
         # Must be /2
         n = read(state, _Token, _TOKEN_NUMBER)
         if n.value != "2"
@@ -634,10 +688,11 @@ function _parse_quad_expression(
 end
 
 # TERM :=
-#   "+" TERM
+#   [\n*] TERM
+#   | "+" TERM
 #   | "-" TERM
-#   | NUMBER
 #   | IDENTIFIER
+#   | NUMBER
 #   | NUMBER IDENTIFIER
 #   | NUMBER "*" IDENTIFIER
 #   | QUADRATIC_EXPRESSION
@@ -670,12 +725,28 @@ function _parse_term(
             _ = read(state, _Token, _TOKEN_MULTIPLICATION)
             x = _parse_variable(state, cache)
             return MOI.ScalarAffineTerm(coef, x)
-        elseif _next_token_is(state, _TOKEN_NEWLINE) ||
-               _next_token_is(state, _TOKEN_ADDITION) ||
-               _next_token_is(state, _TOKEN_SUBTRACTION)
-            # NUMBER
-            return coef
+        elseif _next_token_is(state, _TOKEN_NEWLINE)
+            # This could either be NUMBER \nEND-OF-TERM, or it could be a term
+            # split by a new line, like `2\nx`.
+            t = _next_non_newline(state)
+            if t === nothing
+                # NUMBER
+                return coef
+            elseif t.kind == _TOKEN_MULTIPLICATION
+                # NUMBER \n * [\n] IDENTIFIER
+                _skip_newlines(state)
+                _ = read(state, _Token, _TOKEN_MULTIPLICATION)
+                _skip_newlines(state)
+                x = _parse_variable(state, cache)
+                return MOI.ScalarAffineTerm(coef, x)
+            elseif t.kind == _TOKEN_IDENTIFIER
+                # NUMBER \n IDENTIFIER
+                x = _parse_variable(state, cache)
+                return MOI.ScalarAffineTerm(coef, x)
+            end
         end
+        # NUMBER
+        return coef
     elseif _next_token_is(state, _TOKEN_OPEN_BRACKET)
         # QUADRATIC_EXPRESSION
         return _parse_quad_expression(state, cache, prefix)
