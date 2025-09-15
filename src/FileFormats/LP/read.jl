@@ -395,13 +395,13 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
         if token.kind != _TOKEN_IDENTIFIER
             continue
         end
-        # Here we have a _TOKEN_IDENTIFIER. If it is preceeded by a
-        # _TOKEN_NEWLINE, it may be a _TOKEN_KEYWORD.
+        # Here we have a _TOKEN_IDENTIFIER. But if it is not preceeded by a
+        # _TOKEN_NEWLINE, it cannot be a _TOKEN_KEYWORD.
         if !_nothing_or_newline(_prior_token(state))
-            continue  # It can't be a keyword
+            continue
         end
         # It might be a _TOKEN_KEYWORD.
-        kw = _case_insenstive_identifier_to_keyword(token.value)
+        (kw = _case_insenstive_identifier_to_keyword(token.value))
         if kw !== nothing
             # The token matches a single word keyword. All keywords are followed
             # by a new line, or an EOF.
@@ -414,25 +414,36 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
             end
             continue
         end
-        for (a, b) in ["subject" => "to", "such" => "that"]
-            if _compare_case_insenstive(token, a)
-                # This _might_ be `subject to`, or it might just be a variable
-                # named `subject`, like `obj:\n subject\n`.
-                t = _peek_inner(state)
-                if t !== nothing
-                    t2 = _peek_inner(state)
-                    if _compare_case_insenstive(t, b) && _nothing_or_newline(t2)
-                        state.peek_tokens[end] =
-                        _Token(_TOKEN_KEYWORD, "CONSTRAINTS", token.pos)
-                    else
-                        push!(state.peek_tokens, t)
-                    end
-                    if t2 !== nothing
-                        push!(state.peek_tokens, t2)
-                    end
-                end
+        # There are two keyword that contain whitespace: `subject to` and
+        # `such that`
+        for (a, b) in ("subject" => "to", "such" => "that")
+            if !_compare_case_insenstive(token, a)
                 continue
             end
+            # This _might_ be `subject to`, or it might just be a variable
+            # named `subject`, like `obj:\n subject\n`.
+            token_b = _peek_inner(state)
+            if token_b === nothing
+                # The next token is EOF. Nothing to do here.
+                break
+            elseif !_compare_case_insenstive(token_b, b)
+                # The second token doesn't match. Store `token_b` and break
+                push!(state.peek_tokens, token_b)
+                break
+            end
+            # We have something that matches (a, b), but a TOKEN_KEYWORD needs
+            # to be followed by a new line.
+            token_nl = _peek_inner(state)
+            if _nothing_or_newline(token_nl)
+                state.peek_tokens[end] =
+                    _Token(_TOKEN_KEYWORD, "CONSTRAINTS", token.pos)
+            else
+                push!(state.peek_tokens, token_b)
+            end
+            if token_nl !== nothing
+                push!(state.peek_tokens, token_nl)
+            end
+            break
         end
     end
     return state.peek_tokens[n]
