@@ -1592,7 +1592,7 @@ function test_parse_keyword_subject_to_errors()
     return
 end
 
-function test_parse_keyword_subject_to_errors()
+function test_parse_newline_in_objective_expression()
     for obj in ["2 x", "\n2 x", "2\nx", "2*\nx", "2\n*x", "2\n\n*\n\n\nx\n"]
         io = IOBuffer("""
         maximize
