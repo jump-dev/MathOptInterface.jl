@@ -55,6 +55,8 @@ struct _SOSConstraint{T}
 end
 
 mutable struct TempMPSModel{T}
+    lines::Int
+    contents::String
     name::String
     is_minimization::Bool
     obj_name::String
@@ -78,34 +80,61 @@ mutable struct TempMPSModel{T}
     qc_matrix::Dict{String,Vector{Tuple{String,String,T}}}
     current_qc_matrix::String
     indicators::Dict{String,Tuple{String,MOI.ActivationCondition}}
+
+    function TempMPSModel{T}() where {T}
+        return new{T}(
+            0,        # line
+            "",       # contents
+            "",       # name
+            true,     # is_minimization
+            "",       # obj_name
+            T[],      # c
+            zero(T),  # obj_constant
+            T[],      # col_lower
+            T[],      # col_upper
+            Bool[],   # col_bounds_default
+            T[],      # row_lower
+            T[],      # row_upper
+            Sense[],  # sense
+            Vector{Tuple{Int,T}}[],  # A
+            VType[],
+            Dict{String,Int}(),
+            String[],
+            Dict{String,Int}(),
+            String[],
+            false,
+            _SOSConstraint{T}[],
+            Tuple{String,String,T}[],
+            Dict{String,Vector{Tuple{String,String,T}}}(),
+            "",
+            Dict{String,Tuple{String,MOI.ActivationCondition}}(),
+        )
+    end
 end
 
-function TempMPSModel{T}() where {T}
-    return TempMPSModel{T}(
-        "",
-        true,
-        "",
-        T[],      # c
-        zero(T),  # obj_constant
-        T[],      # col_lower
-        T[],      # col_upper
-        Bool[],   # col_bounds_default
-        T[],      # row_lower
-        T[],      # row_upper
-        Sense[],  # sense
-        Vector{Tuple{Int,T}}[],  # A
-        VType[],
-        Dict{String,Int}(),
-        String[],
-        Dict{String,Int}(),
-        String[],
-        false,
-        _SOSConstraint{T}[],
-        Tuple{String,String,T}[],
-        Dict{String,Vector{Tuple{String,String,T}}}(),
-        "",
-        Dict{String,Tuple{String,MOI.ActivationCondition}}(),
-    )
+"""
+    struct ParseError <: Exception
+        line::Int
+        msg::String
+    end
+
+This error is thrown when we encounter an error parsing the MPS file.
+"""
+struct ParseError <: Exception
+    line::Int
+    msg::String
+end
+
+function _throw_parse_error(data, msg)
+    counters = "1234567890"
+    counter_line = counters ^ ceil(Int, length(data.contents) / 10)
+    counter_line = counter_line[1:length(data.contents)]
+    msg = string(data.contents, "\n", counter_line, "\n\n", msg)
+    return throw(ParseError(data.lines, msg))
+end
+
+function Base.showerror(io::IO, err::ParseError)
+    return print(io, "Error parsing MPS file on line $(err.line):\n\n", err.msg)
 end
 
 @enum(
@@ -208,11 +237,12 @@ function Base.read!(io::IO, model::Model{T}) where {T}
     data = TempMPSModel{T}()
     header = HEADER_NAME
     while !eof(io) && header != HEADER_ENDATA
-        raw_line = readline(io)
-        if startswith(raw_line, '*')
+        data.contents = readline(io)
+        data.lines += 1
+        if startswith(data.contents, '*')
             continue  # Lines starting with `*` are comments
         end
-        line = string(strip(raw_line))
+        line = string(strip(data.contents))
         if isempty(line)
             continue  # Skip blank lines
         end
@@ -221,7 +251,12 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             items = line_to_items(line)
             if length(items) == 2
                 sense = uppercase(items[2])
-                @assert sense == "MAX" || sense == "MIN"
+                if !(sense in ("MIN", "MAX"))
+                    _throw_parse_error(
+                        data,
+                        "The objective sense must be MIN or MAX.",
+                    )
+                end
                 data.is_minimization = sense == "MIN"
             else
                 header = HEADER_OBJSENSE
@@ -229,7 +264,12 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             continue
         elseif h == HEADER_QCMATRIX || h == HEADER_QSECTION
             items = line_to_items(line)
-            @assert length(items) == 2
+            if length(items) != 2
+                _throw_parse_error(
+                    data,
+                    "The header for a quadratic matrx must have two fields, where the second field is the name of the Q matrix.",
+                )
+            end
             data.current_qc_matrix = String(items[2])
             header = h
             data.qc_matrix[data.current_qc_matrix] = Tuple{String,String,T}[]
@@ -245,7 +285,12 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             parse_name_line(data, line)
         elseif header == HEADER_OBJSENSE
             sense = uppercase(only(items))
-            @assert sense == "MAX" || sense == "MIN"
+            if !(sense in ("MIN", "MAX"))
+                _throw_parse_error(
+                    data,
+                    "The objective sense must be MIN or MAX.",
+                )
+            end
             data.is_minimization = sense == "MIN"
         elseif header == HEADER_ROWS
             parse_rows_line(data, items)
@@ -270,6 +315,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         elseif header == HEADER_INDICATORS
             parse_indicators_line(data, items)
         else
+            # This really is an assert, not an opportunity for a ParseError.
             @assert header == HEADER_ENDATA
         end
     end
@@ -428,16 +474,11 @@ function _add_quad_constraint(
     ]
     quad_terms = MOI.ScalarQuadraticTerm{T}[]
     options = get_options(model)
-    scale = if options.quadratic_format == kQuadraticFormatGurobi
+    scale = 1
+    if options.quadratic_format == kQuadraticFormatGurobi
         # Gurobi does NOT have a /2 as part of the quadratic matrix. Why oh why
         # would you break precedent with all other formats.
-        2
-    else
-        @assert in(
-            options.quadratic_format,
-            (kQuadraticFormatCPLEX, kQuadraticFormatMosek),
-        )
-        1
+        scale = 2
     end
     for (x_name, y_name, q) in data.qc_matrix[c_name]
         x, y = variable_map[x_name], variable_map[y_name]
@@ -456,7 +497,10 @@ end
 function parse_name_line(data::TempMPSModel, line::String)
     m = match(r"^\s*NAME(.*)"i, line)
     if m === nothing
-        error("Malformed NAME line: ", line)
+        _throw_parse_error(
+            data,
+            "This line must be  of the form `NAME <problem name>`.",
+        )
     end
     data.name = strip(m[1]::AbstractString)
     return
@@ -468,7 +512,10 @@ end
 
 function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
     if length(items) < 2
-        error("Malformed ROWS line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "A `ROWS` line must have two fields, where the first is the sense (`N`, `G`, `L`, or `E`) and the second is the name of the row.",
+        )
     end
     # if length(items) > 2
     #     We could throw an error here, but it seems like other solvers just
@@ -480,9 +527,15 @@ function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
     # end
     sense, name = Sense(items[1]), items[2]
     if haskey(data.name_to_row, name)
-        error("Duplicate row encountered: $(join(items, " ")).")
+        _throw_parse_error(
+            data,
+            "There are two ROWS with a duplicate name: $name.",
+        )
     elseif sense == SENSE_UNKNOWN
-        error("Invalid row sense: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "This row sense is invalid: $(items[1]). It must be `N`, `G`, `L`, or `E`.",
+        )
     end
     if sense == SENSE_N
         if data.obj_name == ""
@@ -492,7 +545,10 @@ function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
         end
     end
     if name == data.obj_name
-        error("Found row with same name as objective: $(join(items, " ")).")
+        _throw_parse_error(
+            data,
+            "Encountered a row with same name as the objective: $name.",
+        )
     end
     # Add some default bounds for the constraints.
     push!(data.row_to_name, name)
@@ -511,6 +567,7 @@ function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
         push!(data.row_lower, zero(T))
         push!(data.row_upper, zero(T))
     else
+        # This really is an assert, not an opportunity for a ParseError
         @assert sense == SENSE_N
         push!(data.row_lower, typemin(T))
         push!(data.row_upper, typemax(T))
@@ -529,7 +586,10 @@ function parse_single_coefficient(data, row_name::String, column::Int, value)
     end
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
-        error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
+        _throw_parse_error(
+            data,
+            "The ROW name $(row_name) not recognised. If a row appears in the COLUMNS section, it must first be declared in the ROWS section.",
+        )
     end
     push!(data.A[row], (column, value))
     return
@@ -555,9 +615,9 @@ function _set_intorg(data::TempMPSModel{T}, column, column_name) where {T}
         # The default upper bound for variables in INTORG is `1`, not `Inf`...
         data.col_upper[column] = one(T)
     elseif data.vtype[column] != VTYPE_CONTINUOUS
-        error(
-            "Variable $(column_name) appeared in COLUMNS outside an " *
-            "`INT` marker after already being declared as integer.",
+        _throw_parse_error(
+            data,
+            "The variable $(column_name) appeared in COLUMNS outside an `INTORG`-`INTEND` marker after already being declared as integer.",
         )
     end
     return
@@ -592,7 +652,10 @@ function parse_columns_line(
         parse_single_coefficient(data, row_name_2, column, parse(T, value_2))
         _set_intorg(data, column, column_name)
     else
-        error("Malformed COLUMNS line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed COLUMNS line. This line must have 3 or 5 fields.",
+        )
     end
     return
 end
@@ -608,7 +671,10 @@ function parse_single_rhs(data, row_name::String, value, items::Vector{String})
     end
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
-        error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
+        _throw_parse_error(
+            data,
+            "The ROW name $(row_name) not recognised. If a row appears in the RHS section, it must previously have been declared in the ROWS section.",
+        )
     end
     if data.sense[row] == SENSE_E
         data.row_upper[row] = value
@@ -618,8 +684,12 @@ function parse_single_rhs(data, row_name::String, value, items::Vector{String})
     elseif data.sense[row] == SENSE_L
         data.row_upper[row] = value
     else
+        # This really is an assert, not an opportunity for a ParseError.
         @assert data.sense[row] == SENSE_N
-        error("Cannot have RHS for free row: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "A row sense `N` cannot have a right-hand side value.",
+        )
     end
     return
 end
@@ -636,7 +706,10 @@ function parse_rhs_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
         parse_single_rhs(data, row_name_1, parse(T, value_1), items)
         parse_single_rhs(data, row_name_2, parse(T, value_2), items)
     else
-        error("Malformed RHS line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed RHS line: expected three or five fields.",
+        )
     end
     return
 end
@@ -658,7 +731,10 @@ end
 function parse_single_range(data, row_name::String, value)
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
-        error("ROW name $(row_name) not recognised. Is it in the ROWS field?")
+        _throw_parse_error(
+            data,
+            "The ROW name $(row_name) not recognised. If a row appears in the RHS section, it must previously have been declared in the ROWS section.",
+        )
     end
     if data.sense[row] == SENSE_G
         data.row_upper[row] = data.row_lower[row] + abs(value)
@@ -689,7 +765,10 @@ function parse_ranges_line(
         parse_single_range(data, row_name_1, parse(T, value_1))
         parse_single_range(data, row_name_2, parse(T, value_2))
     else
-        error("Malformed RANGES line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed RANGES line: expected three or five fields.",
+        )
     end
     return
 end
@@ -705,7 +784,10 @@ function _parse_single_bound(
 ) where {T}
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
-        error("Column name $(column_name) not found.")
+        _throw_parse_error(
+            data,
+            "The column name $(column_name) was not recognized. If a column appears in the BOUNDS section, it must have previously appeared in the COLUMNS section.",
+        )
     end
     if data.col_bounds_default[col] && data.vtype[col] == VTYPE_INTEGER
         # This column was part of an INTORG...INTEND block, so it gets a default
@@ -726,7 +808,10 @@ function _parse_single_bound(
         data.col_upper[col] = typemax(T)
         data.vtype[col] = VTYPE_BINARY
     else
-        error("Invalid bound type $(bound_type): $(column_name)")
+        _throw_parse_error(
+            data,
+            "The bound type $bound_type is invalid when there are three fields.",
+        )
     end
 end
 
@@ -738,7 +823,10 @@ function _parse_single_bound(
 ) where {T}
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
-        error("Column name $(column_name) not found.")
+        _throw_parse_error(
+            data,
+            "The column name $(column_name) was not recognized. If a column appears in the BOUNDS section, it must have previously appeared in the COLUMNS section.",
+        )
     end
     if data.col_bounds_default[col] && data.vtype[col] == VTYPE_INTEGER
         # This column was part of an INTORG...INTEND block, so it gets a default
@@ -774,7 +862,10 @@ function _parse_single_bound(
         data.col_upper[col] = typemax(T)
         data.vtype[col] = VTYPE_BINARY
     else
-        error("Invalid bound type $(bound_type): $(column_name)")
+        _throw_parse_error(
+            data,
+            "The bound type $bound_type is invalid when there are four fields.",
+        )
     end
 end
 
@@ -789,7 +880,10 @@ function parse_bounds_line(
         bound_type, _, column_name, value = items
         _parse_single_bound(data, column_name, bound_type, parse(T, value))
     else
-        error("Malformed BOUNDS line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed BOUNDS line: expected three or four fields.",
+        )
     end
     return
 end
@@ -800,7 +894,7 @@ end
 
 function parse_sos_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 2
-        error("Malformed SOS line: $(join(items, " "))")
+        _throw_parse_error(data, "Malformed SOS line: expected two fields.")
     elseif items[1] == "S1"
         push!(data.sos_constraints, _SOSConstraint(1, T[], String[]))
     elseif items[1] == "S2"
@@ -819,7 +913,10 @@ end
 
 function parse_quadobj_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
-        error("Malformed QUADOBJ line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed QUADOBJ line: expected three fields.",
+        )
     end
     push!(data.quad_obj, (items[1], items[2], parse(T, items[3])))
     return
@@ -831,7 +928,10 @@ end
 
 function parse_qmatrix_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
-        error("Malformed QMATRIX line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed QMATRIX line: expected three fields.",
+        )
     end
     if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
         # Off-diagonals have duplicate entries. We don't need to store both
@@ -847,7 +947,10 @@ end
 
 function parse_qcmatrix_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
-        error("Malformed QCMATRIX line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed QCMATRIX line: expected three fields.",
+        )
     end
     if data.name_to_col[items[1]] <= data.name_to_col[items[2]]
         # Off-diagonals have duplicate entries. We don't need to store both
@@ -866,7 +969,10 @@ end
 
 function parse_qsection_line(data::TempMPSModel{T}, items) where {T}
     if length(items) != 3
-        error("Malformed QSECTION line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed QSECTION line: expected three fields.",
+        )
     end
     if data.current_qc_matrix == "OBJ"
         push!(data.quad_obj, (items[1], items[2], parse(T, items[3])))
@@ -885,13 +991,20 @@ end
 
 function parse_indicators_line(data, items)
     if length(items) != 4
-        error("Malformed INDICATORS line: $(join(items, " "))")
+        _throw_parse_error(
+            data,
+            "Malformed INDICATORS line: expected four fields.",
+        )
     end
     condition = if items[4] == "0"
         MOI.ACTIVATE_ON_ZERO
-    else
-        @assert items[4] == "1"
+    elseif items[4] == "1"
         MOI.ACTIVATE_ON_ONE
+    else
+        _throw_parse_error(
+            data,
+            "The value in field four of an indicator constraint must be either `0` or `1`.",
+        )
     end
     data.indicators[items[2]] = (items[3], condition)
     return
