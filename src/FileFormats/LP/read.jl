@@ -29,13 +29,6 @@ struct _ReadCache{T}
     end
 end
 
-function _read_newline_or_eof(state)
-    if (p = peek(state, _Token)) !== nothing
-        _ = read(state, _Token, _TOKEN_NEWLINE)
-    end
-    return
-end
-
 """
     Base.read!(io::IO, model::FileFormats.LP.Model)
 
@@ -60,7 +53,6 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         if token.kind == _TOKEN_KEYWORD
             _ = read(state, _Token)
             keyword = Symbol(token.value)
-            _read_newline_or_eof(state)
         elseif token.kind == _TOKEN_NEWLINE
             _ = read(state, _Token, _TOKEN_NEWLINE)
         elseif keyword == :MINIMIZE
@@ -74,13 +66,13 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         elseif keyword == :CONSTRAINTS
             _parse_constraint(state, cache)
         elseif keyword == :BINARY
-            x = _parse_variable(state, cache)
+            x = _parse_identifier(state, cache)
             MOI.add_constraint(cache.model, x, MOI.ZeroOne())
         elseif keyword == :INTEGER
-            x = _parse_variable(state, cache)
+            x = _parse_identifier(state, cache)
             MOI.add_constraint(cache.model, x, MOI.Integer())
         elseif keyword == :BOUNDS
-            _parse_bound(state, cache)
+            _parse_bound_expression(state, cache)
         elseif keyword == :SOS
             _parse_constraint(state, cache)
         elseif keyword == :END
@@ -362,18 +354,6 @@ function Base.read(state::_LexerState, ::Type{_Token}, kind::_TokenKind)
     return _expect(state, token, kind)
 end
 
-# We're a bit more relaxed than typical, allowing any letter or digit, not just
-# ASCII.
-function _is_identifier(c::Char)
-    return isletter(c) || isdigit(c) || c in "!\"#\$%&()/,.;?@_`'{}|~"
-end
-
-function _is_starting_identifier(c::Char)
-    return isletter(c) || c in "!\"#\$%&(),;?@_`'{}|~"
-end
-
-_is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
-
 _nothing_or_newline(::Nothing) = true
 _nothing_or_newline(t::_Token) = t.kind == _TOKEN_NEWLINE
 
@@ -448,6 +428,18 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
     end
     return state.peek_tokens[n]
 end
+
+# We're a bit more relaxed than typical, allowing any letter or digit, not just
+# ASCII.
+function _is_identifier(c::Char)
+    return isletter(c) || isdigit(c) || c in "!\"#\$%&()/,.;?@_`'{}|~"
+end
+
+function _is_starting_identifier(c::Char)
+    return isletter(c) || c in "!\"#\$%&(),;?@_`'{}|~"
+end
+
+_is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
 function _peek_inner(state::_LexerState)
     while (c = peek(state, Char)) !== nothing
@@ -531,11 +523,11 @@ function _next_non_newline(state::_LexerState)
     end
 end
 
-# IDENTIFIER := "string"
+# <identifier> :== "string"
 #
 #   There _are_ rules to what an identifier can be. We handle these when lexing.
 #   Anything that makes it here is deemed acceptable.
-function _parse_variable(
+function _parse_identifier(
     state::_LexerState,
     cache::_ReadCache,
 )::MOI.VariableIndex
@@ -560,12 +552,12 @@ function _parse_variable(
     return x
 end
 
-# NUMBER :=
-#   "+" NUMBER
-#   | "-" NUMBER
-#   | "inf"
-#   | "infinity"
-#   | :(parse(T, x))
+# <number> :==
+#   "+" <number>
+#   | "-" <number>
+#   | <digit>*[.(<digit>)*][("e" | "E")("+" | "-")(<digit>)+]
+#   | i"inf"
+#   | i"infinity"
 function _parse_number(state::_LexerState, cache::_ReadCache{T})::T where {T}
     _skip_newlines(state)
     token = read(state, _Token)
@@ -587,12 +579,12 @@ function _parse_number(state::_LexerState, cache::_ReadCache{T})::T where {T}
     return ret
 end
 
-# QUAD_TERM :=
-#   "+" QUAD_TERM
-#   | "-" QUAD_TERM
-#   | [NUMBER] [*] IDENTIFIER "^" "2"
-#   | [NUMBER] [*] IDENTIFIER "*" IDENTIFIER
-function _parse_quad_term(
+# <quadratic-term> :==
+#   "+" <quadratic-term>
+#   | "-" <quadratic-term>
+#   | [<number> [*]] <identifier> "^" "2"
+#   | [<number> [*]] <identifier> "*" <identifier>
+function _parse_quadratic_term(
     state::_LexerState,
     cache::_ReadCache{T},
     prefix::T,
@@ -600,10 +592,10 @@ function _parse_quad_term(
     _skip_newlines(state)
     if _next_token_is(state, _TOKEN_ADDITION)
         _ = read(state, _Token)
-        return _parse_quad_term(state, cache, prefix)
+        return _parse_quadratic_term(state, cache, prefix)
     elseif _next_token_is(state, _TOKEN_SUBTRACTION)
         _ = read(state, _Token)
-        return _parse_quad_term(state, cache, -prefix)
+        return _parse_quadratic_term(state, cache, -prefix)
     end
     coef = prefix
     if _next_token_is(state, _TOKEN_NUMBER)
@@ -613,7 +605,7 @@ function _parse_quad_term(
         _skip_newlines(state)
         _ = read(state, _Token)  # Skip optional multiplication
     end
-    x1 = _parse_variable(state, cache)
+    x1 = _parse_identifier(state, cache)
     _skip_newlines(state)
     if _next_token_is(state, _TOKEN_EXPONENT)
         _ = read(state, _Token) # ^
@@ -625,31 +617,30 @@ function _parse_quad_term(
         return MOI.ScalarQuadraticTerm(T(2) * coef, x1, x1)
     end
     token = read(state, _Token, _TOKEN_MULTIPLICATION)
-    x2 = _parse_variable(state, cache)
+    x2 = _parse_identifier(state, cache)
     if x1 == x2
         coef *= T(2)
     end
     return MOI.ScalarQuadraticTerm(coef, x1, x2)
 end
 
-# QUADRATIC_EXPRESSION :=
-#   "[" QUAD_TERM (("+" | "-") QUAD_TERM)* "]"
-#   | "[" QUAD_TERM (("+" | "-") QUAD_TERM)* "]/2"
-function _parse_quad_expression(
+# <quadratic-expression> :==
+#   "[" <quadratic-term> (("+" | "-") <quadratic-term>)* "]" ["/" "2"]
+function _parse_quadratic_expression(
     state::_LexerState,
     cache::_ReadCache{T},
     prefix::T,
 ) where {T}
     token = read(state, _Token, _TOKEN_OPEN_BRACKET)
     f = zero(MOI.ScalarQuadraticFunction{T})
-    push!(f.quadratic_terms, _parse_quad_term(state, cache, prefix))
+    push!(f.quadratic_terms, _parse_quadratic_term(state, cache, prefix))
     while (p = peek(state, _Token)) !== nothing
         if p.kind == _TOKEN_ADDITION
             p = read(state, _Token)
-            push!(f.quadratic_terms, _parse_quad_term(state, cache, prefix))
+            push!(f.quadratic_terms, _parse_quadratic_term(state, cache, prefix))
         elseif p.kind == _TOKEN_SUBTRACTION
             p = read(state, _Token)
-            push!(f.quadratic_terms, _parse_quad_term(state, cache, -prefix))
+            push!(f.quadratic_terms, _parse_quadratic_term(state, cache, -prefix))
         elseif p.kind == _TOKEN_NEWLINE
             _ = read(state, _Token)
         elseif p.kind == _TOKEN_CLOSE_BRACKET
@@ -687,15 +678,14 @@ function _parse_quad_expression(
     return f
 end
 
-# TERM :=
-#   [\n*] TERM
-#   | "+" TERM
-#   | "-" TERM
-#   | IDENTIFIER
-#   | NUMBER
-#   | NUMBER IDENTIFIER
-#   | NUMBER "*" IDENTIFIER
-#   | QUADRATIC_EXPRESSION
+# <term> :==
+#     "+" <term>
+#   | "-" <term>
+#   | <identifier>
+#   | <number>
+#   | <number> <identifier>
+#   | <number> "*" <identifier>
+#   | <quadratic-expression>
 function _parse_term(
     state::_LexerState,
     cache::_ReadCache{T},
@@ -703,53 +693,53 @@ function _parse_term(
 ) where {T}
     _skip_newlines(state)
     if _next_token_is(state, _TOKEN_ADDITION)
-        # "+" TERM
+        # "+" <term>
         _ = read(state, _Token, _TOKEN_ADDITION)
         return _parse_term(state, cache, prefix)
     elseif _next_token_is(state, _TOKEN_SUBTRACTION)
-        # "-" TERM
+        # "-" <term>
         _ = read(state, _Token, _TOKEN_SUBTRACTION)
         return _parse_term(state, cache, -prefix)
     elseif _next_token_is(state, _TOKEN_IDENTIFIER)
-        # IDENTIFIER
-        x = _parse_variable(state, cache)
+        # <identifier>
+        x = _parse_identifier(state, cache)
         return MOI.ScalarAffineTerm(prefix, x)
     elseif _next_token_is(state, _TOKEN_NUMBER)
         coef = prefix * _parse_number(state, cache)
         if _next_token_is(state, _TOKEN_IDENTIFIER)
-            # NUMBER IDENTIFIER
-            x = _parse_variable(state, cache)
+            # <number> <identifier>
+            x = _parse_identifier(state, cache)
             return MOI.ScalarAffineTerm(coef, x)
         elseif _next_token_is(state, _TOKEN_MULTIPLICATION)
-            # NUMBER * IDENTIFIER
+            # <number> * <identifier>
             _ = read(state, _Token, _TOKEN_MULTIPLICATION)
-            x = _parse_variable(state, cache)
+            x = _parse_identifier(state, cache)
             return MOI.ScalarAffineTerm(coef, x)
         elseif _next_token_is(state, _TOKEN_NEWLINE)
-            # This could either be NUMBER \nEND-OF-TERM, or it could be a term
+            # This could either be <number> \nEND-OF-<term>, or it could be a term
             # split by a new line, like `2\nx`.
             t = _next_non_newline(state)
             if t === nothing
-                # NUMBER
+                # <number>
                 return coef
             elseif t.kind == _TOKEN_MULTIPLICATION
-                # NUMBER \n * [\n] IDENTIFIER
+                # <number> \n * [\n] <identifier>
                 _skip_newlines(state)
                 _ = read(state, _Token, _TOKEN_MULTIPLICATION)
                 _skip_newlines(state)
-                x = _parse_variable(state, cache)
+                x = _parse_identifier(state, cache)
                 return MOI.ScalarAffineTerm(coef, x)
             elseif t.kind == _TOKEN_IDENTIFIER
-                # NUMBER \n IDENTIFIER
-                x = _parse_variable(state, cache)
+                # <number> \n <identifier>
+                x = _parse_identifier(state, cache)
                 return MOI.ScalarAffineTerm(coef, x)
             end
         end
-        # NUMBER
+        # <number>
         return coef
     elseif _next_token_is(state, _TOKEN_OPEN_BRACKET)
-        # QUADRATIC_EXPRESSION
-        return _parse_quad_expression(state, cache, prefix)
+        # <quadratic-expression>
+        return _parse_quadratic_expression(state, cache, prefix)
     end
     token = peek(state, _Token)
     return _throw_parse_error(
@@ -780,8 +770,7 @@ function _add_to_expression!(
     return
 end
 
-# EXPRESSION :=
-#   TERM (("+" | "-") TERM)*
+# <expression> :== <term> (("+" | "-") <term>)*
 function _parse_expression(state::_LexerState, cache::_ReadCache{T}) where {T}
     f = zero(MOI.ScalarQuadraticFunction{T})
     _add_to_expression!(f, _parse_term(state, cache))
@@ -807,11 +796,11 @@ function _parse_expression(state::_LexerState, cache::_ReadCache{T}) where {T}
     return f
 end
 
-# SET_SUFFIX :=
+# <set-suffix> :==
 #   "free"
-#   | ">=" NUMBER
-#   | "<=" NUMBER
-#   | "==" NUMBER
+#   | ">=" <number>
+#   | "<=" <number>
+#   | "==" <number>
 #
 # There are other inequality operators that are supported, like `>`, `<`, and
 # `=`. These are normalized when lexing.
@@ -840,10 +829,10 @@ function _parse_set_suffix(state, cache)
     end
 end
 
-# SET_PREFIX :=
-#   NUMBER ">="
-#   | NUMBER "<="
-#   | NUMBER "=="
+# <set-prefix> :==
+#   <number> ">="
+#   | <number> "<="
+#   | <number> "=="
 #
 # There are other inequality operators that are supported, like `>`, `<`, and
 # `=`. These are normalized when lexing.
@@ -866,8 +855,8 @@ function _parse_set_prefix(state, cache)
     end
 end
 
-# NAME := [IDENTIFIER :]
-function _parse_optional_name(state::_LexerState, cache::_ReadCache)
+# <name> :== [<identifier> :]
+function _parse_name(state::_LexerState, cache::_ReadCache)
     _skip_newlines(state)
     if _next_token_is(state, _TOKEN_IDENTIFIER, 1) &&
        _next_token_is(state, _TOKEN_COLON, 2)
@@ -878,16 +867,15 @@ function _parse_optional_name(state::_LexerState, cache::_ReadCache)
     return nothing
 end
 
-# OBJECTIVE := [NAME] [EXPRESSION]
+# <objective> :== <name> [<expression>]
 function _parse_objective(state::_LexerState, cache::_ReadCache)
-    _ = _parse_optional_name(state, cache)
+    _ = _parse_name(state, cache)
     _skip_newlines(state)
     if _next_token_is(state, _TOKEN_KEYWORD)
         return  # A line like `obj:\nsubject to`
     end
     f = _parse_expression(state, cache)
     MOI.set(cache.model, MOI.ObjectiveFunction{typeof(f)}(), f)
-    _read_newline_or_eof(state)
     return
 end
 
@@ -925,21 +913,20 @@ function _add_bound(cache::_ReadCache, x::MOI.VariableIndex, ::Nothing)
     return
 end
 
-# BOUND :=
-#   IDENFITIER SET_SUFFIX \n
-#   | SET_PREFIX IDENTIFIER \n
-#   | SET_PREFIX IDENTIFIER SET_SUFFIX \n
-function _parse_bound(state, cache)
+# <bound-expression> :==
+#   <identifier> <set-suffix>
+#   | <set-prefix> <identifier>
+#   | <set-prefix> <identifier> <set-suffix>
+function _parse_bound_expression(state, cache)
     if _next_token_is(state, _TOKEN_IDENTIFIER)  # `x free` or `x op b`
-        x = _parse_variable(state, cache)
+        x = _parse_identifier(state, cache)
         set = _parse_set_suffix(state, cache)
         _add_bound(cache, x, set)
-        _read_newline_or_eof(state)
         return
     end
     # `a op x` or `a op x op b`
     lhs_set = _parse_set_prefix(state, cache)
-    x = _parse_variable(state, cache)
+    x = _parse_identifier(state, cache)
     _add_bound(cache, x, lhs_set)
     if _next_token_is(state, _TOKEN_GREATER_THAN) ||
        _next_token_is(state, _TOKEN_LESS_THAN) ||
@@ -949,7 +936,6 @@ function _parse_bound(state, cache)
         rhs_set = _parse_set_suffix(state, cache)
         _add_bound(cache, x, rhs_set)
     end
-    _read_newline_or_eof(state)
     return
 end
 
@@ -959,13 +945,12 @@ function _is_sos_constraint(state)
            _next_token_is(state, _TOKEN_COLON, 3)
 end
 
-# SOS_CONSTRAINT :=
-#   [NAME] S1:: (IDENTIFIER:NUMBER)+
-#   | [NAME] S2:: (IDENTIFIER:NUMBER)+
+# <constraint-sos> :==
+#     S1:: (<identifier>:<number>)+
+#   | S2:: (<identifier>:<number>)+
 #
 # New lines are not supported within the line.
-# Terminating new lines are handled in _parse_constraint
-function _parse_sos_constraint(
+function _parse_constraint_sos(
     state::_LexerState,
     cache::_ReadCache{T},
 ) where {T}
@@ -989,7 +974,7 @@ function _parse_sos_constraint(
                 "SOS constraints cannot be spread across lines.",
             )
         end
-        push!(f.variables, _parse_variable(state, cache))
+        push!(f.variables, _parse_identifier(state, cache))
         _ = read(state, _Token, _TOKEN_COLON)
         push!(w, _parse_number(state, cache))
         if _next_token_is(state, _TOKEN_NEWLINE)
@@ -1010,16 +995,13 @@ function _is_indicator_constraint(state)
            _next_token_is(state, _TOKEN_IMPLIES, 4)
 end
 
-# INDICATOR_CONSTRAINT :=
-#   IDENTIFIER "=" "0" "->" EXPRESSION SET_SUFFIX
-#   | IDENTIFIER "=" "1" "->" EXPRESSION SET_SUFFIX
-#
-# Terminating new lines are handled in _parse_constraint
-function _parse_indicator_constraint(
+# <constraint-indicator> :==
+#   <identifier> "=" ("0" | "1") "->" <expression> <set-suffix>
+function _parse_constraint_indicator(
     state::_LexerState,
     cache::_ReadCache{T},
 ) where {T}
-    z = _parse_variable(state, cache)
+    z = _parse_identifier(state, cache)
     _ = read(state, _Token, _TOKEN_EQUAL_TO)
     t = read(state, _Token, _TOKEN_NUMBER)
     indicator = if t.value == "0"
@@ -1039,17 +1021,17 @@ function _parse_indicator_constraint(
     )
 end
 
-# CONSTRAINT :=
-#   [NAME] EXPRESSION SET_SUFFIX \n
-#   | [NAME] SOS_CONSTRAINT \n
-#   | [NAME] INDICATOR_CONSTRAINT \n
+# <constraint> :==
+#     <name> <expression> <set-suffix>
+#   | <name> <constraint-sos>
+#   | <name> <constraint-indicator>
 function _parse_constraint(state::_LexerState, cache::_ReadCache)
-    name = _parse_optional_name(state, cache)
+    name = _parse_name(state, cache)
     # Check if this is an SOS constraint
     c = if _is_sos_constraint(state)
-        _parse_sos_constraint(state, cache)
+        _parse_constraint_sos(state, cache)
     elseif _is_indicator_constraint(state)
-        _parse_indicator_constraint(state, cache)
+        _parse_constraint_indicator(state, cache)
     else
         f = _parse_expression(state, cache)
         set = _parse_set_suffix(state, cache)
@@ -1058,6 +1040,5 @@ function _parse_constraint(state::_LexerState, cache::_ReadCache)
     if name !== nothing
         MOI.set(cache.model, MOI.ConstraintName(), c, name)
     end
-    _read_newline_or_eof(state)
     return
 end
