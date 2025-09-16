@@ -28,7 +28,7 @@ V6 free
 0 <= V7 < 1 \ stupidly allow < as <=
 0 <= V8 <= 1
 General
-Var4 V5 \ integer variables can be listed (MOSEK)
+Var4 V5 \ integer variables can be listed (Mosek)
 V6 \ or each new line
 Binary
 V8

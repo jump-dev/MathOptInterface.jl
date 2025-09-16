@@ -637,10 +637,16 @@ function _parse_quadratic_expression(
     while (p = peek(state, _Token)) !== nothing
         if p.kind == _TOKEN_ADDITION
             p = read(state, _Token)
-            push!(f.quadratic_terms, _parse_quadratic_term(state, cache, prefix))
+            push!(
+                f.quadratic_terms,
+                _parse_quadratic_term(state, cache, prefix),
+            )
         elseif p.kind == _TOKEN_SUBTRACTION
             p = read(state, _Token)
-            push!(f.quadratic_terms, _parse_quadratic_term(state, cache, -prefix))
+            push!(
+                f.quadratic_terms,
+                _parse_quadratic_term(state, cache, -prefix),
+            )
         elseif p.kind == _TOKEN_NEWLINE
             _ = read(state, _Token)
         elseif p.kind == _TOKEN_CLOSE_BRACKET
