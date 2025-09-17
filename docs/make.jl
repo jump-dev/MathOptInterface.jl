@@ -67,6 +67,7 @@ const _PAGES = [
         "FileFormats" => [
             "Overview" => "submodules/FileFormats/overview.md",
             "API Reference" => "submodules/FileFormats/reference.md",
+            "The LP file format" => "submodules/FileFormats/LP.md",
         ],
         "Nonlinear" => [
             "Overview" => "submodules/Nonlinear/overview.md",

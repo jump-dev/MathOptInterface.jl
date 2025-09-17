@@ -5026,7 +5026,7 @@ function version_added(
 end
 
 """
-Problem SDP1 - sdo1 from MOSEK docs
+Problem SDP1 - sdo1 from Mosek docs
 From Mosek.jl/test/mathprogtestextra.jl, under license:
 
 Copyright (c) 2013 Ulf Worsoe, Mosek ApS

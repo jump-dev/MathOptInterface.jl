@@ -976,8 +976,7 @@ function test_read_newline_breaks()
     + z ==
     0
     Bounds
-    x >= 0
-    -1 <= y
+    x >= 0 -1 <= y
     +1 <= z <= +2
     End
     """
@@ -1248,7 +1247,7 @@ function test_subject_to_name()
     return
 end
 
-function test_parse_variable()
+function test_parse_identifier()
     cache = LP._ReadCache(LP.Model{Float64}())
     for input in [
         "x",
@@ -1263,14 +1262,14 @@ function test_parse_variable()
         io = IOBuffer(input)
         seekstart(io)
         state = LP._LexerState(io)
-        x = LP._parse_variable(state, cache)
+        x = LP._parse_identifier(state, cache)
         @test cache.variable_name_to_index[input] == x
     end
     for input in ["2", "2x", ".x"]
         io = IOBuffer(input)
         seekstart(io)
         state = LP._LexerState(io)
-        @test_throws LP.ParseError LP._parse_variable(state, cache)
+        @test_throws LP.ParseError LP._parse_identifier(state, cache)
     end
     return
 end
@@ -1333,11 +1332,11 @@ function test_parse_quad_term()
         io = IOBuffer(input)
         seekstart(io)
         state = LP._LexerState(io)
-        term = LP._parse_quad_term(state, cache, 1.0)
+        term = LP._parse_quadratic_term(state, cache, 1.0)
         x = cache.variable_name_to_index["x"]
         @test term == MOI.ScalarQuadraticTerm(coef, x, x)
         seekstart(io)
-        term = LP._parse_quad_term(state, cache, -1.0)
+        term = LP._parse_quadratic_term(state, cache, -1.0)
         @test term == MOI.ScalarQuadraticTerm(-coef, x, x)
     end
     # Off-diagonal
@@ -1356,19 +1355,19 @@ function test_parse_quad_term()
         io = IOBuffer(input)
         seekstart(io)
         state = LP._LexerState(io)
-        term = LP._parse_quad_term(state, cache, 1.0)
+        term = LP._parse_quadratic_term(state, cache, 1.0)
         x = cache.variable_name_to_index["x"]
         y = cache.variable_name_to_index["y"]
         @test term == MOI.ScalarQuadraticTerm(coef, x, y)
         seekstart(io)
-        term = LP._parse_quad_term(state, cache, -1.0)
+        term = LP._parse_quadratic_term(state, cache, -1.0)
         @test term == MOI.ScalarQuadraticTerm(-coef, x, y)
     end
     for input in ["x^", "x^x", "x^0", "x^1", "x^3", "x * 2 * x"]
         io = IOBuffer(input)
         seekstart(io)
         state = LP._LexerState(io)
-        @test_throws LP.ParseError LP._parse_quad_term(state, cache, -1.0)
+        @test_throws LP.ParseError LP._parse_quadratic_term(state, cache, -1.0)
     end
     return
 end
@@ -1414,7 +1413,7 @@ function test_parse_quad_expression()
         state = LP._LexerState(io)
         @test_throws(
             LP.ParseError,
-            LP._parse_quad_expression(state, cache, 1.0),
+            LP._parse_quadratic_expression(state, cache, 1.0),
         )
     end
     return
@@ -1540,11 +1539,6 @@ function test_new_line_edge_case_fails()
         "maximize\nobj: x subject to",
         # No new line between subject to and constraint
         "maximize\nobj: x\nsubject to c: x >= 0",
-        # No new line between multiple constraints
-        "maximize\nobj: x\nsubject to\nc: x >= 0 x <= 1",
-        # New lines in bounds section
-        "maximize\nobj: x\nsubject to\nbounds x >= 0\bx <= 1",
-        "maximize\nobj: x\nsubject to\nbounds\nx >= 0 x <= 1",
     ]
         io = IOBuffer(input)
         seekstart(io)
@@ -1644,6 +1638,39 @@ function test_parse_quadratic_expr_eof()
     f = 1.0 * x * x
     g = MOI.get(model, MOI.ObjectiveFunction{typeof(f)}())
     @test isapprox(f, g)
+    return
+end
+
+function test_ambiguous_case_1()
+    # Xpress allows this. We currently don't.
+    io = IOBuffer("maximize obj: x subject to c: x <= 1 end")
+    model = LP.Model()
+    @test_throws LP.ParseError MOI.read!(io, model)
+    return
+end
+
+function test_ambiguous_case_2()
+    # Xpress allows this. We currently parse this as two "<keyword-constraint>"
+    # sections, and think that there is no objective function.
+    io = IOBuffer("min\nst\nst\nst >= 0\nend")
+    model = LP.Model()
+    MOI.read!(io, model)
+    st = MOI.get(model, MOI.VariableIndex, "st")
+    @test_broken MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    f = 1.0 * st
+    @test_broken isapprox(MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()), f)
+    return
+end
+
+function test_ambiguous_case_3()
+    # Gurobi doesn't allow this, but Xpress does. We do.
+    io = IOBuffer("min\nobj: end\nsubject to\nc: end <= 1\nend")
+    model = LP.Model()
+    MOI.read!(io, model)
+    x = MOI.get(model, MOI.VariableIndex, "end")
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+    f = 1.0 * x
+    @test isapprox(MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()), f)
     return
 end
 

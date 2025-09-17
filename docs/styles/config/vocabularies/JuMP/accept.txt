@@ -15,6 +15,7 @@ errored
 flamegraph
 getters
 [Jj]ulia
+juxtaposted
 linkcheck
 nonlinearly
 nonzeros
@@ -52,7 +53,10 @@ Hijazi
 Holy
 JSONSchema
 MOI
+Mosek
 PATHSolver
+QSopt
 preprint
 Lubin
 Nemirovski
+Xpress
