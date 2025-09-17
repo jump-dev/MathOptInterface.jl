@@ -190,15 +190,7 @@ function Headers(s::AbstractString)
                 return HEADER_QMATRIX
             end
         end
-    elseif N == 8
-        if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
-            return HEADER_OBJSENSE
-        end
-    elseif N == 10
-        if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
-            return HEADER_INDICATORS
-        end
-    elseif N >= 12
+    elseif N >= 8
         if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
             return HEADER_OBJSENSE
         elseif (x == 'Q' || x == 'q')
@@ -207,6 +199,10 @@ function Headers(s::AbstractString)
                 return HEADER_QCMATRIX
             elseif startswith(header, "QSECTION")
                 return HEADER_QSECTION
+            end
+        elseif N == 10
+            if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
+                return HEADER_INDICATORS
             end
         end
     end
