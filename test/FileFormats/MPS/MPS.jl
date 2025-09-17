@@ -1506,10 +1506,7 @@ function test_rhs_free_row()
     ENDATA
     """)
     model = MPS.Model()
-    @test_throws(
-        MPS.ParseError,
-        read!(io, model),
-    )
+    @test_throws MPS.ParseError read!(io, model)
     return
 end
 
