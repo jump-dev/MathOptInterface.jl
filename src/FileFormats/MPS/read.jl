@@ -267,7 +267,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             if length(items) != 2
                 _throw_parse_error(
                     data,
-                    "The header for a quadratic matrx must have two fields, where the second field is the name of the Q matrix.",
+                    "The header for a quadratic matrix must have two fields, where the second field is the name of the Q matrix.",
                 )
             end
             data.current_qc_matrix = String(items[2])
