@@ -7,6 +7,28 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.45.0 (September 18, 2025)
+
+### Added
+
+ - Added [`Bridges.ObjectiveToScalarNonlinearBridge`](@ref) (#2834), (#2835)
+ - Added support support for querying [`ConstraintConflictStatus`](@ref) when
+   the constraint was bridged (#2839)
+
+### Fixed
+
+ - Fixed a type instability in [`Utilities.set_dot`](@ref) (#2831)
+ - Rewrote `Base.read!(::IO, ::FileFormats.LP.Model)` to use a proper recursive
+   descent parser. This fixed numerous performance issues, and the resulting
+   parser is simpler to maintain and extend. (#2840), (#2841), (#2842), (#2843),
+   (#2844), (#2846), (#2847), (#2848)
+ - Rewrote the error handling in `read!(::IO, ::FileFormats.MPS.Model)` to throw
+   a `FileFormats.MPS.ParseError` (#2845), (#2849)
+
+### Other
+
+- Temporarily pinned `OpenSSL_jll` to work around an upstream bug (#2850)
+
 ## v1.44.0 (September 4, 2025)
 
 ### Added
