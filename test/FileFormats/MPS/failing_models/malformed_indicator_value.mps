@@ -1,4 +1,4 @@
-NAME malformed_indicator
+NAME malformed_indicator_value
 OBJSENSE MAX
 ROWS
  N  obj
@@ -13,5 +13,5 @@ BOUNDS
  FR bounds    x         0
  BV bounds    z         1
 INDICATORS
- IF con1     z
+ IF con1      z         2
 ENDATA

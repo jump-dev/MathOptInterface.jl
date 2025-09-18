@@ -71,22 +71,27 @@ function test_nonempty()
     MOI.empty!(model)
     @test MOI.is_empty(model)
     MOI.add_variable(model)
-    @test_throws Exception MOI.read_from_file(
-        model,
-        joinpath(@__DIR__, "failing_models", "bad_name.mps"),
+    @test_throws(
+        ErrorException("Cannot read in file because model is not empty."),
+        MOI.read_from_file(model, joinpath(@__DIR__, "free_integer.mps")),
     )
     return
 end
 
 function test_failing_models()
-    @testset "$(filename)" for filename in filter(
-        f -> endswith(f, ".mps"),
-        readdir(joinpath(@__DIR__, "failing_models")),
-    )
-        @test_throws Exception MOI.read_from_file(
-            MPS.Model(),
-            joinpath(@__DIR__, "failing_models", filename),
+    dir = joinpath(@__DIR__, "failing_models")
+    @testset "$file" for file in filter(endswith(".mps"), readdir(dir))
+        @test_throws(
+            MPS.ParseError,
+            MOI.read_from_file(MPS.Model(), joinpath(dir, file))
         )
+        @info file
+        try
+            MOI.read_from_file(MPS.Model(), joinpath(dir, file))
+        catch err
+            showerror(stdout, err)
+        end
+        println()
     end
     return
 end
@@ -1123,8 +1128,7 @@ function test_parse_name_line()
     )
         data.name = "_"
         if name === nothing
-            err = ErrorException("Malformed NAME line: $line")
-            @test_throws err MPS.parse_name_line(data, line)
+            @test_throws MPS.ParseError MPS.parse_name_line(data, line)
         else
             MPS.parse_name_line(data, line)
             @test data.name == name
@@ -1502,10 +1506,7 @@ function test_rhs_free_row()
     ENDATA
     """)
     model = MPS.Model()
-    @test_throws(
-        ErrorException("Cannot have RHS for free row: rhs c 1"),
-        read!(io, model),
-    )
+    @test_throws MPS.ParseError read!(io, model)
     return
 end
 
@@ -1527,10 +1528,7 @@ function test_malformed_indicator()
     ENDATA
     """)
     model = MPS.Model()
-    @test_throws(
-        ErrorException("Malformed INDICATORS line: IF c1 y"),
-        read!(io, model),
-    )
+    @test_throws MPS.ParseError read!(io, model)
     return
 end
 
