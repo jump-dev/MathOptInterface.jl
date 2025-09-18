@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- Temporarily pinned `OpenSSL_jll` to work around an upstream bug (#2850)
+- Temporarily pinned `OpenSSL_jll` to work around an upstream bug (#2850), (#2854)
 
 ## v1.44.0 (September 4, 2025)
 
