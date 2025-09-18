@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Rewrote `Base.read!(::IO, ::FileFormats.LP.Model)` to use a proper recursive
    descent parser. This fixed numerous performance issues, and the resulting
    parser is simpler to maintain and extend. (#2840), (#2841), (#2842), (#2843),
-   (#2844), (#2846), (#2847), (#2848)
+   (#2844), (#2846), (#2847), (#2848), (#2852), (#2853)
  - Rewrote the error handling in `read!(::IO, ::FileFormats.MPS.Model)` to throw
    a `FileFormats.MPS.ParseError` (#2845), (#2849)
 
