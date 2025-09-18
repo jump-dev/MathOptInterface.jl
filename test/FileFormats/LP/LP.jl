@@ -1490,9 +1490,7 @@ function test_parse_term()
         term = LP._parse_term(state, cache, -1.0)
         @test term == MOI.ScalarAffineTerm(-coef, x)
     end
-    for (input, reason) in [
-        ">= 1" => "Got the symbol `>=`.",
-    ]
+    for (input, reason) in [">= 1" => "Got the symbol `>=`."]
         io = IOBuffer(input)
         state = LP._LexerState(io)
         @test_parse_error(
