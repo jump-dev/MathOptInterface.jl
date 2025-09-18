@@ -82,6 +82,38 @@ function Base.read!(io::IO, model::Model{T}) where {T}
                 "No file contents are allowed after `end`.",
             )
         else
+            if token.kind == _TOKEN_IDENTIFIER
+                # We didn't identify the token as an keyword during lexing. But
+                # it might be one that is missing surrounding `\n`. Since our
+                # alternative at this point is to throw an error, we ,might as
+                # well attempt to see it can be interpreted as one.
+                kw = _case_insenstive_identifier_to_keyword(token.value)
+                if kw !== nothing
+                    _ = read(state, _Token, _TOKEN_IDENTIFIER)
+                    keyword = Symbol(kw)
+                    continue
+                elseif _compare_case_insenstive(token.value, "subject")
+                    p = peek(state, _Token, 2)
+                    if p !== nothing && p.kind == _TOKEN_IDENTIFIER
+                        if _compare_case_insenstive(p.value, "to")
+                            _ = read(state, _Token, _TOKEN_IDENTIFIER)
+                            _ = read(state, _Token, _TOKEN_IDENTIFIER)
+                            keyword = :CONSTRAINTS
+                            continue
+                        end
+                    end
+                elseif _compare_case_insenstive(token.value, "such")
+                    p = peek(state, _Token, 2)
+                    if p !== nothing && p.kind == _TOKEN_IDENTIFIER
+                        if _compare_case_insenstive(p.value, "that")
+                            _ = read(state, _Token, _TOKEN_IDENTIFIER)
+                            _ = read(state, _Token, _TOKEN_IDENTIFIER)
+                            keyword = :CONSTRAINTS
+                            continue
+                        end
+                    end
+                end
+            end
             _expect(state, token, _TOKEN_KEYWORD)
         end
     end

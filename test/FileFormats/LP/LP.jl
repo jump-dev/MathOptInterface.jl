@@ -1490,10 +1490,7 @@ function test_parse_term()
         term = LP._parse_term(state, cache, -1.0)
         @test term == MOI.ScalarAffineTerm(-coef, x)
     end
-    for (input, reason) in [
-        "subject to" => "Got a keyword defining a new section with value `CONSTRAINTS`.",
-        ">= 1" => "Got the symbol `>=`.",
-    ]
+    for (input, reason) in [">= 1" => "Got the symbol `>=`."]
         io = IOBuffer(input)
         state = LP._LexerState(io)
         @test_parse_error(
@@ -1545,14 +1542,14 @@ function test_parse_set_prefix()
         state = LP._LexerState(io)
         @test LP._parse_set_prefix(state, cache) == set
     end
-    io = IOBuffer("->")
+    io = IOBuffer("1.0 ->")
     state = LP._LexerState(io)
     @test_parse_error(
         """
         Error parsing LP file on line 1:
-        ->
-        ^
-        Got the symbol `->`. We expected this token to be a number.""",
+        1.0 ->
+            ^
+        Got the symbol `->`. We expected this to be an inequality like `>=`, `<=`, or `==`.""",
         LP._parse_set_prefix(state, cache),
     )
     return
@@ -1642,7 +1639,7 @@ function test_new_line_edge_cases_sos()
     return
 end
 
-function test_new_line_edge_case_fails()
+function test_missing_new_line_edge_cases()
     for input in [
         # No newline between objective sense and objective
         "minimize x",
@@ -1655,7 +1652,8 @@ function test_new_line_edge_case_fails()
     ]
         io = IOBuffer(input)
         model = LP.Model()
-        @test_throws LP.ParseError MOI.read!(io, model)
+        MOI.read!(io, model)
+        @test MOI.get(model, MOI.VariableIndex, "x") isa MOI.VariableIndex
     end
     return
 end
@@ -1680,7 +1678,7 @@ function test_parse_keyword_edge_cases_identifier_is_keyword()
 end
 
 function test_parse_keyword_subject_to_errors()
-    for line in ["subject", "subject too", "subject to a:"]
+    for line in ["subject", "subject too"]
         io = IOBuffer("""
         maximize
         obj: x
@@ -1755,17 +1753,18 @@ function test_parse_quadratic_expr_eof()
 end
 
 function test_ambiguous_case_1()
-    # Xpress allows this. We currently don't.
-    io = IOBuffer("maximize obj: x subject to c: x <= 1 end")
-    model = LP.Model()
-    @test_parse_error(
-        """
-        Error parsing LP file on line 1:
-        maximize obj: x subject to c: x <= 1 end
-        ^
-        Got an identifier with value `maximize`. We expected this token to be a keyword defining a new section.""",
-        MOI.read!(io, model),
-    )
+    # Xpress allows this. We currently do too.
+    for kw in ("subject to", "such that", "st")
+        io = IOBuffer("maximize obj: x $kw c: x <= 1\nend")
+        model = LP.Model()
+        MOI.read!(io, model)
+        @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+        F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+        @test isa(
+            MOI.get(model, MOI.ConstraintIndex, "c"),
+            MOI.ConstraintIndex{F,S},
+        )
+    end
     return
 end
 
