@@ -82,11 +82,7 @@ function Base.read!(io::IO, model::Model{T}) where {T}
                 "No file contents are allowed after `end`.",
             )
         else
-            _throw_parse_error(
-                state,
-                token,
-                "Parsing this section is not supported by the current reader.",
-            )
+            _expect(state, token, _TOKEN_KEYWORD)
         end
     end
     # if keyword != :END
@@ -190,8 +186,8 @@ This dictionary makes `_TokenKind` to a string that is used when printing error
 messages. The string must complete the sentence "We expected this token to be ".
 """
 const _KIND_TO_MSG = Dict{_TokenKind,String}(
-    _TOKEN_KEYWORD => "a keyword",
-    _TOKEN_IDENTIFIER => "a variable name",
+    _TOKEN_KEYWORD => "a keyword defining a new section",
+    _TOKEN_IDENTIFIER => "an identifier",
     _TOKEN_NUMBER => "a number",
     _TOKEN_ADDITION => "the symbol `+`",
     _TOKEN_SUBTRACTION => "the symbol `-`",
@@ -206,7 +202,7 @@ const _KIND_TO_MSG = Dict{_TokenKind,String}(
     _TOKEN_COLON => "the symbol `:`",
     _TOKEN_IMPLIES => "the symbol `->`",
     _TOKEN_NEWLINE => "a new line",
-    _TOKEN_UNKNOWN => "some unknown symbol",
+    _TOKEN_UNKNOWN => "a token",
 )
 
 """
@@ -296,14 +292,50 @@ struct ParseError <: Exception
     msg::String
 end
 
+_is_utf8_start(b::UInt8) = b < 0x80 || (0xC0 <= b <= 0xF7)
+
+function _get_line_about_pos(io::IO, pos::Int, width::Int)
+    seek(io, max(0, pos - width))
+    # This byte might be an invalid or continuation byte. We need to seek
+    # forward until we reach a new valid byte.
+    while !_is_utf8_start(peek(io, UInt8))
+        read(io, UInt8)
+    end
+    char = Char[]
+    mark = 0
+    while !eof(io) && position(io) <= pos + width
+        c = read(io, Char)
+        if c == '\n'
+            if position(io) < pos
+                empty!(char)
+            else
+                break
+            end
+        elseif c != '\r'
+            push!(char, c)
+        end
+        if position(io) == pos
+            mark = length(char)
+        end
+    end
+    if mark == 0
+        mark = length(char) + 1
+    end
+    return String(char), mark
+end
+
 function _throw_parse_error(state::_LexerState, token::_Token, msg::String)
-    offset = min(40, token.pos)
-    seek(state.io, token.pos - offset)
-    line = String(read(state.io, 2 * offset))
-    i = something(findprev('\n', line, offset-1), 0)
-    j = something(findnext('\n', line, offset), length(line) + 1)
-    extract = replace(line[(i+1):(j-1)], "\r" => "")
-    help = string(extract, "\n", " "^(offset - i + - 1), "^\n", msg)
+    line, mark = _get_line_about_pos(state.io, token.pos, 40)
+    help = string(
+        line,
+        "\n",
+        " "^(mark - 1),
+        "^\nGot ",
+        _KIND_TO_MSG[token.kind],
+        _with_value(token.value),
+        ". ",
+        msg,
+    )
     return throw(ParseError(state.line, help))
 end
 
@@ -311,12 +343,15 @@ function Base.showerror(io::IO, err::ParseError)
     return print(io, "Error parsing LP file on line $(err.line):\n", err.msg)
 end
 
+_with_value(::Nothing) = ""
+_with_value(x::String) = string(" with value `", x, "`")
+
 function _expect(state::_LexerState, token::_Token, kind::_TokenKind)
     if token.kind != kind
         _throw_parse_error(
             state,
             token,
-            string("We expected this token to be ", _KIND_TO_MSG[kind]),
+            "We expected this token to be $(_KIND_TO_MSG[kind]).",
         )
     end
     return token
@@ -346,6 +381,9 @@ function Base.read(state::_LexerState, ::Type{_Token})
     end
     popfirst!(state.peek_tokens)
     state.current_token = token
+    if token.kind == _TOKEN_NEWLINE
+        state.line += 1
+    end
     return token
 end
 
@@ -445,7 +483,6 @@ function _peek_inner(state::_LexerState)
     while (c = peek(state, Char)) !== nothing
         pos = position(state.io)
         if c == '\n'
-            state.line += 1
             _ = read(state, Char)
             return _Token(_TOKEN_NEWLINE, nothing, pos)
         elseif isspace(c)  # Whitespace
@@ -480,11 +517,17 @@ function _peek_inner(state::_LexerState)
                 _ = read(state, Char)  # Allow <=, >=, and ==
             end
             return _Token(op, nothing, pos)
+        elseif _is_identifier(c) && !_is_starting_identifier(c)
+            _throw_parse_error(
+                state,
+                _Token(_TOKEN_UNKNOWN, "$c", pos),
+                "This character is not supported at the start of an identifier.",
+            )
         else
             _throw_parse_error(
                 state,
                 _Token(_TOKEN_UNKNOWN, "$c", pos),
-                "This character is not supported an LP file.",
+                "This character is not supported in an LP file.",
             )
         end
     end
@@ -574,7 +617,11 @@ function _parse_number(state::_LexerState, cache::_ReadCache{T})::T where {T}
     _expect(state, token, _TOKEN_NUMBER)
     ret = tryparse(T, token.value)
     if ret === nothing
-        _throw_parse_error(state, token, "We expected this to be a number.")
+        _throw_parse_error(
+            state,
+            _Token(_TOKEN_IDENTIFIER, token.value, token.pos),
+            "We were unable to parse this as a number.",
+        )
     end
     return ret
 end
@@ -751,7 +798,7 @@ function _parse_term(
     return _throw_parse_error(
         state,
         token,
-        "Got $(_KIND_TO_MSG[token.kind]), but we expected this to be a new term in the expression.",
+        "We expected this to be a new term in the expression.",
     )
 end
 
@@ -815,9 +862,7 @@ function _parse_set_suffix(state, cache)
     p = read(state, _Token)
     if _compare_case_insenstive(p, "free")
         return nothing
-    end
-    _skip_newlines(state)
-    if p.kind == _TOKEN_GREATER_THAN
+    elseif p.kind == _TOKEN_GREATER_THAN
         rhs = _parse_number(state, cache)
         return MOI.GreaterThan(rhs)
     elseif p.kind == _TOKEN_LESS_THAN
@@ -830,7 +875,7 @@ function _parse_set_suffix(state, cache)
         _throw_parse_error(
             state,
             p,
-            "We expected this to be an inequality like `>=`, `<=` ,or `==`.",
+            "We expected this to be an inequality like `>=`, `<=`, or `==`.",
         )
     end
 end
@@ -856,7 +901,7 @@ function _parse_set_prefix(state, cache)
         _throw_parse_error(
             state,
             p,
-            "We expected this to be an inequality like `>=`, `<=` ,or `==`.",
+            "We expected this to be an inequality like `>=`, `<=`, or `==`.",
         )
     end
 end
