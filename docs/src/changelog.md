@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
  - Added [`Bridges.Objective.ToScalarNonlinearBridge`](@ref) (#2834), (#2835)
- - Added support support for querying [`ConstraintConflictStatus`](@ref) when
+ - Added support for querying [`ConstraintConflictStatus`](@ref) when
    the constraint was bridged (#2839)
 
 ### Fixed
