@@ -1,7 +1,7 @@
-maximize 
+maximize
 obj: x1
-subject to 
+subject to
 c1: x <= 11
-bounds 
- x1 != 10 
-end 
+bounds
+ x1 != 10
+end
