@@ -140,7 +140,7 @@ The list of multivariate operators that are supported by default.
 
 ```jldoctest
 julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
-10-element Vector{Symbol}:
+14-element Vector{Symbol}:
  :+
  :-
  :*
@@ -152,10 +152,13 @@ julia> MOI.Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS
  :max
  :vect
  :dot
+ :hcat
+ :vcat
+ :norm
 ```
 """
 const DEFAULT_MULTIVARIATE_OPERATORS =
-    [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max, :vect, :dot]
+    [:+, :-, :*, :^, :/, :ifelse, :atan, :min, :max, :vect, :dot, :hcat, :vcat, :norm]
 
 """
     OperatorRegistry()
