@@ -37,7 +37,7 @@ In addition to the grammar, there are the following rules:
  * Newlines are ignored, except where explicitly described
 
 ```
-<lp-file> :== 
+<lp-file> :==
     <keyword-objective>\n
     [<section-objective>\n]
     <keyword-constraints>\n
@@ -52,7 +52,7 @@ In addition to the grammar, there are the following rules:
     i"min" | i"minimum" | i"minimize" | i"minimise"
   | i"max" | i"maximum" | i"maximize" | i"maximise"
 
-<keyword-constraints> :== 
+<keyword-constraints> :==
     (i"subject to" | i"st" | i"st." | i"s.t." | i"such that")[":"]
 
 <keyword-bounds> :== i"bound" | i"bounds"
@@ -71,7 +71,7 @@ In addition to the grammar, there are the following rules:
 
 <identifier> :== <char> (<char> | <digit> | ".")*
 
-<number> :== 
+<number> :==
     "+" <number>
   | "-" <number>
   | <digit>+[.(<digit>)*][("e" | "E")("+" | "-")(<digit>)+]
@@ -106,11 +106,11 @@ In addition to the grammar, there are the following rules:
 
 <set-suffix> := <inequality> <number>
 
-<set-prefix> := <number> <inequality> 
+<set-prefix> := <number> <inequality>
 
 <constraint-indicator> :== <identifier> "=" (0 | 1) "->" <expression> <set-suffix>
 
-<constraint-sos> :== 
+<constraint-sos> :==
     "S1::" (<identifier>":"<number>)+\n
   | "S2::" (<identifier>":"<number>)+\n
 
@@ -138,7 +138,7 @@ integers
 x
 ```
 Gurobi will interpret this as `x in MOI.Integer()`. FICO Xpress will interpret
-this as `x in MOI.ZeroOne()`. 
+this as `x in MOI.ZeroOne()`.
 
 FICO document this behavior, but they're an outlier.
 
@@ -168,7 +168,7 @@ x >= 0
 end
 ```
 
-**We choose to allow variables to be named as keywords, and we use context to 
+**We choose to allow variables to be named as keywords, and we use context to
 disambiguate.**
 
 ### Whitespace
@@ -186,7 +186,7 @@ Xpress will interpret this as the expression `2 * x`.
 Gurobi document this behavior, saying that they require whitespace around all
 tokens, but they're an outlier.
 
-**We choose to allow juxtaposted tokens without whitespace.**
+**We choose to allow juxtaposed tokens without whitespace.**
 
 ### Identifiers
 
