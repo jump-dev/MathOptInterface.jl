@@ -24,7 +24,7 @@ with the reasons for latency in Julia and how to fix them.
 
  * Read the blogposts on julialang.org on [precompilation](https://julialang.org/blog/2021/01/precompile_tutorial/)
    and [SnoopCompile](https://julialang.org/blog/2021/01/snoopi_deep/)
- * Read the [SnoopCompile](https://timholy.github.io/SnoopCompile.jl/stable/)
+ * Read the [SnoopCompile](https://juliadebug.github.io/SnoopCompile.jl/stable/)
    documentation.
  * Watch Tim Holy's [talk at JuliaCon 2021](https://www.youtube.com/watch?v=rVBgrWYKLHY)
  * Watch the [package development workshop at JuliaCon 2021](https://www.youtube.com/watch?v=wXRMwJdEjX4)
