@@ -188,6 +188,18 @@ end
 
 MOI.Bridges.needs_final_touch(::IndicatorToMILPBridge) = true
 
+function _is_binary(model::MOI.ModelLike, f::MOI.AbstractScalarFunction)
+    x = convert(MOI.VariableIndex, f)
+    return _is_binary(model, x)
+end
+
+function _is_binary(model::MOI.ModelLike, x::MOI.VariableIndex)
+    return MOI.is_valid(
+        model,
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(x.value),
+    )
+end
+
 function MOI.Bridges.final_touch(
     bridge::IndicatorToMILPBridge{T,F},
     model::MOI.ModelLike,
@@ -198,6 +210,10 @@ function MOI.Bridges.final_touch(
     ret = MOI.Utilities.get_bounds(model, bounds, fi)
     if ret === nothing
         throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, fi))
+    elseif !_is_binary(model, scalars[1])
+        error(
+            "Unable to reformulate indicator constraint to a MILP. The indicator variable must be binary.",
+        )
     end
     if bridge.slack === nothing
         # This is the first time calling final_touch

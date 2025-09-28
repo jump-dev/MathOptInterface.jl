@@ -301,6 +301,25 @@ function test_delete_before_final_touch()
     return
 end
 
+function test_runtests_error_not_binary()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[2], MOI.Interval(0, 4))
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(2)),
+    )
+    @test_throws(
+        ErrorException(
+            "Unable to reformulate indicator constraint to a MILP. The indicator variable must be binary.",
+        ),
+        MOI.Bridges.final_touch(model),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintIndicatorToMILP.runtests()
