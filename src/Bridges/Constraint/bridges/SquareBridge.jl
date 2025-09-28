@@ -48,7 +48,8 @@ because the expressions are the same.
 
 `SquareBridge` creates:
 
-  * `G` in `TT`
+  * `F` in `TT`
+  * `G` in [`MOI.EqualTo{T}`](@ref)
 """
 struct SquareBridge{
     T,
