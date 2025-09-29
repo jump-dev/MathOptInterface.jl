@@ -18,9 +18,9 @@ supported in specific circumstances, for example, `F`-in-`S` constraints cannot 
 combined with another type of constraint, it should still return `true`.
 """
 function supports_constraint(
-    ::ModelLike,
-    ::Type{<:AbstractFunction},
-    ::Type{<:AbstractSet},
+    @nospecialize(::ModelLike),
+    @nospecialize(F::Type{<:AbstractFunction}),
+    @nospecialize(S::Type{<:AbstractSet}),
 )
     return false
 end
