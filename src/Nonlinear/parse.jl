@@ -125,6 +125,8 @@ function _parse_expression(stack, data, expr, x, parent_index)
         _parse_logic_expression(stack, data, expr, x, parent_index)
     elseif Meta.isexpr(x, :vect)
         _parse_vect_expression(stack, data, expr, x, parent_index)
+    elseif Meta.isexpr(x, :hcat)
+        _parse_hcat_expression(stack, data, expr, x, parent_index)
     else
     end
 end
@@ -262,6 +264,22 @@ function _parse_vect_expression(
 )
     @assert Meta.isexpr(x, :vect)
     id = get(data.operators.multivariate_operator_to_id, :vect, nothing)
+    push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent_index))
+    for i in length(x.args):-1:1
+        push!(stack, (length(expr.nodes), x.args[i]))
+    end
+    return
+end
+
+function _parse_hcat_expression(
+    stack::Vector{Tuple{Int,Any}},
+    data::Model,
+    expr::Expression,
+    x::Expr,
+    parent_index::Int,
+)
+    @assert Meta.isexpr(x, :hcat)
+    id = get(data.operators.multivariate_operator_to_id, :hcat, nothing)
     push!(expr.nodes, Node(NODE_CALL_MULTIVARIATE, id, parent_index))
     for i in length(x.args):-1:1
         push!(stack, (length(expr.nodes), x.args[i]))
