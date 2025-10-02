@@ -2796,7 +2796,7 @@ struct VectorNonlinearOracle{T} <: AbstractVectorSet
         eval_hessian_lagrangian::Union{Nothing,Function} = nothing,
     ) where {T}
         if length(l) != length(u)
-            throw(DimenionMismatch())
+            throw(DimensionMismatch())
         end
         return new{T}(
             dimension,

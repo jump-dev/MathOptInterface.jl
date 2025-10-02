@@ -421,7 +421,7 @@ end
 
 function test_VectorNonlinearOracle()
     @test_throws(
-        DimenionMismatch,
+        DimensionMismatch,
         MOI.VectorNonlinearOracle(;
             dimension = 3,
             l = [0.0, 0.0, 1.0],
