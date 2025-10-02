@@ -2827,6 +2827,21 @@ function Base.copy(s::VectorNonlinearOracle)
     )
 end
 
+function Base.:(==)(
+    x::VectorNonlinearOracle{T},
+    y::VectorNonlinearOracle{T},
+) where {T}
+    return x.input_dimension == y.input_dimension &&
+           x.output_dimension == y.output_dimension &&
+           x.l == y.l &&
+           x.u == y.u &&
+           x.eval_f == y.eval_f &&
+           x.jacobian_structure == y.jacobian_structure &&
+           x.eval_jacobian == y.eval_jacobian &&
+           x.hessian_lagrangian_structure == y.hessian_lagrangian_structure &&
+           x.eval_hessian_lagrangian == y.eval_hessian_lagrangian
+end
+
 function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
     println(io, "VectorNonlinearOracle{$T}(;")
     println(io, "    dimension = ", s.input_dimension, ",")
