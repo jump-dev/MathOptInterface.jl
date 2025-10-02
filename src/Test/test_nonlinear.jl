@@ -2236,8 +2236,8 @@ function test_vector_nonlinear_oracle(
     )
     set = MOI.VectorNonlinearOracle(;
         dimension = 5,
-        l = [0.0, 0.0],
-        u = [0.0, 0.0],
+        l = T[0, 0],
+        u = T[0, 0],
         eval_f = (ret, x) -> begin
             @test length(ret) == 2
             @test length(x) == 5
@@ -2249,11 +2249,11 @@ function test_vector_nonlinear_oracle(
         eval_jacobian = (ret, x) -> begin
             @test length(ret) == 5
             @test length(x) == 5
-            ret[1] = 2 * x[1]
-            ret[2] = 2 * x[2]
-            ret[3] = 3 * x[3]^2
-            ret[4] = -1.0
-            ret[5] = -1.0
+            ret[1] = T(2) * x[1]
+            ret[2] = T(2) * x[2]
+            ret[3] = T(3) * x[3]^2
+            ret[4] = -T(1)
+            ret[5] = -T(1)
             return
         end,
         hessian_lagrangian_structure = [(1, 1), (2, 2), (3, 3)],
@@ -2261,22 +2261,22 @@ function test_vector_nonlinear_oracle(
             @test length(ret) == 3
             @test length(x) == 5
             @test length(u) == 2
-            ret[1] = 2 * u[1]
-            ret[2] = 2 * u[2]
-            ret[3] = 6 * x[3] * u[2]
+            ret[1] = T(2) * u[1]
+            ret[2] = T(2) * u[2]
+            ret[3] = T(6) * x[3] * u[2]
             return
         end,
     )
     @test MOI.dimension(set) == 5
     x, y = MOI.add_variables(model, 3), MOI.add_variables(model, 2)
-    MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
+    MOI.add_constraints.(model, x, MOI.EqualTo.(T(1):T(3)))
     c = MOI.add_constraint(model, MOI.VectorOfVariables([x; y]), set)
     MOI.optimize!(model)
     x_v = MOI.get.(model, MOI.VariablePrimal(), x)
     y_v = MOI.get.(model, MOI.VariablePrimal(), y)
     @test ≈(y_v, [x_v[1]^2, x_v[2]^2 + x_v[3]^3], config)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [x_v; y_v], config)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(5), config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(T, 5), config)
     return
 end
 
@@ -2312,8 +2312,8 @@ function test_vector_nonlinear_oracle_no_hessian(
     )
     set = MOI.VectorNonlinearOracle(;
         dimension = 5,
-        l = [0.0, 0.0],
-        u = [0.0, 0.0],
+        l = T[0, 0],
+        u = T[0, 0],
         eval_f = (ret, x) -> begin
             ret[1] = x[1]^2 - x[4]
             ret[2] = x[2]^2 + x[3]^3 - x[5]
@@ -2321,24 +2321,24 @@ function test_vector_nonlinear_oracle_no_hessian(
         end,
         jacobian_structure = [(1, 1), (2, 2), (2, 3), (1, 4), (2, 5)],
         eval_jacobian = (ret, x) -> begin
-            ret[1] = 2 * x[1]
-            ret[2] = 2 * x[2]
-            ret[3] = 3 * x[3]^2
-            ret[4] = -1.0
-            ret[5] = -1.0
+            ret[1] = T(2) * x[1]
+            ret[2] = T(2) * x[2]
+            ret[3] = T(3) * x[3]^2
+            ret[4] = -T(1)
+            ret[5] = -T(1)
             return
         end,
     )
     @test MOI.dimension(set) == 5
     x, y = MOI.add_variables(model, 3), MOI.add_variables(model, 2)
-    MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
+    MOI.add_constraints.(model, x, MOI.EqualTo.(T(1):T(3)))
     c = MOI.add_constraint(model, MOI.VectorOfVariables([x; y]), set)
     MOI.optimize!(model)
     x_v = MOI.get.(model, MOI.VariablePrimal(), x)
     y_v = MOI.get.(model, MOI.VariablePrimal(), y)
     @test ≈(y_v, [x_v[1]^2, x_v[2]^2 + x_v[3]^3], config)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [x_v; y_v], config)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(5), config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(T, 5), config)
     return
 end
 

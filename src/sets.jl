@@ -2765,7 +2765,7 @@ julia> set = MOI.VectorNonlinearOracle(;
        );
 
 julia> set
-VectorNonlinearOracle(;
+VectorNonlinearOracle{Float64}(;
     dimension = 3,
     l = [0.0, 0.0],
     u = [1.0, 0.0],
