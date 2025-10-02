@@ -2828,7 +2828,7 @@ function Base.copy(s::VectorNonlinearOracle)
 end
 
 function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
-    println(io, "VectorNonlinearOracle{T}(;")
+    println(io, "VectorNonlinearOracle{$T}(;")
     println(io, "    dimension = ", s.input_dimension, ",")
     println(io, "    l = ", s.l, ",")
     println(io, "    u = ", s.u, ",")
