@@ -351,15 +351,6 @@ function Base.isapprox(x, y, config::Config{T}) where {T}
     return Base.isapprox(x, y; atol = config.atol, rtol = config.rtol)
 end
 
-function Base.isapprox(
-    x::AbstractVector{T},
-    y::AbstractVector{T},
-    config::Config{T},
-) where {T}
-    return length(x) == length(y) &&
-           all(isapprox(xi, yi, config) for (xi, yi) in zip(x, y))
-end
-
 """
     _supports(config::Config, attribute::MOI.AnyAttribute)
 

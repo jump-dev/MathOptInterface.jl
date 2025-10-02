@@ -2290,12 +2290,13 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[1, 2, 3, 1, 13],
+            T[1, 2, 3, 1, 31],
             (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{T}) =>
-                zeros(T, 5),
+                [zeros(T, 5)],
         ),
     )
-    return
+    model.eval_variable_constraint_dual = false
+    return () -> model.eval_variable_constraint_dual = true
 end
 
 version_added(::typeof(test_vector_nonlinear_oracle)) = v"1.46.0"
@@ -2352,12 +2353,13 @@ function setup_test(
         mock -> MOI.Utilities.mock_optimize!(
             mock,
             config.optimal_status,
-            T[1, 2, 3, 1, 13],
+            T[1, 2, 3, 1, 31],
             (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{T}) =>
-                zeros(T, 5),
+                [zeros(T, 5)],
         ),
     )
-    return
+    model.eval_variable_constraint_dual = false
+    return () -> model.eval_variable_constraint_dual = true
 end
 
 version_added(::typeof(test_vector_nonlinear_oracle_no_hessian)) = v"1.46.0"
