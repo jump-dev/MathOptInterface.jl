@@ -419,6 +419,21 @@ function test_update_dimension()
     return
 end
 
+function test_VectorNonlinearOracle()
+    @test_throws(
+        DimenionMismatch,
+        MOI.VectorNonlinearOracle(;
+            dimension = 3,
+            l = [0.0, 0.0, 1.0],
+            u = [1.0, 0.0],
+            eval_f = (ret, x) -> nothing,
+            jacobian_structure = Tuple{Int,Int}[],
+            eval_jacobian = (ret, x) -> nothing,
+        ),
+    )
+    return
+end
+
 end  # module
 
 TestSets.runtests()

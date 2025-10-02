@@ -2223,3 +2223,141 @@ function setup_test(
 end
 
 version_added(::typeof(test_nonlinear_quadratic_4)) = v"1.35.0"
+
+function test_vector_nonlinear_oracle(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.VectorNonlinearOracle{T},
+    )
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 5,
+        l = [0.0, 0.0],
+        u = [0.0, 0.0],
+        eval_f = (ret, x) -> begin
+            @test length(ret) == 2
+            @test length(x) == 5
+            ret[1] = x[1]^2 - x[4]
+            ret[2] = x[2]^2 + x[3]^3 - x[5]
+            return
+        end,
+        jacobian_structure = [(1, 1), (2, 2), (2, 3), (1, 4), (2, 5)],
+        eval_jacobian = (ret, x) -> begin
+            @test length(ret) == 5
+            @test length(x) == 5
+            ret[1] = 2 * x[1]
+            ret[2] = 2 * x[2]
+            ret[3] = 3 * x[3]^2
+            ret[4] = -1.0
+            ret[5] = -1.0
+            return
+        end,
+        hessian_lagrangian_structure = [(1, 1), (2, 2), (3, 3)],
+        eval_hessian_lagrangian = (ret, x, u) -> begin
+            @test length(ret) == 3
+            @test length(x) == 5
+            @test length(u) == 2
+            ret[1] = 2 * u[1]
+            ret[2] = 2 * u[2]
+            ret[3] = 6 * x[3] * u[2]
+            return
+        end,
+    )
+    @test MOI.dimension(set) == 5
+    x, y = MOI.add_variables(model, 3), MOI.add_variables(model, 2)
+    MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables([x; y]), set)
+    MOI.optimize!(model)
+    x_v = MOI.get.(model, MOI.VariablePrimal(), x)
+    y_v = MOI.get.(model, MOI.VariablePrimal(), y)
+    @test ≈(y_v, [x_v[1]^2, x_v[2]^2 + x_v[3]^3], config)
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [x_v; y_v], config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(5), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_vector_nonlinear_oracle),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1, 2, 3, 1, 13],
+            (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{T}) =>
+                zeros(T, 5),
+        ),
+    )
+    return
+end
+
+version_added(::typeof(test_vector_nonlinear_oracle)) = v"1.46.0"
+
+function test_vector_nonlinear_oracle_no_hessian(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.VectorNonlinearOracle{T},
+    )
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 5,
+        l = [0.0, 0.0],
+        u = [0.0, 0.0],
+        eval_f = (ret, x) -> begin
+            ret[1] = x[1]^2 - x[4]
+            ret[2] = x[2]^2 + x[3]^3 - x[5]
+            return
+        end,
+        jacobian_structure = [(1, 1), (2, 2), (2, 3), (1, 4), (2, 5)],
+        eval_jacobian = (ret, x) -> begin
+            ret[1] = 2 * x[1]
+            ret[2] = 2 * x[2]
+            ret[3] = 3 * x[3]^2
+            ret[4] = -1.0
+            ret[5] = -1.0
+            return
+        end,
+    )
+    @test MOI.dimension(set) == 5
+    x, y = MOI.add_variables(model, 3), MOI.add_variables(model, 2)
+    MOI.add_constraints.(model, x, MOI.EqualTo.(1.0:3.0))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables([x; y]), set)
+    MOI.optimize!(model)
+    x_v = MOI.get.(model, MOI.VariablePrimal(), x)
+    y_v = MOI.get.(model, MOI.VariablePrimal(), y)
+    @test ≈(y_v, [x_v[1]^2, x_v[2]^2 + x_v[3]^3], config)
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [x_v; y_v], config)
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(5), config)
+    return
+end
+
+function setup_test(
+    ::typeof(test_vector_nonlinear_oracle_no_hessian),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> MOI.Utilities.mock_optimize!(
+            mock,
+            config.optimal_status,
+            T[1, 2, 3, 1, 13],
+            (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{T}) =>
+                zeros(T, 5),
+        ),
+    )
+    return
+end
+
+version_added(::typeof(test_vector_nonlinear_oracle_no_hessian)) = v"1.46.0"

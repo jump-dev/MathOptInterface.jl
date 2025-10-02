@@ -2666,6 +2666,177 @@ function Base.:(==)(x::Reified{S}, y::Reified{S}) where {S}
     return x.set == y.set
 end
 
+"""
+    VectorNonlinearOracle(;
+        dimension::Int,
+        l::Vector{Float64},
+        u::Vector{Float64},
+        eval_f::Function,
+        jacobian_structure::Vector{Tuple{Int,Int}},
+        eval_jacobian::Function,
+        hessian_lagrangian_structure::Vector{Tuple{Int,Int}} = Tuple{Int,Int}[],
+        eval_hessian_lagrangian::Union{Nothing,Function} = nothing,
+    ) <: AbstractVectorSet
+
+The set:
+```math
+S = \\{x \\in \\mathbb{R}^{dimension}: l \\le f(x) \\le u\\}
+```
+where ``f`` is defined by the vectors `l` and `u`, and the callback oracles
+`eval_f`, `eval_jacobian`, and `eval_hessian_lagrangian`.
+
+## f
+
+The `eval_f` function must have the signature
+```julia
+eval_f(ret::AbstractVector, x::AbstractVector)::Nothing
+```
+which fills ``f(x)`` into the dense vector `ret`.
+
+## Jacobian
+
+The `eval_jacobian` function must have the signature
+```julia
+eval_jacobian(ret::AbstractVector, x::AbstractVector)::Nothing
+```
+which fills the sparse Jacobian ``\\nabla f(x)`` into `ret`.
+
+The one-indexed sparsity structure must be provided in the `jacobian_structure`
+argument.
+
+## Hessian
+
+The `eval_hessian_lagrangian` function is optional.
+
+If `eval_hessian_lagrangian === nothing`, Ipopt will use a Hessian approximation
+instead of the exact Hessian.
+
+If `eval_hessian_lagrangian` is a function, it must have the signature
+```julia
+eval_hessian_lagrangian(
+    ret::AbstractVector,
+    x::AbstractVector,
+    μ::AbstractVector,
+)::Nothing
+```
+which fills the sparse Hessian of the Lagrangian ``\\sum \\mu_i \\nabla^2 f_i(x)``
+into `ret`.
+
+The one-indexed sparsity structure must be provided in the
+`hessian_lagrangian_structure` argument.
+
+## Example
+
+To model the set:
+```math
+\\begin{align}
+0 \\le & x^2           \\le 1
+0 \\le & y^2 + z^3 - w \\le 0
+\\end{align}
+```
+do
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> set = MOI.VectorNonlinearOracle(;
+           dimension = 3,
+           l = [0.0, 0.0],
+           u = [1.0, 0.0],
+           eval_f = (ret, x) -> begin
+               ret[1] = x[2]^2
+               ret[2] = x[3]^2 + x[4]^3 - x[1]
+               return
+           end,
+           jacobian_structure = [(1, 2), (2, 1), (2, 3), (2, 4)],
+           eval_jacobian = (ret, x) -> begin
+               ret[1] = 2.0 * x[2]
+               ret[2] = -1.0
+               ret[3] = 2.0 * x[3]
+               ret[4] = 3.0 * x[4]^2
+               return
+           end,
+           hessian_lagrangian_structure = [(2, 2), (3, 3), (4, 4)],
+           eval_hessian_lagrangian = (ret, x, u) -> begin
+               ret[1] = 2.0 * u[1]
+               ret[2] = 2.0 * u[2]
+               ret[3] = 6.0 * x[4] * u[2]
+               return
+           end,
+       );
+
+julia> set
+VectorNonlinearOracle(;
+    dimension = 3,
+    l = [0.0, 0.0],
+    u = [1.0, 0.0],
+    ...,
+)
+```
+"""
+struct VectorNonlinearOracle{T} <: AbstractVectorSet
+    input_dimension::Int
+    output_dimension::Int
+    l::Vector{T}
+    u::Vector{T}
+    eval_f::Function
+    jacobian_structure::Vector{Tuple{Int,Int}}
+    eval_jacobian::Function
+    hessian_lagrangian_structure::Vector{Tuple{Int,Int}}
+    eval_hessian_lagrangian::Union{Nothing,Function}
+
+    function VectorNonlinearOracle(;
+        dimension::Int,
+        l::Vector{T},
+        u::Vector{T},
+        eval_f::Function,
+        jacobian_structure::Vector{Tuple{Int,Int}},
+        eval_jacobian::Function,
+        # The hessian_lagrangian is optional.
+        hessian_lagrangian_structure::Vector{Tuple{Int,Int}} = Tuple{Int,Int}[],
+        eval_hessian_lagrangian::Union{Nothing,Function} = nothing,
+    ) where {T}
+        if length(l) != length(u)
+            throw(DimenionMismatch())
+        end
+        return new{T}(
+            dimension,
+            length(l),
+            l,
+            u,
+            eval_f,
+            jacobian_structure,
+            eval_jacobian,
+            hessian_lagrangian_structure,
+            eval_hessian_lagrangian,
+        )
+    end
+end
+
+dimension(s::VectorNonlinearOracle) = s.input_dimension
+
+function Base.copy(s::VectorNonlinearOracle)
+    return VectorNonlinearOracle(;
+        dimension = s.input_dimension,
+        l = copy(s.l),
+        u = copy(s.u),
+        eval_f = s.eval_f,
+        jacobian_structure = copy(s.jacobian_structure),
+        eval_jacobian = s.eval_jacobian,
+        hessian_lagrangian_structure = copy(s.hessian_lagrangian_structure),
+        eval_hessian_lagrangian = s.eval_hessian_lagrangian,
+    )
+end
+
+function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
+    println(io, "VectorNonlinearOracle{T}(;")
+    println(io, "    dimension = ", s.input_dimension, ",")
+    println(io, "    l = ", s.l, ",")
+    println(io, "    u = ", s.u, ",")
+    println(io, "    ...,")
+    print(io, ")")
+    return
+end
+
 # TODO(odow): these are not necessarily isbits. They may not be safe to return
 # without copying if the number is BigFloat, for example.
 function Base.copy(

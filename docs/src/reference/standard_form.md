@@ -104,6 +104,7 @@ ACTIVATE_ON_ONE
 Complements
 HyperRectangle
 Scaled
+VectorNonlinearOracle
 ```
 
 ## Constraint programming sets
