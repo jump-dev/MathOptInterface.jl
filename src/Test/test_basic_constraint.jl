@@ -176,10 +176,10 @@ function _set(::Type{T}, ::Type{MOI.HyperRectangle}) where {T}
 end
 
 function _set(::Type{T}, ::Type{MOI.VectorNonlinearOracle}) where {T}
-    return MOI.VectorNonlinearOracle(;
+    set = MOI.VectorNonlinearOracle(;
         dimension = 3,
-        l = [0.0, 0.0],
-        u = [1.0, 0.0],
+        l = T[0, 0],
+        u = T[1, 0],
         eval_f = (ret, x) -> begin
             ret[1] = x[2]^2
             ret[2] = x[3]^2 + x[4]^3 - x[1]
@@ -187,13 +187,17 @@ function _set(::Type{T}, ::Type{MOI.VectorNonlinearOracle}) where {T}
         end,
         jacobian_structure = [(1, 2), (2, 1), (2, 3), (2, 4)],
         eval_jacobian = (ret, x) -> begin
-            ret[1] = 2.0 * x[2]
-            ret[2] = -1.0
-            ret[3] = 2.0 * x[3]
-            ret[4] = 3.0 * x[4]^2
+            ret[1] = T(2) * x[2]
+            ret[2] = -T(1)
+            ret[3] = T(2) * x[3]
+            ret[4] = T(3) * x[4]^2
             return
         end,
     )
+    x, ret_f, ret_J = T[1, 2, 3, 4, 5], T[0, 0], T[0, 0, 0, 0]
+    set.eval_f(ret_f, x)
+    set.eval_jacobian(ret_J, x)
+    return set
 end
 
 function _test_function_modification(

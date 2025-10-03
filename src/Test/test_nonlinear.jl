@@ -2268,6 +2268,16 @@ function test_vector_nonlinear_oracle(
         end,
     )
     @test MOI.dimension(set) == 5
+    x = T[1, 2, 3, 4, 5]
+    ret = T[0, 0]
+    set.eval_f(ret, x)
+    @test ret == T[-3, 26]
+    ret = T[0, 0, 0, 0, 0]
+    set.eval_jacobian(ret, x)
+    @test ret == T[2, 4, 27, -1, -1]
+    ret = T[0, 0, 0]
+    set.eval_hessian_lagrangian(ret, x, T[2, 3])
+    @test ret == T[4, 6, 54]
     x, y = MOI.add_variables(model, 3), MOI.add_variables(model, 2)
     MOI.add_constraints.(model, x, MOI.EqualTo.(T(1):T(3)))
     c = MOI.add_constraint(model, MOI.VectorOfVariables([x; y]), set)
@@ -2331,6 +2341,15 @@ function test_vector_nonlinear_oracle_no_hessian(
         end,
     )
     @test MOI.dimension(set) == 5
+    x = T[1, 2, 3, 4, 5]
+    ret = T[0, 0]
+    set.eval_f(ret, x)
+    @test ret == T[-3, 26]
+    ret = T[0, 0, 0, 0, 0]
+    set.eval_jacobian(ret, x)
+    @test ret == T[2, 4, 27, -1, -1]
+    @test isempty(set.hessian_lagrangian_structure)
+    @test set.eval_hessian_lagrangian === nothing
     x, y = MOI.add_variables(model, 3), MOI.add_variables(model, 2)
     MOI.add_constraints.(model, x, MOI.EqualTo.(T(1):T(3)))
     c = MOI.add_constraint(model, MOI.VectorOfVariables([x; y]), set)
