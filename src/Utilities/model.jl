@@ -843,6 +843,7 @@ const EqualToIndicatorZero{T} =
         MOI.Table,
         MOI.BinPacking,
         MOI.HyperRectangle,
+        MOI.VectorNonlinearOracle,
     ),
     (MOI.ScalarNonlinearFunction,),
     (MOI.ScalarAffineFunction, MOI.ScalarQuadraticFunction),

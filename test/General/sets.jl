@@ -419,6 +419,54 @@ function test_update_dimension()
     return
 end
 
+function test_VectorNonlinearOracle()
+    @test_throws(
+        DimensionMismatch,
+        MOI.VectorNonlinearOracle(;
+            dimension = 3,
+            l = [0.0, 0.0, 1.0],
+            u = [1.0, 0.0],
+            eval_f = (ret, x) -> nothing,
+            jacobian_structure = Tuple{Int,Int}[],
+            eval_jacobian = (ret, x) -> nothing,
+        ),
+    )
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 3,
+        l = [0.0, 0.0],
+        u = [1.0, 0.0],
+        eval_f = (ret, x) -> begin
+            ret[1] = x[2]^2
+            ret[2] = x[3]^2 + x[4]^3 - x[1]
+            return
+        end,
+        jacobian_structure = [(1, 2), (2, 1), (2, 3), (2, 4)],
+        eval_jacobian = (ret, x) -> begin
+            ret[1] = 2.0 * x[2]
+            ret[2] = -1.0
+            ret[3] = 2.0 * x[3]
+            ret[4] = 3.0 * x[4]^2
+            return
+        end,
+        hessian_lagrangian_structure = [(2, 2), (3, 3), (4, 4)],
+        eval_hessian_lagrangian = (ret, x, u) -> begin
+            ret[1] = 2.0 * u[1]
+            ret[2] = 2.0 * u[2]
+            ret[3] = 6.0 * x[4] * u[2]
+            return
+        end,
+    )
+    contents = """
+    VectorNonlinearOracle{Float64}(;
+        dimension = 3,
+        l = [0.0, 0.0],
+        u = [1.0, 0.0],
+        ...,
+    )"""
+    @test sprint(show, set) == contents
+    return
+end
+
 end  # module
 
 TestSets.runtests()

@@ -82,6 +82,7 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 | [`RelativeEntropyCone(d)`](@ref MathOptInterface.RelativeEntropyCone) | ``\{ (u, v, w) \in \mathbb{R}^{d} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}`` |
 | [`HyperRectangle(l, u)`](@ref MathOptInterface.HyperRectangle)        | ``\{x \in \bar{\mathbb{R}}^d: x_i \in [l_i, u_i] \forall i=1,\ldots,d\}`` |
 | [`NormCone(p, d)`](@ref MathOptInterface.NormCone)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \left(\sum\limits_i \lvert x_i \rvert^p\right)^{\frac{1}{p}} \}`` |
+| [`VectorNonlinearOracle`](@ref MathOptInterface.VectorNonlinearOracle)| ``\{x \in \mathbb{R}^{dimension}: l \le f(x) \le u \}`` |
 
 ## Matrix cones
 
