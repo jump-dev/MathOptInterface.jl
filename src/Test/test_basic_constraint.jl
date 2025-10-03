@@ -417,6 +417,7 @@ for s in [
     :Table,
     :Path,
     :HyperRectangle,
+    :VectorNonlinearOracle,
 ]
     S = getfield(MOI, s)
     functions = if S <: MOI.AbstractScalarSet
