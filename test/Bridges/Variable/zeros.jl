@@ -175,7 +175,8 @@ function test_zeros()
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c1) == 0.0
     @test MOI.get(bridged_mock, MOI.ConstraintDual(), c2) == 1.0
     attr = MOI.ConstraintDual()
-    err = ErrorException(
+    err = MOI.GetAttributeNotAllowed(
+        attr,
         "Unable to query the dual of a variable bound that was reformulated " *
         "using `ZerosBridge`. This usually arises in conic solvers when a " *
         "variable is fixed to a value. As a work-around, instead of creating " *
