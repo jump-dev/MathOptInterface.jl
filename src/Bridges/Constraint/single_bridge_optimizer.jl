@@ -105,9 +105,9 @@ function MOI.Bridges.supports_bridging_constrained_variable(
 end
 
 function MOI.Bridges.supports_bridging_constraint(
-    ::SingleBridgeOptimizer{BT},
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
+    @nospecialize(b::SingleBridgeOptimizer{BT}),
+    @nospecialize(F::Type{<:MOI.AbstractFunction}),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
 ) where {BT}
     return MOI.supports_constraint(BT, F, S)
 end

@@ -36,9 +36,9 @@ Return a `Bool` indicating whether the bridges of type `BT` support bridging
    constraint types that the bridge implements.
 """
 function MOI.supports_constraint(
-    ::Type{<:AbstractBridge},
-    ::Type{<:MOI.AbstractFunction},
-    ::Type{<:MOI.AbstractSet},
+    @nospecialize(BT::Type{<:AbstractBridge}),
+    @nospecialize(F::Type{<:MOI.AbstractFunction}),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
 )
     return false
 end

@@ -19,8 +19,8 @@ combined with another type of constraint, it should still return `true`.
 """
 function supports_constraint(
     ::ModelLike,
-    ::Type{<:AbstractFunction},
-    ::Type{<:AbstractSet},
+    F::Type{<:AbstractFunction},
+    S::Type{<:AbstractSet},
 )
     return false
 end

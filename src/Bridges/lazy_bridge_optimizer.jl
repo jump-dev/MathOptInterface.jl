@@ -155,9 +155,9 @@ end
 Return the list of `VariableNode` that would be added if `BT` is used in `b`.
 """
 function _variable_nodes(
-    b::LazyBridgeOptimizer,
-    ::Type{BT},
-) where {BT<:AbstractBridge}
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT),
+)
     return map(added_constrained_variable_types(BT)) do (S,)
         return node(b, S)::VariableNode
     end
@@ -169,9 +169,9 @@ end
 Return the list of `ConstraintNode` that would be added if `BT` is used in `b`.
 """
 function _constraint_nodes(
-    b::LazyBridgeOptimizer,
-    ::Type{BT},
-) where {BT<:AbstractBridge}
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT),
+)
     return ConstraintNode[
         node(b, F, S) for (F, S) in added_constraint_types(BT)
     ]
@@ -183,7 +183,11 @@ end
 Return the `Edge` or `ObjectiveEdge` in the hyper-graph associated with the
 bridge `BT`, where `index` is the index of `BT` in the list of bridges.
 """
-function _edge(b::LazyBridgeOptimizer, index::Int, BT::Type{<:AbstractBridge})
+function _edge(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(index::Int),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)
     return Edge(
         index,
         _variable_nodes(b, BT),
@@ -247,7 +251,10 @@ end
 
 Return the `VariableNode` associated with set `S` in `b`.
 """
-function node(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
+function node(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
+)
     # If we support the set, the node is 0.
     if (
         S <: MOI.AbstractScalarSet &&
@@ -304,9 +311,9 @@ end
 Return the `ConstraintNode` associated with constraint `F`-in-`S` in `b`.
 """
 function node(
-    b::LazyBridgeOptimizer,
-    F::Type{<:MOI.AbstractFunction},
-    S::Type{<:MOI.AbstractSet},
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(F::Type{<:MOI.AbstractFunction}),
+    @nospecialize(S::Type{<:MOI.AbstractSet}),
 )
     # If we support the constraint type, the node is 0.
     if MOI.supports_constraint(b.model, F, S)
@@ -377,8 +384,8 @@ function _bridge_types(
 end
 
 function _bridge_types(
-    b::LazyBridgeOptimizer,
-    ::Type{<:Constraint.AbstractBridge},
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:Constraint.AbstractBridge}),
 )
     return b.constraint_bridge_types
 end
@@ -395,7 +402,10 @@ end
 
 Enable the use of the bridges of type `BT` by `b`.
 """
-function add_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function add_bridge(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)
     if !has_bridge(b, BT)
         push!(_bridge_types(b, BT), BT)
         _reset_bridge_graph(b)
@@ -427,7 +437,10 @@ end
 
 Return a `Bool` indicating whether the bridges of type `BT` are used by `b`.
 """
-function has_bridge(b::LazyBridgeOptimizer, BT::Type{<:AbstractBridge})
+function has_bridge(
+    @nospecialize(b::LazyBridgeOptimizer),
+    @nospecialize(BT::Type{<:AbstractBridge}),
+)::Bool
     return findfirst(isequal(BT), _bridge_types(b, BT)) !== nothing
 end
 
