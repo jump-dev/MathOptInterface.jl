@@ -320,6 +320,43 @@ function test_runtests_error_not_binary()
     return
 end
 
+MOI.Utilities.@model(
+    Model2867,
+    (),
+    (MOI.EqualTo, MOI.LessThan),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    ()
+)
+
+function MOI.supports_constraint(
+    model::Model2867,
+    ::Type{MOI.VariableIndex},
+    ::Type{<:Union{MOI.Integer,MOI.ZeroOne}},
+)
+    return get(model.ext, :supports, false)
+end
+
+function test_issue_2867()
+    model = MOI.instantiate(Model2867{Float64}; with_bridge_type = Float64)
+    @test !MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
+    )
+    model = MOI.instantiate(Model2867{Float64}; with_bridge_type = Float64)
+    model.model.ext[:supports] = true
+    @test MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.EqualTo{Float64}},
+    )
+    return
+end
+
 end  # module
 
 TestConstraintIndicatorToMILP.runtests()

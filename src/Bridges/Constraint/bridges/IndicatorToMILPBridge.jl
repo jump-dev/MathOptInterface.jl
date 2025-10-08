@@ -81,7 +81,7 @@ end
 function MOI.Bridges.added_constrained_variable_types(
     ::Type{<:IndicatorToMILPBridge},
 )
-    return Tuple{Type}[(MOI.Reals,)]
+    return Tuple{Type}[(MOI.Reals,), (MOI.ZeroOne,)]
 end
 
 function MOI.Bridges.added_constraint_types(
