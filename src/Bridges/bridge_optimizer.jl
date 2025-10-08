@@ -2032,36 +2032,32 @@ _check_double_single_variable(::AbstractBridgeOptimizer, ::Any, ::Any) = nothing
 
 function MOI.add_constraint(
     b::AbstractBridgeOptimizer,
-    f::MOI.AbstractFunction,
-    s::MOI.AbstractSet,
-)
+    f::F,
+    s::S,
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     if Variable.has_bridges(Variable.bridges(b))
-        if f isa MOI.VariableIndex
+        if F <: MOI.VariableIndex
             if is_bridged(b, f)
-                if MOI.is_valid(
-                    b,
-                    MOI.ConstraintIndex{MOI.VariableIndex,typeof(s)}(f.value),
-                )
+                ci = MOI.ConstraintIndex{MOI.VariableIndex,S}(f.value)
+                if MOI.is_valid(b, ci)
                     # The other constraint could have been through a variable bridge.
-                    error(
-                        "Cannot add two `VariableIndex`-in-`$(typeof(s))`",
-                        " on the same variable $(f).",
-                    )
+                    msg = "Cannot add two `VariableIndex`-in-`$S` on the same variable $f."
+                    throw(MOI.AddConstraintNotAllowed{F,S}(msg))
                 end
                 BridgeType = Constraint.concrete_bridge_type(
                     constraint_scalar_functionize_bridge(b),
-                    typeof(f),
-                    typeof(s),
+                    F,
+                    S,
                 )
                 MOI.add_constraint(Variable.bridges(b), f, s)
                 return add_bridged_constraint(b, BridgeType, f, s)
             end
-        elseif f isa MOI.VectorOfVariables
+        elseif F <: MOI.VectorOfVariables
             if any(vi -> is_bridged(b, vi), f.variables)
                 BridgeType = Constraint.concrete_bridge_type(
                     constraint_vector_functionize_bridge(b),
-                    typeof(f),
-                    typeof(s),
+                    F,
+                    S,
                 )
                 return add_bridged_constraint(b, BridgeType, f, s)
             end
@@ -2069,12 +2065,12 @@ function MOI.add_constraint(
             f, s = bridged_constraint_function(b, f, s)
         end
     end
-    if is_bridged(b, typeof(f), typeof(s))
+    if is_bridged(b, F, S)
         _check_double_single_variable(b, f, s)
         # We compute `BridgeType` first as `concrete_bridge_type` calls
         # `bridge_type` which might throw an `UnsupportedConstraint` error in
         # which case, we do not want any modification to have been done
-        BridgeType = Constraint.concrete_bridge_type(b, typeof(f), typeof(s))
+        BridgeType = Constraint.concrete_bridge_type(b, F, S)
         # `add_constraint` might throw an `UnsupportedConstraint` but no
         # modification has been done in the previous line
         return add_bridged_constraint(b, BridgeType, f, s)

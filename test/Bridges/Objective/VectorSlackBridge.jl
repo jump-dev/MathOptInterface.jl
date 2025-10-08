@@ -115,11 +115,15 @@ function test_objective_sense_before_function()
     model = MOI.Bridges.Objective.VectorSlack{Float64}(inner)
     x = MOI.add_variable(model)
     f = MOI.Utilities.operate(vcat, Float64, 1.0 * x, 1.0 * x)
-    err = ErrorException(
-        "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when using " *
-        "`MOI.Bridges.Objective.VectorSlackBridge`.",
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    @test_throws(
+        MOI.SetAttributeNotAllowed(
+            attr,
+            "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when " *
+            "using `MOI.Bridges.Objective.VectorSlackBridge`.",
+        ),
+        MOI.set(model, attr, f),
     )
-    @test_throws err MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     return
 end
 

@@ -58,7 +58,7 @@ function test_imag_t()
     f_x = (1.0 + 2.0im) * x[2] + (3.0 + 4.0im)
     f = MOI.Utilities.operate(vcat, Complex{Float64}, f_t, f_x)
     @test_throws(
-        ErrorException(
+        MOI.AddConstraintNotAllowed{typeof(f),MOI.NormInfinityCone}(
             "The epigraph variable `t` in `[t; x] in NormInfinityCone()` " *
             "must be real. It is: $f_t",
         ),

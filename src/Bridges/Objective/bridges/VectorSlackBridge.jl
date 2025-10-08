@@ -69,15 +69,14 @@ function bridge_objective(
     )
     sense = MOI.get(model, MOI.ObjectiveSense())
     if sense == MOI.FEASIBILITY_SENSE
-        error(
-            "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when",
-            " using `MOI.Bridges.Objective.VectorSlackBridge`.",
-        )
+        msg = "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when using `MOI.Bridges.Objective.VectorSlackBridge`."
+        throw(MOI.SetAttributeNotAllowed(MOI.ObjectiveFunction{G}(), msg))
     end
     slacks = MOI.VectorOfVariables(variables[slacked_objectives])
     f = if sense == MOI.MIN_SENSE
         MOI.Utilities.operate(-, T, slacks, funcs[slacked_objectives])
-    elseif sense == MOI.MAX_SENSE
+    else
+        @assert sense == MOI.MAX_SENSE
         MOI.Utilities.operate(-, T, funcs[slacked_objectives], slacks)
     end
     set = MOI.Nonnegatives(length(slacked_objectives))

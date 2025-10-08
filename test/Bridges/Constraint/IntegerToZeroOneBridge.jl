@@ -78,10 +78,7 @@ function test_finite_domain_error()
     model = MOI.Bridges.Constraint.IntegerToZeroOne{Int}(inner)
     x, _ = MOI.add_constrained_variable(model, MOI.Integer())
     @test_throws(
-        ErrorException(
-            "Unable to use IntegerToZeroOneBridge because the variable " *
-            "$(x) has a non-finite domain",
-        ),
+        MOI.Bridges.BridgeRequiresFiniteDomainError,
         MOI.Bridges.final_touch(model),
     )
     return

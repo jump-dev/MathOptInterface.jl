@@ -320,10 +320,7 @@ function _test_interval(
             MOI.ConstraintPrimalStart(),
             MOI.ConstraintBasisStatus(),
         ]
-            err = ErrorException(
-                "Cannot get `$attr` for a constraint " *
-                "in the interval `[-Inf, Inf]`.",
-            )
+            err = MOI.GetAttributeNotAllowed{typeof(attr)}
             @test_throws err MOI.get(bridged_mock, attr, ci)
         end
         @test zero(T) == MOI.get(bridged_mock, MOI.ConstraintDualStart(), ci)
