@@ -156,10 +156,7 @@ function MOI.Bridges.final_touch(
     if ret === bridge.last_bounds
         return nothing  # final_touch already called
     elseif ret[1] == typemin(T) || ret[2] == typemax(T)
-        error(
-            "Unable to use IntegerToZeroOneBridge because the variable " *
-            "$(bridge.x) has a non-finite domain",
-        )
+        throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, bridge.x))
     end
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), bridge.x)], T(0))
     lb, ub = ceil(Int, ret[1]), floor(Int, ret[2])

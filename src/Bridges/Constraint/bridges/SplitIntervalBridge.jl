@@ -230,9 +230,8 @@ function MOI.get(
     if bridge.upper !== nothing
         return MOI.get(model, attr, bridge.upper)
     end
-    return error(
-        "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`.",
-    )
+    msg = "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`."
+    return throw(MOI.GetAttributeNotAllowed(attr, msg))
 end
 
 function MOI.set(
@@ -333,10 +332,8 @@ function MOI.get(
             # The only case where the interval `[-∞, ∞]` is allowed is for
             # `VariableIndex` constraints but `ConstraintBasisStatus` is not
             # defined for `VariableIndex` constraints.
-            error(
-                "Cannot get `$attr` for a constraint in the interval " *
-                "`[-Inf, Inf]`.",
-            )
+            msg = "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`."
+            throw(MOI.GetAttributeNotAllowed(attr, msg))
         end
         return upper_stat
     end

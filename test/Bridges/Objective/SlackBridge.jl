@@ -28,12 +28,14 @@ function test_SlackBridge_ObjectiveSense_error()
     model = MOI.Bridges.Objective.Slack{Float64}(inner)
     x = MOI.add_variable(model)
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.1, x)], 1.2)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
     @test_throws(
-        ErrorException(
-            "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when" *
-            " using `MOI.Bridges.Objective.SlackBridge`.",
+        MOI.SetAttributeNotAllowed(
+            attr,
+            "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when " *
+            "using `MOI.Bridges.Objective.SlackBridge`.",
         ),
-        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f),
+        MOI.set(model, attr, f),
     )
     return
 end

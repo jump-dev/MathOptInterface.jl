@@ -256,12 +256,12 @@ function _primal_start_or_error(model, attr, v)
     var_attr = MOI.VariablePrimalStart()
     value = MOI.get(model, MOI.VariablePrimalStart(), v)
     if isnothing(value)
-        error(
-            "In order to set the `$attr`, the",
-            "`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the ",
-            "`$var_attr` but it is not set. Set the `$var_attr` first before ",
-            "setting the `$attr` in order to fix this.",
-        )
+        msg =
+            "In order to set the `$attr`, the " *
+            "`MOI.Bridges.Constraint.QuadtoSOCBridge` needs to get the " *
+            "`$var_attr` but it is not set. Set the `$var_attr` first before " *
+            "setting the `$attr` in order to fix this."
+        throw(MOI.SetAttributeNotAllowed(attr, msg))
     end
     return value
 end

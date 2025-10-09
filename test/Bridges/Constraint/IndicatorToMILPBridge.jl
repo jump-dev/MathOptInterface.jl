@@ -306,13 +306,10 @@ function test_runtests_error_not_binary()
     model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)
     x = MOI.add_variables(model, 2)
     MOI.add_constraint(model, x[2], MOI.Interval(0, 4))
-    c = MOI.add_constraint(
-        model,
-        MOI.VectorOfVariables(x),
-        MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(2)),
-    )
+    set = MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.GreaterThan(2))
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
     @test_throws(
-        ErrorException(
+        MOI.AddConstraintNotAllowed{MOI.VectorOfVariables,typeof(set)}(
             "Unable to reformulate indicator constraint to a MILP. The indicator variable must be binary.",
         ),
         MOI.Bridges.final_touch(model),

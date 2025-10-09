@@ -58,15 +58,16 @@ function bridge_objective(
 ) where {T,F,G<:MOI.AbstractScalarFunction}
     slack = MOI.add_variable(model)
     f = MOI.Utilities.operate(-, T, func, slack)
-    if MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
-        set = MOI.LessThan(zero(T))
-    elseif MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
-        set = MOI.GreaterThan(zero(T))
+    sense = MOI.get(model, MOI.ObjectiveSense())
+    if sense == MOI.FEASIBILITY_SENSE
+        msg = "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when using `MOI.Bridges.Objective.SlackBridge`."
+        throw(MOI.SetAttributeNotAllowed(MOI.ObjectiveFunction{G}(), msg))
+    end
+    set = if sense == MOI.MIN_SENSE
+        MOI.LessThan(zero(T))
     else
-        error(
-            "Set `MOI.ObjectiveSense` before `MOI.ObjectiveFunction` when",
-            " using `MOI.Bridges.Objective.SlackBridge`.",
-        )
+        @assert sense == MOI.MAX_SENSE
+        MOI.GreaterThan(zero(T))
     end
     constraint = MOI.Utilities.normalize_and_add_constraint(model, f, set)
     MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), slack)
