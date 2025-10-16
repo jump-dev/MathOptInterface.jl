@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.46.0 (October 16, 2025)
+## v1.46.0 (October 17, 2025)
 
 ### Added
 
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
- - Documentation updates (#2855), (#2858)
+ - Documentation updates (#2855), (#2858), (#2864)
  - Added `@nospecialize` to some methods (#2830)
 
 ## v1.45.0 (September 20, 2025)
