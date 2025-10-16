@@ -41,8 +41,6 @@ jobs:
           - version: '1.6'
             os: ubuntu-latest
             arch: x64
-          # We may need to make some changes because of
-          # https://github.com/JuliaIO/JSON.jl/issues/386
           - version: '1'
             os: ubuntu-latest
             arch: x86
