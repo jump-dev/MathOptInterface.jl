@@ -282,7 +282,7 @@ Use `JSONSchema.validate` to obtain more insight into why the validation failed:
 julia> JSONSchema.validate(schema, bad_model)
 Validation failed:
 path:         [variables][1]
-instance:     Dict{String, Any}("NaMe" => "x")
+instance:     JSON.Object{String, Any}("NaMe" => "x")
 schema key:   required
 schema value: Any["name"]
 ```
