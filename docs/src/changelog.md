@@ -7,6 +7,26 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.46.0 (October 21, 2025)
+
+### Added
+
+ - Added [`VectorNonlinearOracle`](@ref) (#2860)
+
+### Fixed
+
+ - Fixed [`Bridges.Constraint.IndicatorToMILPBridge`](@ref) when the `z` variable
+   was not binary (#2857), (#2868)
+ - Fixed an `error` to [`GetAttributeNotAllowed`](@ref) in
+   [`Bridges.Variable.ZerosBridge`](@ref) (#2863)
+ - Fixed various bridges to throw MOI error subtypes instead of `Base.error()`
+   (#2866)
+
+### Other
+
+ - Documentation updates (#2855), (#2858), (#2864)
+ - Added `@nospecialize` to some methods (#2830)
+
 ## v1.45.0 (September 20, 2025)
 
 ### Added
