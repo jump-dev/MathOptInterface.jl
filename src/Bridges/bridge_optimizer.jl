@@ -1749,6 +1749,9 @@ function MOI.set(
     return throw(MOI.SettingVariableIndexNotAllowed())
 end
 
+_f_type(::Type{S}) where {S<:MOI.AbstractScalarSet} = MOI.VariableIndex
+_f_type(::Type{S}) where {S<:MOI.AbstractVectorSet} = MOI.VectorOfVariables
+
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintConflictStatus,
@@ -1756,6 +1759,17 @@ function MOI.get(
 )
     ret = MOI.NOT_IN_CONFLICT
     for (F, S) in MOI.Bridges.added_constraint_types(typeof(bridge))
+        for ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
+            status = MOI.get(model, attr, ci)
+            if status == MOI.IN_CONFLICT
+                return status
+            elseif status == MOI.MAYBE_IN_CONFLICT
+                ret = status
+            end
+        end
+    end
+    for (S,) in MOI.Bridges.added_constrained_variable_types(typeof(bridge))
+        F = _f_type(S)
         for ci in MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}())
             status = MOI.get(model, attr, ci)
             if status == MOI.IN_CONFLICT
