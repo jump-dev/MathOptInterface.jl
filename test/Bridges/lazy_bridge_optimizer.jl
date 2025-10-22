@@ -2328,18 +2328,6 @@ function test_issue_2838()
     return
 end
 
-MOI.Utilities.@model(
-    Model2870,
-    (),
-    (MOI.EqualTo,),
-    (),
-    (),
-    (),
-    (MOI.ScalarAffineFunction,),
-    (),
-    ()
-)
-
 function test_issue_2870()
     inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Constraint.ScalarSlack{Float64}(inner)
