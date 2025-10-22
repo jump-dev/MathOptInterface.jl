@@ -2300,60 +2300,71 @@ MOI.Utilities.@model(
     ()
 )
 
+function _test_conflicts(model, inner, c)
+    ci = MOI.ConstraintIndex[]
+    for (F, S) in MOI.get(inner, MOI.ListOfConstraintTypesPresent())
+        append!(ci, MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    end
+    list = (MOI.NOT_IN_CONFLICT, MOI.IN_CONFLICT, MOI.MAYBE_IN_CONFLICT)
+    for a in Iterators.product(ntuple(i -> list, length(ci))...)
+        MOI.set(inner, MOI.ConflictCount(), 1)
+        MOI.set.(inner, MOI.ConstraintConflictStatus(), ci, a)
+        MOI.compute_conflict!(model)
+        status = MOI.get(model, MOI.ConstraintConflictStatus(), c)
+        @test status == reduce(_cmp, a)
+    end
+    return
+end
+
+function _cmp(
+    a::MOI.ConflictParticipationStatusCode,
+    b::MOI.ConflictParticipationStatusCode,
+)
+    if a == MOI.IN_CONFLICT || b == MOI.IN_CONFLICT
+        return MOI.IN_CONFLICT
+    elseif a == MOI.MAYBE_IN_CONFLICT || b == MOI.MAYBE_IN_CONFLICT
+        return MOI.MAYBE_IN_CONFLICT
+    else
+        return MOI.NOT_IN_CONFLICT
+    end
+end
+
 function test_issue_2838()
     inner = MOI.Utilities.MockOptimizer(Model2838{Float64}())
     model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
     x = MOI.add_variables(model, 2)
     f = MOI.Utilities.operate(vcat, Float64, (1.0 * x)...)
     c = MOI.add_constraint(model, f, MOI.Nonnegatives(2))
-    F, S = MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}
-    ci = MOI.get(inner, MOI.ListOfConstraintIndices{F,S}())
-    function cmp(a, b)
-        if a == MOI.IN_CONFLICT || b == MOI.IN_CONFLICT
-            return MOI.IN_CONFLICT
-        elseif a == MOI.MAYBE_IN_CONFLICT || b == MOI.MAYBE_IN_CONFLICT
-            return MOI.MAYBE_IN_CONFLICT
-        else
-            return MOI.NOT_IN_CONFLICT
-        end
-    end
-    list = (MOI.NOT_IN_CONFLICT, MOI.IN_CONFLICT, MOI.MAYBE_IN_CONFLICT)
-    for a in list, b in list
-        MOI.set(inner, MOI.ConflictCount(), 1)
-        MOI.set(inner, MOI.ConstraintConflictStatus(), ci[1], a)
-        MOI.set(inner, MOI.ConstraintConflictStatus(), ci[2], b)
-        MOI.compute_conflict!(model)
-        @test MOI.get(model, MOI.ConstraintConflictStatus(), c) == cmp(a, b)
-    end
+    _test_conflicts(model, inner, c)
     return
 end
 
-function test_issue_2870()
+function test_issue_2870_scalar_slack()
     inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Constraint.ScalarSlack{Float64}(inner)
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, 2.0 * x, MOI.Interval(1.0, -1.0))
-    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
-    ci_eq = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
-    F, S = MOI.VariableIndex, MOI.Interval{Float64}
-    ci_iv = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
-    function cmp(a, b)
-        if a == MOI.IN_CONFLICT || b == MOI.IN_CONFLICT
-            return MOI.IN_CONFLICT
-        elseif a == MOI.MAYBE_IN_CONFLICT || b == MOI.MAYBE_IN_CONFLICT
-            return MOI.MAYBE_IN_CONFLICT
-        else
-            return MOI.NOT_IN_CONFLICT
-        end
-    end
-    list = (MOI.NOT_IN_CONFLICT, MOI.IN_CONFLICT, MOI.MAYBE_IN_CONFLICT)
-    for a in list, b in list
-        MOI.set(inner, MOI.ConflictCount(), 1)
-        MOI.set(inner, MOI.ConstraintConflictStatus(), ci_eq, a)
-        MOI.set(inner, MOI.ConstraintConflictStatus(), ci_iv, b)
-        MOI.compute_conflict!(model)
-        @test MOI.get(model, MOI.ConstraintConflictStatus(), c) == cmp(a, b)
-    end
+    _test_conflicts(model, inner, c)
+    return
+end
+
+function test_issue_2870_geomean_to_power()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.GeoMeanToPower{Float64}(inner)
+    x = MOI.add_variables(model, 4)
+    f = MOI.VectorOfVariables(x)
+    c = MOI.add_constraint(model, f, MOI.GeometricMeanCone(4))
+    _test_conflicts(model, inner, c)
+    return
+end
+
+function test_issue_2870_relative_entropy()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.RelativeEntropy{Float64}(inner)
+    x = MOI.add_variables(model, 5)
+    f = MOI.VectorOfVariables(x)
+    c = MOI.add_constraint(model, f, MOI.RelativeEntropyCone(5))
+    _test_conflicts(model, inner, c)
     return
 end
 
