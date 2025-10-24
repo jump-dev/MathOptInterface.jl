@@ -22,9 +22,10 @@ jobs:
           - package: 'Cbc'
           - package: 'Clp'
           - package: 'CPLEX'
-          - package: 'CSDP'  
+          - package: 'CSDP'
           - package: 'DiffOpt'
-          - package: 'DSDP'
+          # There are too many issues with this solver to worry about it
+          # - package: 'DSDP'
           - package: 'Dualization'
           - package: 'ECOS'
           - package: 'GLPK'
