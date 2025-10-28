@@ -41,6 +41,7 @@ jobs:
           - package: 'MultiObjectiveAlgorithms'
           - package: 'NEOSServer'
           - package: 'NLopt'
+          - package: 'UnoSolver'
           - package: 'Pajarito'
           - package: 'ParametricOptInterface'
           - package: 'Pavito'
