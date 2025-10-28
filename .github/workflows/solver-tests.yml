@@ -93,6 +93,7 @@ jobs:
           - package: 'SparseVariables'
           - package: 'Tulip'
           - package: 'UnitJuMP'
+          - package: 'UnoSolver'
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
