@@ -108,6 +108,19 @@ function _add_penalty_to_objective(
 end
 
 function _add_penalty_to_objective(
+    model::MOI.ModelLike,
+    ::Type{F},
+    penalty::T,
+    x::Vector{MOI.VariableIndex},
+) where {T,F<:MOI.ScalarNonlinearFunction}
+    attr = MOI.ObjectiveFunction{F}()
+    f = MOI.get(model, attr)
+    g = Any[MOI.ScalarNonlinearFunction(:*, Any[penalty, xi]) for xi in x]
+    MOI.set(model, attr, MOI.ScalarNonlinearFunction(:+, vcat(f, g)))
+    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), zero(T))
+end
+
+function _add_penalty_to_objective(
     ::MOI.ModelLike,
     ::Type{F},
     ::T,

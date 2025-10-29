@@ -101,6 +101,23 @@ function test_relax_variable_index_objective()
     return
 end
 
+function test_relax_scalar_nonlinear_objective()
+    _test_roundtrip(
+        """
+        variables: x, y
+        minobjective: ScalarNonlinearFunction(exp(x))
+        c1: x + y <= 1.0
+        """,
+        """
+        variables: x, y, a
+        minobjective: ScalarNonlinearFunction(+(exp(x), *(1.0, a)))
+        c1: x + y + -1.0 * a <= 1.0
+        a >= 0.0
+        """,
+    )
+    return
+end
+
 function test_relax_affine_lessthan()
     _test_roundtrip(
         """
