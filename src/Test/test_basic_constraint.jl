@@ -177,7 +177,7 @@ end
 
 function _set(::Type{T}, ::Type{MOI.VectorNonlinearOracle}) where {T}
     set = MOI.VectorNonlinearOracle(;
-        dimension = 3,
+        dimension = 4,
         l = T[0, 0],
         u = T[1, 0],
         eval_f = (ret, x) -> begin
@@ -194,7 +194,8 @@ function _set(::Type{T}, ::Type{MOI.VectorNonlinearOracle}) where {T}
             return
         end,
     )
-    x, ret_f, ret_J = T[1, 2, 3, 4, 5], T[0, 0], T[0, 0, 0, 0]
+    @assert MOI.dimension(set) == 4
+    x, ret_f, ret_J = T[1, 2, 3, 4], T[0, 0], T[0, 0, 0, 0]
     set.eval_f(ret_f, x)
     set.eval_jacobian(ret_J, x)
     return set
