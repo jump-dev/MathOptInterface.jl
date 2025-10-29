@@ -81,6 +81,43 @@ function _change_sense_to_min_if_necessary(
     return MOI.MIN_SENSE
 end
 
+function _add_penalty_to_objective(
+    model::MOI.ModelLike,
+    ::Type{F},
+    penalty::T,
+    x::Vector{MOI.VariableIndex},
+) where {T,F<:MOI.VariableIndex}
+    g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(penalty, x), zero(T))
+    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    push!(g.terms, MOI.ScalarAffineTerm(one(T), f))
+    MOI.set(model, MOI.ObjectiveFunction{typeof(g)}(), g)
+    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), zero(T))
+end
+
+function _add_penalty_to_objective(
+    model::MOI.ModelLike,
+    ::Type{F},
+    penalty::T,
+    x::Vector{MOI.VariableIndex},
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    obj = MOI.ObjectiveFunction{F}()
+    for xi in x
+        MOI.modify(model, obj, MOI.ScalarCoefficientChange(xi, penalty))
+    end
+    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), zero(T))
+end
+
+function _add_penalty_to_objective(
+    ::MOI.ModelLike,
+    ::Type{F},
+    ::T,
+    ::Vector{MOI.VariableIndex},
+) where {T,F}
+    return error(
+        "Cannot perform `ScalarPenaltyRelaxation` with an objective function of type `$F`",
+    )
+end
+
 function MOI.modify(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
@@ -93,13 +130,9 @@ function MOI.modify(
     MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
     MOI.modify(model, ci, MOI.ScalarCoefficientChange(y, one(T)))
     MOI.modify(model, ci, MOI.ScalarCoefficientChange(z, -one(T)))
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+    penalty = sense == MOI.MIN_SENSE ? relax.penalty : -relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return one(T) * y + one(T) * z
+    return _add_penalty_to_objective(model, O, penalty, [y, z])
 end
 
 function MOI.modify(
@@ -112,12 +145,9 @@ function MOI.modify(
     y = MOI.add_variable(model)
     MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
     MOI.modify(model, ci, MOI.ScalarCoefficientChange(y, one(T)))
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+    penalty = sense == MOI.MIN_SENSE ? relax.penalty : -relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    return one(T) * y
+    return _add_penalty_to_objective(model, O, penalty, [y])
 end
 
 function MOI.modify(
@@ -130,42 +160,28 @@ function MOI.modify(
     z = MOI.add_variable(model)
     MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
     MOI.modify(model, ci, MOI.ScalarCoefficientChange(z, -one(T)))
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+    penalty = sense == MOI.MIN_SENSE ? relax.penalty : -relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return one(T) * z
+    return _add_penalty_to_objective(model, O, penalty, [z])
 end
 
 function MOI.modify(
     model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,<:MOI.AbstractScalarSet},
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
     relax::ScalarPenaltyRelaxation{T},
-) where {T}
+) where {T,S<:MOI.AbstractScalarSet}
     sense = _change_sense_to_min_if_necessary(T, model)
-    y = MOI.add_variable(model)
-    z = MOI.add_variable(model)
-    MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
-    MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
-    func = MOI.get(model, MOI.ConstraintFunction(), ci)
-    newfunc = MOI.ScalarNonlinearFunction(:+, [func, (one(T) * y - one(T) * z)])
-    MOI.set(model, MOI.ConstraintFunction(), ci, newfunc)
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+    y, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    z, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    f = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[f, y, MOI.ScalarNonlinearFunction(:-, Any[z])],
+    )
+    MOI.set(model, MOI.ConstraintFunction(), ci, f)
+    penalty = sense == MOI.MIN_SENSE ? relax.penalty : -relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    # This breaks if the objective is a VariableIndex or ScalarNonlinearFunction
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    # The following causes problems with other methods trying to modify the objective
-    # function. We would have to branch/dispatch on objective type
-    # To support existing nonlinear objectives as well as linear/quadratic objectives,
-    # we just turn any objective into a ScalarNonlinearFunction
-    #obj = MOI.get(model, MOI.ObjectiveFunction{O}())
-    #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * y + a * z])
-    #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
-    return one(T) * y + one(T) * z
+    return _add_penalty_to_objective(model, O, penalty, [y, z])
 end
 
 function MOI.modify(
@@ -179,12 +195,9 @@ function MOI.modify(
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     newfunc = MOI.ScalarNonlinearFunction(:+, [func, y])
     MOI.set(model, MOI.ConstraintFunction(), ci, newfunc)
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+    penalty = sense == MOI.MIN_SENSE ? relax.penalty : -relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    return one(T) * y
+    return _add_penalty_to_objective(model, O, penalty, [y])
 end
 
 function MOI.modify(
@@ -198,12 +211,9 @@ function MOI.modify(
     func = MOI.get(model, MOI.ConstraintFunction(), ci)
     newfunc = MOI.ScalarNonlinearFunction(:-, [func, z])
     MOI.set(model, MOI.ConstraintFunction(), ci, newfunc)
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+    penalty = sense == MOI.MIN_SENSE ? relax.penalty : -relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return one(T) * z
+    return _add_penalty_to_objective(model, O, penalty, [z])
 end
 
 """
