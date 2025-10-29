@@ -138,6 +138,86 @@ function MOI.modify(
     return one(T) * z
 end
 
+function MOI.modify(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,<:MOI.AbstractScalarSet},
+    relax::ScalarPenaltyRelaxation{T},
+) where {T}
+    sense = _change_sense_to_min_if_necessary(T, model)
+    y = MOI.add_variable(model)
+    z = MOI.add_variable(model)
+    MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
+    MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
+    func = MOI.get(model, MOI.ConstraintFunction(), ci)
+    set = MOI.get(model, MOI.ConstraintSet(), ci)
+    newfunc = MOI.ScalarNonlinearFunction(:+, [func, (one(T) * y - one(T) * z)])
+    MOI.set(model, MOI.ConstraintFunction(), ci, newfunc)
+    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
+    a = scale * relax.penalty
+    O = MOI.get(model, MOI.ObjectiveFunctionType())
+    obj = MOI.get(model, MOI.ObjectiveFunction{O}())
+    obj = MOI.ObjectiveFunction{O}()
+    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
+    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
+    # This causes problems with other methods trying to modify the objective
+    # function.
+    # To support existing nonlinear objectives as well as linear/quadratic objectives,
+    # we just turn any objective into a ScalarNonlinearFunction
+    #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * y + a * z])
+    #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
+    return one(T) * y + one(T) * z
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.GreaterThan{T}},
+    relax::ScalarPenaltyRelaxation{T},
+) where {T}
+    sense = _change_sense_to_min_if_necessary(T, model)
+    y = MOI.add_variable(model)
+    MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
+    func = MOI.get(model, MOI.ConstraintFunction(), ci)
+    set = MOI.get(model, MOI.ConstraintSet(), ci)
+    newfunc = MOI.ScalarNonlinearFunction(:+, [func, y])
+    MOI.set(model, MOI.ConstraintFunction(), ci, newfunc)
+    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
+    a = scale * relax.penalty
+    O = MOI.get(model, MOI.ObjectiveFunctionType())
+    obj = MOI.get(model, MOI.ObjectiveFunction{O}())
+    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
+    # This causes problems. TODO: Revisit.
+    # To support existing nonlinear objectives as well as linear/quadratic objectives,
+    # we just turn any objective into a ScalarNonlinearFunction
+    #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * y])
+    #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
+    return one(T) * y
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{T}},
+    relax::ScalarPenaltyRelaxation{T},
+) where {T}
+    sense = _change_sense_to_min_if_necessary(T, model)
+    z = MOI.add_variable(model)
+    MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
+    func = MOI.get(model, MOI.ConstraintFunction(), ci)
+    set = MOI.get(model, MOI.ConstraintSet(), ci)
+    newfunc = MOI.ScalarNonlinearFunction(:-, [func, z])
+    MOI.set(model, MOI.ConstraintFunction(), ci, newfunc)
+    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
+    a = scale * relax.penalty
+    O = MOI.get(model, MOI.ObjectiveFunctionType())
+    obj = MOI.get(model, MOI.ObjectiveFunction{O}())
+    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
+    # This causes problems. TODO: Revisit.
+    # To support existing nonlinear objectives as well as linear/quadratic objectives,
+    # we just turn any objective into a ScalarNonlinearFunction
+    #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * z])
+    #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
+    return one(T) * z
+end
+
 """
     PenaltyRelaxation(
         penalties = Dict{MOI.ConstraintIndex,Float64}();
