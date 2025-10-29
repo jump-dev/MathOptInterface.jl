@@ -155,14 +155,15 @@ function MOI.modify(
     scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
     a = scale * relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.get(model, MOI.ObjectiveFunction{O}())
     obj = MOI.ObjectiveFunction{O}()
+    # This breaks if the objective is a VariableIndex or ScalarNonlinearFunction
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    # This causes problems with other methods trying to modify the objective
-    # function.
+    # The following causes problems with other methods trying to modify the objective
+    # function. We would have to branch/dispatch on objective type
     # To support existing nonlinear objectives as well as linear/quadratic objectives,
     # we just turn any objective into a ScalarNonlinearFunction
+    #obj = MOI.get(model, MOI.ObjectiveFunction{O}())
     #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * y + a * z])
     #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
     return one(T) * y + one(T) * z
@@ -183,13 +184,8 @@ function MOI.modify(
     scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
     a = scale * relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.get(model, MOI.ObjectiveFunction{O}())
+    obj = MOI.ObjectiveFunction{O}()
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    # This causes problems. TODO: Revisit.
-    # To support existing nonlinear objectives as well as linear/quadratic objectives,
-    # we just turn any objective into a ScalarNonlinearFunction
-    #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * y])
-    #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
     return one(T) * y
 end
 
@@ -208,13 +204,8 @@ function MOI.modify(
     scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
     a = scale * relax.penalty
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.get(model, MOI.ObjectiveFunction{O}())
+    obj = MOI.ObjectiveFunction{O}()
     MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    # This causes problems. TODO: Revisit.
-    # To support existing nonlinear objectives as well as linear/quadratic objectives,
-    # we just turn any objective into a ScalarNonlinearFunction
-    #newobj = MOI.ScalarNonlinearFunction(:+, [obj, a * z])
-    #MOI.set(model, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), newobj)
     return one(T) * z
 end
 
