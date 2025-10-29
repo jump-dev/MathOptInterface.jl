@@ -2739,7 +2739,7 @@ do
 julia> import MathOptInterface as MOI
 
 julia> set = MOI.VectorNonlinearOracle(;
-           dimension = 3,
+           dimension = 4,
            l = [0.0, 0.0],
            u = [1.0, 0.0],
            eval_f = (ret, x) -> begin
@@ -2766,7 +2766,7 @@ julia> set = MOI.VectorNonlinearOracle(;
 
 julia> set
 VectorNonlinearOracle{Float64}(;
-    dimension = 3,
+    dimension = 4,
     l = [0.0, 0.0],
     u = [1.0, 0.0],
     ...,
