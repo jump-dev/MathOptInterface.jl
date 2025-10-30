@@ -2702,7 +2702,11 @@ eval_jacobian(ret::AbstractVector, x::AbstractVector)::Nothing
 which fills the sparse Jacobian ``\\nabla f(x)`` into `ret`.
 
 The one-indexed sparsity structure must be provided in the `jacobian_structure`
-argument.
+argument and it must be independent of the point ``x``.
+
+`jacobian_structure` is not required to be sorted and it may contain duplicates,
+in which case the solver will combine the corresponding non-zero values in `ret`
+by adding them together.
 
 ## Hessian
 
@@ -2723,15 +2727,23 @@ which fills the sparse Hessian of the Lagrangian ``\\sum \\mu_i \\nabla^2 f_i(x)
 into `ret`.
 
 The one-indexed sparsity structure must be provided in the
-`hessian_lagrangian_structure` argument.
+`hessian_lagrangian_structure` argument and it must be independent of the point
+``x``.
+
+`hessian_lagrangian_structure` is not required to be sorted and it may contain
+duplicates, in which case the solver will combine the corresponding non-zero
+values in `ret` by adding them together.
+
+Any mix of lower and upper-triangular indices is valid. Elements `(i, j)` and
+`(j, i)`, if both present, are treated as duplicates.
 
 ## Example
 
 To model the set:
 ```math
 \\begin{align}
-0 \\le & x^2           \\le 1
-0 \\le & y^2 + z^3 - w \\le 0
+0 \\le & x^2                   \\le 1
+0 \\le & y^2 + x \\cdot z^3 - w \\le 0
 \\end{align}
 ```
 do
@@ -2744,22 +2756,24 @@ julia> set = MOI.VectorNonlinearOracle(;
            u = [1.0, 0.0],
            eval_f = (ret, x) -> begin
                ret[1] = x[2]^2
-               ret[2] = x[3]^2 + x[4]^3 - x[1]
+               ret[2] = x[3]^2 + x[2] * x[4]^3 - x[1]
                return
            end,
-           jacobian_structure = [(1, 2), (2, 1), (2, 3), (2, 4)],
+           jacobian_structure = [(1, 2), (2, 1), (2, 2), (2, 3), (2, 4)],
            eval_jacobian = (ret, x) -> begin
                ret[1] = 2.0 * x[2]
                ret[2] = -1.0
-               ret[3] = 2.0 * x[3]
-               ret[4] = 3.0 * x[4]^2
+               ret[3] = x[4]^3
+               ret[4] = 2.0 * x[3]
+               ret[5] = 3.0 * x[2] * x[4]^2
                return
            end,
-           hessian_lagrangian_structure = [(2, 2), (3, 3), (4, 4)],
+           hessian_lagrangian_structure = [(2, 2), (3, 3), (4, 4), (2, 4)],
            eval_hessian_lagrangian = (ret, x, u) -> begin
                ret[1] = 2.0 * u[1]
                ret[2] = 2.0 * u[2]
                ret[3] = 6.0 * x[4] * u[2]
+               ret[4] = 3.0 * x[4]^2 * u[2]
                return
            end,
        );
