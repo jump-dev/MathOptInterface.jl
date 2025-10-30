@@ -110,7 +110,7 @@ function test_relax_scalar_nonlinear_objective()
         """,
         """
         variables: x, y, a
-        minobjective: ScalarNonlinearFunction(+(exp(x), *(1.0, a)))
+        minobjective: ScalarNonlinearFunction(+(exp(x), esc(1.0 * a)))
         c1: x + y + -1.0 * a <= 1.0
         a >= 0.0
         """,
