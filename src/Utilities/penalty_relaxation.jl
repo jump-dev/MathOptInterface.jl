@@ -71,71 +71,143 @@ function _change_sense_to_min_if_necessary(
     ::Type{T},
     model::MOI.ModelLike,
 ) where {T}
-    sense = MOI.get(model, MOI.ObjectiveSense())
-    if sense != MOI.FEASIBILITY_SENSE
-        return sense
+    if MOI.get(model, MOI.ObjectiveSense()) != MOI.FEASIBILITY_SENSE
+        return
     end
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     f = zero(MOI.ScalarAffineFunction{T})
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
-    return MOI.MIN_SENSE
+    return
+end
+
+function _add_penalty_to_objective(
+    model::MOI.ModelLike,
+    ::Type{F},
+    penalty::MOI.ScalarAffineFunction{T},
+) where {
+    T,
+    F<:Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+}
+    f = MOI.get(model, MOI.ObjectiveFunction{F}())
+    g = if MOI.get(model, MOI.ObjectiveSense()) == MOI.MIN_SENSE
+        MOI.Utilities.operate(+, T, f, penalty)
+    else
+        MOI.Utilities.operate(-, T, f, penalty)
+    end
+    MOI.set(model, MOI.ObjectiveFunction{typeof(g)}(), g)
+    return
+end
+
+function _add_penalty_to_objective(
+    ::MOI.ModelLike,
+    ::Type{F},
+    ::MOI.ScalarAffineFunction,
+) where {F}
+    return error(
+        "Cannot perform `ScalarPenaltyRelaxation` with an objective function of type `$F`",
+    )
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint.(model, x, MOI.GreaterThan(zero(T)))
+    MOI.modify(model, ci, MOI.ScalarCoefficientChange(x[1], one(T)))
+    MOI.modify(model, ci, MOI.ScalarCoefficientChange(x[2], -one(T)))
+    return x
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
+    MOI.modify(model, ci, MOI.ScalarCoefficientChange(x, one(T)))
+    return [x]
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{F,MOI.LessThan{T}},
+) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(zero(T)))
+    MOI.modify(model, ci, MOI.ScalarCoefficientChange(x, -one(T)))
+    return [x]
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
+) where {T,S<:MOI.AbstractScalarSet}
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    y, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    g = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[f, x, MOI.ScalarNonlinearFunction(:-, Any[y])],
+    )
+    MOI.set(model, MOI.ConstraintFunction(), ci, g)
+    return [x, y]
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.GreaterThan{T}},
+) where {T}
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    g = MOI.ScalarNonlinearFunction(:+, [f, x])
+    MOI.set(model, MOI.ConstraintFunction(), ci, g)
+    return [x]
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{T}},
+) where {T}
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(zero(T)))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    g = MOI.ScalarNonlinearFunction(:-, [f, x])
+    MOI.set(model, MOI.ConstraintFunction(), ci, g)
+    return [x]
 end
 
 function MOI.modify(
     model::MOI.ModelLike,
     ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
     relax::ScalarPenaltyRelaxation{T},
-) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    sense = _change_sense_to_min_if_necessary(T, model)
-    y = MOI.add_variable(model)
-    z = MOI.add_variable(model)
-    MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
-    MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
-    MOI.modify(model, ci, MOI.ScalarCoefficientChange(y, one(T)))
-    MOI.modify(model, ci, MOI.ScalarCoefficientChange(z, -one(T)))
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
+) where {
+    T,
+    F<:Union{
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+        MOI.ScalarNonlinearFunction,
+    },
+}
+    x = _relax_constraint(T, model, ci)
+    p = MOI.ScalarAffineFunction(
+        MOI.ScalarAffineTerm.(relax.penalty, x),
+        zero(T),
+    )
+    _change_sense_to_min_if_necessary(T, model)
     O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return one(T) * y + one(T) * z
-end
-
-function MOI.modify(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{F,MOI.GreaterThan{T}},
-    relax::ScalarPenaltyRelaxation{T},
-) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    sense = _change_sense_to_min_if_necessary(T, model)
-    # Performance optimization: we don't need the z relaxation variable.
-    y = MOI.add_variable(model)
-    MOI.add_constraint(model, y, MOI.GreaterThan(zero(T)))
-    MOI.modify(model, ci, MOI.ScalarCoefficientChange(y, one(T)))
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
-    O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(y, a))
-    return one(T) * y
-end
-
-function MOI.modify(
-    model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{F,MOI.LessThan{T}},
-    relax::ScalarPenaltyRelaxation{T},
-) where {T,F<:Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
-    sense = _change_sense_to_min_if_necessary(T, model)
-    # Performance optimization: we don't need the y relaxation variable.
-    z = MOI.add_variable(model)
-    MOI.add_constraint(model, z, MOI.GreaterThan(zero(T)))
-    MOI.modify(model, ci, MOI.ScalarCoefficientChange(z, -one(T)))
-    scale = sense == MOI.MIN_SENSE ? one(T) : -one(T)
-    a = scale * relax.penalty
-    O = MOI.get(model, MOI.ObjectiveFunctionType())
-    obj = MOI.ObjectiveFunction{O}()
-    MOI.modify(model, obj, MOI.ScalarCoefficientChange(z, a))
-    return one(T) * z
+    _add_penalty_to_objective(model, O, p)
+    return MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), zero(T))
 end
 
 """
@@ -270,13 +342,20 @@ end
 
 function MOI.modify(model::MOI.ModelLike, relax::PenaltyRelaxation{T}) where {T}
     map = Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction{T}}()
+    penalty_expr = zero(MOI.ScalarAffineFunction{T})
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _modify_penalty_relaxation(map, model, relax, F, S)
+        _modify_penalty_relaxation(penalty_expr, map, model, relax, F, S)
+    end
+    if !isempty(penalty_expr.terms)
+        _change_sense_to_min_if_necessary(T, model)
+        O = MOI.get(model, MOI.ObjectiveFunctionType())
+        _add_penalty_to_objective(model, O, penalty_expr)
     end
     return map
 end
 
 function _modify_penalty_relaxation(
+    penalty_expr::MOI.ScalarAffineFunction{T},
     map::Dict{MOI.ConstraintIndex,MOI.ScalarAffineFunction{T}},
     model::MOI.ModelLike,
     relax::PenaltyRelaxation,
@@ -289,9 +368,14 @@ function _modify_penalty_relaxation(
             continue
         end
         try
-            map[ci] = MOI.modify(model, ci, ScalarPenaltyRelaxation(penalty))
+            x = _relax_constraint(T, model, ci)
+            map[ci] = MOI.ScalarAffineFunction(
+                MOI.ScalarAffineTerm.(one(T), x),
+                zero(T),
+            )
+            append!(penalty_expr.terms, MOI.ScalarAffineTerm{T}.(penalty, x))
         catch err
-            if err isa MethodError && err.f == MOI.modify
+            if err isa MethodError && err.f == _relax_constraint
                 if relax.warn
                     @warn(
                         "Skipping PenaltyRelaxation for ConstraintIndex{$F,$S}"

@@ -84,6 +84,40 @@ function test_relax_no_warn()
     return
 end
 
+function test_relax_variable_index_objective()
+    _test_roundtrip(
+        """
+        variables: x, y
+        minobjective: x
+        c1: x + y <= 1.0
+        """,
+        """
+        variables: x, y, a
+        minobjective: 1.0 * x + 1.0 * a
+        c1: x + y + -1.0 * a <= 1.0
+        a >= 0.0
+        """,
+    )
+    return
+end
+
+function test_relax_scalar_nonlinear_objective()
+    _test_roundtrip(
+        """
+        variables: x, y
+        minobjective: ScalarNonlinearFunction(exp(x))
+        c1: x + y <= 1.0
+        """,
+        """
+        variables: x, y, a
+        minobjective: ScalarNonlinearFunction(+(exp(x), esc(1.0 * a)))
+        c1: x + y + -1.0 * a <= 1.0
+        a >= 0.0
+        """,
+    )
+    return
+end
+
 function test_relax_affine_lessthan()
     _test_roundtrip(
         """
@@ -238,6 +272,58 @@ function test_relax_quadratic_greaterthanthan()
     return
 end
 
+function test_relax_scalarnonlinear_lessthan()
+    _test_roundtrip(
+        """
+        variables: x
+        maxobjective: 1.0 * x
+        c1: ScalarNonlinearFunction(log(x)) <= 1.0
+        """,
+        """
+        variables: x, a
+        maxobjective: 1.0 * x + -1.0 * a
+        c1: ScalarNonlinearFunction(log(x) - a) <= 1.0
+        a >= 0.0
+        """,
+    )
+    return
+end
+
+function test_relax_scalarnonlinear_greaterthan()
+    _test_roundtrip(
+        """
+        variables: x
+        maxobjective: 1.0 * x
+        c1: ScalarNonlinearFunction(log(x)) >= 1.0
+        """,
+        """
+        variables: x, a
+        maxobjective: 1.0 * x + -1.0 * a
+        c1: ScalarNonlinearFunction(log(x) + a) >= 1.0
+        a >= 0.0
+        """,
+    )
+    return
+end
+
+function test_relax_scalarnonlinear_equalto()
+    _test_roundtrip(
+        """
+        variables: x
+        minobjective: 1.0 * x
+        c1: ScalarNonlinearFunction(log(x)) == 1.0
+        """,
+        """
+        variables: x, a, b
+        minobjective: 1.0 * x + 1.0 * a + 1.0 * b
+        c1: ScalarNonlinearFunction(+(log(x), a, -b)) == 1.0
+        a >= 0.0
+        b >= 0.0
+        """,
+    )
+    return
+end
+
 function test_penalty_dict()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)
@@ -370,6 +456,22 @@ function test_scalar_penalty_relaxation()
     VariableIndex-in-GreaterThan{Float64}
      v[2] >= 0.0
     """
+    return
+end
+
+function test_scalar_penalty_relaxation_vector_objective()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(2.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = MOI.VectorOfVariables([x])
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VectorOfVariables}(), f)
+    @test_throws(
+        ErrorException(
+            "Cannot perform `ScalarPenaltyRelaxation` with an objective function of type `$(typeof(f))`",
+        ),
+        MOI.modify(model, c, MOI.Utilities.ScalarPenaltyRelaxation(2.0)),
+    )
     return
 end
 
