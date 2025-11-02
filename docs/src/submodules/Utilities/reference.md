@@ -6,19 +6,19 @@ end
 DocTestFilters = [r"MathOptInterface|MOI"]
 ```
 
-## Utilities.Model
+## [Utilities.Model](@id reference_utilities_model)
 
 ```@docs
 Utilities.Model
 ```
 
-## Utilities.UniversalFallback
+## [Utilities.UniversalFallback](@id reference_utilities_universal_fallback)
 
 ```@docs
 Utilities.UniversalFallback
 ```
 
-## Utilities.@model
+## [Utilities.@model](@id reference_model_macro)
 
 ```@docs
 Utilities.@model

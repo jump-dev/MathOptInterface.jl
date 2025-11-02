@@ -11,7 +11,7 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 The Utilities submodule provides a variety of functions and datastructures for
 managing `MOI.ModelLike` objects.
 
-## Utilities.Model
+## [Utilities.Model](@id overview_utilities_model)
 
 [`Utilities.Model`](@ref) provides an implementation of a [`ModelLike`](@ref)
 that efficiently supports all functions and sets defined within MOI. However,
@@ -27,7 +27,7 @@ MOIU.Model{Float64}
 └ NumberOfConstraints: 0
 ```
 
-## Utilities.UniversalFallback
+## [Utilities.UniversalFallback](@id overview_utilities_universal_fallback)
 
 [`Utilities.UniversalFallback`](@ref) is a layer that sits on top of any
 [`ModelLike`](@ref) and provides non-specialized (slower) fallbacks for
@@ -51,7 +51,7 @@ MOIU.UniversalFallback{MOIU.Model{Float64}}
     constraints, even if the inner-model does not. This can lead to unexpected
     behavior.
 
-## Utilities.@model
+## [Utilities.@model](@id overview_model_macro)
 
 For advanced use cases that need efficient support for functions and sets
 defined outside of MOI (but still known at compile time), we provide the
