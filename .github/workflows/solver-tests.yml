@@ -151,10 +151,7 @@ jobs:
       - name: Setup KNITRO
         if: ${{ matrix.package == 'KNITRO' }}
         shell: bash
-        run: |
-          echo "${{ secrets.KNITRO_LICENSE }}" > ~/artelys_lic.txt
-          echo "SECRET_KNITRO_URL=${{ secrets.KNITRO_URL }}" >> $GITHUB_ENV
-          echo "SECRET_KNITRO_LIBIOMP5=${{ secrets.KNITRO_LIBIOMP5 }}" >> $GITHUB_ENV
+        run: echo "${{ secrets.KNITRO_LICENSE }}" > ~/artelys_lic.txt
       # Setup MathOptAI.jl
       - name: Install Python
         if: ${{ matrix.package == 'MathOptAI' }}
