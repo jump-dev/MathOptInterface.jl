@@ -159,7 +159,7 @@ Documenter.DocMeta.setdocmeta!(
         r"https://github.com/jump-dev/.+",
         "https://arxiv.org/abs/2002.03447",
         # https://github.com/JuliaDocs/Documenter.jl/issues/2834
-         "https://lpsolve.sourceforge.net/5.5/CPLEX-format.htm",
+        "https://lpsolve.sourceforge.net/5.5/CPLEX-format.htm",
     ],
     modules = [MathOptInterface],
     checkdocs = :exports,
