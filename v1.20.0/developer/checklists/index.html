@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Checklists · MathOptInterface</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">MathOptInterface</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><input class="collapse-toggle" id="menuitem-1" type="checkbox"/><label class="tocitem" for="menuitem-1"><span class="docs-label">Introduction</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../">Introduction</a></li><li><a class="tocitem" href="../../background/motivation/">Motivation</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-2" type="checkbox"/><label class="tocitem" for="menuitem-2"><span class="docs-label">Tutorials</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../tutorials/example/">Solving a problem using MathOptInterface</a></li><li><a class="tocitem" href="../../tutorials/implementing/">Implementing a solver interface</a></li><li><a class="tocitem" href="../../tutorials/mathprogbase/">Transitioning from MathProgBase</a></li><li><a class="tocitem" href="../../tutorials/bridging_constraint/">Implementing a constraint bridge</a></li><li><a class="tocitem" href="../../tutorials/manipulating_expressions/">Manipulating expressions</a></li><li><a class="tocitem" href="../../tutorials/latency/">Latency</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Manual</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../manual/standard_form/">Standard form problem</a></li><li><a class="tocitem" href="../../manual/models/">Models</a></li><li><a class="tocitem" href="../../manual/variables/">Variables</a></li><li><a class="tocitem" href="../../manual/constraints/">Constraints</a></li><li><a class="tocitem" href="../../manual/solutions/">Solutions</a></li><li><a class="tocitem" href="../../manual/modification/">Problem modification</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Background</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../background/duality/">Duality</a></li><li><a class="tocitem" href="../../background/infeasibility_certificates/">Infeasibility certificates</a></li><li><a class="tocitem" href="../../background/naming_conventions/">Naming conventions</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../reference/standard_form/">Standard form</a></li><li><a class="tocitem" href="../../reference/models/">Models</a></li><li><a class="tocitem" href="../../reference/variables/">Variables</a></li><li><a class="tocitem" href="../../reference/constraints/">Constraints</a></li><li><a class="tocitem" href="../../reference/modification/">Modifications</a></li><li><a class="tocitem" href="../../reference/nonlinear/">Nonlinear programming</a></li><li><a class="tocitem" href="../../reference/callbacks/">Callbacks</a></li><li><a class="tocitem" href="../../reference/errors/">Errors</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Submodules</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-6-1" type="checkbox"/><label class="tocitem" for="menuitem-6-1"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../submodules/Benchmarks/overview/">Overview</a></li><li><a class="tocitem" href="../../submodules/Benchmarks/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Bridges</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../submodules/Bridges/overview/">Overview</a></li><li><a class="tocitem" href="../../submodules/Bridges/list_of_bridges/">List of bridges</a></li><li><a class="tocitem" href="../../submodules/Bridges/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-3" type="checkbox"/><label class="tocitem" for="menuitem-6-3"><span class="docs-label">FileFormats</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../submodules/FileFormats/overview/">Overview</a></li><li><a class="tocitem" href="../../submodules/FileFormats/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-4" type="checkbox"/><label class="tocitem" for="menuitem-6-4"><span class="docs-label">Nonlinear</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../submodules/Nonlinear/overview/">Overview</a></li><li><a class="tocitem" href="../../submodules/Nonlinear/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-5" type="checkbox"/><label class="tocitem" for="menuitem-6-5"><span class="docs-label">Utilities</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../submodules/Utilities/overview/">Overview</a></li><li><a class="tocitem" href="../../submodules/Utilities/reference/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-6" type="checkbox"/><label class="tocitem" for="menuitem-6-6"><span class="docs-label">Test</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../submodules/Test/overview/">Overview</a></li><li><a class="tocitem" href="../../submodules/Test/reference/">API Reference</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox" checked/><label class="tocitem" for="menuitem-7"><span class="docs-label">Developer Docs</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Checklists</a><ul class="internal"><li><a class="tocitem" href="#Making-a-release"><span>Making a release</span></a></li><li><a class="tocitem" href="#Adding-a-new-set"><span>Adding a new set</span></a></li><li><a class="tocitem" href="#Adding-a-new-bridge"><span>Adding a new bridge</span></a></li><li><a class="tocitem" href="#Updating-MathOptFormat"><span>Updating MathOptFormat</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../release_notes/">Release notes</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Developer Docs</a></li><li class="is-active"><a href>Checklists</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Checklists</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/jump-dev/MathOptInterface.jl/blob/master/docs/src/developer/checklists.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Checklists"><a class="docs-heading-anchor" href="#Checklists">Checklists</a><a id="Checklists-1"></a><a class="docs-heading-anchor-permalink" href="#Checklists" title="Permalink"></a></h1><p>The purpose of this page is to collate a series of checklists for commonly performed changes to the source code of MathOptInterface.</p><p>In each case, copy the checklist into the description of the pull request.</p><h2 id="Making-a-release"><a class="docs-heading-anchor" href="#Making-a-release">Making a release</a><a id="Making-a-release-1"></a><a class="docs-heading-anchor-permalink" href="#Making-a-release" title="Permalink"></a></h2><p>Use this checklist when making a release of the MathOptInterface repository.</p><pre><code class="nohighlight hljs">## Basic
+
+ - [ ] `version` field of `Project.toml` has been updated
+       - If a breaking change, increment the MAJOR field and reset others to 0
+       - If adding new features, increment the MINOR field and reset PATCH to 0
+       - If adding bug fixes or documentation changes, increment the PATCH field
+
+## Documentation
+
+ - [ ] Add a new entry to `docs/src/changelog.md`, following existing style
+
+## Tests
+
+ - [ ] The `solver-tests.yml` GitHub action does not have unexpected failures.
+       To run the action, go to:
+       https://github.com/jump-dev/MathOptInterface.jl/actions/workflows/solver-tests.yml
+       and click &quot;Run workflow&quot;</code></pre><h2 id="Adding-a-new-set"><a class="docs-heading-anchor" href="#Adding-a-new-set">Adding a new set</a><a id="Adding-a-new-set-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-a-new-set" title="Permalink"></a></h2><p>Use this checklist when adding a new set to the MathOptInterface repository.</p><pre><code class="nohighlight hljs">## Basic
+
+ - [ ] Add a new `AbstractScalarSet` or `AbstractVectorSet` to `src/sets.jl`
+ - [ ] If `isbitstype(S) == false`, implement `Base.copy(set::S)`
+ - [ ] If `isbitstype(S) == false`, implement `Base.:(==)(x::S, y::S)`
+ - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`, unless the
+       dimension is given by `set.dimension`.
+
+## Utilities
+
+ - [ ] If an `AbstractVectorSet`, implement `Utilities.set_dot`,
+       unless the dot product between two vectors in the set is equivalent to
+       `LinearAlgebra.dot`
+ - [ ] If an `AbstractVectorSet`, implement `Utilities.set_with_dimension` in
+       `src/Utilities/matrix_of_constraints.jl`
+ - [ ] Add the set to the `@model` macro at the bottom of `src/Utilities.model.jl`
+
+## Documentation
+
+ - [ ] Add a docstring, which gives the mathematical definition of the set,
+       along with an `## Example` block containing a `jldoctest`
+ - [ ] Add the docstring to `docs/src/reference/standard_form.md`
+ - [ ] Add the set to the relevant table in `docs/src/manual/standard_form.md`
+
+## Tests
+
+ - [ ] Define a new `_set(::Type{S})` method in `src/Test/test_basic_constraint.jl`
+       and add the name of the set to the list at the bottom of that files
+ - [ ] If the set has any checks in its constructor, add tests to `test/sets.jl`
+
+## MathOptFormat
+
+ - [ ] Open an issue at `https://github.com/jump-dev/MathOptFormat` to add
+       support for the new set {{ replace with link to the issue }}
+
+## Optional
+
+ - [ ] Implement `dual_set(::S)` and `dual_set_type(::Type{S})`
+ - [ ] Add new tests to the `Test` submodule exercising your new set
+ - [ ] Add new bridges to convert your set into more commonly used sets</code></pre><h2 id="Adding-a-new-bridge"><a class="docs-heading-anchor" href="#Adding-a-new-bridge">Adding a new bridge</a><a id="Adding-a-new-bridge-1"></a><a class="docs-heading-anchor-permalink" href="#Adding-a-new-bridge" title="Permalink"></a></h2><p>Use this checklist when adding a new bridge to the MathOptInterface repository.</p><p>The steps are mostly the same, but locations depend on whether the bridge is a <code>Constraint</code>, <code>Objective</code>, or <code>Variable</code> bridge. In each case below, replace <code>XXX</code> with the appropriate type of bridge.</p><pre><code class="nohighlight hljs">## Basic
+
+ - [ ] Create a new file in `src/Bridges/XXX/bridges`
+ - [ ] Define the bridge, following existing examples. The name of the bridge
+       struct must end in `Bridge`
+ - [ ] Check if your bridge can be a subtype of [`MOI.Bridges.Constraint.SetMapBridge`](@ref)
+ - [ ] Define a new `const` that is a `SingleBridgeOptimizer` wrapping the
+       new bridge. The name of the const must be the name of the bridge, less
+       the `Bridge` suffix
+ - [ ] `include` the file in `src/Bridges/XXX/bridges/XXX.jl`
+ - [ ] If the bridge should be enabled by default, add the bridge to
+       `add_all_bridges` at the bottom of `src/Bridges/XXX/XXX.jl`
+
+## Tests
+
+ - [ ] Create a new file in the appropriate subdirectory of `tests/Bridges/XXX`
+ - [ ] Use `MOI.Bridges.runtests` to test various inputs and outputs of the
+       bridge
+ - [ ] If, after opening the pull request to add the bridge, some lines are not
+       covered by the tests, add additional bridge-specific tests to cover the
+       untested lines.
+
+## Documentation
+
+ - [ ] Add a docstring which uses the same template as existing bridges.
+ - [ ] Add the docstring to `docs/src/submodules/Bridges/list_of_bridges.md`
+
+## Final touch
+
+If the bridge depends on run-time values of other variables and constraints in
+the model:
+
+ - [ ] Implement `MOI.Utilities.needs_final_touch(::Bridge)`
+ - [ ] Implement `MOI.Utilities.final_touch(::Bridge, ::MOI.ModelLike)`
+ - [ ] Ensure that `final_touch` can be called multiple times in a row</code></pre><h2 id="Updating-MathOptFormat"><a class="docs-heading-anchor" href="#Updating-MathOptFormat">Updating MathOptFormat</a><a id="Updating-MathOptFormat-1"></a><a class="docs-heading-anchor-permalink" href="#Updating-MathOptFormat" title="Permalink"></a></h2><p>Use this checklist when updating the version of MathOptFormat.</p><pre><code class="nohighlight hljs">## Basic
+
+ - [ ] The file at `src/FileFormats/MOF/mof.X.Y.schema.json` is updated
+ - [ ] The constants `SCHEMA_PATH`, `VERSION`, and `SUPPORTED_VERSIONS` are
+       updated in `src/FileFormats/MOF/MOF.jl`
+
+## New sets
+
+ - [ ] New sets are added to the `@model` in `src/FileFormats/MOF/MOF.jl`
+ - [ ] New sets are added to the `@enum` in `src/FileFormats/MOF/read.jl`
+ - [ ] `set_to_moi` is defined for each set in `src/FileFormats/MOF/read.jl`
+ - [ ] `head_name` is defined for each set in `src/FileFormats/MOF/write.jl`
+ - [ ] A new unit test calling `_test_model_equality` is aded to
+       `test/FileFormats/MOF/MOF.jl`
+
+## Tests
+
+ - [ ] The version field in `test/FileFormats/MOF/nlp.mof.json` is updated
+
+## Documentation
+
+ - [ ] The version fields are updated in `docs/src/submodules/FileFormats/overview.md`</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../submodules/Test/reference/">« API Reference</a><a class="docs-footer-nextpage" href="../../release_notes/">Release notes »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Saturday 9 September 2023 20:12">Saturday 9 September 2023</span>. Using Julia version 1.9.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
