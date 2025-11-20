@@ -327,8 +327,6 @@ function _compute_hessian_sparsity(
                     union!(child_group_variables[child_group_idx], sub_vars)
                 end
             end
-
-            println(child_group_variables)
             _add_hessian_edges!(edge_list, interactions, child_group_variables)
         elseif nod.type == Nonlinear.NODE_SUBEXPRESSION
             for ij in subexpression_edgelist[nod.index]
