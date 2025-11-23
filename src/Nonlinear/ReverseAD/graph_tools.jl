@@ -177,7 +177,7 @@ end
 
 """
     _get_nonlinear_child_interactions(
-        nod::Nonlinear.Node,
+        node::Nonlinear.Node,
         num_children::Int,
     )
 
@@ -192,21 +192,20 @@ For functions like `+` or `-`, the result is `[]` since there are no nonlinear
 interactions between children.
 """
 function _get_nonlinear_child_interactions(
-    nod::Nonlinear.Node,
+    node::Nonlinear.Node,
     num_children::Int,
 )::Vector{Tuple{Int,Int}}
-    if nod.type == Nonlinear.NODE_CALL_UNIVARIATE
+    if node.type == Nonlinear.NODE_CALL_UNIVARIATE
         @assert num_children == 1
-        op = get(Nonlinear.DEFAULT_UNIVARIATE_OPERATORS, nod.index, nothing)
+        op = get(Nonlinear.DEFAULT_UNIVARIATE_OPERATORS, node.index, nothing)
         # Univariate operators :+ and :- don't create interactions
         if op in (:+, :-)
             return Tuple{Int,Int}[]
         else
             return [(1, 1)]
         end
-    elseif nod.type == Nonlinear.NODE_CALL_MULTIVARIATE
-        op = get(Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS, nod.index, nothing)
-
+    elseif node.type == Nonlinear.NODE_CALL_MULTIVARIATE
+        op = get(Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS, node.index, nothing)
         if op in (:+, :-, :ifelse, :min, :max)
             # No nonlinear interactions between children
             return Tuple{Int,Int}[]
@@ -268,49 +267,39 @@ function _compute_hessian_sparsity(
 )
     edge_list = Set{Tuple{Int,Int}}()
     children_arr = SparseArrays.rowvals(adj)
-
     # Stack entry: (node_index, child_group_index)
     stack = Tuple{Int,Int}[]
     # Map from child_group_index to variable indices
     child_group_variables = Dict{Int,Set{Int}}()
-
-    for k in 1:length(nodes)
-        nod = nodes[k]
-        @assert nod.type != Nonlinear.NODE_MOI_VARIABLE
-
+    for (k, node) in enumerate(nodes)
+        @assert node.type != Nonlinear.NODE_MOI_VARIABLE
         if input_linearity[k] == CONSTANT
             continue  # No hessian contribution from constant nodes
         end
-
         # Check if this node has nonlinear child interactions
         children_idx = SparseArrays.nzrange(adj, k)
         num_children = length(children_idx)
-        interactions = _get_nonlinear_child_interactions(nod, num_children)
-
+        interactions = _get_nonlinear_child_interactions(node, num_children)
         if !isempty(interactions)
-            # This node has nonlinear child interactions, so collect variables from its children
+            # This node has nonlinear child interactions, so collect variables
+            # from its children
             empty!(child_group_variables)
-
             # DFS from all children, tracking child index
             for (child_position, cidx) in enumerate(children_idx)
                 child_node_idx = children_arr[cidx]
                 push!(stack, (child_node_idx, child_position))
             end
-
             while length(stack) > 0
                 r, child_group_idx = pop!(stack)
-
                 # Don't traverse into logical conditions or comparisons
                 if nodes[r].type == Nonlinear.NODE_LOGIC ||
                    nodes[r].type == Nonlinear.NODE_COMPARISON
                     continue
                 end
-
                 r_children_idx = SparseArrays.nzrange(adj, r)
                 for cidx in r_children_idx
                     push!(stack, (children_arr[cidx], child_group_idx))
                 end
-
                 if nodes[r].type == Nonlinear.NODE_VARIABLE
                     if !haskey(child_group_variables, child_group_idx)
                         child_group_variables[child_group_idx] = Set{Int}()
@@ -328,8 +317,8 @@ function _compute_hessian_sparsity(
                 end
             end
             _add_hessian_edges!(edge_list, interactions, child_group_variables)
-        elseif nod.type == Nonlinear.NODE_SUBEXPRESSION
-            for ij in subexpression_edgelist[nod.index]
+        elseif node.type == Nonlinear.NODE_SUBEXPRESSION
+            for ij in subexpression_edgelist[node.index]
                 push!(edge_list, ij)
             end
         end
@@ -378,6 +367,7 @@ function _add_hessian_edges!(
             end
         end
     end
+    return
 end
 
 """
