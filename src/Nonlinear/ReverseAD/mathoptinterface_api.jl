@@ -93,7 +93,6 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
                 subex.nodes,
                 subex.adj,
                 linearity,
-                coloring_storage,
                 subexpression_edgelist,
                 subexpression_variables,
             )

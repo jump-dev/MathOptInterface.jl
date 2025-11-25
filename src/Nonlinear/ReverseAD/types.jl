@@ -91,7 +91,6 @@ struct _FunctionStorage
                 nodes,
                 adj,
                 linearity,
-                coloring_storage,
                 subexpression_edgelist,
                 subexpression_variables,
             )
