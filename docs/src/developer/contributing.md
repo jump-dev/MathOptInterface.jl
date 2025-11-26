@@ -1,6 +1,6 @@
 # [Contributing](@id contributing_to_mathoptinterface)
 
-This document explains to contribute code to MathOptInterface.
+This document explains how to contribute code to MathOptInterface.
 
 ## Obtain the source code
 
@@ -10,7 +10,7 @@ julia> import Pkg
 
 julia> Pkg.dev("MathOptInterface")
 ```
-This will download the JuMP Git repository to `~/.julia/dev/MathOptInterface`.
+This will download the MathOptInterface Git repository to `~/.julia/dev/MathOptInterface`.
 If you're on Windows, this will be `C:\\Users\\<my_name>\\.julia\\dev\\MathOptInterface`.
 
 Alternatively, you can use `git` to clone the source to a directory of your
@@ -117,7 +117,7 @@ Finally, running the tests locally is best practice, but it is not required.
 When you open a pull request, our automated CI will run all of the tests and
 highlight any failing tests that need to be fixed.
 
-A comment from `@odow`: when I'm working on a feature, I make local changes, run
+A comment from `@odow`: when I'm working on a feature, I make local changes,
 run the most relevant test file with `include`, and then open a PR. If the
 change caused a test to fail in some other part of the codebase, I then
 `include` the file with the failing test locally to debug my follow-up changes.
