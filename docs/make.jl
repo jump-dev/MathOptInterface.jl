@@ -83,7 +83,10 @@ const _PAGES = [
             "API Reference" => "submodules/Test/reference.md",
         ],
     ],
-    "Developer Docs" => ["developer/checklists.md"],
+    "Developer Docs" => [
+        "developer/checklists.md",
+        "developer/contributing.md",
+    ],
     "Release notes" => "release_notes.md",
 ]
 
