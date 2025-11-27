@@ -6,8 +6,7 @@
 
 module Coloring
 
-import DataStructures
-
+include("Forest.jl")
 include("topological_sort.jl")
 
 """
@@ -154,7 +153,7 @@ function _prevent_cycle(
     forbiddenColors,
     color,
 )
-    er = DataStructures.find_root!(S, e_idx2)
+    er = _find_root!(S, e_idx2)
     @inbounds first = firstVisitToTree[er]
     p = first.source # but this depends on the order?
     q = first.target
@@ -172,27 +171,16 @@ function _grow_star(v, w, e_idx, firstNeighbor, color, S)
     @inbounds if p != v
         firstNeighbor[color[w]] = _Edge(e_idx, v, w)
     else
-        union!(S, e_idx, e.index)
+        _root_union!(S, e_idx, e.index)
     end
     return
 end
 
-function _merge_trees(eg, eg1, S)
-    e1 = DataStructures.find_root!(S, eg)
-    e2 = DataStructures.find_root!(S, eg1)
-    if e1 != e2
-        union!(S, eg, eg1)
+function _merge_trees(S::_Forest, eg::Int, eg1::Int)
+    if _find_root!(S, eg) != _find_root!(S, eg1)
+        _root_union!(S, eg, eg1)
     end
     return
-end
-
-# Work-around a deprecation in DataStructures@0.19
-function _IntDisjointSet(n)
-    @static if isdefined(DataStructures, :IntDisjointSet)
-        return DataStructures.IntDisjointSet(n)
-    else
-        return DataStructures.IntDisjointSets(n)                 # COV_EXCL_LINE
-    end
 end
 
 """
@@ -214,8 +202,7 @@ function acyclic_coloring(g::UndirectedGraph)
     firstNeighbor = _Edge[]
     firstVisitToTree = fill(_Edge(0, 0, 0), _num_edges(g))
     color = fill(0, _num_vertices(g))
-    # disjoint set forest of edges in the graph
-    S = _IntDisjointSet(_num_edges(g))
+    S = _Forest(_num_edges(g))
     @inbounds for v in 1:_num_vertices(g)
         n_neighbor = _num_neighbors(v, g)
         start_neighbor = _start_neighbors(v, g)
@@ -293,7 +280,7 @@ function acyclic_coloring(g::UndirectedGraph)
                     continue
                 end
                 if color[x] == color[v]
-                    _merge_trees(e_idx, e2_idx, S)
+                    _merge_trees(S, e_idx, e2_idx)
                 end
             end
         end

@@ -8,7 +8,7 @@ module MPS
 
 import ..FileFormats
 import MathOptInterface as MOI
-import DataStructures: OrderedDict
+import OrderedCollections: OrderedDict
 
 const IndicatorLessThanTrue{T} =
     MOI.Indicator{MOI.ACTIVATE_ON_ONE,MOI.LessThan{T}}
