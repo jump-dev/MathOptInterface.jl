@@ -6,7 +6,7 @@
 
 module Coloring
 
-include("Forest.jl")
+include("IntDisjointSet.jl")
 include("topological_sort.jl")
 
 """
@@ -176,7 +176,7 @@ function _grow_star(v, w, e_idx, firstNeighbor, color, S)
     return
 end
 
-function _merge_trees(S::_Forest, eg::Int, eg1::Int)
+function _merge_trees(S::_IntDisjointSet, eg::Int, eg1::Int)
     if _find_root!(S, eg) != _find_root!(S, eg1)
         _root_union!(S, eg, eg1)
     end
@@ -202,7 +202,7 @@ function acyclic_coloring(g::UndirectedGraph)
     firstNeighbor = _Edge[]
     firstVisitToTree = fill(_Edge(0, 0, 0), _num_edges(g))
     color = fill(0, _num_vertices(g))
-    S = _Forest(_num_edges(g))
+    S = _IntDisjointSet(_num_edges(g))
     @inbounds for v in 1:_num_vertices(g)
         n_neighbor = _num_neighbors(v, g)
         start_neighbor = _start_neighbors(v, g)

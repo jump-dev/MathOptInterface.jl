@@ -11,9 +11,9 @@ import LinearAlgebra
 import MathOptInterface as MOI
 import SparseArrays
 
-const Nonlinear = MOI.Nonlinear
-const ReverseAD = Nonlinear.ReverseAD
-const Coloring = ReverseAD.Coloring
+import MathOptInterface.Nonlinear
+import MathOptInterface.Nonlinear.ReverseAD
+import MathOptInterface.Nonlinear.ReverseAD.Coloring
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -1418,6 +1418,33 @@ function test_hessian_reinterpret_unsafe()
     @test count(isapprox.(H, 1.0; atol = 1e-8)) == 3
     @test count(isapprox.(H, 0.0; atol = 1e-8)) == 5
     @test sort(H_s[round.(Bool, H)]) == [(3, 1), (3, 2), (5, 4)]
+    return
+end
+
+function test_IntDisjointSet()
+    for case in [
+        [(1, 2) => [1, 1, 3], (1, 3) => [1, 1, 1]],
+        [(1, 2) => [1, 1, 3], (3, 1) => [1, 1, 1]],
+        [(2, 1) => [2, 2, 3], (1, 3) => [2, 2, 2]],
+        [(2, 1) => [2, 2, 3], (3, 1) => [3, 2, 3]],
+        [(1, 3) => [1, 2, 1], (2, 3) => [1, 2, 2]],
+        [(1, 3) => [1, 2, 1], (3, 2) => [1, 1, 1]],
+        [(3, 1) => [3, 2, 3], (2, 3) => [3, 3, 3]],
+        [(3, 1) => [3, 2, 3], (3, 2) => [3, 3, 3]],
+        [(2, 3) => [1, 2, 2], (1, 3) => [1, 2, 1]],
+        [(2, 3) => [1, 2, 2], (3, 1) => [2, 2, 2]],
+        [(3, 2) => [1, 3, 3], (1, 3) => [3, 3, 3]],
+        [(3, 2) => [1, 3, 3], (3, 1) => [3, 3, 3]],
+    ]
+        S = Coloring._IntDisjointSet(3)
+        @test Coloring._find_root!.((S,), [1, 2, 3]) == [1, 2, 3]
+        @test S.number_of_trees == 3
+        for (i, (union, result)) in enumerate(case)
+            Coloring._root_union!(S, union[1], union[2])
+            @test Coloring._find_root!.((S,), [1, 2, 3]) == result
+            @test S.number_of_trees == 3 - i
+        end
+    end
     return
 end
 

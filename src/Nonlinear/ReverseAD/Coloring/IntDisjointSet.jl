@@ -6,7 +6,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 # The code in this file was taken from
-# https://github.com/gdalle/SparseMatrixColorings.jl/blob/main/src/forest.jl
+# https://github.com/gdalle/SparseMatrixColorings.jl/blob/main/src/Forest.jl
 #
 # It was copied at the suggestion of Alexis in his JuMP-dev 2025 talk.
 #
@@ -14,8 +14,8 @@
 #
 # x-ref https://github.com/gdalle/SparseMatrixColorings.jl/pull/190
 
-mutable struct _Forest
-    # current number of distinct trees in the forest
+mutable struct _IntDisjointSet
+    # current number of distinct trees in the S
     number_of_trees::Int
     # vector storing the index of a parent in the tree for each edge, used in
     # union-find operations
@@ -23,29 +23,25 @@ mutable struct _Forest
     # vector approximating the depth of each tree to optimize path compression
     ranks::Vector{Int}
 
-    _Forest(n::Integer) = new(n, collect(Base.OneTo(n)), zeros(Int, n))
+    _IntDisjointSet(n::Integer) = new(n, collect(1:n), zeros(Int, n))
 end
 
-function _find_root!(parents::Vector{Int}, index_edge::Integer)
-    p = parents[index_edge]
-    if parents[p] != p
-        parents[index_edge] = p = _find_root!(parents, p)
+function _find_root!(S::_IntDisjointSet, x::Integer)
+    p = S.parents[x]
+    if S.parents[p] != p
+        S.parents[x] = p = _find_root!(S, p)
     end
     return p
 end
 
-function _find_root!(forest::_Forest, index_edge::Integer)
-    return _find_root!(forest.parents, index_edge)
-end
-
-function _root_union!(forest::_Forest, index_edge1::Int, index_edge2::Int)
-    rank1, rank2 = forest.ranks[index_edge1], forest.ranks[index_edge2]
+function _root_union!(S::_IntDisjointSet, x::Int, y::Int)
+    rank1, rank2 = S.ranks[x], S.ranks[y]
     if rank1 < rank2
-        index_edge1, index_edge2 = index_edge2, index_edge1
+        x, y = y, x
     elseif rank1 == rank2
-        forest.ranks[index_edge1] += 1
+        S.ranks[x] += 1
     end
-    forest.parents[index_edge2] = index_edge1
-    forest.number_of_trees -= 1
+    S.parents[y] = x
+    S.number_of_trees -= 1
     return
 end
