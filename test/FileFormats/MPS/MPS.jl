@@ -10,7 +10,7 @@ using Test
 
 import MathOptInterface as MOI
 import MathOptInterface.FileFormats: MPS
-import DataStructures: OrderedDict
+import OrderedCollections: OrderedDict
 
 function runtests()
     for name in names(@__MODULE__; all = true)
