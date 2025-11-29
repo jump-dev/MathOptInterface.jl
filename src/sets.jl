@@ -2744,7 +2744,7 @@ To model the set:
 \\begin{aligned}
 0 &\\le x^2                    & \\le 1 \\\\
 0 &\\le y^2 + x \\cdot z^3 - w & \\le 0
-\end{aligned}
+\\end{aligned}
 ```
 do
 ```jldoctest
