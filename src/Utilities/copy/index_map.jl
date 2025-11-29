@@ -20,6 +20,7 @@ struct IndexMap <: AbstractDict{MOI.Index,MOI.Index}
         typeof(CleverDicts.index_to_key),
     }
     con_map::DoubleDicts.IndexDoubleDict
+    nl_cache::Dict{MOI.ScalarNonlinearFunction,MOI.ScalarNonlinearFunction}
 end
 
 """
@@ -30,7 +31,8 @@ The dictionary-like object returned by [`MOI.copy_to`](@ref).
 function IndexMap()
     var_map = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}()
     con_map = DoubleDicts.IndexDoubleDict()
-    return IndexMap(var_map, con_map)
+    nl_cache = Dict{MOI.ScalarNonlinearFunction,MOI.ScalarNonlinearFunction}()
+    return IndexMap(var_map, con_map, nl_cache)
 end
 
 function _identity_constraints_map(
@@ -103,4 +105,8 @@ Base.length(map::IndexMap) = length(map.var_map) + length(map.con_map)
 
 function Base.iterate(map::IndexMap, args...)
     return iterate(Base.Iterators.flatten((map.var_map, map.con_map)), args...)
+end
+
+function map_indices(index_map::IndexMap, f::MOI.ScalarNonlinearFunction)
+    return map_indices(Base.Fix1(getindex, index_map), f, index_map.nl_cache)
 end
