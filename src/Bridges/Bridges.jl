@@ -283,7 +283,7 @@ julia> MOI.Bridges.runtests(
            end,
        )
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   32     32  0.8s
+Bridges.runtests |   33     33  0.8s
 ```
 """
 function runtests(args...; kwargs...)
@@ -293,12 +293,60 @@ function runtests(args...; kwargs...)
     return
 end
 
+# A good way to check that the linear mapping implemented in the setter of
+# `ConstraintDual` is the inverse-adjoint of the mapping implemented in the
+# constraint transformation is to check `get_fallback` for `DualObjectiveValue`.
+# Indeed, it will check that the inner product between the constraint constants
+# and the dual is the same before and after the bridge transformations.
+# For this test to be enabled, the bridge should implement `supports`
+# for `ConstraintDual` and implement `MOI.set` for `ConstraintDual`.
+# Typically, this would be achieved using
+# `Union{ConstraintDual,ConstraintDualStart}` for `MOI.get`, `MOI.set` and
+# `MOI.supports`
+function _test_dual(
+    Bridge::Type{<:AbstractBridge},
+    input_fn::Function;
+    dual,
+    eltype,
+    model_eltype,
+)
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
+    mock = MOI.Utilities.MockOptimizer(inner)
+    model = _bridged_model(Bridge{eltype}, mock)
+    input_fn(model)
+    final_touch(model)
+    # Should be able to call final_touch multiple times.
+    final_touch(model)
+    # If the bridges does not support `ConstraintDualStart`, it probably won't
+    # support `ConstraintDual` so we skip these tests
+    list_of_constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    attr = MOI.ConstraintDual()
+    for (F, S) in list_of_constraints
+        if !MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+            # We need all duals for `DualObjectiveValue` fallback
+            # TODO except the ones with no constants, we could ignore them
+            return
+        end
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            MOI.set(model, MOI.ConstraintDual(), ci, _fake_start(dual, set))
+        end
+    end
+    model_dual =
+        MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), eltype)
+    mock_dual =
+        MOI.Utilities.get_fallback(mock, MOI.DualObjectiveValue(), eltype)
+    # Need `atol` in case one of them is zero and the other one almost zero
+    Test.@test model_dual ≈ mock_dual atol = 1e-6
+end
+
 function _runtests(
     Bridge::Type{<:AbstractBridge},
     input_fn::Function,
     output_fn::Function;
     variable_start = 1.2,
     constraint_start = 1.2,
+    dual = constraint_start,
     eltype = Float64,
     model_eltype = eltype,
     print_inner_model::Bool = false,
@@ -402,6 +450,11 @@ function _runtests(
     end
     Test.@testset "Test delete" begin                                           # COV_EXCL_LINE
         _test_delete(Bridge, model, inner)
+    end
+    if !isnothing(dual)
+        Test.@testset "Test ConstraintDual" begin
+            _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
+        end
     end
     return
 end
