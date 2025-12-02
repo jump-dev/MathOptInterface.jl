@@ -113,6 +113,15 @@ end
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::T,
+    set::MOI.Parameter{T},
+) where {T<:Number}
+    return abs(set.value - x)
+end
+
+# This is the minimal L2-norm.
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::T,
     set::MOI.Interval{T},
 ) where {T<:Real}
     return max(x - set.upper, set.lower - x, zero(T))
