@@ -61,6 +61,12 @@ function test_equalto()
     return
 end
 
+function test_parameter()
+    _test_set(MOI.Parameter(2.0), 1.0 => 1.0)
+    _test_set(MOI.Parameter(0.5), 1.0 => 0.5)
+    return
+end
+
 function test_interval()
     _test_set(MOI.Interval(1.0, 2.0), 1.0 => 0.0, 0.5 => 0.5, 2.75 => 0.75)
     return
