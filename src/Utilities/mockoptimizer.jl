@@ -137,10 +137,7 @@ function MockOptimizer(
         # Basis status
         Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
         Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}(),
-        Dict{
-            MOI.AbstractConstraintAttribute,
-            Dict{MOI.ConstraintIndex,Any},
-        }(),
+        Dict{MOI.AbstractConstraintAttribute,Dict{MOI.ConstraintIndex,Any}}(),
     )
 end
 

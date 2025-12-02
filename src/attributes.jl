@@ -3331,7 +3331,7 @@ end
 function get_fallback(
     model::ModelLike,
     attr::LagrangeMultipliers,
-    ci::ConstraintIndex
+    ci::ConstraintIndex,
 )
     return get(model, ConstraintDual(attr.result_index), ci)
 end
