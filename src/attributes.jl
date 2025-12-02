@@ -3273,6 +3273,70 @@ function get_fallback(
 end
 
 """
+    LagrangeMultipliers(result_index::Int = 1)
+
+An [`AbstractConstraintAttribute`](@ref) for the Lagrange multipliers associated
+with a constraint.
+
+## Relationship to `ConstraintDual`
+
+In most cases, the value of this attribute is equivalent to
+[`ConstraintDual`](@ref), and querying the value of [`LagrangeMultipliers`](@ref)
+will fallback to querying the value of [`ConstraintDual`](@ref).
+
+The attribute values differ in one important case.
+
+When there is a [`VectorNonlinearOracle`](@ref) constraint of the form:
+```math
+x \\in VectorNonlinearOracle
+```
+the associated [`ConstraintDual`](@ref) is ``\\mu^\\top \\nabla f(x)``, and the
+value of [`LagrangeMultipliers`](@ref) is the vector ``\\mu`` directly.
+
+Both values are useful in different circumstances.
+
+## DualStatus
+
+Before quering this attribute you should first check [`DualStatus`](@ref) to
+confirm that a dual solution is avaiable.
+
+If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
+this attribute is undefined.
+
+## `result_index`
+
+The optimizer may return multiple dual solutions. See [`ResultCount`](@ref)
+for information on how the results are ordered.
+
+If the solver does not have a dual value for the constraint because the
+`result_index` is beyond the available solutions (whose number is indicated by
+the [`ResultCount`](@ref) attribute), getting this attribute must throw a
+[`ResultIndexBoundsError`](@ref).
+
+## Implementation
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.LagrangeMultipliers, ::MOI.ConstraintIndex)
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
+
+"""
+struct LagrangeMultipliers <: AbstractConstraintAttribute
+    result_index::Int
+
+    LagrangeMultipliers(result_index::Int = 1) = new(result_index)
+end
+
+function get_fallback(
+    model::ModelLike,
+    attr::LagrangeMultipliers,
+    ci::ConstraintIndex
+)
+    return get(model, ConstraintDual(attr.result_index), ci)
+end
+
+"""
     is_set_by_optimize(::AnyAttribute)
 
 Return a `Bool` indicating whether the value of the attribute is set during an
@@ -3330,6 +3394,7 @@ function is_set_by_optimize(
         ConstraintDual,
         ConstraintBasisStatus,
         VariableBasisStatus,
+        LagrangeMultipliers,
     },
 )
     return true
