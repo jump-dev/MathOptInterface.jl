@@ -2382,3 +2382,133 @@ function setup_test(
 end
 
 version_added(::typeof(test_vector_nonlinear_oracle_no_hessian)) = v"1.46.0"
+
+function test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ConstraintDual)
+    @requires _supports(config, MOI.LagrangeMultipliers)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.VectorNonlinearOracle{T},
+    )
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 2,
+        l = T[typemin(T)],
+        u = T[1],
+        eval_f = (ret, x) -> (ret[1] = x[1]^2 + x[2]^2),
+        jacobian_structure = [(1, 1), (1, 2)],
+        eval_jacobian = (ret, x) -> ret .= T(2) .* x,
+        hessian_lagrangian_structure = [(1, 1), (2, 2)],
+        eval_hessian_lagrangian = (ret, x, u) -> ret .= T(2) .* u[1],
+    )
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    f = one(T) * x[1] + one(T) * x[2]
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
+    MOI.optimize!(model)
+    y = T(1) / sqrt(T(2))
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), [y, y], config)
+    @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), T[-1, -1], config)
+    @test isapprox(MOI.get(model, MOI.LagrangeMultipliers(), c), T[-y])
+    return
+end
+
+function setup_test(
+    ::typeof(test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    F, S = MOI.VectorOfVariables, MOI.VectorNonlinearOracle{T}
+    y = T(1) / sqrt(T(2))
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                T[y, y],
+                (F, S) => [T[-1, -1]],
+            )
+            ci = only(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
+            MOI.set(mock, MOI.LagrangeMultipliers(), ci, T[-y])
+        end,
+    )
+    model.eval_variable_constraint_dual = false
+    return () -> model.eval_variable_constraint_dual = true
+end
+
+function version_added(
+    ::typeof(test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE),
+)
+    return v"1.47.0"
+end
+
+function test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE(
+    model::MOI.ModelLike,
+    config::MOI.Test.Config{T},
+) where {T}
+    @requires _supports(config, MOI.optimize!)
+    @requires _supports(config, MOI.ConstraintDual)
+    @requires _supports(config, MOI.LagrangeMultipliers)
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorOfVariables,
+        MOI.VectorNonlinearOracle{T},
+    )
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 2,
+        l = T[-1],
+        u = T[typemax(T)],
+        eval_f = (ret, x) -> (ret[1] = -x[1]^2 - x[2]^2),
+        jacobian_structure = [(1, 1), (1, 2)],
+        eval_jacobian = (ret, x) -> ret .= -T(2) .* x,
+        hessian_lagrangian_structure = [(1, 1), (2, 2)],
+        eval_hessian_lagrangian = (ret, x, u) -> ret .= -T(2) .* u[1],
+    )
+    x = MOI.add_variables(model, 2)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = one(T) * x[1] + one(T) * x[2]
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
+    MOI.optimize!(model)
+    y = T(1) / sqrt(T(2))
+    @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), [-y, -y], config)
+    @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), T[1, 1], config)
+    @test isapprox(MOI.get(model, MOI.LagrangeMultipliers(), c), T[y])
+    return
+end
+
+function setup_test(
+    ::typeof(test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE),
+    model::MOIU.MockOptimizer,
+    config::Config{T},
+) where {T}
+    F, S = MOI.VectorOfVariables, MOI.VectorNonlinearOracle{T}
+    y = T(1) / sqrt(T(2))
+    MOI.Utilities.set_mock_optimize!(
+        model,
+        mock -> begin
+            MOI.Utilities.mock_optimize!(
+                mock,
+                config.optimal_status,
+                T[-y, -y],
+                (F, S) => [T[1, 1]],
+            )
+            ci = only(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
+            MOI.set(mock, MOI.LagrangeMultipliers(), ci, T[y])
+        end,
+    )
+    model.eval_variable_constraint_dual = false
+    return () -> model.eval_variable_constraint_dual = true
+end
+
+function version_added(
+    ::typeof(test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE),
+)
+    return v"1.47.0"
+end
