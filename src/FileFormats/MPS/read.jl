@@ -34,7 +34,7 @@
 
 @enum(Sense, SENSE_N, SENSE_G, SENSE_L, SENSE_E, SENSE_UNKNOWN)
 
-function Sense(s::String)
+function Sense(s)
     if s == "G"
         return SENSE_G
     elseif s == "L"
@@ -158,7 +158,7 @@ end
 
 # `Headers` gets called _alot_ (on every line), so we try very hard to be
 # efficient.
-function Headers(s::AbstractString)
+function Headers(s)
     N = length(s)
     x = first(s)
     if N == 3
@@ -217,8 +217,7 @@ function line_to_items(line)
     # whitespace is disallowed in names. If this ever becomes a problem, we
     # could change to the fixed MPS format, where the files are split at the
     # usual offsets.
-    items = split(line, r"\s"; keepempty = false)
-    return String.(items)
+    return split(line, r"\s"; keepempty = false)
 end
 
 """
@@ -490,7 +489,7 @@ end
 #   NAME
 # ==============================================================================
 
-function parse_name_line(data::TempMPSModel, line::String)
+function parse_name_line(data::TempMPSModel, line)
     m = match(r"^\s*NAME(.*)"i, line)
     if m === nothing
         _throw_parse_error(
@@ -498,7 +497,7 @@ function parse_name_line(data::TempMPSModel, line::String)
             "This line must be  of the form `NAME <problem name>`.",
         )
     end
-    data.name = strip(m[1]::AbstractString)
+    data.name = strip(m[1])
     return
 end
 
@@ -506,7 +505,7 @@ end
 #   ROWS
 # ==============================================================================
 
-function parse_rows_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
+function parse_rows_line(data::TempMPSModel{T}, items::Vector) where {T}
     if length(items) < 2
         _throw_parse_error(
             data,
@@ -575,7 +574,7 @@ end
 #   COLUMNS
 # ==============================================================================
 
-function parse_single_coefficient(data, row_name::String, column::Int, value)
+function parse_single_coefficient(data, row_name, column::Int, value)
     if row_name == data.obj_name
         data.c[column] += value
         return
@@ -619,10 +618,7 @@ function _set_intorg(data::TempMPSModel{T}, column, column_name) where {T}
     return
 end
 
-function parse_columns_line(
-    data::TempMPSModel{T},
-    items::Vector{String},
-) where {T}
+function parse_columns_line(data::TempMPSModel{T}, items::Vector) where {T}
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
@@ -660,7 +656,7 @@ end
 #   RHS
 # ==============================================================================
 
-function parse_single_rhs(data, row_name::String, value, items::Vector{String})
+function parse_single_rhs(data, row_name, value, items::Vector)
     if row_name == data.obj_name
         data.obj_constant = value
         return
@@ -691,7 +687,7 @@ function parse_single_rhs(data, row_name::String, value, items::Vector{String})
 end
 
 # TODO: handle multiple RHS vectors.
-function parse_rhs_line(data::TempMPSModel{T}, items::Vector{String}) where {T}
+function parse_rhs_line(data::TempMPSModel{T}, items::Vector) where {T}
     if length(items) == 3
         # [rhs name] [row name] [value]
         rhs_name, row_name, value = items
@@ -724,7 +720,7 @@ end
 #         E    |      -      | rhs + range   |     rhs
 # ==============================================================================
 
-function parse_single_range(data, row_name::String, value)
+function parse_single_range(data, row_name, value)
     row = get(data.name_to_row, row_name, nothing)
     if row === nothing
         _throw_parse_error(
@@ -747,10 +743,7 @@ function parse_single_range(data, row_name::String, value)
 end
 
 # TODO: handle multiple RANGES vectors.
-function parse_ranges_line(
-    data::TempMPSModel{T},
-    items::Vector{String},
-) where {T}
+function parse_ranges_line(data::TempMPSModel{T}, items::Vector) where {T}
     if length(items) == 3
         # [rhs name] [row name] [value]
         _, row_name, value = items
@@ -775,8 +768,8 @@ end
 
 function _parse_single_bound(
     data::TempMPSModel{T},
-    column_name::String,
-    bound_type::String,
+    column_name,
+    bound_type,
 ) where {T}
     col = get(data.name_to_col, column_name, nothing)
     if col === nothing
@@ -813,8 +806,8 @@ end
 
 function _parse_single_bound(
     data::TempMPSModel{T},
-    column_name::String,
-    bound_type::String,
+    column_name,
+    bound_type,
     value::T,
 ) where {T}
     col = get(data.name_to_col, column_name, nothing)
@@ -865,10 +858,7 @@ function _parse_single_bound(
     end
 end
 
-function parse_bounds_line(
-    data::TempMPSModel{T},
-    items::Vector{String},
-) where {T}
+function parse_bounds_line(data::TempMPSModel{T}, items::Vector) where {T}
     if length(items) == 3
         bound_type, _, column_name = items
         _parse_single_bound(data, column_name, bound_type)
