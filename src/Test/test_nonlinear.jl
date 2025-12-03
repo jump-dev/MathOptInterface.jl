@@ -2389,7 +2389,7 @@ function test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE(
 ) where {T}
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    @requires _supports(config, MOI.LagrangeMultipliers)
+    @requires _supports(config, MOI.LagrangeMultiplier)
     @requires MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
@@ -2410,11 +2410,15 @@ function test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE(
     f = one(T) * x[1] + one(T) * x[2]
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
-    MOI.optimize!(model)
     y = T(1) / sqrt(T(2))
+    CI = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}}
+    if MOI.supports(model, MOI.LagrangeMultiplierStart(), CI)
+        MOI.set(model, MOI.LagrangeMultiplierStart(), c, T[-y])
+    end
+    MOI.optimize!(model)
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), [y, y], config)
     @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), T[-1, -1], config)
-    @test isapprox(MOI.get(model, MOI.LagrangeMultipliers(), c), T[-y])
+    @test isapprox(MOI.get(model, MOI.LagrangeMultiplier(), c), T[-y])
     return
 end
 
@@ -2435,7 +2439,7 @@ function setup_test(
                 (F, S) => [T[-1, -1]],
             )
             ci = only(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
-            MOI.set(mock, MOI.LagrangeMultipliers(), ci, T[-y])
+            MOI.set(mock, MOI.LagrangeMultiplier(), ci, T[-y])
         end,
     )
     model.eval_variable_constraint_dual = false
@@ -2454,7 +2458,7 @@ function test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE(
 ) where {T}
     @requires _supports(config, MOI.optimize!)
     @requires _supports(config, MOI.ConstraintDual)
-    @requires _supports(config, MOI.LagrangeMultipliers)
+    @requires _supports(config, MOI.LagrangeMultiplier)
     @requires MOI.supports_constraint(
         model,
         MOI.VectorOfVariables,
@@ -2475,11 +2479,15 @@ function test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE(
     f = one(T) * x[1] + one(T) * x[2]
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     c = MOI.add_constraint(model, MOI.VectorOfVariables(x), set)
-    MOI.optimize!(model)
     y = T(1) / sqrt(T(2))
+    CI = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}}
+    if MOI.supports(model, MOI.LagrangeMultiplierStart(), CI)
+        MOI.set(model, MOI.LagrangeMultiplierStart(), c, T[y])
+    end
+    MOI.optimize!(model)
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), [-y, -y], config)
     @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), T[1, 1], config)
-    @test isapprox(MOI.get(model, MOI.LagrangeMultipliers(), c), T[y])
+    @test isapprox(MOI.get(model, MOI.LagrangeMultiplier(), c), T[y])
     return
 end
 
@@ -2500,7 +2508,7 @@ function setup_test(
                 (F, S) => [T[1, 1]],
             )
             ci = only(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
-            MOI.set(mock, MOI.LagrangeMultipliers(), ci, T[y])
+            MOI.set(mock, MOI.LagrangeMultiplier(), ci, T[y])
         end,
     )
     model.eval_variable_constraint_dual = false
