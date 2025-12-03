@@ -3273,15 +3273,15 @@ function get_fallback(
 end
 
 """
-    LagrangeMultipliers(result_index::Int = 1)
+    LagrangeMultiplier(result_index::Int = 1)
 
-An [`AbstractConstraintAttribute`](@ref) for the Lagrange multipliers associated
+An [`AbstractConstraintAttribute`](@ref) for the Lagrange multiplier associated
 with a constraint.
 
 ## Relationship to `ConstraintDual`
 
 In most cases, the value of this attribute is equivalent to
-[`ConstraintDual`](@ref), and querying the value of [`LagrangeMultipliers`](@ref)
+[`ConstraintDual`](@ref), and querying the value of [`LagrangeMultiplier`](@ref)
 will fallback to querying the value of [`ConstraintDual`](@ref).
 
 The attribute values differ in one important case.
@@ -3291,7 +3291,7 @@ When there is a [`VectorNonlinearOracle`](@ref) constraint of the form:
 x \\in VectorNonlinearOracle
 ```
 the associated [`ConstraintDual`](@ref) is ``\\mu^\\top \\nabla f(x)``, and the
-value of [`LagrangeMultipliers`](@ref) is the vector ``\\mu`` directly.
+value of [`LagrangeMultiplier`](@ref) is the vector ``\\mu`` directly.
 
 Both values are useful in different circumstances.
 
@@ -3317,24 +3317,36 @@ the [`ResultCount`](@ref) attribute), getting this attribute must throw a
 
 Optimizers should implement the following methods:
 ```
-MOI.get(::Optimizer, ::MOI.LagrangeMultipliers, ::MOI.ConstraintIndex)
+MOI.get(::Optimizer, ::MOI.LagrangeMultiplier, ::MOI.ConstraintIndex)
 ```
 They should not implement [`set`](@ref) or [`supports`](@ref).
 
 """
-struct LagrangeMultipliers <: AbstractConstraintAttribute
+struct LagrangeMultiplier <: AbstractConstraintAttribute
     result_index::Int
 
-    LagrangeMultipliers(result_index::Int = 1) = new(result_index)
+    LagrangeMultiplier(result_index::Int = 1) = new(result_index)
 end
 
 function get_fallback(
     model::ModelLike,
-    attr::LagrangeMultipliers,
+    attr::LagrangeMultiplier,
     ci::ConstraintIndex,
 )
     return get(model, ConstraintDual(attr.result_index), ci)
 end
+
+"""
+    LagrangeMultiplierStart()
+
+An [`AbstractConstraintAttribute`](@ref) for the initial assignment to the
+constraint's [`LagrangeMultiplier`](@ref) that the optimizer may use to
+warm-start the solve.
+
+May be `nothing` (unset), a number for [`AbstractScalarFunction`](@ref), or a
+vector for [`AbstractVectorFunction`](@ref).
+"""
+struct LagrangeMultiplierStart <: AbstractConstraintAttribute end
 
 """
     is_set_by_optimize(::AnyAttribute)
@@ -3394,7 +3406,7 @@ function is_set_by_optimize(
         ConstraintDual,
         ConstraintBasisStatus,
         VariableBasisStatus,
-        LagrangeMultipliers,
+        LagrangeMultiplier,
     },
 )
     return true
