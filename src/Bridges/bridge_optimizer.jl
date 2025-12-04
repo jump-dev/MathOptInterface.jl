@@ -410,7 +410,7 @@ function MOI.Utilities.pass_nonvariable_constraints(
     constraint_types,
 )
     if Variable.has_bridges(Variable.bridges(dest))
-        # The functions may contained bridged variables which needs to be
+        # The functions may contain bridged variables which needs to be
         # substituted so we use the fallback.
         MOI.Utilities.pass_nonvariable_constraints_fallback(
             dest,
