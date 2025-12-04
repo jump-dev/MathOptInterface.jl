@@ -7,6 +7,32 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.47.0 (December 5, 2025)
+
+### Added
+
+ - Allow penalty relaxation for [`ScalarNonlinearFunction`](@ref) constraints
+   (#2875)
+ - Improve hessian sparsity detection. This may result in a different sparsity
+   pattern of the Hessian and improved performance. (#2882)
+ - Added support for [`Utilities.distance_to_set`](@ref) and the
+   [`Parameter`](@ref) set (#2889)
+
+### Fixed
+
+ - Fixed querying [`ConstraintConflictStatus`](@ref) in bridges with constrained
+   variables (#2871)
+ - Fixed the dimension of [`VectorNonlinearOracle`](@ref) in the tests and
+   docstrings (#2874)
+
+### Other
+
+ - Updates to `solver-tests.yml` (#2872), (#2873), (#2880)
+ - Minor documentation updates (#2876), (#2878), (#2881), (#2886)
+ - Add a contributing page to the developer documentation (#2884)
+ - Add a custom `IntDisjointSet` type and remove DataStructures.jl (#2885)
+ - Improved the performance of reading MPS files (#2892)
+
 ## v1.46.0 (October 21, 2025)
 
 ### Added
