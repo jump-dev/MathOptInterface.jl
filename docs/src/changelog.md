@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.47.0 (December 3, 2025)
+## v1.47.0 (December 5, 2025)
 
 ### Added
 
@@ -31,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Minor documentation updates (#2876), (#2878), (#2881), (#2886)
  - Add a contributing page to the developer documentation (#2884)
  - Add a custom `IntDisjointSet` type and remove DataStructures.jl (#2885)
+ - Improved the performance of reading MPS files (#2892)
 
 ## v1.46.0 (October 21, 2025)
 
