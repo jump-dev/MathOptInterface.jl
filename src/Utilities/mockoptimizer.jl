@@ -76,6 +76,10 @@ mutable struct MockOptimizer{MT<:MOI.ModelLike,T} <: MOI.AbstractOptimizer
         Dict{Int,MOI.BasisStatusCode},
     }
     variable_basis_status::Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}
+    constraint_attributes::Dict{
+        MOI.AbstractConstraintAttribute,
+        Dict{MOI.ConstraintIndex,Any},
+    }
 end
 
 function MockOptimizer(
@@ -133,6 +137,7 @@ function MockOptimizer(
         # Basis status
         Dict{MOI.ConstraintIndex,Dict{Int,MOI.BasisStatusCode}}(),
         Dict{MOI.VariableIndex,Dict{Int,MOI.BasisStatusCode}}(),
+        Dict{MOI.AbstractConstraintAttribute,Dict{MOI.ConstraintIndex,Any}}(),
     )
 end
 
@@ -421,7 +426,14 @@ function MOI.set(
     idx::MOI.ConstraintIndex,
     value,
 )
-    MOI.set(mock.inner_model, attr, xor_index(idx), value)
+    if MOI.is_set_by_optimize(attr)
+        ret = get!(mock.constraint_attributes, attr) do
+            return Dict{MOI.ConstraintIndex,Any}()
+        end
+        ret[idx] = value
+    else
+        MOI.set(mock.inner_model, attr, xor_index(idx), value)
+    end
     return
 end
 
@@ -660,6 +672,9 @@ function MOI.get(
 )
     # If it is thrown by `mock.inner_model`, the index will be xor'ed.
     MOI.throw_if_not_valid(mock, idx)
+    if MOI.is_set_by_optimize(attr)
+        return mock.constraint_attributes[attr][idx]
+    end
     return MOI.get(mock.inner_model, attr, xor_index(idx))
 end
 
