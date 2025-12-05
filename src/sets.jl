@@ -2234,7 +2234,7 @@ function Base.:(==)(x::CountAtLeast, y::CountAtLeast)
 end
 
 """
-    CountBelongs(dimenson::Int, set::Set{Int})
+    CountBelongs(dimension::Int, set::Set{Int})
 
 The set ``\\{(n, x) \\in \\mathbb{Z}^{1+d}\\}``, such that `n` elements of the
 vector `x` take on of the values in `set` and `dimension = 1 + d`.
