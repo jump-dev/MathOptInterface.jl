@@ -3281,12 +3281,10 @@ with a constraint.
 ## Relationship to `ConstraintDual`
 
 In most cases, the value of this attribute is equivalent to
-[`ConstraintDual`](@ref), and querying the value of [`LagrangeMultiplier`](@ref)
-will fallback to querying the value of [`ConstraintDual`](@ref).
+[`ConstraintDual`](@ref).
 
-The attribute values differ in one important case.
-
-When there is a [`VectorNonlinearOracle`](@ref) constraint of the form:
+The attribute values differ in one important case. When there is a
+[`VectorNonlinearOracle`](@ref) constraint of the form:
 ```math
 x \\in VectorNonlinearOracle
 ```
@@ -3321,19 +3319,14 @@ MOI.get(::Optimizer, ::MOI.LagrangeMultiplier, ::MOI.ConstraintIndex)
 ```
 They should not implement [`set`](@ref) or [`supports`](@ref).
 
+Solvers should implement [`LagrangeMultiplier`](@ref) only if they also
+implement the [`ConstraintDual`](@ref), and only if if the two values are
+different.
 """
 struct LagrangeMultiplier <: AbstractConstraintAttribute
     result_index::Int
 
     LagrangeMultiplier(result_index::Int = 1) = new(result_index)
-end
-
-function get_fallback(
-    model::ModelLike,
-    attr::LagrangeMultiplier,
-    ci::ConstraintIndex,
-)
-    return get(model, ConstraintDual(attr.result_index), ci)
 end
 
 """
