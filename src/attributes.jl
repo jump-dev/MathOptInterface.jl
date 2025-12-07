@@ -3320,7 +3320,7 @@ MOI.get(::Optimizer, ::MOI.LagrangeMultiplier, ::MOI.ConstraintIndex)
 They should not implement [`set`](@ref) or [`supports`](@ref).
 
 Solvers should implement [`LagrangeMultiplier`](@ref) only if they also
-implement the [`ConstraintDual`](@ref), and only if if the two values are
+implement the [`ConstraintDual`](@ref), and only if the two values are
 different.
 """
 struct LagrangeMultiplier <: AbstractConstraintAttribute
