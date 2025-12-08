@@ -25,7 +25,7 @@ t = \max(f_1(x), f_2(x), \ldots, f_N(x))
 The first step to design a new set for MathOptInterface is to define the
 mathematical relationship you want to model as a _function-in-set_ $f(x) \in S$.
 
-Your inital thought for representing the _LinMax_ constraint in MathOptInterface
+Your initial thought for representing the _LinMax_ constraint in MathOptInterface
 may be to represent it as:
 ```math
 F(x) \in LinMax(t)
