@@ -171,7 +171,9 @@ function _grow_star(v, w, e_idx, firstNeighbor, color, S)
     @inbounds if p != v
         firstNeighbor[color[w]] = _Edge(e_idx, v, w)
     else
-        _union!(S, e_idx, e.index)
+        root1 = _find_root!(S, e_idx)
+        root2 = _find_root!(S, e.index)
+        _root_union!(S, root1, root2)
     end
     return
 end
