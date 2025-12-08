@@ -2286,7 +2286,9 @@ function test_vector_nonlinear_oracle(
     y_v = MOI.get.(model, MOI.VariablePrimal(), y)
     @test ≈(y_v, [x_v[1]^2, x_v[2]^2 + x_v[3]^3], config)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [x_v; y_v], config)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(T, 5), config)
+    if _supports(config, MOI.ConstraintDual)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(T, 5), config)
+    end
     return
 end
 
@@ -2358,7 +2360,9 @@ function test_vector_nonlinear_oracle_no_hessian(
     y_v = MOI.get.(model, MOI.VariablePrimal(), y)
     @test ≈(y_v, [x_v[1]^2, x_v[2]^2 + x_v[3]^3], config)
     @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [x_v; y_v], config)
-    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(T, 5), config)
+    if _supports(config, MOI.ConstraintDual)
+        @test ≈(MOI.get(model, MOI.ConstraintDual(), c), zeros(T, 5), config)
+    end
     return
 end
 
