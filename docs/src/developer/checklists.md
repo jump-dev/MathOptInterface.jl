@@ -42,6 +42,7 @@ Use this checklist when adding a new set to the MathOptInterface repository.
  - [ ] If `isbitstype(S) == false`, implement `Base.:(==)(x::S, y::S)`
  - [ ] If an `AbstractVectorSet`, implement `dimension(set::S)`, unless the
        dimension is given by `set.dimension`.
+ - [ ] Ensure the set does not contain references to any variables or constraints
 
 ## Utilities
 

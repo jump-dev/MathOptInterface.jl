@@ -22,6 +22,9 @@ where:
 * the sets ``\mathcal{S}_1, \ldots, \mathcal{S}_m`` are specified by
   [`AbstractSet`](@ref) objects
 
+An important design consideration is that the sets are independent of the
+decision variables.
+
 !!! tip
     For more information on this standard form, read [our paper](https://arxiv.org/abs/2002.03447).
 
@@ -42,8 +45,6 @@ The function types implemented in MathOptInterface.jl are:
 | [`ScalarQuadraticFunction`](@ref) | ``\frac{1}{2} x^T Q x + a^T x + b``, where ``Q`` is a symmetric matrix, ``a`` is a vector, and ``b`` is a constant. |
 | [`VectorQuadraticFunction`](@ref) | A vector of scalar-valued quadratic functions. |
 | [`VectorNonlinearFunction`](@ref) | ``f(x)``, where ``f`` is a vector-valued nonlinear function. |
-
-Extensions for nonlinear programming are present but not yet well documented.
 
 ## One-dimensional sets
 
