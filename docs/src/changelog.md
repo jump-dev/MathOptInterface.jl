@@ -13,10 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Fixed a bug in the acyclic coloring algorithm that was introduced in v1.47.0
    (#2898)
+ - Fixed skipping `ConstraintDual` in `Test.test_vector_nonlinear_oracle_` (#2899)
 
 ### Other
 
  - Fixed a typo in the documentation (#2895)
+ - Added [Defining a new set](@ref) to the documentation (#2901)
 
 ## v1.47.0 (December 5, 2025)
 
