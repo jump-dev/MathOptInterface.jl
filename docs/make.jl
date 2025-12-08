@@ -86,7 +86,7 @@ const _PAGES = [
     "Developer Docs" => [
         "developer/checklists.md",
         "developer/contributing.md",
-        "tutorials/defining_a_new_set.md",
+        "developer/defining_a_new_set.md",
     ],
     "Release notes" => "release_notes.md",
 ]
