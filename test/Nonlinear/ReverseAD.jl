@@ -1448,6 +1448,16 @@ function test_IntDisjointSet()
     return
 end
 
+function test_issue_2897()
+    I = [4, 5, 4, 6, 5, 6]
+    J = [2, 1, 1, 2, 3, 3]
+    g = Coloring.UndirectedGraph(I, J, length(I))
+    color, num_colors = Coloring.acyclic_coloring(g)
+    @test color == [1, 1, 1, 2, 2, 3]
+    @test num_colors == 3
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()

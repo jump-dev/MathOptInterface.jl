@@ -45,3 +45,12 @@ function _root_union!(S::_IntDisjointSet, x::Int, y::Int)
     S.number_of_trees -= 1
     return
 end
+
+function _union!(S, x::Int, y::Int)
+    root_x = _find_root!(S, x)
+    root_y = _find_root!(S, y)
+    if root_x != root_y
+        _root_union!(S, root_x, root_y)
+    end
+    return
+end
