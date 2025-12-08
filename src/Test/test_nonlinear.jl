@@ -2419,6 +2419,16 @@ function test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE(
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), [y, y], config)
     @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), T[-1, -1], config)
     @test isapprox(MOI.get(model, MOI.LagrangeMultiplier(), c), T[-y])
+    # Test `set` just for code coverage
+    x = T[1, 2]
+    ret = T[0]
+    set.eval_f(ret, x)
+    @test ret == T[5]
+    ret = T[0, 0]
+    set.eval_jacobian(ret, x)
+    @test ret == T[2, 4]
+    set.eval_hessian_lagrangian(ret, x, T[-1])
+    @test ret == [-2, -2]
     return
 end
 
@@ -2488,6 +2498,16 @@ function test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE(
     @test isapprox(MOI.get(model, MOI.VariablePrimal(), x), [-y, -y], config)
     @test isapprox(MOI.get(model, MOI.ConstraintDual(), c), T[1, 1], config)
     @test isapprox(MOI.get(model, MOI.LagrangeMultiplier(), c), T[y])
+    # Test `set` just for code coverage
+    x = T[1, 2]
+    ret = T[0]
+    set.eval_f(ret, x)
+    @test ret == T[-5]
+    ret = T[0, 0]
+    set.eval_jacobian(ret, x)
+    @test ret == T[-2, -4]
+    set.eval_hessian_lagrangian(ret, x, T[-1])
+    @test ret == [2, 2]
     return
 end
 
