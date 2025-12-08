@@ -3280,11 +3280,8 @@ with a constraint.
 
 ## Relationship to `ConstraintDual`
 
-In most cases, the value of this attribute is equivalent to
-[`ConstraintDual`](@ref).
-
-The attribute values differ in one important case. When there is a
-[`VectorNonlinearOracle`](@ref) constraint of the form:
+This attribute differs from [`ConstraintDual`](@ref) in one important case.
+When there is a [`VectorNonlinearOracle`](@ref) constraint of the form:
 ```math
 x \\in VectorNonlinearOracle
 ```
