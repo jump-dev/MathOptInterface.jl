@@ -2459,7 +2459,7 @@ end
 function version_added(
     ::typeof(test_VectorNonlinearOracle_LagrangeMultipliers_MAX_SENSE),
 )
-    return v"1.47.0"
+    return v"1.48.0"
 end
 
 function test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE(
@@ -2538,5 +2538,5 @@ end
 function version_added(
     ::typeof(test_VectorNonlinearOracle_LagrangeMultipliers_MIN_SENSE),
 )
-    return v"1.47.0"
+    return v"1.48.0"
 end
