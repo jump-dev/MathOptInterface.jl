@@ -32,12 +32,12 @@ mutable struct GenericModel{T,O,V,C} <: AbstractModelLike{T}
     # A useful dictionary for extensions to store things. These are
     # _not_ copied between models.
     ext::Dict{Symbol,Any}
-    function GenericModel{T,O,V,C}() where {T,O,V,C}
-        return new{T,O,V,C}(
+    function GenericModel{T}(objective, variables, constraints) where {T}
+        return new{T,typeof(objective),typeof(variables),typeof(constraints)}(
             "",
-            O(),
-            V(),
-            C(),
+            objective,
+            variables,
+            constraints,
             Dict{MOI.VariableIndex,String}(),
             nothing,
             Dict{MOI.ConstraintIndex,String}(),
@@ -45,6 +45,10 @@ mutable struct GenericModel{T,O,V,C} <: AbstractModelLike{T}
             Dict{Symbol,Any}(),
         )
     end
+end
+
+function GenericModel{T,O,V,C}() where {T,O,V,C}
+    return GenericModel{T}(O(), V(), C())
 end
 
 abstract type AbstractOptimizer{T} <: MOI.AbstractOptimizer end
