@@ -1054,6 +1054,29 @@ function canonical(f::MOI.AbstractFunction)
     return g
 end
 
+# Workaround: both `is_canonical` and `canonicalize!` would be slow otherwise
+canonical(f::MOI.ScalarNonlinearFunction) = f
+
+function canonical(f::MOI.ScalarNonlinearFunction)
+    cache = Dict{MOI.AbstractScalarFunction,MOI.AbstractScalarFunction}()
+    # Don't use recursion here. This gets called for all scalar nonlinear
+    # constraints.
+    stack = Any[arg for arg in f.args]
+    while !isempty(stack)
+        arg = pop!(stack)
+        if arg isa MOI.ScalarNonlinearFunction
+            for a in arg.args
+                push!(stack, a)
+            end
+        else
+            if !is_canonical(arg)
+                return false
+            end
+        end
+    end
+    return true
+end
+
 canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
 
 """
