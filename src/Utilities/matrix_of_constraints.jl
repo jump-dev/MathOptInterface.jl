@@ -92,11 +92,22 @@ mutable struct MatrixOfConstraints{T,AT,BT,ST} <: MOI.ModelLike
     caches::Vector{Any}
     are_indices_mapped::Vector{BitSet}
     final_touch::Bool
-    function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
-        model = new{T,AT,BT,ST}(AT(), BT(), ST(), Any[], BitSet[], false)
+    function MatrixOfConstraints{T}(coefficients, constants, sets) where {T}
+        model = new{T,typeof(coefficients),typeof(constants),typeof(sets)}(
+            coefficients,
+            constants,
+            sets,
+            Any[],
+            BitSet[],
+            false,
+        )
         MOI.empty!(model)
         return model
     end
+end
+
+function MatrixOfConstraints{T,AT,BT,ST}() where {T,AT,BT,ST}
+    return MatrixOfConstraints{T}(AT(), BT(), ST())
 end
 
 ###
