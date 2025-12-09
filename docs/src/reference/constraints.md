@@ -43,4 +43,6 @@ NONBASIC
 NONBASIC_AT_LOWER
 NONBASIC_AT_UPPER
 SUPER_BASIC
+LagrangeMultiplier
+LagrangeMultiplierStart
 ```
