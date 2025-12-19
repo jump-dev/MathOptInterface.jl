@@ -184,10 +184,10 @@ function Base.convert(
 end
 
 function _first_in_column(
-    A::MutableSparseMatrixCSC{Tv,Ti},
+    A::MutableSparseMatrixCSC,
     row::Integer,
     col::Integer,
-) where {Tv,Ti}
+)
     range = SparseArrays.nzrange(A, col)
     row = _shift(row, OneBasedIndexing(), A.indexing)
     idx = searchsortedfirst(view(A.rowval, range), row)
