@@ -306,7 +306,7 @@ MOI.is_empty(v::MatrixOfConstraints) = MOI.is_empty(v.sets)
 function _reset_caches!(v::MatrixOfConstraints{T}) where {T}
     v.caches =
         [Tuple{_affine_function_type(T, S),S}[] for S in set_types(v.sets)]
-    v.are_indices_mapped = [BitSet() for _ in eachindex(v.caches)]
+    return v.are_indices_mapped = [BitSet() for _ in eachindex(v.caches)]
 end
 
 function MOI.empty!(v::MatrixOfConstraints)

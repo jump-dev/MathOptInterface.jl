@@ -714,15 +714,18 @@ function test_unsupported_constraint()
     return
 end
 
-MOI.Utilities.@product_of_sets(
-    _EqualTos,
-    MOI.EqualTo{T},
-)
+MOI.Utilities.@product_of_sets(_EqualTos, MOI.EqualTo{T},)
 
-function _equality_constraints(A::AbstractMatrix{T}, b::AbstractVector{T}) where {T}
+function _equality_constraints(
+    A::AbstractMatrix{T},
+    b::AbstractVector{T},
+) where {T}
     sets = _EqualTos{T}()
     for _ in eachindex(b)
-        MOI.Utilities.add_set(sets, MOI.Utilities.set_index(sets, MOI.EqualTo{T}))
+        MOI.Utilities.add_set(
+            sets,
+            MOI.Utilities.set_index(sets, MOI.EqualTo{T}),
+        )
     end
     MOI.Utilities.final_touch(sets)
     constants = MOI.Utilities.Hyperrectangle(b, b)
@@ -730,7 +733,6 @@ function _equality_constraints(A::AbstractMatrix{T}, b::AbstractVector{T}) where
     model.final_touch = true
     return model
 end
-
 
 # Inspired from MatrixOfConstraints
 function test_lp_standard_form()
@@ -760,10 +762,7 @@ function test_lp_standard_form()
     )
 
     model = MOI.Utilities.Model{Float64}()
-    MOI.copy_to(
-        MOI.Bridges.Constraint.Scalarize{Float64}(model),
-        form,
-    )
+    MOI.copy_to(MOI.Bridges.Constraint.Scalarize{Float64}(model), form)
     MOI.set(
         model,
         MOI.VariableName(),
@@ -776,16 +775,13 @@ function test_lp_standard_form()
         MOI.ConstraintIndex{
             MOI.ScalarAffineFunction{Float64},
             MOI.EqualTo{Float64},
-        }.(eachindex(con_names)),
+        }.(
+            eachindex(con_names),
+        ),
         con_names,
     )
 
-    MOI.Test.util_test_models_equal(
-        model,
-        expected,
-        var_names,
-        con_names,
-    )
+    MOI.Test.util_test_models_equal(model, expected, var_names, con_names)
 
     return
 end

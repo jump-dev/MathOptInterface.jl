@@ -186,16 +186,10 @@ end
 _indexing(A::MutableSparseMatrixCSC) = A.indexing
 _indexing(::SparseArrays.SparseMatrixCSC) = OneBasedIndexing()
 
-const _SparseMatrixCSC{Tv,Ti} = Union{
-    MutableSparseMatrixCSC{Tv,Ti},
-    SparseArrays.SparseMatrixCSC{Tv,Ti}
-}
+const _SparseMatrixCSC{Tv,Ti} =
+    Union{MutableSparseMatrixCSC{Tv,Ti},SparseArrays.SparseMatrixCSC{Tv,Ti}}
 
-function _first_in_column(
-    A::_SparseMatrixCSC,
-    row::Integer,
-    col::Integer,
-)
+function _first_in_column(A::_SparseMatrixCSC, row::Integer, col::Integer)
     range = SparseArrays.nzrange(A, col)
     row = _shift(row, OneBasedIndexing(), _indexing(A))
     idx = searchsortedfirst(view(A.rowval, range), row)
