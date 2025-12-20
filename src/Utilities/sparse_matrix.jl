@@ -183,19 +183,27 @@ function Base.convert(
     )
 end
 
+_indexing(A::MutableSparseMatrixCSC) = A.indexing
+_indexing(::SparseArrays.SparseMatrixCSC) = OneBasedIndexing()
+
+const _SparseMatrixCSC{Tv,Ti} = Union{
+    MutableSparseMatrixCSC{Tv,Ti},
+    SparseArrays.SparseMatrixCSC{Tv,Ti}
+}
+
 function _first_in_column(
-    A::MutableSparseMatrixCSC,
+    A::_SparseMatrixCSC,
     row::Integer,
     col::Integer,
 )
     range = SparseArrays.nzrange(A, col)
-    row = _shift(row, OneBasedIndexing(), A.indexing)
+    row = _shift(row, OneBasedIndexing(), _indexing(A))
     idx = searchsortedfirst(view(A.rowval, range), row)
     return get(range, idx, last(range) + 1)
 end
 
 function extract_function(
-    A::MutableSparseMatrixCSC{T},
+    A::_SparseMatrixCSC{T},
     row::Integer,
     constant::T,
 ) where {T}
@@ -205,7 +213,7 @@ function extract_function(
         if idx > last(SparseArrays.nzrange(A, col))
             continue
         end
-        r = _shift(A.rowval[idx], A.indexing, OneBasedIndexing())
+        r = _shift(A.rowval[idx], _indexing(A), OneBasedIndexing())
         if r == row
             push!(
                 func.terms,
@@ -217,7 +225,7 @@ function extract_function(
 end
 
 function extract_function(
-    A::MutableSparseMatrixCSC{T},
+    A::_SparseMatrixCSC{T},
     rows::UnitRange,
     constants::Vector{T},
 ) where {T}
@@ -231,7 +239,7 @@ function extract_function(
             if idx[col] > last(SparseArrays.nzrange(A, col))
                 continue
             end
-            row = _shift(A.rowval[idx[col]], A.indexing, OneBasedIndexing())
+            row = _shift(A.rowval[idx[col]], _indexing(A), OneBasedIndexing())
             if row != rows[output_index]
                 continue
             end
