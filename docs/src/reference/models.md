@@ -134,7 +134,7 @@ BarrierIterations
 NodeCount
 ```
 
-### ResultStatusCode
+### Result Status
 
 ```@docs
 ResultStatusCode
