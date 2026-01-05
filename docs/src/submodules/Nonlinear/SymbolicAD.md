@@ -86,7 +86,7 @@ To revert back to the default sparse reverse mode algorithm, set the
 [`AutomaticDifferentiationBackend`](@ref) attribute to
 [`Nonlinear.SparseReverseMode`](@ref).
 
-## `simplify`
+## [`simplify`](@id symbolic_ad_manual_simplify)
 
 Use [`Nonlinear.SymbolicAD.simplify`](@ref) to simplify nonlinear expressions.
 The simplification algorithm performs simple rewrites such as lifting nested
@@ -151,7 +151,7 @@ In addition to [`Nonlinear.SymbolicAD.simplify`](@ref), there is an in-place
 version [`Nonlinear.SymbolicAD.simplify!`](@ref) that may make changes to the
 existing function.
 
-## `variables`
+## [`variables`](@id symbolic_ad_manual_variables)
 
 Use [`Nonlinear.SymbolicAD.variables`](@ref) to return a sorted list of the
 variables that appear in the function:
@@ -172,7 +172,7 @@ julia> MOI.Nonlinear.SymbolicAD.variables(f)
  MOI.VariableIndex(3)
 ```
 
-## `derivative`
+## [`derivative`](@id symbolic_ad_manual_derivative)
 
 Use [`Nonlinear.SymbolicAD.derivative`](@ref) to compute the symbolic derivative
 of a function with respect to a decision variable:
