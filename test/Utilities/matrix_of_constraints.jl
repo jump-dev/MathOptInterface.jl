@@ -738,51 +738,30 @@ end
 function test_lp_standard_form()
     s = """
     variables: x1, x2
+    minobjective: 7x1 + 8x2
     cx1: x1 >= 0.0
     cx2: x2 >= 0.0
     c1: 1x1       == 5.0
     c2: 3x1 + 4x2 == 6.0
-    minobjective: 7x1 + 8x2
     """
     expected = MOI.Utilities.Model{Float64}()
     MOI.Utilities.loadfromstring!(expected, s)
-
     var_names = ["x1", "x2"]
     con_names = ["c1", "c2"]
-
-    A = SparseArrays.sparse([
-        1.0 0.0
-        3.0 4.0
-    ])
+    A = SparseArrays.sparse([1.0 0.0; 3.0 4.0])
     b = [5.0, 6.0]
     form = MOI.Utilities.GenericModel{Float16}(
         expected.objective,
         expected.variables,
         _equality_constraints(A, b),
     )
-
     model = MOI.Utilities.Model{Float64}()
     MOI.copy_to(MOI.Bridges.Constraint.Scalarize{Float64}(model), form)
-    MOI.set(
-        model,
-        MOI.VariableName(),
-        MOI.VariableIndex.(eachindex(var_names)),
-        var_names,
-    )
-    MOI.set(
-        model,
-        MOI.ConstraintName(),
-        MOI.ConstraintIndex{
-            MOI.ScalarAffineFunction{Float64},
-            MOI.EqualTo{Float64},
-        }.(
-            eachindex(con_names),
-        ),
-        con_names,
-    )
-
+    MOI.set(model, MOI.VariableName(), MOI.VariableIndex.(1:2), var_names)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    ci = MOI.ConstraintIndex{F,S}.(1:2)
+    MOI.set(model, MOI.ConstraintName(), ci, con_names)
     MOI.Test.util_test_models_equal(model, expected, var_names, con_names)
-
     return
 end
 

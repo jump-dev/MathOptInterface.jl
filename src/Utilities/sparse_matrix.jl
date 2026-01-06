@@ -184,12 +184,14 @@ function Base.convert(
 end
 
 _indexing(A::MutableSparseMatrixCSC) = A.indexing
+
 _indexing(::SparseArrays.SparseMatrixCSC) = OneBasedIndexing()
 
-const _SparseMatrixCSC{Tv,Ti} =
-    Union{MutableSparseMatrixCSC{Tv,Ti},SparseArrays.SparseMatrixCSC{Tv,Ti}}
-
-function _first_in_column(A::_SparseMatrixCSC, row::Integer, col::Integer)
+function _first_in_column(
+    A::Union{MutableSparseMatrixCSC,SparseArrays.SparseMatrixCSC},
+    row::Integer,
+    col::Integer,
+)
     range = SparseArrays.nzrange(A, col)
     row = _shift(row, OneBasedIndexing(), _indexing(A))
     idx = searchsortedfirst(view(A.rowval, range), row)
@@ -197,7 +199,7 @@ function _first_in_column(A::_SparseMatrixCSC, row::Integer, col::Integer)
 end
 
 function extract_function(
-    A::_SparseMatrixCSC{T},
+    A::Union{MutableSparseMatrixCSC{T},SparseArrays.SparseMatrixCSC{T}},
     row::Integer,
     constant::T,
 ) where {T}
@@ -219,7 +221,7 @@ function extract_function(
 end
 
 function extract_function(
-    A::_SparseMatrixCSC{T},
+    A::Union{MutableSparseMatrixCSC{T},SparseArrays.SparseMatrixCSC{T}},
     rows::UnitRange,
     constants::Vector{T},
 ) where {T}
