@@ -714,6 +714,57 @@ function test_unsupported_constraint()
     return
 end
 
+MOI.Utilities.@product_of_sets(_EqualTos, MOI.EqualTo{T},)
+
+function _equality_constraints(
+    A::AbstractMatrix{T},
+    b::AbstractVector{T},
+) where {T}
+    sets = _EqualTos{T}()
+    for _ in eachindex(b)
+        MOI.Utilities.add_set(
+            sets,
+            MOI.Utilities.set_index(sets, MOI.EqualTo{T}),
+        )
+    end
+    MOI.Utilities.final_touch(sets)
+    constants = MOI.Utilities.Hyperrectangle(b, b)
+    model = MOI.Utilities.MatrixOfConstraints{T}(A, constants, sets)
+    model.final_touch = true
+    return model
+end
+
+# Inspired from MatrixOfConstraints
+function test_lp_standard_form()
+    s = """
+    variables: x1, x2
+    minobjective: 7x1 + 8x2
+    cx1: x1 >= 0.0
+    cx2: x2 >= 0.0
+    c1: 1x1       == 5.0
+    c2: 3x1 + 4x2 == 6.0
+    """
+    expected = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(expected, s)
+    var_names = ["x1", "x2"]
+    con_names = ["c1", "c2"]
+    A = SparseArrays.sparse([1.0 0.0; 3.0 4.0])
+    b = [5.0, 6.0]
+    form = MOI.Utilities.GenericModel{Float16}(
+        expected.objective,
+        expected.variables,
+        _equality_constraints(A, b),
+    )
+    model = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(MOI.Bridges.Constraint.Scalarize{Float64}(model), form)
+    MOI.set(model, MOI.VariableName(), MOI.VariableIndex.(1:2), var_names)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    ci = MOI.ConstraintIndex{F,S}.(1:2)
+    MOI.set(model, MOI.ConstraintName(), ci, con_names)
+    MOI.Test.util_test_models_equal(model, expected, var_names, con_names)
+    return
+end
+
 end
 
 TestMatrixOfConstraints.runtests()
