@@ -9,7 +9,16 @@
 
 `SOS1ToMILPBridge` implements the following reformulation:
 
-  * ``x \\in \\textsf{SOS1}(d)`` into a mixed-integer linear program.
+  * ``x \\in \\textsf{SOS1}(d)`` into the following mixed-integer linear program.
+
+Assuming ``l_i \\le x_i \\le u_i`` with finite bounds ``l_i``, ``u_i``:
+```math
+\\begin{aligned}
+z_i \\in \\{0, 1\\} &  \\;\\; \\forall i \\in 1\\ldots d            \\\\
+l_i z_i \\le x_i \\le u_i z_i &  \\;\\; \\forall i \\in 1\\ldots d  \\\\
+\\sum z_i = 1
+\\end{aligned}
+```
 
 ## Source node
 
