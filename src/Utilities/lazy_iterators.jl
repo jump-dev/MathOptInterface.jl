@@ -31,10 +31,10 @@ depending on the type of `data`.
 struct LazyMap{T,VT,F}
     f::F
     data::VT
-end
 
-function LazyMap{T}(f, data) where {T}
-    return LazyMap{T,typeof(data),typeof(f)}(f, data)
+    function LazyMap{T}(f, data) where {T}
+        return new{T,typeof(data),typeof(f)}(f, data)
+    end
 end
 
 """
@@ -62,10 +62,11 @@ depending on the type of `data`.
 struct VectorLazyMap{T,VT<:AbstractVector,F} <: AbstractVector{T}
     f::F
     data::VT
-end
 
-function VectorLazyMap{T}(f, data) where {T}
-    return VectorLazyMap{T,typeof(data),typeof(f)}(f, data)
+    function VectorLazyMap{T}(f, data) where {T}
+        return new{T,typeof(data),typeof(f)}(f, data)
+    end
+
 end
 
 function lazy_map(::Type{T}, f, data::AbstractVector) where {T}

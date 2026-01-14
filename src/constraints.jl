@@ -95,6 +95,10 @@ An error indicating that the constant part of the function in the constraint
 """
 struct ScalarFunctionConstantNotZero{T,F,S} <: Exception
     constant::T
+
+    function ScalarFunctionConstantNotZero{T,F,S}(constant::T) where {T,F,S}
+        return new{T,F,S}(constant)
+    end
 end
 
 function Base.:(==)(

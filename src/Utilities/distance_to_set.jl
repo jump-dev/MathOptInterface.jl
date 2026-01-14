@@ -504,9 +504,12 @@ function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeSquare)
     return reshape(x, (n, n))
 end
 
-function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeTriangle)
+function _reshape(
+    x::AbstractVector{T},
+    set::MOI.PositiveSemidefiniteConeTriangle,
+) where {T}
     n = MOI.side_dimension(set)
-    X = zeros(eltype(x), n, n)
+    X = zeros(T, n, n)::Matrix{T}
     k = 1
     for i in 1:n
         for j in 1:i

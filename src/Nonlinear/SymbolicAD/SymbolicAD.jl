@@ -1333,7 +1333,11 @@ function Evaluator(
     constraint_index_by_hash = Dict{UInt64,Vector{Int}}()
     jac_offset, hess_offset = 0, 0
     if model.objective !== nothing
-        o_sym = _to_symbolic_form(model, model.objective, variable_to_column)
+        o_sym = _to_symbolic_form(
+            model,
+            model.objective::MOI.Nonlinear.Expression,
+            variable_to_column,
+        )
         x, ∇f, H, ∇²f = gradient_and_hessian(x -> x.value > 0, o_sym.f)
         dag = _DAG(model.operators, Any[o_sym.f; ∇f; ∇²f])
         hash_to_dag[o_sym.hash] = dag

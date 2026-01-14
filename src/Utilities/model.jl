@@ -295,7 +295,8 @@ function MOI.get(model::AbstractModel, ::Type{MOI.VariableIndex}, name::String)
     if model.name_to_var === nothing
         model.name_to_var = build_name_to_var_map(model.var_to_name)
     end
-    result = get(model.name_to_var, name, nothing)
+    result =
+        get(model.name_to_var::Dict{String,MOI.VariableIndex}, name, nothing)
     throw_if_multiple_with_name(result, name)
     return result
 end

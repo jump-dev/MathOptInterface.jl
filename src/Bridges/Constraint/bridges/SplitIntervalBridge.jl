@@ -325,17 +325,15 @@ function MOI.get(
         upper_stat = MOI.get(model, attr, bridge.upper)
         if upper_stat == MOI.NONBASIC
             return MOI.NONBASIC_AT_UPPER
+        elseif bridge.lower === nothing
+            return upper_stat
         end
-    end
-    if bridge.lower === nothing
-        if bridge.upper === nothing
-            # The only case where the interval `[-∞, ∞]` is allowed is for
-            # `VariableIndex` constraints but `ConstraintBasisStatus` is not
-            # defined for `VariableIndex` constraints.
-            msg = "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`."
-            throw(MOI.GetAttributeNotAllowed(attr, msg))
-        end
-        return upper_stat
+    elseif bridge.lower === nothing
+        # The only case where the interval `[-∞, ∞]` is allowed is for
+        # `VariableIndex` constraints but `ConstraintBasisStatus` is not
+        # defined for `VariableIndex` constraints.
+        msg = "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`."
+        error(msg)
     end
     lower_stat = MOI.get(model, attr, bridge.lower)
     if lower_stat == MOI.NONBASIC

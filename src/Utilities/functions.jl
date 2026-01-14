@@ -932,12 +932,14 @@ Sums the coefficients of `t1` and `t2` and returns an output
 `variable` of `t1` as the `output_index` and `variable` of the output term
 without checking that they are equal to those of `t2`.
 """
-function unsafe_add(
-    t1::T,
-    t2::T,
-) where {T<:Union{MOI.VectorAffineTerm,MOI.VectorQuadraticTerm}}
+function unsafe_add(t1::MOI.VectorAffineTerm, t2::MOI.VectorAffineTerm)
     scalar_term = unsafe_add(t1.scalar_term, t2.scalar_term)
-    return T(t1.output_index, scalar_term)
+    return MOI.VectorAffineTerm(t1.output_index, scalar_term)
+end
+
+function unsafe_add(t1::MOI.VectorQuadraticTerm, t2::MOI.VectorQuadraticTerm)
+    scalar_term = unsafe_add(t1.scalar_term, t2.scalar_term)
+    return MOI.VectorQuadraticTerm(t1.output_index, scalar_term)
 end
 
 # Generic fallback for items inside NonlinearFunctions like numbers.

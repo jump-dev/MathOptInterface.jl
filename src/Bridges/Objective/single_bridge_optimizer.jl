@@ -41,10 +41,10 @@ mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
                MOI.Bridges.AbstractBridgeOptimizer
     model::OT
     map::Map # `MOI.ObjectiveFunction` -> objective bridge
-end
 
-function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
-    return SingleBridgeOptimizer{BT,OT}(model, Map())
+    function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
+        return new{BT,OT}(model, Map())
+    end
 end
 
 bridges(::MOI.Bridges.AbstractBridgeOptimizer) = EmptyMap()

@@ -382,48 +382,45 @@ function MOI.optimize!(m::CachingOptimizer)
 end
 
 function MOI.add_variable(m::CachingOptimizer)
-    if m.state == ATTACHED_OPTIMIZER
-        if m.mode == AUTOMATIC
-            try
-                vindex_optimizer =
-                    MOI.add_variable(m.optimizer)::MOI.VariableIndex
-            catch err
-                _rethrow_if_not_NotAllowedError(err)
-                reset_optimizer(m)
-            end
-        else
-            vindex_optimizer = MOI.add_variable(m.optimizer)::MOI.VariableIndex
+    if m.state != ATTACHED_OPTIMIZER
+        return MOI.add_variable(m.model_cache)
+    end
+    vindex_optimizer = if m.mode == AUTOMATIC
+        try
+            MOI.add_variable(m.optimizer)::MOI.VariableIndex
+        catch err
+            _rethrow_if_not_NotAllowedError(err)
+            reset_optimizer(m)
+            return MOI.add_variable(m)
         end
+    else
+        MOI.add_variable(m.optimizer)::MOI.VariableIndex
     end
     vindex = MOI.add_variable(m.model_cache)
-    if m.state == ATTACHED_OPTIMIZER
-        m.model_to_optimizer_map[vindex] = vindex_optimizer
-        m.optimizer_to_model_map[vindex_optimizer] = vindex
-    end
+    m.model_to_optimizer_map[vindex] = vindex_optimizer
+    m.optimizer_to_model_map[vindex_optimizer] = vindex
     return vindex
 end
 
 function MOI.add_variables(m::CachingOptimizer, n)
-    if m.state == ATTACHED_OPTIMIZER
-        if m.mode == AUTOMATIC
-            try
-                vindices_optimizer =
-                    MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
-            catch err
-                _rethrow_if_not_NotAllowedError(err)
-                reset_optimizer(m)
-            end
-        else
-            vindices_optimizer =
-                MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
+    if m.state != ATTACHED_OPTIMIZER
+        return MOI.add_variables(m.model_cache, n)
+    end
+    vindices_optimizer = if m.mode == AUTOMATIC
+        try
+            MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
+        catch err
+            _rethrow_if_not_NotAllowedError(err)
+            reset_optimizer(m)
+            return MOI.add_variables(m, n)
         end
+    else
+        MOI.add_variables(m.optimizer, n)::Vector{MOI.VariableIndex}
     end
     vindices = MOI.add_variables(m.model_cache, n)
-    if m.state == ATTACHED_OPTIMIZER
-        for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
-            m.model_to_optimizer_map[vindex] = vindex_optimizer
-            m.optimizer_to_model_map[vindex_optimizer] = vindex
-        end
+    for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
+        m.model_to_optimizer_map[vindex] = vindex_optimizer
+        m.optimizer_to_model_map[vindex_optimizer] = vindex
     end
     return vindices
 end
@@ -442,38 +439,26 @@ function MOI.add_constrained_variable(
     m::CachingOptimizer,
     set::S,
 ) where {S<:MOI.AbstractScalarSet}
-    if m.state == ATTACHED_OPTIMIZER
-        if m.mode == AUTOMATIC
-            try
-                vindex_optimizer, cindex_optimizer =
-                    MOI.add_constrained_variable(
-                        m.optimizer,
-                        set,
-                    )::Tuple{
-                        MOI.VariableIndex,
-                        MOI.ConstraintIndex{MOI.VariableIndex,S},
-                    }
-            catch err
-                _rethrow_if_not_NotAllowedError(err)
-                reset_optimizer(m)
-            end
-        else
-            vindex_optimizer, cindex_optimizer = MOI.add_constrained_variable(
-                m.optimizer,
-                set,
-            )::Tuple{
-                MOI.VariableIndex,
-                MOI.ConstraintIndex{MOI.VariableIndex,S},
-            }
+    if m.state != ATTACHED_OPTIMIZER
+        return MOI.add_constrained_variable(m.model_cache, set)
+    end
+    R = Tuple{MOI.VariableIndex,MOI.ConstraintIndex{MOI.VariableIndex,S}}
+    vindex_optimizer, cindex_optimizer = if m.mode == AUTOMATIC
+        try
+            MOI.add_constrained_variable(m.optimizer, set)::R
+        catch err
+            _rethrow_if_not_NotAllowedError(err)
+            reset_optimizer(m)
+            return MOI.add_constrained_variable(m, set)
         end
+    else
+        MOI.add_constrained_variable(m.optimizer, set)::R
     end
     vindex, cindex = MOI.add_constrained_variable(m.model_cache, set)
-    if m.state == ATTACHED_OPTIMIZER
-        m.model_to_optimizer_map[vindex] = vindex_optimizer
-        m.optimizer_to_model_map[vindex_optimizer] = vindex
-        m.model_to_optimizer_map[cindex] = cindex_optimizer
-        m.optimizer_to_model_map[cindex_optimizer] = cindex
-    end
+    m.model_to_optimizer_map[vindex] = vindex_optimizer
+    m.optimizer_to_model_map[vindex_optimizer] = vindex
+    m.model_to_optimizer_map[cindex] = cindex_optimizer
+    m.optimizer_to_model_map[cindex_optimizer] = cindex
     return vindex, cindex
 end
 
@@ -506,41 +491,39 @@ function MOI.add_constrained_variables(
     m::CachingOptimizer,
     set::S,
 ) where {S<:MOI.AbstractVectorSet}
-    if m.state == ATTACHED_OPTIMIZER
-        if m.mode == AUTOMATIC
-            try
-                vindices_optimizer, cindex_optimizer =
-                    MOI.add_constrained_variables(
-                        m.optimizer,
-                        set,
-                    )::Tuple{
-                        Vector{MOI.VariableIndex},
-                        MOI.ConstraintIndex{MOI.VectorOfVariables,S},
-                    }
-            catch err
-                _rethrow_if_not_NotAllowedError(err)
-                reset_optimizer(m)
-            end
-        else
-            vindices_optimizer, cindex_optimizer =
-                MOI.add_constrained_variables(
-                    m.optimizer,
-                    set,
-                )::Tuple{
-                    Vector{MOI.VariableIndex},
-                    MOI.ConstraintIndex{MOI.VectorOfVariables,S},
-                }
+    if m.state != ATTACHED_OPTIMIZER
+        return MOI.add_constrained_variables(m.model_cache, set)
+    end
+    vindices_optimizer, cindex_optimizer = if m.mode == AUTOMATIC
+        try
+            MOI.add_constrained_variables(
+                m.optimizer,
+                set,
+            )::Tuple{
+                Vector{MOI.VariableIndex},
+                MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+            }
+        catch err
+            _rethrow_if_not_NotAllowedError(err)
+            reset_optimizer(m)
+            return MOI.add_constrained_variables(m, set)
         end
+    else
+        MOI.add_constrained_variables(
+            m.optimizer,
+            set,
+        )::Tuple{
+            Vector{MOI.VariableIndex},
+            MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+        }
     end
     vindices, cindex = MOI.add_constrained_variables(m.model_cache, set)
-    if m.state == ATTACHED_OPTIMIZER
-        for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
-            m.model_to_optimizer_map[vindex] = vindex_optimizer
-            m.optimizer_to_model_map[vindex_optimizer] = vindex
-        end
-        m.model_to_optimizer_map[cindex] = cindex_optimizer
-        m.optimizer_to_model_map[cindex_optimizer] = cindex
+    for (vindex, vindex_optimizer) in zip(vindices, vindices_optimizer)
+        m.model_to_optimizer_map[vindex] = vindex_optimizer
+        m.optimizer_to_model_map[vindex_optimizer] = vindex
     end
+    m.model_to_optimizer_map[cindex] = cindex_optimizer
+    m.optimizer_to_model_map[cindex_optimizer] = cindex
     return vindices, cindex
 end
 
@@ -560,34 +543,34 @@ function MOI.add_constraint(
     func::F,
     set::S,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    if m.state == ATTACHED_OPTIMIZER
-        if m.mode == AUTOMATIC
-            try
-                cindex_optimizer = MOI.add_constraint(
-                    m.optimizer,
-                    map_indices(m.model_to_optimizer_map, func),
-                    set,
-                )::MOI.ConstraintIndex{F,S}
-            catch err
-                _rethrow_if_not_NotAllowedError(err)
-                # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
-                # or S' != S if, for example, the `F`-in-`S` constraint is bridged
-                # to other constraints in `m.optimizer`
-                reset_optimizer(m)
-            end
-        else
-            cindex_optimizer = MOI.add_constraint(
+    if m.state != ATTACHED_OPTIMIZER
+        return MOI.add_constraint(m.model_cache, func, set)
+    end
+    cindex_optimizer = if m.mode == AUTOMATIC
+        try
+            MOI.add_constraint(
                 m.optimizer,
                 map_indices(m.model_to_optimizer_map, func),
                 set,
             )::MOI.ConstraintIndex{F,S}
+        catch err
+            _rethrow_if_not_NotAllowedError(err)
+            # It could be MOI.AddConstraintNotAllowed{F', S'} with F' != F
+            # or S' != S if, for example, the `F`-in-`S` constraint is bridged
+            # to other constraints in `m.optimizer`
+            reset_optimizer(m)
+            return MOI.add_constraint(m, func, set)
         end
+    else
+        MOI.add_constraint(
+            m.optimizer,
+            map_indices(m.model_to_optimizer_map, func),
+            set,
+        )::MOI.ConstraintIndex{F,S}
     end
     cindex = MOI.add_constraint(m.model_cache, func, set)
-    if m.state == ATTACHED_OPTIMIZER
-        m.model_to_optimizer_map[cindex] = cindex_optimizer
-        m.optimizer_to_model_map[cindex_optimizer] = cindex
-    end
+    m.model_to_optimizer_map[cindex] = cindex_optimizer
+    m.optimizer_to_model_map[cindex_optimizer] = cindex
     return cindex
 end
 
