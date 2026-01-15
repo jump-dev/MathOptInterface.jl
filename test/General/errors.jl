@@ -410,6 +410,18 @@ function test_logs_precompile()
     return
 end
 
+function test_GetAttributeNotAllowed_showerror()
+    c_set = sprint(showerror, MOI.GetAttributeNotAllowed(MOI.ConstraintSet()))
+    @test occursin("## Fixing this error", c_set)
+    @test occursin("MOI.Utilities.CachingOptimizer", c_set)
+    @test !occursin("Check the solver log for details.", c_set)
+    c_dual = sprint(showerror, MOI.GetAttributeNotAllowed(MOI.ConstraintDual()))
+    @test occursin("## Fixing this error", c_set)
+    @test !occursin("MOI.Utilities.CachingOptimizer", c_set)
+    @test occursin("Check the solver log for details.", c_set)
+    return
+end
+
 end  # module
 
 TestErrors.runtests()
