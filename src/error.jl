@@ -61,30 +61,31 @@ function Base.showerror(io::IO, err::NotAllowedError)
         println(io, " because:\n\n", m)
     end
     println(io)
-    print(
-        io,
-        """
-        ## Fixing this error
-
-        An `MOI.NotAllowedError` error occurs when you have tried to do something that
-        is not implemented by the solver.
-
-        The most common way to fix this error is to wrap the optimizer in a
-        `MOI.Utilities.CachingOptimizer`.
-
-        For example, if you are using `JuMP.Model` or `JuMP.set_optimizer`, do:
-        ```julia
-        model = JuMP.Model(optimizer; with_cache_type = Float64)
-        model = JuMP.GenericModel{T}(optimizer; with_cache_type = T)
-        JuMP.set_optimizer(model, optimizer; with_cache_type = Float64)
-        ```
-        Similarly, if you are using `MOI.instantiate`, do:
-        ```julia
-        model = MOI.instantiate(optimizer; with_cache_type = Float64)
-        ```
-        """,
-    )
+    print(io, fix_message(err))
     return
+end
+
+function fix_message(::NotAllowedError)
+    return """
+    ## Fixing this error
+
+    An `MOI.NotAllowedError` error occurs when you have tried to do something that
+    is not implemented by the solver.
+
+    The most common way to fix this error is to wrap the optimizer in a
+    `MOI.Utilities.CachingOptimizer`.
+
+    For example, if you are using `JuMP.Model` or `JuMP.set_optimizer`, do:
+    ```julia
+    model = JuMP.Model(optimizer; with_cache_type = Float64)
+    model = JuMP.GenericModel{T}(optimizer; with_cache_type = T)
+    JuMP.set_optimizer(model, optimizer; with_cache_type = Float64)
+    ```
+    Similarly, if you are using `MOI.instantiate`, do:
+    ```julia
+    model = MOI.instantiate(optimizer; with_cache_type = Float64)
+    ```
+    """
 end
 
 """

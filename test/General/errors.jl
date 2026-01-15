@@ -361,6 +361,7 @@ function test_get_fallback_error()
         contents,
     )
     @test occursin("## Fixing this error", contents)
+    @test occursin("No other information is available", contents)
     return
 end
 
