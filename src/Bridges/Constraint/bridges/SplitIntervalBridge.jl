@@ -333,7 +333,7 @@ function MOI.get(
         # `VariableIndex` constraints but `ConstraintBasisStatus` is not
         # defined for `VariableIndex` constraints.
         msg = "Cannot get `$attr` for a constraint in the interval `[-Inf, Inf]`."
-        error(msg)
+        throw(MOI.GetAttributeNotAllowed(attr, msg))
     end
     lower_stat = MOI.get(model, attr, bridge.lower)
     if lower_stat == MOI.NONBASIC
