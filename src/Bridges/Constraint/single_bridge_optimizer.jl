@@ -48,15 +48,15 @@ mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
     map::Map # index of bridged constraint -> constraint bridge
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
-end
 
-function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
-    return SingleBridgeOptimizer{BT,OT}(
-        model,
-        Map(),
-        Dict{MOI.ConstraintIndex,String}(),
-        nothing,
-    )
+    function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
+        return new{BT,OT}(
+            model,
+            Map(),
+            Dict{MOI.ConstraintIndex,String}(),
+            nothing,
+        )
+    end
 end
 
 bridges(::MOI.Bridges.AbstractBridgeOptimizer) = EmptyMap()

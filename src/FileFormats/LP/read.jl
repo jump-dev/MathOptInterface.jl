@@ -511,6 +511,11 @@ end
 
 _is_number(c::Char) = isdigit(c) || c in ('.', 'e', 'E', '+', '-')
 
+function _is_negative_digit(state, c)
+    # The type annotation is needed for JET.
+    return c == '-' && isdigit(peek(state, Char)::Char)
+end
+
 function _peek_inner(state::_LexerState)
     while (c = peek(state, Char)) !== nothing
         pos = position(state.io)
@@ -523,7 +528,7 @@ function _peek_inner(state::_LexerState)
             while (c = peek(state, Char)) !== nothing && c != '\n'
                 _ = read(state, Char)
             end
-        elseif isdigit(c) || (c == '-' && isdigit(peek(state, Char))) # Number
+        elseif isdigit(c) || _is_negative_digit(state, c) # Number
             buf = IOBuffer()
             while (c = peek(state, Char)) !== nothing && _is_number(c)
                 write(buf, c)
@@ -826,7 +831,8 @@ function _parse_term(
         # <quadratic-expression>
         return _parse_quadratic_expression(state, cache, prefix)
     end
-    token = peek(state, _Token)
+    # The type annotation is needed for JET.
+    token = peek(state, _Token)::_Token
     return _throw_parse_error(
         state,
         token,
@@ -1050,7 +1056,8 @@ function _parse_constraint_sos(
     f, w = MOI.VectorOfVariables(MOI.VariableIndex[]), T[]
     while true
         if _next_token_is(state, _TOKEN_NEWLINE)
-            t = peek(state, _Token)
+            # The type annotation is needed for JET.
+            t = peek(state, _Token)::_Token
             _throw_parse_error(
                 state,
                 t,
@@ -1096,7 +1103,8 @@ function _parse_constraint_indicator(
     end
     _ = read(state, _Token, _TOKEN_IMPLIES)
     f = _parse_expression(state, cache)
-    set = _parse_set_suffix(state, cache)
+    # The type annotation is needed for JET.
+    set = _parse_set_suffix(state, cache)::MOI.AbstractScalarSet
     return MOI.add_constraint(
         cache.model,
         MOI.Utilities.operate(vcat, T, z, f),
@@ -1117,7 +1125,8 @@ function _parse_constraint(state::_LexerState, cache::_ReadCache)
         _parse_constraint_indicator(state, cache)
     else
         f = _parse_expression(state, cache)
-        set = _parse_set_suffix(state, cache)
+        # The type annotation is needed for JET.
+        set = _parse_set_suffix(state, cache)::MOI.AbstractScalarSet
         MOI.add_constraint(cache.model, f, set)
     end
     if name !== nothing

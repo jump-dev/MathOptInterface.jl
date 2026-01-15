@@ -292,10 +292,10 @@ julia> MOI.Utilities.operate(*, Float64, Diagonal(a), ones(3))
 """
 struct SetDotScalingVector{T,S<:MOI.AbstractSet} <: AbstractVector{T}
     set::S
-end
 
-function SetDotScalingVector{T}(s::MOI.AbstractSet) where {T}
-    return SetDotScalingVector{T,typeof(s)}(s)
+    function SetDotScalingVector{T}(s::MOI.AbstractSet) where {T}
+        return new{T,typeof(s)}(s)
+    end
 end
 
 function Base.getindex(s::SetDotScalingVector{T}, i::Base.Integer) where {T}

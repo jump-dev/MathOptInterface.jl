@@ -2389,7 +2389,10 @@ end
 Substitute any bridged [`MOI.VariableIndex`](@ref) in `value` by an equivalent
 expression in terms of variables of `b.model`.
 """
-function bridged_function(bridge::AbstractBridgeOptimizer, value)
+function bridged_function(
+    bridge::AbstractBridgeOptimizer,
+    value::V,
+)::V where {V}
     if !Variable.has_bridges(Variable.bridges(bridge))
         # Shortcut, this allows performance to be unaltered when no variable
         # bridges are used.
@@ -2398,10 +2401,9 @@ function bridged_function(bridge::AbstractBridgeOptimizer, value)
     # We assume that the type of `value` is not altered. This restricts
     # variable bridges to only return `ScalarAffineFunction` but otherwise,
     # the performance would be bad.
-    return MOI.Utilities.substitute_variables(
-        vi -> bridged_variable_function(bridge, vi),
-        value,
-    )::typeof(value)
+    return MOI.Utilities.substitute_variables(value) do vi
+        return bridged_variable_function(bridge, vi)
+    end
 end
 
 function bridged_function(b::AbstractBridgeOptimizer, func::MOI.VariableIndex)

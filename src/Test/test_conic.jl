@@ -2175,6 +2175,8 @@ function _test_conic_RotatedSecondOrderCone_helper(
             MOI.RotatedSecondOrderCone,
         )
     end
+    # These variables are needed for JET.
+    vc1, vc2 = nothing, nothing
     if abvars
         abx, rsoc =
             MOI.add_constrained_variables(model, MOI.RotatedSecondOrderCone(4))
@@ -5938,6 +5940,8 @@ function _test_det_cone_helper_ellipsoid(
     @test MOI.get(model, MOI.NumberOfVariables()) == 1
     Q = MOI.add_variables(model, square ? 4 : 3)
     @test MOI.get(model, MOI.NumberOfVariables()) == (square ? 5 : 4)
+    # These variables are needed for JET.
+    u, vc = nothing, nothing
     if use_logdet
         u = MOI.add_variable(model)
         vc = MOI.add_constraint(model, u, MOI.EqualTo(T(1)))
