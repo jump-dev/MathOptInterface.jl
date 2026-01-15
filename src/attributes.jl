@@ -129,8 +129,8 @@ operation_name(err::GetAttributeNotAllowed) = "Getting attribute $(err.attr)"
 
 message(err::GetAttributeNotAllowed) = err.message
 
-function fix_message(attr::GetAttributeNotAllowed)
-    if is_set_by_optimize(attr)
+function fix_message(err::GetAttributeNotAllowed)
+    if is_set_by_optimize(err.attr)
         return """
         ## Fixing this error
 
