@@ -66,7 +66,6 @@ struct VectorLazyMap{T,VT<:AbstractVector,F} <: AbstractVector{T}
     function VectorLazyMap{T}(f, data) where {T}
         return new{T,typeof(data),typeof(f)}(f, data)
     end
-
 end
 
 function lazy_map(::Type{T}, f, data::AbstractVector) where {T}

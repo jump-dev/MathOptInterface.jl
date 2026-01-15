@@ -57,7 +57,6 @@ mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
             nothing,
         )
     end
-
 end
 
 bridges(::MOI.Bridges.AbstractBridgeOptimizer) = EmptyMap()
