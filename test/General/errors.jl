@@ -416,9 +416,9 @@ function test_GetAttributeNotAllowed_showerror()
     @test occursin("MOI.Utilities.CachingOptimizer", c_set)
     @test !occursin("Check the solver log for details.", c_set)
     c_dual = sprint(showerror, MOI.GetAttributeNotAllowed(MOI.ConstraintDual()))
-    @test occursin("## Fixing this error", c_set)
-    @test !occursin("MOI.Utilities.CachingOptimizer", c_set)
-    @test occursin("Check the solver log for details.", c_set)
+    @test occursin("## Fixing this error", c_dual)
+    @test !occursin("MOI.Utilities.CachingOptimizer", c_dual)
+    @test occursin("Check the solver log for details.", c_dual)
     return
 end
 
