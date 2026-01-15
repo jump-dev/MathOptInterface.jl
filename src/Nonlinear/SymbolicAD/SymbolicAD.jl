@@ -1335,6 +1335,7 @@ function Evaluator(
     if model.objective !== nothing
         o_sym = _to_symbolic_form(
             model,
+            # The type annotation is needed for JET.
             model.objective::MOI.Nonlinear.Expression,
             variable_to_column,
         )

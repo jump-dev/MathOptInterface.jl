@@ -509,6 +509,7 @@ function _reshape(
     set::MOI.PositiveSemidefiniteConeTriangle,
 ) where {T}
     n = MOI.side_dimension(set)
+    # The type annotation is needed for JET.
     X = zeros(T, n, n)::Matrix{T}
     k = 1
     for i in 1:n

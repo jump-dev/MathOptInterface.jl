@@ -152,6 +152,7 @@ function MOI.Bridges.final_touch(
     bridge::IntegerToZeroOneBridge{T},
     model::MOI.ModelLike,
 ) where {T}
+    # Type annotation needed for JET
     ret = MOI.Utilities.get_bounds(model, T, bridge.x)::Tuple{T,T}
     if ret === bridge.last_bounds
         return nothing  # final_touch already called

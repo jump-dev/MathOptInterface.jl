@@ -432,6 +432,7 @@ function _add_indicator_constraint(
         scalar = MOI.ScalarAffineTerm(coef, variable_map[data.col_to_name[i]])
         push!(terms, MOI.VectorAffineTerm(2, scalar))
     end
+    # The type annotation is needed for JET.
     f = MOI.VectorAffineFunction(terms, zeros(T, 2)::Vector{T})
     c = MOI.add_constraint(model, f, MOI.Indicator{activate}(set))
     MOI.set(model, MOI.ConstraintName(), c, c_name)

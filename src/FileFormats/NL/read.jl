@@ -271,12 +271,14 @@ _try_scalar_affine_function(x::MOI.VariableIndex) = x
 function _try_scalar_affine_function(expr::Expr)
     if expr.args[1] == :+
         args = _try_scalar_affine_function.(expr.args[2:end])
+        # The type annotation is needed for JET.
         if any(isnothing, args)::Bool
             return nothing
         end
         return MOI.Utilities.operate(+, Float64, args...)
     elseif expr.args[1] == :*
         args = _try_scalar_affine_function.(expr.args[2:end])
+        # The type annotation is needed for JET.
         if any(isnothing, args)::Bool
             return nothing
         end
