@@ -393,14 +393,12 @@ end
 
 function function_to_moi(
     ::Val{:VectorOfVariables},
-    ::Type{T},
+    ::Type,
     object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
-) where {T}
+)
     return MOI.VectorOfVariables(
-        MOI.VariableIndex[
-            name_map[variable] for variable::String in object["variables"]
-        ],
+        [name_map[variable::String] for variable in object["variables"]],
     )
 end
 
