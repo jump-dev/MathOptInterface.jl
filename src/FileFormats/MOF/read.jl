@@ -397,9 +397,8 @@ function function_to_moi(
     object::Dict,
     name_map::Dict{String,MOI.VariableIndex},
 )
-    return MOI.VectorOfVariables(
-        [name_map[variable::String] for variable in object["variables"]],
-    )
+    variables = [name_map[variable::String] for variable in object["variables"]]
+    return MOI.VectorOfVariables(variables)
 end
 
 function function_to_moi(
