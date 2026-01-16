@@ -361,6 +361,7 @@ function test_get_fallback_error()
         contents,
     )
     @test occursin("## Fixing this error", contents)
+    @test occursin("No other information is available", contents)
     return
 end
 
@@ -406,6 +407,18 @@ function test_logs_precompile()
     @test_logs (:warn,) MOI.precompile_constraint(model, F, S)
     @test_logs (:warn,) MOI.precompile_variables(model)
     @test_logs (:warn,) MOI.precompile_model(model, [(F, S)])
+    return
+end
+
+function test_GetAttributeNotAllowed_showerror()
+    c_set = sprint(showerror, MOI.GetAttributeNotAllowed(MOI.ConstraintSet()))
+    @test occursin("## Fixing this error", c_set)
+    @test occursin("MOI.Utilities.CachingOptimizer", c_set)
+    @test !occursin("Check the solver log for details.", c_set)
+    c_dual = sprint(showerror, MOI.GetAttributeNotAllowed(MOI.ConstraintDual()))
+    @test occursin("## Fixing this error", c_dual)
+    @test !occursin("MOI.Utilities.CachingOptimizer", c_dual)
+    @test occursin("Check the solver log for details.", c_dual)
     return
 end
 

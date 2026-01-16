@@ -129,6 +129,37 @@ operation_name(err::GetAttributeNotAllowed) = "Getting attribute $(err.attr)"
 
 message(err::GetAttributeNotAllowed) = err.message
 
+function fix_message(err::GetAttributeNotAllowed)
+    if is_set_by_optimize(err.attr)
+        return """
+        ## Fixing this error
+
+        This error occurs when we cannot query the attribute from the solver.
+        No other information is available. Check the solver log for details.
+        """
+    end
+    return """
+    ## Fixing this error
+
+    An `MOI.NotAllowedError` error occurs when you have tried to do something that
+    is not implemented by the solver.
+
+    The most common way to fix this error is to wrap the optimizer in a
+    `MOI.Utilities.CachingOptimizer`.
+
+    For example, if you are using `JuMP.Model` or `JuMP.set_optimizer`, do:
+    ```julia
+    model = JuMP.Model(optimizer; with_cache_type = Float64)
+    model = JuMP.GenericModel{T}(optimizer; with_cache_type = T)
+    JuMP.set_optimizer(model, optimizer; with_cache_type = Float64)
+    ```
+    Similarly, if you are using `MOI.instantiate`, do:
+    ```julia
+    model = MOI.instantiate(optimizer; with_cache_type = Float64)
+    ```
+    """
+end
+
 """
     AbstractSubmittable
 
