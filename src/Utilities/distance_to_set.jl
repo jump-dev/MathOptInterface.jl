@@ -557,3 +557,14 @@ function distance_to_set(
     eigvals .= min.(zero(T), eigvals)
     return LinearAlgebra.norm(eigvals, 2)
 end
+
+function distance_to_set(
+    x::AbstractVector{T},
+    set::MOI.VectorNonlinearOracle,
+) where {T<:Real}
+    _check_dimension(x, set)
+    y = zeros(set.output_dimension)
+    set.eval_f(y, x)
+    point = clamp.(y, set.l, set.u)
+    return LinearAlgebra.norm(y .- point, 2)
+end
