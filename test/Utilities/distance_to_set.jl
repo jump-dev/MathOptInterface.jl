@@ -338,6 +338,44 @@ function test_positivesemidefiniteconetriangle()
     return
 end
 
+function test_vectornonlinearoracle()
+    function eval_f(ret::AbstractVector, x::AbstractVector)
+        ret[1] = sum(x)
+        ret[2] = x[1]^2 + x[2]^2 - x[3]^2
+        ret[3] = x[1]^2 - x[2] * x[3]
+        return
+    end
+    function eval_jacobian(ret::AbstractVector, x::AbstractVector)
+        ret[1] = 1.0
+        ret[2] = 1.0
+        ret[3] = 1.0
+        ret[4] = 2.0 * x[1]
+        ret[5] = 2.0 * x[2]
+        ret[6] = -2.0 * x[3]
+        ret[7] = 2.0 * x[1]
+        ret[8] = -1.0 * x[3]
+        ret[9] = -1.0 * x[2]
+        return
+    end
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 3,
+        l = [1.0, -Inf, -Inf],
+        u = [1.0, 0.0, 0.0],
+        eval_f,
+        jacobian_structure = [(i, j) for i in 1:3 for j in 1:3],
+        eval_jacobian,
+    )
+    _test_set(
+        set,
+        [0.0, 0.0, 0.0] => 1.0,
+        [1.0, 0.0, 0.0] => sqrt(2),
+        [0.0, 1.0, 0.0] => 1.0,
+        [0.0, 0.0, 1.0] => 0.0,
+        mismatch = [1.0],
+    )
+    return
+end
+
 end
 
 TestFeasibilityChecker.runtests()

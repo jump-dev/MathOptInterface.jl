@@ -557,3 +557,25 @@ function distance_to_set(
     eigvals .= min.(zero(T), eigvals)
     return LinearAlgebra.norm(eigvals, 2)
 end
+
+"""
+    distance_to_set(
+        ::ProjectionUpperBoundDistance,
+        x::AbstractVector{T},
+        set::MOI.VectorNonlinearOracle,
+    ) where {T<:Real}
+
+!!! warning
+    This is not an upper bound on the projection in `x` space; instead, it
+    is a projection in `f(x)`-space.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.VectorNonlinearOracle{T},
+) where {T<:Real}
+    _check_dimension(x, set)
+    y = zeros(T, set.output_dimension)
+    set.eval_f(y, x)
+    return LinearAlgebra.norm(y .- clamp.(y, set.l, set.u))
+end
