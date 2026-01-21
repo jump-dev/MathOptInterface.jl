@@ -751,7 +751,11 @@ function test_lp_standard_form()
     con_names = ["c1", "c2"]
     A = SparseArrays.sparse([1.0 - 3im 0.0; 3.0 + 2im 4.0])
     b = [5.0 - im, 6.0 + im]
-    for _A in [A, LinearAlgebra.transpose(copy(LinearAlgebra.transpose(A))), (copy(A'))']
+    for _A in [
+        A,
+        LinearAlgebra.transpose(copy(LinearAlgebra.transpose(A))),
+        (copy(A'))',
+    ]
         form = MOI.Utilities.GenericModel{Float64}(
             expected.model.objective,
             expected.model.variables,

@@ -1,13 +1,16 @@
+# Copyright (c) 2017: Miles Lubin and contributors
+# Copyright (c) 2017: Google Inc.
+#
+# Use of this source code is governed by an MIT-style license that can be found
+# in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+
 import SparseArrays
 using BenchmarkTools
 
 import MathOptInterface as MOI
 
 # Inspired from MatrixOfConstraints
-MOI.Utilities.@product_of_sets(
-    _EqualTos,
-    MOI.EqualTo{T},
-)
+MOI.Utilities.@product_of_sets(_EqualTos, MOI.EqualTo{T},)
 
 a = 1
 
@@ -54,7 +57,9 @@ end
 function bench(m, args...; kws...)
     T = Float64
     model = lp_standard_form(m, args...; kws...)
-    ci = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}(rand(1:m))
+    ci = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}(
+        rand(1:m),
+    )
     return @benchmark MOI.get($model, MOI.ConstraintFunction(), $ci)
 end
 
@@ -65,7 +70,9 @@ function prof(m, args...)
     T = Float64
     model = lp_standard_form(m, args...)
     return @profview for i in 1:m
-        ci = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}(rand(1:m))
+        ci = MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}(
+            rand(1:m),
+        )
         MOI.get(model, MOI.ConstraintFunction(), ci)
     end
 end
