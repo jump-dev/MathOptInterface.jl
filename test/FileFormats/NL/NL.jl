@@ -1394,6 +1394,144 @@ function test_unsupported_objectives()
     return
 end
 
+function test_write_complements_VectorOfVariables()
+    for (set, k, b) in (
+        (MOI.GreaterThan(0.0), 1, "2 0"),
+        (MOI.LessThan(1.0), 2, "1 1"),
+        (MOI.EqualTo(1.0), 3, "4 1"),
+        (MOI.Interval(0.0, 1.0), 3, "0 0 1"),
+    )
+        src = MOI.Utilities.Model{Float64}()
+        x = MOI.add_variable(src)
+        y, _ = MOI.add_constrained_variable(src, MOI.Interval(0.0, 1.0))
+        MOI.add_constraint(src, x, set)
+        MOI.add_constraint(
+            src,
+            MOI.Utilities.vectorize([y, x]),
+            MOI.Complements(2),
+        )
+        dest = NL.Model()
+        MOI.copy_to(dest, src)
+        @test sprint(write, dest) == """
+        g3 1 1 0
+         2 1 1 0 0 0
+         0 1 1 0 0 0
+         0 0
+         0 0 0
+         0 0 0 1
+         0 0 0 0 0
+         1 0
+         0 0
+         0 0 0 0 0
+        C0
+        n0
+        O0 0
+        n0
+        x2
+        0 0
+        1 0
+        r
+        5 $k 1
+        b
+        $b
+        0 0 1
+        k1
+        0
+        J0 1
+        1 1
+        """
+    end
+    return
+end
+
+function test_write_complements_VectorAffineFunction()
+    for (set, k, b) in (
+        (MOI.GreaterThan(0.0), 1, "2 0"),
+        (MOI.LessThan(1.0), 2, "1 1"),
+        (MOI.EqualTo(1.0), 3, "4 1"),
+        (MOI.Interval(0.0, 1.0), 3, "0 0 1"),
+    )
+        src = MOI.Utilities.Model{Float64}()
+        x = MOI.add_variable(src)
+        MOI.add_constraint(src, x, set)
+        MOI.add_constraint(
+            src,
+            MOI.Utilities.vectorize([1.0 - x, x]),
+            MOI.Complements(2),
+        )
+        dest = NL.Model()
+        MOI.copy_to(dest, src)
+        @test sprint(write, dest) == """
+        g3 1 1 0
+         1 1 1 0 0 0
+         0 1 1 0 0 0
+         0 0
+         0 0 0
+         0 0 0 1
+         0 0 0 0 0
+         1 0
+         0 0
+         0 0 0 0 0
+        C0
+        n1
+        O0 0
+        n0
+        x1
+        0 0
+        r
+        5 $k 1
+        b
+        $b
+        k0
+        J0 1
+        0 -1
+        """
+    end
+    return
+end
+
+function test_write_complements_VectorNonlinearFunction()
+    src = MOI.Utilities.Model{Float64}()
+    x, _ = MOI.add_constrained_variable(src, MOI.Interval(0.0, 1.0))
+    MOI.add_constraint(
+        src,
+        MOI.VectorNonlinearFunction([
+            MOI.ScalarNonlinearFunction(:sin, Any[x]),
+            MOI.ScalarNonlinearFunction(:+, Any[x]),
+        ]),
+        MOI.Complements(2),
+    )
+    dest = NL.Model()
+    MOI.copy_to(dest, src)
+    @test sprint(write, dest) == """
+    g3 1 1 0
+     1 1 1 0 0 0
+     1 1 0 1 0 0
+     0 0
+     1 0 0
+     0 0 0 1
+     0 0 0 0 0
+     1 0
+     0 0
+     0 0 0 0 0
+    C0
+    o41
+    v0
+    O0 0
+    n0
+    x1
+    0 0
+    r
+    5 3 1
+    b
+    0 0 1
+    k0
+    J0 1
+    0 0
+    """
+    return
+end
+
 end
 
 TestNLModel.runtests()
