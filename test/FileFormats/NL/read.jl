@@ -1090,6 +1090,48 @@ function test_try_scalar_affine_function()
     return
 end
 
+function test_complements_sample()
+    model = NL.Model(; use_nlp_block = false)
+    open(joinpath(@__DIR__, "data", "sample.nl"), "r") do io
+        return read!(io, model)
+    end
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 4
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    @test length(x) == 8
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.Complements
+    c = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    @test length(c) == 4
+    for i in 1:4
+        @test isapprox(
+            MOI.get(model, MOI.ConstraintFunction(), c[i]),
+            MOI.Utilities.vectorize([1.0 * x[i], 1.0 * x[i+4]]),
+        )
+    end
+    return
+end
+
+function test_complements_josephy()
+    model = NL.Model(; use_nlp_block = false)
+    open(joinpath(@__DIR__, "data", "josephy.nl"), "r") do io
+        return read!(io, model)
+    end
+    x = MOI.get(model, MOI.ListOfVariableIndices())
+    @test length(x) == 4
+    F, S = MOI.VectorNonlinearFunction, MOI.Complements
+    c = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    @test length(c) == 4
+    for i in 1:4
+        f = MOI.get(model, MOI.ConstraintFunction(), c[i])
+        @test isapprox(f.rows[2], MOI.ScalarNonlinearFunction(:+, Any[x[i]]))
+    end
+    ret = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test length(ret) == 2
+    @test (MOI.VariableIndex, MOI.GreaterThan{Float64}) in ret
+    @test (F, S) in ret
+    return
+end
+
 end
 
 TestNonlinearRead.runtests()

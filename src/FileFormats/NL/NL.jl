@@ -146,6 +146,7 @@ mutable struct Model <: MOI.ModelLike
         MOI.Utilities.UniversalFallback{MOI.Utilities.Model{Float64}},
     }
     use_nlp_block::Bool
+    complementarity_constraints::Vector{Vector{Int}}
 
     function Model(; use_nlp_block::Bool = true)
         return new(
@@ -160,6 +161,7 @@ mutable struct Model <: MOI.ModelLike
             MOI.VariableIndex[],
             nothing,
             use_nlp_block,
+            Vector{Int}[],
         )
     end
 end
@@ -185,6 +187,7 @@ function MOI.empty!(model::Model)
     end
     empty!(model.order)
     model.model = nothing
+    empty!(model.complementarity_constraints)
     return
 end
 
@@ -219,6 +222,21 @@ function MOI.supports_constraint(
     ::Type{MOI.VariableIndex},
     ::Type{<:Union{MOI.ZeroOne,MOI.Integer}},
 )
+    return true
+end
+
+function MOI.supports_constraint(
+    ::Model,
+    ::Type{F},
+    ::Type{MOI.Complements},
+) where {
+    F<:Union{
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{Float64},
+        MOI.VectorQuadraticFunction{Float64},
+        MOI.VectorNonlinearFunction,
+    },
+}
     return true
 end
 
@@ -493,6 +511,48 @@ function _process_constraint(
     return
 end
 
+_to_x(f) = convert(MOI.VariableIndex, f)
+
+function _to_x(f::MOI.ScalarNonlinearFunction)
+    # Hacky way to ensure that f is a standalone variable
+    @assert f isa MOI.ScalarNonlinearFunction
+    @assert f.head == :+ && length(f.args) == 1
+    @assert f.args[1] isa MOI.VariableIndex
+    return return f.args[1]
+end
+
+function _process_constraint(
+    dest::Model,
+    model,
+    ::Type{F},
+    ::Type{S},
+    mapping,
+) where {F,S<:MOI.Complements}
+    ci_src = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    for ci in ci_src
+        f_vec = MOI.get(model, MOI.ConstraintFunction(), ci)
+        f_scalars = MOI.Utilities.scalarize(f_vec)
+        n = div(MOI.output_dimension(f_vec), 2)
+        rows = Int[]
+        for i in 1:n
+            fi, xi = f_scalars[i], _to_x(f_scalars[i+n])
+            con = _NLConstraint(Float64(xi.value), Inf, 5, _NLExpr(fi))
+            if con.expr.is_linear
+                push!(dest.h, con)
+                push!(rows, -length(dest.h))
+            else
+                push!(dest.g, con)
+                push!(rows, length(dest.g))
+            end
+        end
+        push!(dest.complementarity_constraints, rows)
+        mapping[ci] =
+            MOI.ConstraintIndex{F,S}(length(dest.complementarity_constraints))
+    end
+    MOI.Utilities.pass_attributes(dest, model, mapping, ci_src)
+    return
+end
+
 function _str(x::Float64)
     if isinteger(x) && (typemin(Int) <= x <= typemax(Int))
         return string(round(Int, x))
@@ -571,8 +631,19 @@ function Base.write(io::IO, model::Model)
     # Line 3: nonlinear constraints, objectives
     # Notes:
     #  * We assume there is always one objective, even if it is just `min 0`.
+    #  * `Writing .nl Files` lies: there are four extra integers here
+    #     * Number of linear complementarity constraints
+    #     * Number of nonlinear complementarity constraints
+    #     * nd: I have no idea
+    #     * nzlb: I have no idea
     n_nlcon = length(model.g)
-    println(io, " ", n_nlcon, " ", 1)
+    ccon_lin = sum(c.opcode == 5 for c in model.h; init = 0)
+    ccon_nl = sum(c.opcode == 5 for c in model.g; init = 0)
+    if ccon_lin + ccon_nl > 0
+        println(io, " ", n_nlcon, " 1 ", ccon_lin, " ", ccon_nl, " 0 0")
+    else
+        println(io, " ", n_nlcon, " ", 1)
+    end
 
     # Line 4: network constraints: nonlinear, linear
     # Notes:
@@ -694,9 +765,15 @@ function Base.write(io::IO, model::Model)
                 println(io, " ", _str(g.lower))
             elseif g.opcode == 3
                 println(io)
-            else
-                @assert g.opcode == 4
+            elseif g.opcode == 4
                 println(io, " ", _str(g.lower))
+            else
+                @assert g.opcode == 5
+                @assert !isfinite(g.upper)
+                x = MOI.VariableIndex(g.lower)
+                v = model.x[x]
+                k = (-Inf < v.lower) + 2 * (v.upper < Inf)
+                println(io, " ", k, " ", v.order + 1)
             end
         end
         # Linear constraints
@@ -710,9 +787,15 @@ function Base.write(io::IO, model::Model)
                 println(io, " ", _str(h.lower))
             elseif h.opcode == 3
                 println(io)
-            else
-                @assert h.opcode == 4
+            elseif h.opcode == 4
                 println(io, " ", _str(h.lower))
+            else
+                @assert h.opcode == 5
+                @assert !isfinite(h.upper)
+                x = MOI.VariableIndex(h.lower)
+                v = model.x[x]
+                k = (-Inf < v.lower) + 2 * (v.upper < Inf)
+                println(io, " ", k, " ", v.order + 1)
             end
         end
     end
