@@ -9,6 +9,7 @@ module TestMatrixOfConstraints
 using Test
 
 import MathOptInterface as MOI
+import LinearAlgebra
 import SparseArrays
 
 function runtests()
@@ -741,27 +742,33 @@ function test_lp_standard_form()
     minobjective: 7x1 + 8x2
     cx1: x1 >= 0.0
     cx2: x2 >= 0.0
-    c1: 1x1       == 5.0
-    c2: 3x1 + 4x2 == 6.0
+    c1::Complex{Float64}: (1 - 3im) * x1       == 5.0 - im
+    c2::Complex{Float64}: (3 + 2im) * x1 + 4x2 == 6.0 + im
     """
-    expected = MOI.Utilities.Model{Float64}()
+    expected = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(expected, s)
     var_names = ["x1", "x2"]
     con_names = ["c1", "c2"]
-    A = SparseArrays.sparse([1.0 0.0; 3.0 4.0])
-    b = [5.0, 6.0]
-    form = MOI.Utilities.GenericModel{Float16}(
-        expected.objective,
-        expected.variables,
-        _equality_constraints(A, b),
-    )
-    model = MOI.Utilities.Model{Float64}()
-    MOI.copy_to(MOI.Bridges.Constraint.Scalarize{Float64}(model), form)
-    MOI.set(model, MOI.VariableName(), MOI.VariableIndex.(1:2), var_names)
-    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
-    ci = MOI.ConstraintIndex{F,S}.(1:2)
-    MOI.set(model, MOI.ConstraintName(), ci, con_names)
-    MOI.Test.util_test_models_equal(model, expected, var_names, con_names)
+    A = SparseArrays.sparse([1.0 - 3im 0.0; 3.0 + 2im 4.0])
+    b = [5.0 - im, 6.0 + im]
+    for _A in [
+        A,
+        LinearAlgebra.transpose(copy(LinearAlgebra.transpose(A))),
+        (copy(A'))',
+    ]
+        form = MOI.Utilities.GenericModel{Float64}(
+            expected.model.objective,
+            expected.model.variables,
+            _equality_constraints(_A, b),
+        )
+        model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+        MOI.copy_to(MOI.Bridges.Constraint.Scalarize{ComplexF64}(model), form)
+        MOI.set(model, MOI.VariableName(), MOI.VariableIndex.(1:2), var_names)
+        F, S = MOI.ScalarAffineFunction{ComplexF64}, MOI.EqualTo{ComplexF64}
+        ci = MOI.ConstraintIndex{F,S}.(1:2)
+        MOI.set(model, MOI.ConstraintName(), ci, con_names)
+        MOI.Test.util_test_models_equal(model, expected, var_names, con_names)
+    end
     return
 end
 

@@ -220,6 +220,31 @@ function extract_function(
     return func
 end
 
+function extract_function(A::LinearAlgebra.Transpose, row::Integer, constant)
+    return _extract_column_as_function(parent(A), row, constant, identity)
+end
+
+function extract_function(A::LinearAlgebra.Adjoint, row::Integer, constant)
+    return _extract_column_as_function(parent(A), row, constant, conj)
+end
+
+function _extract_column_as_function(
+    A::Union{MutableSparseMatrixCSC{T},SparseArrays.SparseMatrixCSC{T}},
+    col::Integer,
+    constant::T,
+    value_map::F,
+) where {T,F<:Function}
+    func = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], constant)
+    for i in SparseArrays.nzrange(A, col)
+        row = _shift(A.rowval[i], _indexing(A), OneBasedIndexing())
+        push!(
+            func.terms,
+            MOI.ScalarAffineTerm(value_map(A.nzval[i]), MOI.VariableIndex(row)),
+        )
+    end
+    return func
+end
+
 function extract_function(
     A::Union{MutableSparseMatrixCSC{T},SparseArrays.SparseMatrixCSC{T}},
     rows::UnitRange,
