@@ -571,8 +571,13 @@ function Base.write(io::IO, model::Model)
     # Line 3: nonlinear constraints, objectives
     # Notes:
     #  * We assume there is always one objective, even if it is just `min 0`.
+    #  * `Writing .nl Files` lies! There are four extra integers here
+    #     * Number of linear complementarity constraints
+    #     * Number of nonlinear complementarity constraints
+    #     * nd: I have no idea
+    #     * nzlb: I have no idea
     n_nlcon = length(model.g)
-    println(io, " ", n_nlcon, " ", 1)
+    println(io, " ", n_nlcon, " 1 0 0 0 0")
 
     # Line 4: network constraints: nonlinear, linear
     # Notes:

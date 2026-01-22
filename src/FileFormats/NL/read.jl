@@ -16,6 +16,8 @@ mutable struct _CacheModel
     constraint_upper::Vector{Float64}
     objective::Expr
     sense::MOI.OptimizationSense
+    complements_map::Dict{Int,Int}
+
     function _CacheModel()
         return new(
             false,
@@ -29,6 +31,7 @@ mutable struct _CacheModel
             Float64[],
             :(),
             MOI.FEASIBILITY_SENSE,
+            Dict{Int,Int}(),
         )
     end
 end
@@ -208,6 +211,7 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
         MOI.set(model, MOI.ObjectiveSense(), data.sense)
     end
     if use_nlp_block
+        @assert isempty(data.complements_map)
         nlp = MOI.Nonlinear.Model()
         if data.objective != :()
             MOI.Nonlinear.set_objective(nlp, data.objective)
@@ -234,6 +238,16 @@ function _to_model(data::_CacheModel; use_nlp_block::Bool)
             MOI.set(model, MOI.ObjectiveFunction{typeof(obj)}(), obj)
         end
         for (i, expr) in enumerate(data.constraints)
+            if haskey(data.complements_map, i)
+                g = MOI.Utilities.operate(
+                    vcat,
+                    Float64,
+                    _expr_to_function(expr),
+                    x[data.complements_map[i]],
+                )
+                MOI.add_constraint(model, g, MOI.Complements(2))
+                continue
+            end
             lb, ub = data.constraint_lower[i], data.constraint_upper[i]
             f = _expr_to_function(expr)
             if lb == ub
@@ -551,11 +565,15 @@ function _parse_section(io::IO, ::Val{'r'}, model::_CacheModel)
             model.constraint_lower[i] = _next(Float64, io, model)
         elseif type == Cchar('3')
             # Free constraint
-        else
-            @assert type == Cchar('4')
+        elseif type == Cchar('4')
             value = _next(Float64, io, model)
             model.constraint_lower[i] = value
             model.constraint_upper[i] = value
+        else
+            @assert type == Cchar('5')
+            _ = _next(Int, io, model)   # k
+            j = _next(Int, io, model)   # variable i-1
+            push!(model.complements_map, i => j)
         end
         _read_til_newline(io, model)
     end
