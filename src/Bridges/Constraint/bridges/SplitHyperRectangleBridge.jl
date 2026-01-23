@@ -196,15 +196,28 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{<:SplitHyperRectangleBridge{T,G}},
 ) where {T,G}
     return MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.Nonnegatives})
 end
 
-_get_free_start(bridge, ::MOI.ConstraintDualStart) = bridge.free_dual_start
+function _get_free_start(
+    bridge,
+    ::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
+)
+    return bridge.free_dual_start
+end
 
-function _set_free_start(bridge, ::MOI.ConstraintDualStart, value)
+function _set_free_start(
+    bridge,
+    ::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
+    value,
+)
     bridge.free_dual_start = value
     return
 end
@@ -284,7 +297,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::SplitHyperRectangleBridge{T},
     values::AbstractVector{T},
 ) where {T}

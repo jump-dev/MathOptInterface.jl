@@ -317,6 +317,7 @@ function test_FunctionConversionBridge()
         variables: x, y
         ScalarNonlinearFunction(1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0) >= 1.0
         """,
+        dual = nothing, # `get_fallback` ignores the constant `4.0` of the function
     )
     # VectorAffineFunction -> VectorQuadraticFunction
     MOI.Bridges.runtests(
