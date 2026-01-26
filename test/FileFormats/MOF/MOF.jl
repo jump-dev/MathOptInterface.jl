@@ -43,7 +43,7 @@ function _validate(filename::String)
         "r",
         MOI.FileFormats.AutomaticCompression(),
     ) do io
-        object = JSON.parse(io, Dict{String,Any})
+        object = JSON.parse(io; dicttype = Dict{String,Any})
         ret = JSONSchema.validate(SCHEMA, object)
         if ret !== nothing
             error(
@@ -1568,7 +1568,7 @@ function test_use_nlp_block()
     io = IOBuffer()
     write(io, model)
     seekstart(io)
-    object = JSON.parse(io, Dict{String,Any})
+    object = JSON.parse(io; dicttype = Dict{String,Any})
     @test object["has_scalar_nonlinear"] == true
     @test JSONSchema.validate(SCHEMA, object) === nothing
     # Test (; use_nlp_block = nothing)
