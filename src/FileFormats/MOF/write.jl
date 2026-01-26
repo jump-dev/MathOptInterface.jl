@@ -33,7 +33,7 @@ function Base.write(io::IO, model::Model)
     if has_scalar_nonlinear
         object = (; has_scalar_nonlinear = true, object...)
     end
-    JSON3.write(io, object)
+    Base.write(io, JSON.json(object))
     return
 end
 
