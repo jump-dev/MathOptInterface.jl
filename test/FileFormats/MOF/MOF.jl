@@ -8,7 +8,7 @@ module TestMOF
 
 using Test
 
-import JSON3
+import JSON
 import JSONSchema
 import MathOptInterface as MOI
 
@@ -17,7 +17,10 @@ const MOF = MOI.FileFormats.MOF
 const TEST_MOF_FILE = "test.mof.json"
 
 const SCHEMA = JSONSchema.Schema(
-    JSON3.read(read(MOI.FileFormats.MOF.SCHEMA_PATH, String), Dict{String,Any}),
+    JSON.parse(
+        read(MOI.FileFormats.MOF.SCHEMA_PATH, String);
+        dicttype = Dict{String,Any},
+    ),
 )
 
 function runtests()
@@ -40,7 +43,7 @@ function _validate(filename::String)
         "r",
         MOI.FileFormats.AutomaticCompression(),
     ) do io
-        object = JSON3.read(io, Dict{String,Any})
+        object = JSON.parse(io, Dict{String,Any})
         ret = JSONSchema.validate(SCHEMA, object)
         if ret !== nothing
             error(
@@ -1565,7 +1568,7 @@ function test_use_nlp_block()
     io = IOBuffer()
     write(io, model)
     seekstart(io)
-    object = JSON3.read(io, Dict{String,Any})
+    object = JSON.parse(io, Dict{String,Any})
     @test object["has_scalar_nonlinear"] == true
     @test JSONSchema.validate(SCHEMA, object) === nothing
     # Test (; use_nlp_block = nothing)
