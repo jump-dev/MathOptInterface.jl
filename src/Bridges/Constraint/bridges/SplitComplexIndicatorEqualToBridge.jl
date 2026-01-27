@@ -5,7 +5,8 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
-    SplitComplexIndicatorEqualToBridge{T,F,G,A} <: Bridges.Constraint.AbstractBridge
+    SplitComplexIndicatorEqualToBridge{T,F,G,A} <:
+    Bridges.Constraint.AbstractBridge
 
 `SplitComplexIndicatorEqualToBridge` implements the following reformulation:
 
@@ -16,7 +17,7 @@
 
 `SplitComplexIndicatorEqualToBridge` supports:
 
-  * `G` in [`MOI.Indicator{A,MOI.EqualTo{Complex{T}}`](@ref)
+  * `G` in `MOI.Indicator{A,MOI.EqualTo{Complex{T}}`
 
 where `G` is a function with `Complex` coefficients.
 
@@ -24,7 +25,7 @@ where `G` is a function with `Complex` coefficients.
 
 `SplitComplexIndicatorEqualToBridge` creates:
 
-  * `F` in [`MOI.Indicator{A,MOI.EqualTo{T}}`](@ref)
+  * `F` in `MOI.Indicator{A,MOI.EqualTo{T}}`
 
 where `F` is the type of the real/imaginary part of `G`.
 """
@@ -71,11 +72,9 @@ function bridge_constraint(
     return SplitComplexIndicatorEqualToBridge{T,F,G,A}(real_ci, imag_ci)
 end
 
-# We don't support `MOI.VariableIndex` as it would be a self-loop in the bridge
-# graph.
 function MOI.supports_constraint(
     ::Type{<:SplitComplexIndicatorEqualToBridge{T}},
-    ::Type{<:MOI.Utilities.TypedLike{Complex{T}}},
+    ::Type{<:MOI.Utilities.TypedVectorLike{Complex{T}}},
     ::Type{MOI.Indicator{A,MOI.EqualTo{Complex{T}}}},
 ) where {T,A}
     return true
