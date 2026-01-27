@@ -127,6 +127,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, SOS1ToMILPBridge{T})
     MOI.Bridges.add_bridge(model, SOS2ToMILPBridge{T})
     MOI.Bridges.add_bridge(model, SplitComplexEqualToBridge{T})
+    MOI.Bridges.add_bridge(model, SplitComplexIndicatorEqualToBridge{T})
     MOI.Bridges.add_bridge(model, SplitComplexZerosBridge{T})
     MOI.Bridges.add_bridge(model, SplitHyperRectangleBridge{T})
     MOI.Bridges.add_bridge(model, SplitIntervalBridge{T})
