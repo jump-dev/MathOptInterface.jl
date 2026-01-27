@@ -32,18 +32,23 @@ jobs:
           - version: 'nightly'
             os: ubuntu-latest
             arch: x64
+            downgrade: false
           - version: '1'
             os: ubuntu-latest
             arch: x64
+            downgrade: false
           - version: '1'
             os: windows-latest
             arch: x64
+            downgrade: false
           - version: '1.10'
             os: ubuntu-latest
             arch: x64
+            downgrade: true
           - version: '1'
             os: ubuntu-latest
             arch: x86
+            downgrade: false
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
@@ -51,10 +56,16 @@ jobs:
           version: ${{ matrix.machine.version }}
           arch: ${{ matrix.machine.arch }}
       - uses: julia-actions/cache@v1
+      - if: ${{ matrix.machine.downgrade }}
+        uses: julia-actions/julia-downgrade-compat@v2
+        with:
+          mode: deps
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
           depwarn: error
+          allow_reresolve: ${{ !matrix.machine.downgrade }}
+          force_latest_compatible_version: ${{ !matrix.machine.downgrade }}
         env:
             MOI_TEST_MODULES: ${{ matrix.moi_test_modules }}
       - uses: julia-actions/julia-processcoverage@v1
