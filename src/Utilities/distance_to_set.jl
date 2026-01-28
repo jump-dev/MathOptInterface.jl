@@ -579,3 +579,32 @@ function distance_to_set(
     set.eval_f(y, x)
     return LinearAlgebra.norm(y .- clamp.(y, set.l, set.u))
 end
+
+# This is the minimal L2-norm.
+function distance_to_set(
+    distance::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.Indicator{MOI.ACTIVATE_ON_ONE},
+) where {T<:Real}
+    _check_dimension(x, set)
+    return min(
+        # Distance of x[1] from 0
+        abs(x[1]),
+        # Distance of x[1] from 1 + distance to set
+        sqrt((1 - x[1])^2 + distance_to_set(distance, x[2], set.set)^2),
+    )
+end
+
+function distance_to_set(
+    distance::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.Indicator{MOI.ACTIVATE_ON_ZERO},
+) where {T}
+    _check_dimension(x, set)
+    return min(
+        # Distance of x[1] from 1
+        abs(one(T) - x[1]),
+        # Distance of x[1] from 0 + distance to set
+        sqrt(x[1]^2 + distance_to_set(distance, x[2], set.set)^2),
+    )
+end
