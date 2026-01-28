@@ -175,6 +175,39 @@ function _check_dimension(v::AbstractVector, s)
     return
 end
 
+function _reshape(
+    x::AbstractVector,
+    set::Union{
+        MOI.PositiveSemidefiniteConeSquare,
+        MOI.LogDetConeSquare,
+        MOI.RootDetConeSquare,
+    },
+)
+    n = isqrt(length(x))
+    return reshape(x, (n, n))
+end
+
+function _reshape(
+    x::AbstractVector{T},
+    set::Union{
+        MOI.PositiveSemidefiniteConeTriangle,
+        MOI.LogDetConeTriangle,
+        MOI.RootDetConeTriangle,
+    },
+) where {T}
+    n = isqrt(2 * length(x))
+    # The type annotation is needed for JET.
+    X = zeros(T, n, n)::Matrix{T}
+    k = 1
+    for i in 1:n
+        for j in 1:i
+            X[j, i] = X[i, j] = x[k]
+            k += 1
+        end
+    end
+    return LinearAlgebra.Symmetric(X)
+end
+
 # This is the minimal L2-norm.
 function distance_to_set(
     ::ProjectionUpperBoundDistance,
@@ -499,28 +532,6 @@ function distance_to_set(
     return LinearAlgebra.norm(elements, 2)
 end
 
-function _reshape(x::AbstractVector, set::MOI.PositiveSemidefiniteConeSquare)
-    n = MOI.side_dimension(set)
-    return reshape(x, (n, n))
-end
-
-function _reshape(
-    x::AbstractVector{T},
-    set::MOI.PositiveSemidefiniteConeTriangle,
-) where {T}
-    n = MOI.side_dimension(set)
-    # The type annotation is needed for JET.
-    X = zeros(T, n, n)::Matrix{T}
-    k = 1
-    for i in 1:n
-        for j in 1:i
-            X[j, i] = X[i, j] = x[k]
-            k += 1
-        end
-    end
-    return LinearAlgebra.Symmetric(X)
-end
-
 """
     distance_to_set(
         ::ProjectionUpperBoundDistance,
@@ -607,4 +618,87 @@ function distance_to_set(
         # Distance of x[1] from 0 + distance to set
         sqrt(x[1]^2 + distance_to_set(distance, x[2], set.set)^2),
     )
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, set::MOI.NormNuclearCone)
+
+Let `(t, y...) = x`. Return the epigraph distance `d` such that `(t + d, y...)`
+belongs to the set.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormNuclearCone,
+) where {T}
+    _check_dimension(x, set)
+    X = reshape(x[2:end], set.row_dim, set.column_dim)
+    return max(sum(LinearAlgebra.svdvals(X)) - x[1], zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, set::MOI.NormSpectralCone)
+
+Let `(t, y...) = x`. Return the epigraph distance `d` such that `(t + d, y...)`
+belongs to the set.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.NormSpectralCone,
+) where {T}
+    _check_dimension(x, set)
+    X = reshape(x[2:end], set.row_dim, set.column_dim)
+    return max(maximum(LinearAlgebra.svdvals(X)) - x[1], zero(T))
+end
+
+"""
+    distance_to_set(
+        ::ProjectionUpperBoundDistance,
+        x::AbstractVector,
+        set::Union{MOI.RootDetConeSquare,MOI.RootDetConeTriangle},
+    )
+
+Let ``Y`` be `y` in `x = (t, y)`, reshaped into the appropriate matrix. The
+returned distance is ``||Y - Z||_2^2`` where ``Z`` is the eigen decomposition of
+``Y`` with negative eigen values removed, plus the epigraph distance in `t`
+needed to satisfy the root-determinant constraint.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::Union{MOI.RootDetConeSquare,MOI.RootDetConeTriangle},
+) where {T<:Real}
+    _check_dimension(x, set)
+    eigvals = LinearAlgebra.eigvals(_reshape(x[2:end], set))
+    eigvals_neg = min.(zero(T), eigvals)
+    eigvals_pos = max.(zero(T), eigvals)
+    rootdet = prod(eigvals_pos)^(1 / set.side_dimension)
+    push!(eigvals_neg, max(x[1] - rootdet, zero(T)))
+    return LinearAlgebra.norm(eigvals_neg, 2)
+end
+
+"""
+    distance_to_set(
+        ::ProjectionUpperBoundDistance,
+        x::AbstractVector,
+        set::Union{MOI.LogDetConeSquare,MOI.LogDetConeTriangle},
+    )
+
+Let ``Y`` be `y` in `x = (t, y)`, reshaped into the appropriate matrix. The
+returned distance is ``||Y/u - Z||_2^2`` where ``Z`` is the eigen decomposition
+of ``Y`` with negative eigen values removed, plus the epigraph distance in `t`
+needed to satisfy the log-determinant constraint.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::Union{MOI.LogDetConeSquare,MOI.LogDetConeTriangle},
+) where {T<:Real}
+    _check_dimension(x, set)
+    eigvals = LinearAlgebra.eigvals(_reshape(x[3:end] ./ x[2], set))
+    eigvals_neg = min.(eps(T), eigvals)
+    eigvals_pos = max.(eps(T), eigvals)
+    push!(eigvals_neg, max(x[1] - x[2] * sum(log.(eigvals_pos)), zero(T)))
+    return LinearAlgebra.norm(eigvals_neg, 2)
 end
