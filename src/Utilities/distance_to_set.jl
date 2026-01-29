@@ -194,7 +194,7 @@ function _reshape(
         MOI.LogDetConeTriangle,
         MOI.RootDetConeTriangle,
     },
-) where {T}
+) where {T<:Real}
     n = isqrt(2 * length(x))
     # The type annotation is needed for JET.
     X = zeros(T, n, n)::Matrix{T}
@@ -206,6 +206,24 @@ function _reshape(
         end
     end
     return LinearAlgebra.Symmetric(X)
+end
+
+function _reshape(
+    x::AbstractVector{T},
+    set::MOI.PositiveSemidefiniteConeTriangle,
+) where {T<:Complex}
+    n = isqrt(2 * length(x))
+    # The type annotation is needed for JET.
+    X = zeros(T, n, n)::Matrix{T}
+    k = 1
+    for i in 1:n
+        for j in 1:i
+            X[i, j] = conj(x[k])
+            X[j, i] = x[k]
+            k += 1
+        end
+    end
+    return LinearAlgebra.Hermitian(X)
 end
 
 # This is the minimal L2-norm.
@@ -565,13 +583,7 @@ function distance_to_set(
     # The norm should correspond to `MOI.Utilities.set_dot` so it's the
     # Frobenius norm, which is the Euclidean norm of the vector of eigenvalues.
     eigvals = LinearAlgebra.eigvals(_reshape(x, set))
-    return LinearAlgebra.norm(_drop_positives.(eigvals), 2)
-end
-
-_drop_positives(x::T) where {T<:Real} = min(zero(T), x)
-
-function _drop_positives(x::T)::T where {T<:Complex}
-    return ifelse(isreal(x), _drop_positives(real(x)), x)
+    return LinearAlgebra.norm(min.(0, eigvals), 2)
 end
 
 """
