@@ -320,7 +320,8 @@ function test_positivesemidefiniteconesquare()
         [1.0, 0.0, 0.0, 1.0] => 0.0,
         [1.0, -1.0, -1.0, 1.0] => 0.0,
         [1.0, -2.0, -2.0, 1.0] => 1.0,
-        [1.0, 1.1, 1.1, -2.3] => 2.633053201505194;
+        [1.0, 1.1, 1.1, -2.3] => 2.633053201505194,
+        [1.0, -2.0, -2.0, 1.0] => 1.0;
         mismatch = [1.0],
     )
     return
@@ -471,6 +472,44 @@ function test_LogDetConeSquare()
         [0.0, 1.0, 1.0, 2.0, 2.0, 3.0] => 34.60082322336934,
         # Projection onto PSD+t
         [1.0, 1.0, 1.0, 2.0, 2.0, 3.0] => 35.60080060283381;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_Scaled()
+    _test_set(
+        MOI.Scaled(MOI.PositiveSemidefiniteConeTriangle(2)),
+        [1.0, 0.0, 1.0] => 0.0,
+        [1.0, -1.0, 1.0] => 0.0,
+        [1.0, -2.0 * sqrt(2), 1.0] => 1.0,
+        [1.0, 1.1 * sqrt(2), -2.3] => 2.633053201505194;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_PositiveSemidefiniteConeTriangle_Complex()
+    _test_set(
+        MOI.PositiveSemidefiniteConeTriangle(2),
+        ComplexF64[1.0, 0.0, 1.0] => 0.0,
+        ComplexF64[1.0, -1.0, 1.0] => 0.0,
+        ComplexF64[1.0, -2.0, 1.0] => 1.0,
+        ComplexF64[1.0, 1.1, -2.3] => 2.633053201505194,
+        ComplexF64[1.0, 1-im, 1.0] => 0.41421356237309537;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_HermitianPositiveSemidefiniteConeTriangle()
+    _test_set(
+        MOI.HermitianPositiveSemidefiniteConeTriangle(2),
+        [1.0, 0.0, 1.0, 0.0] => 0.0,
+        [1.0, -1.0, 1.0, 0.0] => 0.0,
+        [1.0, -2.0, 1.0, 0.0] => 1.0,
+        [1.0, 1.1, -2.3, 0.0] => 2.633053201505194,
+        [1.0, 1.0, 1.0, -1.0] => 0.41421356237309537;
         mismatch = [1.0],
     )
     return
