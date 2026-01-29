@@ -235,6 +235,15 @@ function test_ScalarAffine_OneBased()
     return
 end
 
+function test_MutableSparseMatrixCSC_convert_to_Cint()
+    I = MOI.Utilities.ZeroBasedIndexing
+    A = MOI.Utilities.MutableSparseMatrixCSC{Float32,Int32,I}()
+    B = convert(SparseArrays.SparseMatrixCSC{Float32,Int32}, A)
+    @test B isa SparseArrays.SparseMatrixCSC{Float32,Int32}
+    @test isempty(B)
+    return
+end
+
 end
 
 TestSparseMatrix.runtests()

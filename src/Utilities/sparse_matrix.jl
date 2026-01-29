@@ -35,9 +35,11 @@ _first_index(::Type{T}, ::ZeroBasedIndexing) where {T} = T(0)
 _first_index(::Type{T}, ::OneBasedIndexing) where {T} = T(1)
 
 _shift(x, ::T, ::T) where {T<:AbstractIndexing} = x
-_shift(x::Integer, ::ZeroBasedIndexing, ::OneBasedIndexing) = x + 1
-_shift(x::Integer, ::OneBasedIndexing, ::ZeroBasedIndexing) = x - 1
-_shift(x::Array{<:Integer}, ::ZeroBasedIndexing, ::OneBasedIndexing) = x .+ 1
+_shift(x::Integer, ::ZeroBasedIndexing, ::OneBasedIndexing) = x + one(typeof(x))
+_shift(x::Integer, ::OneBasedIndexing, ::ZeroBasedIndexing) = x - one(typeof(x))
+function _shift(x::Array{<:Integer}, ::ZeroBasedIndexing, ::OneBasedIndexing)
+    return x .+ one(eltype(x))
+end
 
 """
     mutable struct MutableSparseMatrixCSC{Tv,Ti<:Integer,I<:AbstractIndexing}
