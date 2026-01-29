@@ -613,13 +613,13 @@ function distance_to_set(
     distance::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.Indicator{MOI.ACTIVATE_ON_ONE},
-) where {T<:Real}
+) where {T<:Number}
     _check_dimension(x, set)
     return min(
         # Distance of x[1] from 0
         abs(x[1]),
         # Distance of x[1] from 1 + distance to set
-        sqrt((1 - x[1])^2 + distance_to_set(distance, x[2], set.set)^2),
+        sqrt(abs(1 - x[1])^2 + distance_to_set(distance, x[2], set.set)^2),
     )
 end
 
@@ -627,13 +627,13 @@ function distance_to_set(
     distance::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.Indicator{MOI.ACTIVATE_ON_ZERO},
-) where {T}
+) where {T<:Number}
     _check_dimension(x, set)
     return min(
         # Distance of x[1] from 1
         abs(one(T) - x[1]),
         # Distance of x[1] from 0 + distance to set
-        sqrt(x[1]^2 + distance_to_set(distance, x[2], set.set)^2),
+        sqrt(abs(x[1])^2 + distance_to_set(distance, x[2], set.set)^2),
     )
 end
 
@@ -647,7 +647,7 @@ function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.NormNuclearCone,
-) where {T}
+) where {T<:Real}
     _check_dimension(x, set)
     X = reshape(x[2:end], set.row_dim, set.column_dim)
     return max(sum(LinearAlgebra.svdvals(X)) - x[1], zero(T))
@@ -663,7 +663,7 @@ function distance_to_set(
     ::ProjectionUpperBoundDistance,
     x::AbstractVector{T},
     set::MOI.NormSpectralCone,
-) where {T}
+) where {T<:Real}
     _check_dimension(x, set)
     X = reshape(x[2:end], set.row_dim, set.column_dim)
     return max(maximum(LinearAlgebra.svdvals(X)) - x[1], zero(T))
