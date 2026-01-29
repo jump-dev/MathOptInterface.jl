@@ -394,7 +394,83 @@ function test_indicator()
         [0.99, 1.0] => 0.01,
         [0.99, 1.1] => sqrt(0.01^2 + 0.1^2),
         [0.5, 1.1] => 0.5,
-        [0.8, 1.1] => sqrt(0.2^2 + 0.1^2),
+        [0.8, 1.1] => sqrt(0.2^2 + 0.1^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_NormNuclearCone()
+    _test_set(
+        MOI.NormNuclearCone(2, 3),
+        [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0] => 10.039818672223756,
+        [11.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0] => 0.0;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_NormSpectralCone()
+    _test_set(
+        MOI.NormSpectralCone(2, 3),
+        [0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0] => 9.525518091565111,
+        [9.6, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0] => 0.0;
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_RootDetConeTriangle()
+    _test_set(
+        MOI.RootDetConeTriangle(2),
+        [2.0, 1.0, 0.0, 1.0] => 1.0,
+        [0.9, 1.0, 0.0, 1.0] => 0.0,
+        [2.0, 1.0, 0.0, 2.0] => 2 - sqrt(2),
+        # Projection onto PSD
+        [0.0, 1.0, 2.0, 3.0] => 0.2360679774997897,
+        # Projection onto PSD+t
+        [1.0, 1.0, 2.0, 3.0] => sqrt(1 + 0.2360679774997897^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_RootDetConeSquare()
+    _test_set(
+        MOI.RootDetConeSquare(2),
+        [2.0, 1.0, 0.0, 0.0, 1.0] => 1.0,
+        [0.9, 1.0, 0.0, 0.0, 1.0] => 0.0,
+        [2.0, 1.0, 0.0, 0.0, 2.0] => 2 - sqrt(2),
+        # Projection onto PSD
+        [0.0, 1.0, 2.0, 2.0, 3.0] => 0.2360679774997897,
+        # Projection onto PSD+t
+        [1.0, 1.0, 2.0, 2.0, 3.0] => sqrt(1 + 0.2360679774997897^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_LogDetConeTriangle()
+    _test_set(
+        MOI.LogDetConeTriangle(2),
+        [2.0, 1.0, 2.0, 0.0, 1.0] => 2 - 0.6931471805599453,
+        [0.69, 1.0, 2.0, 0.0, 1.0] => 0.0,
+        [0.0, 2.0, 2.0, 0.0, 1.0] => 1.3862943611198906,
+        mismatch = [1.0],
+    )
+    return
+end
+
+function test_LogDetConeSquare()
+    _test_set(
+        MOI.LogDetConeSquare(2),
+        [2.0, 1.0, 2.0, 0.0, 0.0, 1.0] => 2 - 0.6931471805599453,
+        [0.69, 1.0, 2.0, 0.0, 0.0, 1.0] => 0.0,
+        [0.0, 2.0, 2.0, 0.0, 0.0, 1.0] => 1.3862943611198906,
+        # Projection onto PSD
+        [0.0, 1.0, 1.0, 2.0, 2.0, 3.0] => 34.60082322336934,
+        # Projection onto PSD+t
+        [1.0, 1.0, 1.0, 2.0, 2.0, 3.0] => 35.60080060283381;
         mismatch = [1.0],
     )
     return
