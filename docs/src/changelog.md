@@ -23,10 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
  - Documentation updates (#2905), (#2906)
  - Fixed various errors found by JET (#2908), (#2911)
- - Changed the error msg for [`GetAttributeNotAllowed`](@ref) when
+ - Changed the error message for [`GetAttributeNotAllowed`](@ref) when
    [`is_set_by_optimize`](@ref) (#2910)
  - Replaced JSON3.jl dependency by JSON.jl (#2918)
- - Added `julia-downgrade-compat` to test compat lower bounds (#2919)
+ - Added `julia-downgrade-compat` to test `[compat]` lower bounds (#2919)
 
 ## v1.48.0 (December 9, 2025)
 
