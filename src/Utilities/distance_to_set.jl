@@ -553,7 +553,7 @@ function distance_to_set(
         MOI.PositiveSemidefiniteConeSquare,
         MOI.PositiveSemidefiniteConeTriangle,
     },
-) where {T<:Real}
+) where {T<:Union{Real,Complex}}
     _check_dimension(x, set)
     # We should return the norm of `A` defined by:
     # ```julia
@@ -565,8 +565,13 @@ function distance_to_set(
     # The norm should correspond to `MOI.Utilities.set_dot` so it's the
     # Frobenius norm, which is the Euclidean norm of the vector of eigenvalues.
     eigvals = LinearAlgebra.eigvals(_reshape(x, set))
-    eigvals .= min.(zero(T), eigvals)
-    return LinearAlgebra.norm(eigvals, 2)
+    return LinearAlgebra.norm(_drop_positives.(eigvals), 2)
+end
+
+_drop_positives(x::T) where {T<:Real} = min(zero(T), x)
+
+function _drop_positives(x::T)::T where {T<:Complex}
+    return ifelse(isreal(x), _drop_positives(real(x)), x)
 end
 
 """
@@ -701,4 +706,45 @@ function distance_to_set(
     eigvals_pos = max.(eps(T), eigvals)
     push!(eigvals_neg, max(x[1] - x[2] * sum(log.(eigvals_pos)), zero(T)))
     return LinearAlgebra.norm(eigvals_neg, 2)
+end
+
+"""
+    distance_to_set(
+        ::ProjectionUpperBoundDistance,
+        x::AbstractVector,
+        set::MOI.Scaled{S},
+    )
+
+This is the distance in the un-scaled space.
+"""
+function distance_to_set(
+    dist::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.Scaled{S},
+) where {T,S<:MOI.AbstractVectorSet}
+    _check_dimension(x, set)
+    scale = MOI.Utilities.SetDotScalingVector{T}(set.set)
+    return distance_to_set(dist, x ./ scale, set.set)
+end
+
+function distance_to_set(
+    dist::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.HermitianPositiveSemidefiniteConeTriangle,
+) where {T<:Real}
+    _check_dimension(x, set)
+    output_set = MOI.PositiveSemidefiniteConeTriangle(set.side_dimension)
+    y = zeros(Complex{T}, MOI.dimension(output_set))
+    real_offset, imag_offset = 0, length(y)
+    for col in 1:set.side_dimension
+        for row in 1:col
+            real_offset += 1
+            y[real_offset] = x[real_offset]
+            if row != col
+                imag_offset += 1
+                y[real_offset] += x[imag_offset] * im
+            end
+        end
+    end
+    return distance_to_set(dist, y, output_set)
 end
