@@ -515,6 +515,24 @@ function test_HermitianPositiveSemidefiniteConeTriangle()
     return
 end
 
+function test_indicator_complex()
+    _test_set(
+        MOI.Indicator{MOI.ACTIVATE_ON_ZERO}(MOI.EqualTo(1.0+2.0im)),
+        [0.0, 1.0+2.0im] => 0.0,
+        [0.01, 1.0+1.0im] => 0.99,
+        [0.0, 1.0+1.0im] => 1.0,
+        [0.0, 1.0+1.5im] => 0.5,
+    )
+    _test_set(
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.EqualTo(1.0+2.0im)),
+        [1.0, 1.0+2.0im] => 0.0,
+        [0.99, 1.0+1.0im] => 0.99,
+        [1.0, 1.0+1.0im] => 1.0,
+        [1.0, 1.0+1.5im] => 0.5,
+    )
+    return
+end
+
 end
 
 TestFeasibilityChecker.runtests()
