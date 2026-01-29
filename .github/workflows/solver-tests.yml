@@ -164,6 +164,7 @@ jobs:
         run: |
            pip3 install torch --index-url https://download.pytorch.org/whl/cpu
            pip3 install numpy
+           pip3 install torch_geometric
            echo "JULIA_CONDAPKG_BACKEND=Null" >> $GITHUB_ENV
            echo "JULIA_PYTHONCALL_EXE=python3" >> $GITHUB_ENV
       # Setup Xpress.jl
