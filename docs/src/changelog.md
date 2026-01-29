@@ -7,6 +7,27 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.49.0 (January 30, 2026)
+
+### Added
+
+- Added support creating a [`Utilities.MatrixOfConstraints`](@ref) from existing
+  parts (#2902)
+- Added [`Utilities.distance_to_set`](@ref) for more sets (#2914), (#2923),
+  (#2925), (#2926), (#2927)
+- Implemented [`Utilities.extract_function`](@ref) for transpose matrix (#2915)
+- Added support for [`Complements`](@ref) in `.nl` file format (#2916)
+- Added [`Bridges.Constraint.SplitComplexIndicatorEqualToBridge`](@ref) (#2921)
+
+### Other
+
+ - Documentation updates (#2905), (#2906)
+ - Fixed various errors found by JET (#2908), (#2911)
+ - Changed the error msg for [`GetAttributeNotAllowed`](@ref) when
+   [`is_set_by_optimize`](@ref) (#2910)
+ - Replaced JSON3.jl dependency by JSON.jl (#2918)
+ - Added `julia-downgrade-compat` to test compat lower bounds (#2919)
+
 ## v1.48.0 (December 9, 2025)
 
 ### Added
