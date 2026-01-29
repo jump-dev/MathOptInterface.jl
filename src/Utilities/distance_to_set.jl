@@ -615,7 +615,6 @@ function distance_to_set(
     set::MOI.Indicator{MOI.ACTIVATE_ON_ONE},
 ) where {T<:Number}
     _check_dimension(x, set)
-
     return min(
         # Distance of x[1] from 0
         abs(x[1]),
