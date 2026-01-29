@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for [`Complements`](@ref) in `.nl` file format (#2916)
 - Added [`Bridges.Constraint.SplitComplexIndicatorEqualToBridge`](@ref) (#2921)
 
+### Fixed
+
+ - Fixed a bug converting `MutableSparseMatrixCSC` to `SparseMatrixCSC` (#2929)
+
 ### Other
 
  - Documentation updates (#2905), (#2906)
@@ -27,6 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
    [`is_set_by_optimize`](@ref) (#2910)
  - Replaced JSON3.jl dependency by JSON.jl (#2918)
  - Added `julia-downgrade-compat` to test `[compat]` lower bounds (#2919)
+ - Updated `solver-tests.yml` (#2930)
 
 ## v1.48.0 (December 9, 2025)
 
