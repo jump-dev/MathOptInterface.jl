@@ -73,8 +73,20 @@ function bridge_constraint(
     if !less_than
         LinearAlgebra.rmul!(Q, -1)
     end
-    F = try
-        LinearAlgebra.cholesky(LinearAlgebra.Symmetric(Q))
+    # Construct the VectorAffineFunction. We're aiming for:
+    #  |          1  |
+    #  | -a^T x + ub | ∈ RotatedSecondOrderCone()
+    #  |     Ux + 0  |
+    # Start with the -a^T x terms...
+    vector_terms = MOI.VectorAffineTerm{T}[
+        MOI.VectorAffineTerm(
+            2,
+            MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
+        ) for term in func.affine_terms
+    ]
+    # Compute a sparse U such that U' × U == Q.
+    I, J, V = try
+        _compute_sparse_U(Q)
     catch
         throw(
             MOI.UnsupportedConstraint{typeof(func),typeof(set)}(
@@ -88,35 +100,19 @@ function bridge_constraint(
             ),
         )
     end
-    # Construct the VectorAffineFunction. We're aiming for:
-    #  |          1  |
-    #  | -a^T x + ub | ∈ RotatedSecondOrderCone()
-    #  |     Ux + 0  |
-    # Start with the -a^T x terms...
-    vector_terms = MOI.VectorAffineTerm{T}[
-        MOI.VectorAffineTerm(
-            2,
-            MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
-        ) for term in func.affine_terms
-    ]
-    # Note that `L = U'` so we add the terms of L'x
-    L, p = SparseArrays.sparse(F.L), F.p
-    I, J, V = SparseArrays.findnz(L)
-    for i in 1:length(V)
-        # Cholesky is a pivoted decomposition, so L × L' == Q[p, p].
-        # To get the variable, we need the row of L, I[i], then to map that
-        # through the permutation vector, so `p[I[i]]`, and then through the
-        # index_to_variable_map.
-        xi = index_to_variable_map[p[I[i]]]
+    for (i, j, v) in zip(I, J, V)
         push!(
             vector_terms,
-            MOI.VectorAffineTerm(J[i] + 2, MOI.ScalarAffineTerm(V[i], xi)),
+            MOI.VectorAffineTerm(
+                i + 2,
+                MOI.ScalarAffineTerm(v, index_to_variable_map[j]),
+            ),
         )
     end
     # This is the [1, ub, 0] vector...
     set_constant = MOI.constant(set)
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
-    vector_constant = vcat(one(T), -scale * set_constant, zeros(T, size(L, 1)))
+    vector_constant = vcat(one(T), -scale * set_constant, zeros(T, size(Q, 1)))
     f = MOI.VectorAffineFunction(vector_terms, vector_constant)
     dimension = MOI.output_dimension(f)
     soc = MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(dimension))
@@ -127,6 +123,30 @@ function bridge_constraint(
         set_constant,
         index_to_variable_map,
     )
+end
+
+function _compute_sparse_U(Q::SparseArrays.SparseMatrixCSC)
+    return _compute_sparse_U(LinearAlgebra.Symmetric(Q))
+end
+
+function _compute_sparse_U(Q::LinearAlgebra.Symmetric)
+    F = LinearAlgebra.cholesky(Q; check = false)
+    if LinearAlgebra.issuccess(F)
+        L, p = SparseArrays.sparse(F.L), F.p
+        # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
+        # First, compute L'. Note I and J are reversed
+        J, I, V = SparseArrays.findnz(L)
+        # Then, we want to permute the columns of L'. The rows stay in the same
+        # order.
+        return I, p[J], V
+    end
+    # Cholesky failed. Use instead an eigen value decomposition.
+    E = LinearAlgebra.eigen(LinearAlgebra.Symmetric(Matrix(Q)))
+    if minimum(E.values) < 0
+        error("Matrix is not PSD")
+    end
+    D = LinearAlgebra.Diagonal(sqrt.(E.values)) * E.vectors
+    return SparseArrays.findnz(SparseArrays.sparse(D))
 end
 
 function _matrix_from_quadratic_terms(
