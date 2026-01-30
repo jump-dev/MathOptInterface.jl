@@ -36,30 +36,6 @@ function test_default_fallbacks()
     return
 end
 
-function test_CBF()
-    return include(joinpath(@__DIR__, "CBF", "CBF.jl"))
-end
-
-function test_LP()
-    return include(joinpath(@__DIR__, "LP", "LP.jl"))
-end
-
-function test_MOF()
-    return include(joinpath(@__DIR__, "MOF", "MOF.jl"))
-end
-
-function test_MPS()
-    return include(joinpath(@__DIR__, "MPS", "MPS.jl"))
-end
-
-function test_NL()
-    return include(joinpath(@__DIR__, "NL", "NL.jl"))
-end
-
-function test_SDPA()
-    return include(joinpath(@__DIR__, "SDPA", "SDPA.jl"))
-end
-
 function test_copying()
     models = [
         MOI.FileFormats.CBF.Model,
