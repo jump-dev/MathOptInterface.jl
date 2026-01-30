@@ -375,6 +375,12 @@ function test_compute_sparse_U_edge_cases()
         end
         @test isapprox(A, U' * U; atol = 1e-10)
     end
+    A = [-1.0 0.0; 0.0 1.0]
+    B = SparseArrays.sparse(A)
+    @test_throws(
+        ErrorException("Matrix is not PSD"),
+        MOI.Bridges.Constraint._compute_sparse_U(B),
+    )
     return
 end
 

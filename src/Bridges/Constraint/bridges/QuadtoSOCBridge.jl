@@ -140,9 +140,10 @@ function _compute_sparse_U(Q::LinearAlgebra.Symmetric)
         # order.
         return I, p[J], V
     end
-    # Cholesky failed. Use instead an eigen value decomposition.
+    # Cholesky failed. Use instead an eigen value decomposition. This is not
+    # triangular, but nothing says that it has to be.
     E = LinearAlgebra.eigen(LinearAlgebra.Symmetric(Matrix(Q)))
-    if minimum(E.values) < 0
+    if !all(isreal, E.values) || minimum(E.values) < 0
         error("Matrix is not PSD")
     end
     D = LinearAlgebra.Diagonal(sqrt.(E.values)) * E.vectors
