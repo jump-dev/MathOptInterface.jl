@@ -66,8 +66,8 @@ function compute_sparse_sqrt_root_fallback(Q, ::F, ::S) where {F,S}
     constraint because the quadratic constraint is not strongly convex and
     our Cholesky decomposition failed.
 
-    In some cases you can work-around this issue by manually installing and
-    loading `LDLFactorizations.jl`:
+    If the constraint is convex but not strongly convex, you can work-around
+    this issue by manually installing and loading `LDLFactorizations.jl`:
     ```julia
     import Pkg; Pkg.add("LDLFactorizations")
     using LDLFactorizations
