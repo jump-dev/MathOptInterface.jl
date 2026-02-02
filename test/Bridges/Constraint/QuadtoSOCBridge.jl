@@ -355,7 +355,7 @@ function test_semidefinite_cholesky_fail()
     return
 end
 
-function test_compute_sparse_U_edge_cases()
+function test_compute_sparse_sqrt_edge_cases()
     f = zero(MOI.ScalarQuadraticFunction{Float64})
     s = MOI.GreaterThan(0.0)
     for A in [
@@ -371,7 +371,7 @@ function test_compute_sparse_U_edge_cases()
         [2.0 0.0; 0.0 0.0],
     ]
         B = SparseArrays.sparse(A)
-        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt_root(B, f, s)
+        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s)
         U = zeros(size(A))
         for (i, j, v) in zip(I, J, V)
             U[i, j] += v
@@ -382,7 +382,21 @@ function test_compute_sparse_U_edge_cases()
     B = SparseArrays.sparse(A)
     @test_throws(
         MOI.UnsupportedConstraint{typeof(f),typeof(s)},
-        MOI.Bridges.Constraint.compute_sparse_sqrt_root(B, f, s),
+        MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
+    )
+    return
+end
+
+function test_compute_sparse_sqrt_fallback()
+    # Test the default fallback that is hit when LDLFactorizations isn't loaded.
+    # We could put the test somewhere else so it runs before this file is
+    # loaded, but that's pretty flakey for a long-term solution. Instead, we're
+    # going to abuse the lack of a strong type signature to hit it:
+    f = zero(MOI.ScalarAffineFunction{Float64})
+    A = SparseArrays.sparse([-1.0 0.0; 0.0 1.0])
+    @test_throws(
+        MOI.AddConstraintNotAllowed{typeof(f),MOI.GreaterThan{Float64}},
+        MOI.Bridges.Constraint.compute_sparse_sqrt(A, f, MOI.GreaterThan(0.0)),
     )
     return
 end

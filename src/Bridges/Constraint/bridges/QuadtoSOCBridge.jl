@@ -60,7 +60,7 @@ end
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
 
-function compute_sparse_sqrt_root_fallback(Q, ::F, ::S) where {F,S}
+function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
     msg = """
     Unable to transform a quadratic constraint into a SecondOrderCone
     constraint because the quadratic constraint is not strongly convex and
@@ -79,10 +79,10 @@ function compute_sparse_sqrt_root_fallback(Q, ::F, ::S) where {F,S}
     return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
 end
 
-function compute_sparse_sqrt_root(Q, func, set)
+function compute_sparse_sqrt(Q, func, set)
     factor = LinearAlgebra.cholesky(Q; check = false)
     if !LinearAlgebra.issuccess(factor)
-        return compute_sparse_sqrt_root_fallback(Q, func, set)
+        return compute_sparse_sqrt_fallback(Q, func, set)
     end
     L, p = SparseArrays.sparse(factor.L), factor.p
     # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
@@ -117,7 +117,7 @@ function bridge_constraint(
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
         ) for term in func.affine_terms
     ]
-    I, J, V = compute_sparse_sqrt_root(LinearAlgebra.Symmetric(Q), func, set)
+    I, J, V = compute_sparse_sqrt(LinearAlgebra.Symmetric(Q), func, set)
     for (i, j, v) in zip(I, J, V)
         push!(
             vector_terms,

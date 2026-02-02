@@ -14,7 +14,7 @@ import SparseArrays
 # The type signature of this function is not important, so long as it is more
 # specific than the (untyped) generic fallback with the error pointing to
 # LDLFactorizations.jl
-function MOI.Bridges.Constraint.compute_sparse_sqrt_root_fallback(
+function MOI.Bridges.Constraint.compute_sparse_sqrt_fallback(
     Q::AbstractMatrix,
     ::F,
     ::S,
