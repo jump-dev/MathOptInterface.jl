@@ -10,6 +10,7 @@ import LinearAlgebra
 import SparseArrays
 using Test
 
+import LDLFactorizations
 import MathOptInterface as MOI
 
 function runtests()
@@ -336,6 +337,67 @@ function test_constraint_primal_no_quad_terms()
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
     MOI.set(model, MOI.ConstraintPrimalStart(), c, 1.0)
     @test MOI.get(model, MOI.ConstraintPrimalStart(), c) == 1.0
+    return
+end
+
+function test_semidefinite_cholesky_fail()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    sum_y = 1.0 * y[1] + 1.0 * y[2]
+    @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
+    return
+end
+
+function test_compute_sparse_sqrt_edge_cases()
+    f = zero(MOI.ScalarQuadraticFunction{Float64})
+    s = MOI.GreaterThan(0.0)
+    for A in [
+        # Trivial Cholesky
+        [1.0 0.0; 0.0 2.0],
+        # Cholesky works, with pivoting
+        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
+        # Cholesky fails due to 0 eigen value
+        [1.0 1.0; 1.0 1.0],
+        # Cholesky succeeds, even though 0 eigen value
+        [2.0 2.0; 2.0 2.0],
+        # Cholesky fails because of 0 column/row
+        [2.0 0.0; 0.0 0.0],
+    ]
+        B = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s)
+        U = zeros(size(A))
+        for (i, j, v) in zip(I, J, V)
+            U[i, j] += v
+        end
+        @test isapprox(A, U' * U; atol = 1e-10)
+    end
+    A = [-1.0 0.0; 0.0 1.0]
+    B = SparseArrays.sparse(A)
+    @test_throws(
+        MOI.UnsupportedConstraint{typeof(f),typeof(s)},
+        MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
+    )
+    return
+end
+
+function test_compute_sparse_sqrt_fallback()
+    # Test the default fallback that is hit when LDLFactorizations isn't loaded.
+    # We could put the test somewhere else so it runs before this file is
+    # loaded, but that's pretty flakey for a long-term solution. Instead, we're
+    # going to abuse the lack of a strong type signature to hit it:
+    f = zero(MOI.ScalarAffineFunction{Float64})
+    A = SparseArrays.sparse([-1.0 0.0; 0.0 1.0])
+    @test_throws(
+        MOI.AddConstraintNotAllowed{typeof(f),MOI.GreaterThan{Float64}},
+        MOI.Bridges.Constraint.compute_sparse_sqrt(A, f, MOI.GreaterThan(0.0)),
+    )
     return
 end
 

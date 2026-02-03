@@ -18,6 +18,12 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[weakdeps]
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
+
+[extensions]
+MathOptInterfaceLDLFactorizationsExt = "LDLFactorizations"
+
 [compat]
 BenchmarkTools = "1"
 CodecBzip2 = "0.6, 0.7, 0.8"
@@ -25,6 +31,7 @@ CodecZlib = "0.6, 0.7"
 ForwardDiff = "1"
 JSON = "0.21, 1"
 JSONSchema = "1"
+LDLFactorizations = "0.10"
 LinearAlgebra = "1"
 MutableArithmetics = "1"
 NaNMath = "0.3, 1"
@@ -37,7 +44,8 @@ Test = "1"
 julia = "1.10"
 
 [extras]
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 
 [targets]
-test = ["JSONSchema"]
+test = ["LDLFactorizations", "JSONSchema"]
