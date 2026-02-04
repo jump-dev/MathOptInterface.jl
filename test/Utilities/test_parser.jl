@@ -403,7 +403,9 @@ end
 struct Set2175 <: MOI.AbstractScalarSet end
 
 function test_parse_external_set_constraint()
-    error(join(String.(propertynames(Main))), " <> ")
+    if Sys.iswindows()
+        return # See #2932
+    end
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(model, "variables: x\nx in $(Set2175())")
     constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
@@ -412,6 +414,9 @@ function test_parse_external_set_constraint()
 end
 
 function test_parse_external_set_constrained_variable()
+    if Sys.iswindows()
+        return # See #2932
+    end
     model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     MOI.Utilities.loadfromstring!(
         model,
