@@ -546,12 +546,17 @@ end
 function test_isapprox_ScalarNonlinearFunction()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
+    op(head, args...) = MOI.ScalarNonlinearFunction(head, Any[args...])
     f = Any[
-        MOI.ScalarNonlinearFunction(:+, Any[1.0]),
-        MOI.ScalarNonlinearFunction(:+, Any[0.5, 0.5]),
-        MOI.ScalarNonlinearFunction(:-, Any[1.0]),
-        MOI.ScalarNonlinearFunction(:+, Any[x]),
-        MOI.ScalarNonlinearFunction(:+, Any[y]),
+        op(:+, 1.0),
+        op(:+, 0.5, 0.5),
+        op(:-, 1.0),
+        op(:+, x),
+        op(:+, y),
+        op(:+, op(:sin, x)),
+        op(:+, op(:sin, x), op(:cos, x)),
+        op(:+, op(:sin, x), 1.0 * x),
+        op(:+, 1.0 * x, op(:sin, x)),
     ]
     for i in 1:length(f), j in 1:length(f)
         @test isapprox(f[i], f[j]) == (i == j)
