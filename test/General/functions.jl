@@ -9,6 +9,17 @@ module TestFunctions
 using Test
 import MathOptInterface as MOI
 
+function runtests()
+    for name in names(@__MODULE__; all = true)
+        if startswith("$name", "test_")
+            @testset "$(name)" begin
+                getfield(@__MODULE__, name)()
+            end
+        end
+    end
+    return
+end
+
 """
     test_isbits()
 
@@ -511,16 +522,48 @@ function test_copy_ScalarNonlinearFunction_with_arg()
     return
 end
 
-function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$name", "test_")
-            @testset "$(name)" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
+function test_isapprox_Number()
+    x = MOI.VariableIndex(1)
+    for f in Any[
+        x,
+        1.0*x+1.0,
+        0.0*x+1.1,
+        1.0*x*x+1.0,
+        0.0*x*x+1.1,
+        0.0*x*x+0.0*x+1.1,
+        MOI.ScalarNonlinearFunction(:log, Any[x]),
+    ]
+        @test !isapprox(f, 1.0)
+        @test !isapprox(1.0, f)
     end
+    for f in Any[0.0*x+1.0, 0.0*x*x+1.0, 0.0*x*x+0.0*x+1.0]
+        @test isapprox(f, 1.0)
+        @test isapprox(1.0, f)
+    end
+    return
 end
 
+function test_isapprox_ScalarNonlinearFunction()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    op(head, args...) = MOI.ScalarNonlinearFunction(head, Any[args...])
+    f = Any[
+        op(:+, 1.0),
+        op(:+, 0.5, 0.5),
+        op(:-, 1.0),
+        op(:+, x),
+        op(:+, y),
+        op(:+, op(:sin, x)),
+        op(:+, op(:sin, x), op(:cos, x)),
+        op(:+, op(:sin, x), 1.0 * x),
+        op(:+, 1.0 * x, op(:sin, x)),
+    ]
+    for i in 1:length(f), j in 1:length(f)
+        @test isapprox(f[i], f[j]) == (i == j)
+    end
+    return
 end
+
+end  # TestFunctions
 
 TestFunctions.runtests()

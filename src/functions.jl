@@ -912,6 +912,23 @@ function Base.isapprox(
     )
 end
 
+Base.isapprox(::AbstractScalarFunction, ::Number; kwargs...) = false
+
+function Base.isapprox(f::ScalarAffineFunction, g::Number; kwargs...)
+    return all(t -> iszero(t.coefficient), f.terms) &&
+           isapprox(f.constant, g; kwargs...)
+end
+
+function Base.isapprox(f::ScalarQuadraticFunction, g::Number; kwargs...)
+    return all(t -> iszero(t.coefficient), f.quadratic_terms) &&
+           all(t -> iszero(t.coefficient), f.affine_terms) &&
+           isapprox(f.constant, g; kwargs...)
+end
+
+function Base.isapprox(f::Number, g::AbstractScalarFunction; kwargs...)
+    return isapprox(g, f; kwargs...)
+end
+
 # This method is used by CBF in testing.
 function Base.isapprox(f::VectorOfVariables, g::VectorAffineFunction; kwargs...)
     return isapprox(convert(typeof(g), f), g; kwargs...)
@@ -924,17 +941,39 @@ function _is_approx(x::AbstractArray, y::AbstractArray; kwargs...)
            all(z -> _is_approx(z[1], z[2]; kwargs...), zip(x, y))
 end
 
+# This method is not very robust. For example, it doesn't return `true` if `f`
+# could be simplified to `g` (or vice versa).
+#
+# We additionally need a three-way switch to check
+#
+#  * Both arguments are ScalarNonlinearFunction: add to the stack
+#  * Neither arguments are ScalarNonlinearFunction: use _is_approx
+#  * Exactly one argument is ScalarNonlinearFunction: return false
+_num_snf(::ScalarNonlinearFunction, ::ScalarNonlinearFunction) = 2
+_num_snf(::Any, ::ScalarNonlinearFunction) = 1
+_num_snf(::ScalarNonlinearFunction, ::Any) = 1
+_num_snf(::Any, ::Any) = 0
+
 function Base.isapprox(
     f::ScalarNonlinearFunction,
     g::ScalarNonlinearFunction;
     kwargs...,
 )
-    if f.head != g.head || length(f.args) != length(g.args)
-        return false
-    end
-    for (fi, gi) in zip(f.args, g.args)
-        if !_is_approx(fi, gi; kwargs...)
+    stack = Any[(f, g)]
+    while !isempty(stack)
+        fi, gi = pop!(stack)
+        if fi.head != gi.head || length(fi.args) != length(gi.args)
             return false
+        end
+        for i in 1:length(fi.args)
+            x, y = fi.args[i], gi.args[i]
+            if _num_snf(x, y) == 2
+                push!(stack, (x, y))
+            elseif _num_snf(x, y) == 1
+                return false
+            elseif !_is_approx(x, y; kwargs...)
+                return false
+            end
         end
     end
     return true
