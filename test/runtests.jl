@@ -67,10 +67,10 @@ import ParallelTestRunner
 is_test_file(f) = startswith(f, "test_") && endswith(f, ".jl")
 
 testsuite = Dict{String,Expr}(
-    file => :(include_with_method_redefinition_check($file)) for
+    file => :(include($file)) for
     submodule in split(MODULES_TO_TEST, ";") for
     (root, dirs, files) in walkdir(submodule) for
     file in joinpath.(root, filter(is_test_file, files))
 )
 
-ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
+ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite)
