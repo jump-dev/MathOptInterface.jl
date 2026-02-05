@@ -76,7 +76,7 @@ testsuite = Dict{String,Expr}(
     ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
 else
     import Test
-    Test.@test "$filename" for (filename, _) in testsuite
+    Test.@testset "$filename" for (filename, _) in testsuite
         include(filename)
     end
 end
