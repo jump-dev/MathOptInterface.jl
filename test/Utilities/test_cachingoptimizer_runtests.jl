@@ -9,7 +9,6 @@ module TestCachingOptimizerRuntests
 using Test
 
 import MathOptInterface as MOI
-import MathOptInterface.Utilities as MOIU
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -25,9 +24,12 @@ end
 function test_MOI_Test()
     # It seems like these loops might take a while. But the first one takes
     # _forever_, and then the rest are really quick (like 140s vs 0.4s).
-    for state in
-        (MOIU.NO_OPTIMIZER, MOIU.EMPTY_OPTIMIZER, MOIU.ATTACHED_OPTIMIZER)
-        for mode in (MOIU.MANUAL, MOIU.AUTOMATIC)
+    for state in (
+        MOI.Utilities.NO_OPTIMIZER,
+        MOI.Utilities.EMPTY_OPTIMIZER,
+        MOI.Utilities.ATTACHED_OPTIMIZER,
+    )
+        for mode in (MOI.Utilities.MANUAL, MOI.Utilities.AUTOMATIC)
             _test_caching_optimizer(state, mode)
         end
     end
@@ -35,26 +37,23 @@ function test_MOI_Test()
 end
 
 function _test_caching_optimizer(state, mode)
-    model = MOIU.CachingOptimizer(MOIU.Model{Float64}(), mode)
-    if state != MOIU.NO_OPTIMIZER
-        optimizer = MOIU.MockOptimizer(
-            MOIU.Model{Float64}(),
+    model = MOI.Utilities.CachingOptimizer(MOI.Utilities.Model{Float64}(), mode)
+    if state != MOI.Utilities.NO_OPTIMIZER
+        optimizer = MOI.Utilities.MockOptimizer(
+            MOI.Utilities.Model{Float64}(),
             supports_names = false,
         )
-        MOIU.reset_optimizer(model, optimizer)
-        if state == MOIU.ATTACHED_OPTIMIZER
-            MOIU.attach_optimizer(model)
+        MOI.Utilities.reset_optimizer(model, optimizer)
+        if state == MOI.Utilities.ATTACHED_OPTIMIZER
+            MOI.Utilities.attach_optimizer(model)
         end
     end
-    @test MOIU.state(model) == state
-    @test MOIU.mode(model) == mode
+    @test MOI.Utilities.state(model) == state
+    @test MOI.Utilities.mode(model) == mode
     MOI.Test.runtests(
         model,
         MOI.Test.Config(exclude = Any[MOI.optimize!]),
-        exclude = [
-            "test_attribute_SolverName",
-            "test_attribute_SolverVersion",
-        ],
+        exclude = ["test_attribute_SolverName", "test_attribute_SolverVersion"],
     )
     return
 end
