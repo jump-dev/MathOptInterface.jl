@@ -444,7 +444,7 @@ end
 
 # This function tests that all files in `/test` do not have redefined methods.
 function test_method_redefinition()
-    for (root, dirs, files) in walkdir("test")
+    for (root, dirs, files) in walkdir(dirname(@__DIR__))
         for file in files
             _test_method_redefinition(joinpath(root, file))
         end
