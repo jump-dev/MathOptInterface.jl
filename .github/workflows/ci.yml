@@ -36,10 +36,6 @@ jobs:
             arch: x64
             downgrade: false
           - version: '1'
-            os: ubuntu-latest
-            arch: x64
-            downgrade: false
-          - version: '1'
             os: windows-latest
             arch: x64
             downgrade: false
