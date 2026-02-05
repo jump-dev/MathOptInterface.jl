@@ -61,9 +61,6 @@ const init_code = quote
     end
 end
 
-import MathOptInterface
-import ParallelTestRunner
-
 is_test_file(f) = startswith(f, "test_") && endswith(f, ".jl")
 
 testsuite = Dict{String,Expr}(
@@ -73,4 +70,13 @@ testsuite = Dict{String,Expr}(
     file in joinpath.(root, filter(is_test_file, files))
 )
 
-ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
+@static if Sys.WORD_SIZE == 64
+    import MathOptInterface
+    import ParallelTestRunner
+    ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
+else
+    import Test
+    Test.@test "$filename" for (filename, _) in testsuite
+        include(filename)
+    end
+end
