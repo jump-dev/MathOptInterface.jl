@@ -70,13 +70,14 @@ testsuite = Dict{String,Expr}(
     file in joinpath.(root, filter(is_test_file, files))
 )
 
-@static if Sys.WORD_SIZE == 64
-    import MathOptInterface
-    import ParallelTestRunner
+import MathOptInterface
+import ParallelTestRunner
+import Test
+
+if Sys.WORD_SIZE == 64
     ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
 else
-    import Test
-    Test.@testset "$filename" for (filename, _) in testsuite
+    Test.@testset "$filename" for filename in keys(testsuite)
         include(filename)
     end
 end
