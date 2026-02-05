@@ -24,8 +24,10 @@ jobs:
       matrix:
         moi_test_modules:
           - 'General;Benchmarks;FileFormats;Nonlinear'
-          - 'Bridges'
-          - 'Bridges/Constraint;Bridges/Objective;Bridges/Variable'
+          - 'Bridges/General'
+          - 'Bridges/Constraint'
+          - 'Bridges/Objective'
+          - 'Bridges/Variable'
           - 'Test'
           - 'Utilities'
         machine:

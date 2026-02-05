@@ -21,7 +21,7 @@ function runtests()
     return
 end
 
-include("utilities.jl")
+include("../utilities.jl")
 
 struct DummyModelAttribute <: MOI.AbstractModelAttribute end
 

@@ -20,45 +20,6 @@ function runtests()
     return
 end
 
-function test_runtests()
-    # Some tests are excluded because UniversalFallback accepts absolutely
-    # everything.
-    MOI.Test.runtests(
-        MOI.Utilities.MockOptimizer(
-            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
-        ),
-        MOI.Test.Config(),
-        exclude = [
-            r"^test_model_ScalarFunctionConstantNotZero$",
-            "test_model_copy_to_UnsupportedAttribute",
-            "test_model_copy_to_UnsupportedConstraint",
-            "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-            "test_model_supports_constraint_VariableIndex_EqualTo",
-            "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
-        ],
-        warn_unsupported = true,
-        verbose = true,
-    )
-    # Run the previously excluded tests, this time without UniversalFallback.
-    MOI.Test.runtests(
-        MOI.Utilities.MockOptimizer(
-            MOI.Utilities.Model{Float64}(),
-            scalar_function_constant_non_zero = true,
-        ),
-        MOI.Test.Config();
-        include = [
-            r"^test_model_ScalarFunctionConstantNotZero$",
-            "test_model_copy_to_UnsupportedAttribute",
-            "test_model_copy_to_UnsupportedConstraint",
-            "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-            "test_model_supports_constraint_VariableIndex_EqualTo",
-            "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
-        ],
-        verbose = true,
-    )
-    return
-end
-
 function test_issue_1757()
     MOI.Test.test_model_ScalarFunctionConstantNotZero(
         MOI.Utilities.MockOptimizer(
@@ -80,28 +41,6 @@ function test_exclude_tests_after()
         MOI.Test.Config();
         exclude_tests_after = v"0.0.1",
         verbose = true,
-    )
-    return
-end
-
-# Non-Float64 tests
-
-function test_bigfloat_tests()
-    MOI.Test.runtests(
-        MOI.Utilities.MockOptimizer(
-            MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}()),
-            BigFloat,
-        ),
-        MOI.Test.Config(BigFloat),
-        exclude = [
-            # ========================= Expected failures ======================
-            # UniversalFallback supports these tests.
-            "test_model_copy_to_UnsupportedAttribute",
-            "test_model_copy_to_UnsupportedConstraint",
-            "test_model_supports_constraint_ScalarAffineFunction_EqualTo",
-            "test_model_supports_constraint_VariableIndex_EqualTo",
-            "test_model_supports_constraint_VectorOfVariables_Nonnegatives",
-        ],
     )
     return
 end

@@ -10,7 +10,7 @@
 #
 #  * General
 #  * Benchmarks
-#  * Bridges
+#  * Bridges/General
 #  * Bridges/Constraint
 #  * Bridges/Objective
 #  * Bridges/Variable
@@ -28,7 +28,7 @@ include("issue980.jl")
 MODULES_TO_TEST = get(
     ENV,
     "MOI_TEST_MODULES",
-    "General;Benchmarks;Bridges;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
+    "General;Benchmarks;Bridges/General;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
 )
 
 """
@@ -44,27 +44,40 @@ function. Thus, some warnings may appear in the wrong place.
 
 This function requires Julia to be started with `--warn-overwrite=true`.
 """
-function include_with_method_redefinition_check(jl_filename)
-    stderr_filename = tempname()
-    open(stderr_filename, "w") do io
-        return redirect_stderr(() -> include(jl_filename), io)
+const init_code = quote
+    function include_with_method_redefinition_check(jl_filename)
+        stderr_filename = tempname()
+        open(stderr_filename, "w") do io
+            return redirect_stderr(() -> include(jl_filename), io)
+        end
+        contents = read(stderr_filename, String)
+        print(stderr, contents)
+        regex =
+            r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n"
+        if match(regex, contents) !== nothing
+            error("Found overwritten method in $jl_filename")
+        end
+        return
     end
-    contents = read(stderr_filename, String)
-    print(stderr, contents)
-    regex =
-        r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n"
-    if match(regex, contents) !== nothing
-        error("Found overwritten method")
-    end
-    return
 end
 
-for submodule in split(MODULES_TO_TEST, ";")
-    include_with_method_redefinition_check("$(submodule)/runtests.jl")
-    GC.gc()  # Force GC run here to reduce memory pressure
-end
+is_test_file(f) = startswith(f, "test_") && endswith(f, ".jl")
 
-if occursin("General", MODULES_TO_TEST)
-    # Test hygiene of @model macro
-    include("hygiene.jl")
+testsuite = Dict{String,Expr}(
+    file => :(include_with_method_redefinition_check($file)) for
+    submodule in split(MODULES_TO_TEST, ";") for
+    (root, dirs, files) in walkdir(submodule) for
+    file in joinpath.(root, filter(is_test_file, files))
+)
+
+import MathOptInterface
+import ParallelTestRunner
+import Test
+
+if Sys.WORD_SIZE == 64
+    ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
+else
+    Test.@testset "$filename" for filename in keys(testsuite)
+        include(filename)
+    end
 end

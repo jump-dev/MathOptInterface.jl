@@ -21,6 +21,11 @@ function runtests()
     end
 end
 
+function test_method_ambiguities()
+    @test isempty(Test.detect_ambiguities(MOI; recursive = true))
+    return
+end
+
 function test_errors_fallback_AddVariableNotAllowed()
     model = DummyModel()
     @test_throws MOI.AddVariableNotAllowed MOI.add_variable(model)
