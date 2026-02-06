@@ -31,51 +31,23 @@ MODULES_TO_TEST = get(
     "General;Benchmarks;Bridges/General;Bridges/Constraint;Bridges/Objective;Bridges/Variable;FileFormats;Nonlinear;Test;Utilities",
 )
 
-"""
-    include_with_method_redefinition_check(jl_filename)
-
-This function runs `include(jl_filename)` with an additional check that there
-are no `WARNING: Method definition foo in module Foo overwritten` warnings.
-
-It does this by piping `stderr` to a file, and then parsing the file.
-
-One consequence is that `stderr` is not printed until the _end_ of this
-function. Thus, some warnings may appear in the wrong place.
-
-This function requires Julia to be started with `--warn-overwrite=true`.
-"""
-const init_code = quote
-    function include_with_method_redefinition_check(jl_filename)
-        stderr_filename = tempname()
-        open(stderr_filename, "w") do io
-            return redirect_stderr(() -> include(jl_filename), io)
-        end
-        contents = read(stderr_filename, String)
-        print(stderr, contents)
-        regex =
-            r"WARNING: Method definition (.+?) in module (.+?) at (.+?) overwritten at (.+?)\n"
-        if match(regex, contents) !== nothing
-            error("Found overwritten method in $jl_filename")
-        end
-        return
-    end
-end
-
 is_test_file(f) = startswith(f, "test_") && endswith(f, ".jl")
 
-testsuite = Dict{String,Expr}(
-    file => :(include_with_method_redefinition_check($file)) for
-    submodule in split(MODULES_TO_TEST, ";") for
-    (root, dirs, files) in walkdir(submodule) for
-    file in joinpath.(root, filter(is_test_file, files))
-)
+testsuite = Dict{String,Expr}()
+for submodule in split(MODULES_TO_TEST, ";")
+    for (root, dirs, files) in walkdir(submodule)
+        for file in joinpath.(root, filter(is_test_file, files))
+            testsuite[file] = :(include($file))
+        end
+    end
+end
 
 import MathOptInterface
 import ParallelTestRunner
 import Test
 
 if Sys.WORD_SIZE == 64
-    ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite, init_code)
+    ParallelTestRunner.runtests(MathOptInterface, ARGS; testsuite)
 else
     Test.@testset "$filename" for filename in keys(testsuite)
         include(filename)

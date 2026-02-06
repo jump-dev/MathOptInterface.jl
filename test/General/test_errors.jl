@@ -427,6 +427,31 @@ function test_GetAttributeNotAllowed_showerror()
     return
 end
 
+function _test_method_redefinition(filename)
+    contents = read(filename, String)
+    functions = Set{String}()
+    for regex in (r"^function (test\_.+?)\(.*?\)"m, r"^(test\_.+?)\(.*?\) \= "m)
+        for m in eachmatch(regex, contents)
+            fn_name = String(m[1])
+            if fn_name in functions
+                error("In $filename: overwritten method: $fn_name")
+            end
+            push!(functions, fn_name)
+        end
+    end
+    return
+end
+
+# This function tests that all files in `/test` do not have redefined methods.
+function test_method_redefinition()
+    for (root, dirs, files) in walkdir(dirname(@__DIR__))
+        for file in files
+            _test_method_redefinition(joinpath(root, file))
+        end
+    end
+    return
+end
+
 end  # module
 
 TestErrors.runtests()
