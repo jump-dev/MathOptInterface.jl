@@ -59,6 +59,7 @@ end
 
 function test_parse_expr()
     model = NL._CacheModel()
+    NL._resize_variables(model, 4)
     io = IOBuffer()
     write(io, "o2\nv0\no2\nn2\no2\nv3\nv1\n")
     # (* x1 (* 2 (* x4 x2)))
@@ -72,6 +73,7 @@ end
 
 function test_parse_expr_nary()
     model = NL._CacheModel()
+    NL._resize_variables(model, 4)
     io = IOBuffer()
     write(io, "o54\n4\no5\nv0\nn2\no5\nv2\nn2\no5\nv3\nn2\no5\nv1\nn2\n")
     seekstart(io)
@@ -84,6 +86,7 @@ end
 
 function test_parse_expr_minimum()
     model = NL._CacheModel()
+    NL._resize_variables(model, 3)
     io = IOBuffer()
     write(io, "o11\n3\nv0\nv1\nv2\n")
     seekstart(io)
@@ -95,6 +98,7 @@ end
 
 function test_parse_expr_maximum()
     model = NL._CacheModel()
+    NL._resize_variables(model, 3)
     io = IOBuffer()
     write(io, "o12\n3\nv0\nv1\nv2\n")
     seekstart(io)
@@ -119,6 +123,7 @@ end
 
 function test_parse_expr_atan2()
     model = NL._CacheModel()
+    NL._resize_variables(model, 2)
     io = IOBuffer()
     write(io, "o48\nv0\nv1\n")
     seekstart(io)
@@ -130,6 +135,7 @@ end
 
 function test_parse_expr_atan()
     model = NL._CacheModel()
+    NL._resize_variables(model, 1)
     io = IOBuffer()
     write(io, "o49\nv0\n")
     seekstart(io)
@@ -378,19 +384,20 @@ end
 
 function test_parse_C_J()
     model = NL._CacheModel()
+    NL._resize_variables(model, 2)
     NL._resize_constraints(model, 1)
     io = IOBuffer()
     write(
         io,
         """
-C0
-o2
-v0
-v1
-J0 2
-0 1.1
-1 2.2
-""",
+        C0
+        o2
+        v0
+        v1
+        J0 2
+        0 1.1
+        1 2.2
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -403,19 +410,20 @@ end
 
 function test_parse_J_C()
     model = NL._CacheModel()
+    NL._resize_variables(model, 2)
     NL._resize_constraints(model, 1)
     io = IOBuffer()
     write(
         io,
         """
-J0 2
-0 1.1
-1 2.2
-C0
-o2
-v0
-v1
-""",
+        J0 2
+        0 1.1
+        1 2.2
+        C0
+        o2
+        v0
+        v1
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -535,18 +543,31 @@ end
 
 function test_parse_V()
     model = NL._CacheModel()
+    NL._resize_variables(model, 9)
     io = IOBuffer()
-    write(io, "V")
-    seekstart(io)
-    @test_throws(
-        ErrorException(
-            "Unable to parse NL file: defined variable definitions ('V' sections)" *
-            " are not yet supported. To request support, please open an issue at " *
-            "https://github.com/jump-dev/MathOptInterface.jl with a reproducible " *
-            "example.",
-        ),
-        NL._parse_section(io, model),
+    write(
+        io,
+        """
+        V9 0 0 #nl(t[2])
+        o5 #^
+        v0 #x[2]
+        n2
+        V10 2 0 #t[2]
+        3 10
+        4 11
+        o0 # +
+        v9 #nl(t[2])
+        n1
+        """,
     )
+    seekstart(io)
+    NL._parse_section(io, model)
+    NL._parse_section(io, model)
+    v = MOI.VariableIndex.(1:9)
+    t1 = :($(v[1]) ^ 2.0)
+    @test model.defined_variables[9] == t1
+    @test model.defined_variables[10] ==
+          :((10.0 * $(v[4]) + 11.0 * $(v[5])) + ($t1 + 1.0))
     return
 end
 

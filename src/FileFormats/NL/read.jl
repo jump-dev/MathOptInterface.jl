@@ -17,6 +17,7 @@ mutable struct _CacheModel
     objective::Expr
     sense::MOI.OptimizationSense
     complements_map::Dict{Int,Int}
+    defined_variables::Dict{Int,Expr}
 
     function _CacheModel()
         return new(
@@ -32,6 +33,7 @@ mutable struct _CacheModel
             :(),
             MOI.FEASIBILITY_SENSE,
             Dict{Int,Int}(),
+            Dict{Int,Expr}(),
         )
     end
 end
@@ -179,13 +181,20 @@ function _parse_expr(io::IO, model::_CacheModel)
     elseif char == 'v'
         index = _next(Int, io, model)
         _read_til_newline(io, model)
-        return MOI.VariableIndex(index + 1)
+        return _to_variable(model, index)
     else
         @assert char == 'n'
         ret = _next(Float64, io, model)
         _read_til_newline(io, model)
         return ret
     end
+end
+
+function _to_variable(model::_CacheModel, index::Int)
+    if index >= length(model.variable_primal)
+        return model.defined_variables[index]
+    end
+    return MOI.VariableIndex(index + 1)
 end
 
 function _to_model(data::_CacheModel; use_nlp_block::Bool)
@@ -478,13 +487,24 @@ function _parse_section(io::IO, ::Val{'S'}, model::_CacheModel)
     return
 end
 
-function _parse_section(::IO, ::Val{'V'}, ::_CacheModel)
-    return error(
-        "Unable to parse NL file: defined variable definitions ('V' sections)" *
-        " are not yet supported. To request support, please open an issue at " *
-        "https://github.com/jump-dev/MathOptInterface.jl with a reproducible " *
-        "example.",
-    )
+function _parse_section(io::IO, ::Val{'V'}, model::_CacheModel)
+    i = _next(Int, io, model)
+    j = _next(Int, io, model)
+    k = _next(Int, io, model)
+    _read_til_newline(io, model)
+    affine_terms = Expr(:call, :+)
+    for l in 1:j
+        p_l = _to_variable(model, _next(Int, io, model))
+        c_l = _next(Float64, io, model)
+        _read_til_newline(io, model)
+        push!(affine_terms.args, Expr(:call, :*, c_l, p_l))
+    end
+    expr = _parse_expr(io, model)
+    if j > 0
+        expr = Expr(:call, :+, affine_terms, expr)
+    end
+    model.defined_variables[i] = expr
+    return
 end
 
 function _parse_section(::IO, ::Val{'L'}, ::_CacheModel)
