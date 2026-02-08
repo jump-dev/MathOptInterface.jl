@@ -403,12 +403,7 @@ function _parse_header(io::IO, model::_CacheModel)
     # them
     _read_til_newline(io, model)
     # Line 10
-    # We don't support reading common subexpressions
-    for _ in 1:5
-        if _next(Int, io, model) > 0
-            error("Unable to parse NL file : we don't support common exprs")
-        end
-    end
+    # We support subexpressions, but we don't need to know the details yet.
     _read_til_newline(io, model)
     # ==========================================================================
     # Deal with the integrality of variables. This is quite complicated, so go
