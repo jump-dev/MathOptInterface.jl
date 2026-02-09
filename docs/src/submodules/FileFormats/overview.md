@@ -229,7 +229,7 @@ julia> model = MOI.FileFormats.Model(;
 
 ## Validating MOF files
 
-MathOptFormat files are governed by a schema. Use [JSONSchema.jl](https://github.com/fredo-dedup/JSONSchema.jl)
+MathOptFormat files are governed by a schema. Use [JSONSchema.jl](https://github.com/JuliaIO/JSONSchema.jl)
 to check if a `.mof.json` file satisfies the schema.
 
 First, construct the schema object as follows:
