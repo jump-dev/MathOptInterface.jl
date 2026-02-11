@@ -1773,8 +1773,10 @@ function test_parse_header()
         "QSECTION c" => MPS.HEADER_QSECTION,
         "INDICATORS" => MPS.HEADER_INDICATORS,
         "" => MPS.HEADER_UNKNOWN,
-        "Foo" => MPS.HEADER_UNKNOWN,
-        "rhs x" => MPS.HEADER_UNKNOWN,
+        "FOO" => MPS.HEADER_UNKNOWN,
+        "RHS X" => MPS.HEADER_UNKNOWN,
+        "QDMATRIX X" => MPS.HEADER_UNKNOWN,
+        "RHS X 1" => MPS.HEADER_UNKNOWN,
     ]
         items = MPS.LineToItems(line)
         @test header == MPS.parse_header(items)
