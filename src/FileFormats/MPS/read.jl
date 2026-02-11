@@ -285,7 +285,9 @@ end
 Base.length(x::LineToItems) = x.nfields
 
 function Base.getindex(x::LineToItems, i::Int)
-    @assert 1 <= i <= x.nfields
+    if !(1 <= i <= min(5, x.nfields))
+        throw(BoundsError(x, i))
+    end
     return SubString(x.line, x.fields[i])
 end
 
