@@ -1126,11 +1126,12 @@ function test_parse_name_line()
         " NAME foo" => "foo",
         "" => nothing,
     )
+        data.contents = line
         data.name = "_"
         if name === nothing
-            @test_throws MPS.ParseError MPS.parse_name_line(data, line)
+            @test_throws MPS.ParseError MPS.parse_name_line(data)
         else
-            MPS.parse_name_line(data, line)
+            MPS.parse_name_line(data)
             @test data.name == name
         end
     end
@@ -1702,12 +1703,12 @@ function test_issue_2792()
 end
 
 function test_issue_2797_tab()
-    @test MPS.line_to_items("a b") == ["a", "b"]
-    @test MPS.line_to_items(" a b") == ["a", "b"]
-    @test MPS.line_to_items("a\tb") == ["a", "b"]
-    @test MPS.line_to_items("a\tb") == ["a", "b"]
-    @test MPS.line_to_items("a\t b") == ["a", "b"]
-    @test MPS.line_to_items(" a \t b      c ") == ["a", "b", "c"]
+    @test MPS.LineToItems("a b") |> collect == ["a", "b"]
+    @test MPS.LineToItems(" a b") |> collect == ["a", "b"]
+    @test MPS.LineToItems("a\tb") |> collect == ["a", "b"]
+    @test MPS.LineToItems("a\tb") |> collect == ["a", "b"]
+    @test MPS.LineToItems("a\t b") |> collect == ["a", "b"]
+    @test MPS.LineToItems(" a \t b      c ") |> collect == ["a", "b", "c"]
     return
 end
 
@@ -1724,6 +1725,63 @@ function test_unsupported_objectives()
         MOI.VectorNonlinearFunction => false,
     ]
         @test MOI.supports(model, MOI.ObjectiveFunction{F}()) == ret
+    end
+    return
+end
+
+function test_LineToItems()
+    for line in [
+        "a",
+        " a ",
+        "a b",
+        " a b ",
+        "a b c",
+        " a b c ",
+        "a b c d",
+        " a b c d ",
+        "a b c d e",
+        " a b c d e ",
+    ]
+        @test collect(MPS.LineToItems(line)) ==
+              split(line, ' '; keepempty = false)
+    end
+    items = MPS.LineToItems("a b c d e f g")
+    @test length(items) == 7
+    @test_throws BoundsError items[0]
+    @test items[1] == "a"
+    @test_throws BoundsError items[6]
+    items = MPS.LineToItems("a b")
+    @test length(items) == 2
+    @test_throws BoundsError items[3]
+    return
+end
+
+function test_parse_header()
+    for (line, header) in [
+        "OBJSENSE" => MPS.HEADER_OBJSENSE,
+        "OBJSENSE MAX" => MPS.HEADER_OBJSENSE,
+        "ROWS" => MPS.HEADER_ROWS,
+        "COLUMNS" => MPS.HEADER_COLUMNS,
+        "RHS" => MPS.HEADER_RHS,
+        "RANGES" => MPS.HEADER_RANGES,
+        "BOUNDS" => MPS.HEADER_BOUNDS,
+        "SOS" => MPS.HEADER_SOS,
+        "ENDATA" => MPS.HEADER_ENDATA,
+        "QUADOBJ" => MPS.HEADER_QUADOBJ,
+        "QMATRIX" => MPS.HEADER_QMATRIX,
+        "QCMATRIX c" => MPS.HEADER_QCMATRIX,
+        "QSECTION c" => MPS.HEADER_QSECTION,
+        "INDICATORS" => MPS.HEADER_INDICATORS,
+        "" => MPS.HEADER_UNKNOWN,
+        "FOO" => MPS.HEADER_UNKNOWN,
+        "RHS X" => MPS.HEADER_UNKNOWN,
+        "QDMATRIX X" => MPS.HEADER_UNKNOWN,
+        "RHS X 1" => MPS.HEADER_UNKNOWN,
+    ]
+        items = MPS.LineToItems(line)
+        @test header == MPS.parse_header(items)
+        items = MPS.LineToItems(lowercase(line))
+        @test header == MPS.parse_header(items)
     end
     return
 end
