@@ -156,9 +156,7 @@ end
     HEADER_INDICATORS,
 )
 
-# `Headers` gets called _alot_ (on every line), so we try very hard to be
-# efficient.
-function Headers(s)
+function parse_single_header(s::AbstractString)
     N = length(s)
     x = first(s)
     if N == 3
@@ -180,7 +178,7 @@ function Headers(s)
             return HEADER_ENDATA
         end
     elseif N == 7
-        if (x == 'C' || x == 'c') && (uppercase(s) == "COLUMNS")
+        if (x == 'C' || x == 'c') && uppercase(s) == "COLUMNS"
             return HEADER_COLUMNS
         elseif (x == 'Q' || x == 'q')
             header = uppercase(s)
@@ -190,34 +188,125 @@ function Headers(s)
                 return HEADER_QMATRIX
             end
         end
-    elseif N >= 8
-        if (x == 'O' || x == 'o') && startswith(uppercase(s), "OBJSENSE")
+    elseif N == 8
+        if (x == 'O' || x == 'o') && uppercase(s) == "OBJSENSE"
             return HEADER_OBJSENSE
-        elseif (x == 'Q' || x == 'q')
-            header = uppercase(s)
-            if startswith(header, "QCMATRIX")
-                return HEADER_QCMATRIX
-            elseif startswith(header, "QSECTION")
-                return HEADER_QSECTION
-            end
-        elseif N == 10
-            if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
-                return HEADER_INDICATORS
-            end
+        end
+    elseif N == 10
+        if (x == 'I' || x == 'i') && uppercase(s) == "INDICATORS"
+            return HEADER_INDICATORS
         end
     end
     return HEADER_UNKNOWN
 end
 
-function line_to_items(line)
-    # Split on any whitespace characters. We can't split only on `' '` because
-    # at least one models in MIPLIB has `\t` as a separator.
-    #
-    # This decision assumes that we are parsing a free MPS file, where
-    # whitespace is disallowed in names. If this ever becomes a problem, we
-    # could change to the fixed MPS format, where the files are split at the
-    # usual offsets.
-    return split(line, r"\s"; keepempty = false)
+function parse_double_header(s::AbstractString)
+    N = length(s)
+    x = first(s)
+    if N != 8
+        return HEADER_UNKNOWN
+    elseif (x == 'O' || x == 'o') && uppercase(s) == "OBJSENSE"
+        return HEADER_OBJSENSE
+    elseif (x == 'Q' || x == 'q')
+        header = uppercase(s)
+        if startswith(header, "QCMATRIX")
+            return HEADER_QCMATRIX
+        elseif startswith(header, "QSECTION")
+            return HEADER_QSECTION
+        end
+    end
+    return HEADER_UNKNOWN
+end
+
+"""
+    LineToItems(line::String)
+
+Split on any whitespace characters. We can't split only on `' '` because at
+least one models in MIPLIB has `\t` as a separator.
+
+This decision assumes that we are parsing a free MPS file, where whitespace is
+disallowed in names. If this ever becomes a problem, we could change to the
+fixed MPS format, where the files are split at the usual offsets.
+
+This function is a more performant version of:
+```julia
+LineToItems(line::String) = split(line, r"\\s"; keepempty = false)
+```
+"""
+struct LineToItems
+    line::String
+    nfields::Int
+    fields::NTuple{5,UnitRange{Int}}
+
+    function LineToItems(line::String)
+        nfields, f1, f2, f3, f4, f5 = 0, 0:0, 0:0, 0:0, 0:0, 0:0
+        start, in_field = -1, false
+        n = ncodeunits(line)
+        for i in 1:n
+            if isspace(line[i])
+                if in_field
+                    nfields += 1
+                    if nfields == 1
+                        f1 = start:(i-1)
+                    elseif nfields == 2
+                        f2 = start:(i-1)
+                    elseif nfields == 3
+                        f3 = start:(i-1)
+                    elseif nfields == 4
+                        f4 = start:(i-1)
+                    elseif nfields == 5
+                        f5 = start:(i-1)
+                    end
+                    in_field = false
+                end
+            elseif !in_field
+                start = i
+                in_field = true
+            end
+        end
+        if in_field
+            nfields += 1
+            if nfields == 1
+                f1 = start:n
+            elseif nfields == 2
+                f2 = start:n
+            elseif nfields == 3
+                f3 = start:n
+            elseif nfields == 4
+                f4 = start:n
+            elseif nfields == 5
+                f5 = start:n
+            end
+        end
+        return new(line, nfields, (f1, f2, f3, f4, f5))
+    end
+end
+
+Base.length(x::LineToItems) = x.nfields
+
+function Base.getindex(x::LineToItems, i::Int)
+    @assert 1 <= i <= x.nfields
+    return SubString(x.line, x.fields[i])
+end
+
+Base.iterate(x::LineToItems) = iterate(x, 1)
+
+function Base.iterate(x::LineToItems, i)
+    if i > x.nfields
+        return nothing
+    end
+    return x[i], i + 1
+end
+
+# `parse_header` gets called _alot_ (on every line), so we try very hard to be
+# efficient.
+function parse_header(s::LineToItems)
+    if length(s) == 1
+        return parse_single_header(s[1])
+    elseif length(s) == 2
+        return parse_double_header(s[1])
+    end
+    return HEADER_UNKNOWN
 end
 
 """
@@ -237,13 +326,12 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         if startswith(data.contents, '*')
             continue  # Lines starting with `*` are comments
         end
-        line = string(strip(data.contents))
-        if isempty(line)
+        items = LineToItems(data.contents)
+        if length(items) == 0
             continue  # Skip blank lines
         end
-        h = Headers(line)
+        h = parse_header(items)
         if h == HEADER_OBJSENSE
-            items = line_to_items(line)
             if length(items) == 2
                 sense = uppercase(items[2])
                 if !(sense in ("MIN", "MAX"))
@@ -258,7 +346,6 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             end
             continue
         elseif h == HEADER_QCMATRIX || h == HEADER_QSECTION
-            items = line_to_items(line)
             if length(items) != 2
                 _throw_parse_error(
                     data,
@@ -274,10 +361,8 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             continue
         end
         # Otherwise, carry on with the previous header
-        # TODO: split into hard fields based on column indices.
-        items = line_to_items(line)
         if header == HEADER_NAME
-            parse_name_line(data, line)
+            parse_name_line(data)
         elseif header == HEADER_OBJSENSE
             sense = uppercase(only(items))
             if !(sense in ("MIN", "MAX"))
@@ -490,8 +575,8 @@ end
 #   NAME
 # ==============================================================================
 
-function parse_name_line(data::TempMPSModel, line)
-    m = match(r"^\s*NAME(.*)"i, line)
+function parse_name_line(data::TempMPSModel)
+    m = match(r"^\s*NAME(.*)"i, data.contents)
     if m === nothing
         _throw_parse_error(
             data,
@@ -506,7 +591,7 @@ end
 #   ROWS
 # ==============================================================================
 
-function parse_rows_line(data::TempMPSModel{T}, items::Vector) where {T}
+function parse_rows_line(data::TempMPSModel{T}, items) where {T}
     if length(items) < 2
         _throw_parse_error(
             data,
@@ -619,7 +704,7 @@ function _set_intorg(data::TempMPSModel{T}, column, column_name) where {T}
     return
 end
 
-function parse_columns_line(data::TempMPSModel{T}, items::Vector) where {T}
+function parse_columns_line(data::TempMPSModel{T}, items) where {T}
     if length(items) == 3
         # [column name] [row name] [value]
         column_name, row_name, value = items
@@ -657,7 +742,7 @@ end
 #   RHS
 # ==============================================================================
 
-function parse_single_rhs(data, row_name, value, items::Vector)
+function parse_single_rhs(data, row_name, value, items)
     if row_name == data.obj_name
         data.obj_constant = value
         return
@@ -688,7 +773,7 @@ function parse_single_rhs(data, row_name, value, items::Vector)
 end
 
 # TODO: handle multiple RHS vectors.
-function parse_rhs_line(data::TempMPSModel{T}, items::Vector) where {T}
+function parse_rhs_line(data::TempMPSModel{T}, items) where {T}
     if length(items) == 3
         # [rhs name] [row name] [value]
         rhs_name, row_name, value = items
@@ -744,7 +829,7 @@ function parse_single_range(data, row_name, value)
 end
 
 # TODO: handle multiple RANGES vectors.
-function parse_ranges_line(data::TempMPSModel{T}, items::Vector) where {T}
+function parse_ranges_line(data::TempMPSModel{T}, items) where {T}
     if length(items) == 3
         # [rhs name] [row name] [value]
         _, row_name, value = items
@@ -859,7 +944,7 @@ function _parse_single_bound(
     end
 end
 
-function parse_bounds_line(data::TempMPSModel{T}, items::Vector) where {T}
+function parse_bounds_line(data::TempMPSModel{T}, items) where {T}
     if length(items) == 3
         bound_type, _, column_name = items
         _parse_single_bound(data, column_name, bound_type)

@@ -1126,11 +1126,12 @@ function test_parse_name_line()
         " NAME foo" => "foo",
         "" => nothing,
     )
+        data.contents = line
         data.name = "_"
         if name === nothing
-            @test_throws MPS.ParseError MPS.parse_name_line(data, line)
+            @test_throws MPS.ParseError MPS.parse_name_line(data)
         else
-            MPS.parse_name_line(data, line)
+            MPS.parse_name_line(data)
             @test data.name == name
         end
     end
@@ -1702,12 +1703,12 @@ function test_issue_2792()
 end
 
 function test_issue_2797_tab()
-    @test MPS.line_to_items("a b") == ["a", "b"]
-    @test MPS.line_to_items(" a b") == ["a", "b"]
-    @test MPS.line_to_items("a\tb") == ["a", "b"]
-    @test MPS.line_to_items("a\tb") == ["a", "b"]
-    @test MPS.line_to_items("a\t b") == ["a", "b"]
-    @test MPS.line_to_items(" a \t b      c ") == ["a", "b", "c"]
+    @test MPS.LineToItems("a b") |> collect == ["a", "b"]
+    @test MPS.LineToItems(" a b") |> collect == ["a", "b"]
+    @test MPS.LineToItems("a\tb") |> collect == ["a", "b"]
+    @test MPS.LineToItems("a\tb") |> collect == ["a", "b"]
+    @test MPS.LineToItems("a\t b") |> collect == ["a", "b"]
+    @test MPS.LineToItems(" a \t b      c ") |> collect == ["a", "b", "c"]
     return
 end
 
