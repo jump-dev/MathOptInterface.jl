@@ -1786,6 +1786,50 @@ function test_parse_header()
     return
 end
 
+function test_issue_2941()
+    src = """
+    NAME
+    ROWS
+     E  c2
+     E  c3
+     E  c4a
+     E  c4b
+     E  c5a
+     E  c5b
+    COLUMNS
+        x         c2      1.0
+        x         c3      1.0
+        x         c4a     1.0
+        x         c4b     1.0
+        x         c5a     1.0
+        x         c5b     1.0
+    RHS
+         c2       1.1
+     rhs c3       1.2
+         c4a      1.3      c4b           1.4
+     rhs c5a      1.5      c5b           1.6
+    BOUNDS
+     LO bounds    x         1
+    ENDATA
+    """
+    model = MPS.Model()
+    read!(IOBuffer(src), model)
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(dest, model)
+    for (c_name, rhs) in [
+        "c2" => 1.1,
+        "c3" => 1.2,
+        "c4a" => 1.3,
+        "c4b" => 1.4,
+        "c5a" => 1.5,
+        "c5b" => 1.6,
+    ]
+        ci = MOI.get(dest, MOI.ConstraintIndex, c_name)
+        @test MOI.get(dest, MOI.ConstraintSet(), ci).value == rhs
+    end
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()

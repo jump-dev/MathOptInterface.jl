@@ -776,19 +776,24 @@ end
 
 # TODO: handle multiple RHS vectors.
 function parse_rhs_line(data::TempMPSModel{T}, items) where {T}
-    if length(items) == 3
+    if length(items) == 2
+        # [row name] [value]
+        parse_single_rhs(data, items[1], parse(T, items[2]), items)
+    elseif length(items) == 3
         # [rhs name] [row name] [value]
-        rhs_name, row_name, value = items
-        parse_single_rhs(data, row_name, parse(T, value), items)
+        parse_single_rhs(data, items[2], parse(T, items[3]), items)
+    elseif length(items) == 4
+        # [row name 1] [value 1] [row name 2] [value 2]
+        parse_single_rhs(data, items[1], parse(T, items[2]), items)
+        parse_single_rhs(data, items[3], parse(T, items[4]), items)
     elseif length(items) == 5
         # [rhs name] [row name 1] [value 1] [row name 2] [value 2]
-        rhs_name, row_name_1, value_1, row_name_2, value_2 = items
-        parse_single_rhs(data, row_name_1, parse(T, value_1), items)
-        parse_single_rhs(data, row_name_2, parse(T, value_2), items)
+        parse_single_rhs(data, items[2], parse(T, items[3]), items)
+        parse_single_rhs(data, items[4], parse(T, items[5]), items)
     else
         _throw_parse_error(
             data,
-            "Malformed RHS line: expected three or five fields.",
+            "Malformed RHS line: expected 2, 3, 4, or 5 fields.",
         )
     end
     return
