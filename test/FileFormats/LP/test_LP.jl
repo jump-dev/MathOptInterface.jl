@@ -1794,10 +1794,8 @@ function test_ambiguous_case_3()
 end
 
 function test_generic_names()
-    for (C, R, generic_names) in [
-        (["C1", "C2"], ["R1"], true),
-        (["x", "y"], ["c"], false),
-    ]
+    for (C, R, generic_names) in
+        [(["C1", "C2"], ["R1"], true), (["x", "y"], ["c"], false)]
         model = LP.Model(; generic_names)
         MOI.Utilities.loadfromstring!(
             model,
