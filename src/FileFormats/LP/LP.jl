@@ -100,7 +100,14 @@ function Model(;
     maximum_length::Int = 255,
     warn::Bool = false,
     coefficient_type::Type{T} = Float64,
+    kwargs...,
 ) where {T}
+    if !isempty(kwargs)
+        error(
+            "The LP file format does not support the keyword arguments: ",
+            kwargs...,
+        )
+    end
     model = Model{T}()
     options = Options(maximum_length, warn)
     model.ext[:LP_OPTIONS] = options

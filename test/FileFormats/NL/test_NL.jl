@@ -1532,6 +1532,16 @@ function test_write_complements_VectorNonlinearFunction()
     return
 end
 
+function test_unsupported_kwarg()
+    @test_throws(
+        ErrorException(
+            "The NL file format does not support the keyword arguments: :foo => 1",
+        ),
+        NL.Model(; foo = 1),
+    )
+    return
+end
+
 end
 
 TestNLModel.runtests()

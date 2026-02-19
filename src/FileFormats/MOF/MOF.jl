@@ -159,7 +159,14 @@ function Model(;
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
     use_nlp_block::Union{Bool,Nothing} = nothing,
     coefficient_type::Type{T} = Float64,
+    kwargs...,
 ) where {T}
+    if !isempty(kwargs)
+        error(
+            "The MOF file format does not support the keyword arguments: ",
+            kwargs...,
+        )
+    end
     model = MOI.Utilities.UniversalFallback(InnerModel{T}())
     model.model.ext[:MOF_OPTIONS] =
         Options(print_compact, warn, differentiation_backend, use_nlp_block)

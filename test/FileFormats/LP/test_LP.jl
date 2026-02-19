@@ -1812,6 +1812,16 @@ function test_get_line_about_pos()
     return
 end
 
+function test_unsupported_kwarg()
+    @test_throws(
+        ErrorException(
+            "The LP file format does not support the keyword arguments: :foo => 1",
+        ),
+        LP.Model(; foo = 1),
+    )
+    return
+end
+
 end  # module
 
 TestLP.runtests()

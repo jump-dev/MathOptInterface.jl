@@ -1830,6 +1830,16 @@ function test_issue_2941()
     return
 end
 
+function test_unsupported_kwarg()
+    @test_throws(
+        ErrorException(
+            "The MPS file format does not support the keyword arguments: :foo => 1",
+        ),
+        MPS.Model(; foo = 1),
+    )
+    return
+end
+
 end  # TestMPS
 
 TestMPS.runtests()
