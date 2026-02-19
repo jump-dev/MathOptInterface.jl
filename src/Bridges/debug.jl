@@ -542,7 +542,9 @@ Print the set of bridges that are active in the model `b`.
 """
 function print_active_bridges(io::IO, b::MOI.Bridges.LazyBridgeOptimizer)
     F = MOI.get(b, MOI.ObjectiveFunctionType())
-    print_active_bridges(io, b, F)
+    if F !== nothing
+        print_active_bridges(io, b, F)
+    end
     types = MOI.get(b, MOI.ListOfConstraintTypesPresent())
     # We add a sort here to make the order reproducible, and to group similar
     # constraints together.
@@ -639,6 +641,11 @@ function print_active_bridges(
     offset::String = "",
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     if !MOI.supports_constraint(b, F, S)
+        if F == MOI.VariableIndex || F == MOI.VectorOfVariables
+            # Okay. If you don't support the constraint, maybe you support
+            # adding as a constrained variable.
+            return print_active_bridges(io, b, S, offset)
+        end
         throw(
             MOI.UnsupportedConstraint{F,S}(
                 "The constraint cannot be bridged using the set of available " *
@@ -651,35 +658,31 @@ function print_active_bridges(
         _print_supported(io, "Supported constraint: $F-in-$S\n")
         return
     end
-    is_constraint_bridged = true
     c_node = b.constraint_node[(F, S)]
     if F == MOI.VariableIndex || F == MOI.VectorOfVariables
-        # Call `MOI.supports_` here to build the necessary nodes in the bridging
-        # graph.
-        if F == MOI.VariableIndex
-            MOI.supports_add_constrained_variable(b, S)
+        if is_bridged(b, S)
+            # The constraint can be both variable bridged and constraint
+            # bridged. Which is cheaper?
+            v_node = b.variable_node[(S,)]
+            if bridging_cost(b.graph, v_node) <= bridging_cost(b.graph, c_node)
+                return print_active_bridges(io, b, S, offset)
+            end
         else
-            MOI.supports_add_constrained_variables(b, S)
-        end
-        v_node = b.variable_node[(S,)]
-        if bridging_cost(b.graph, v_node) <= bridging_cost(b.graph, c_node)
-            is_constraint_bridged = false
+            # The constraint is bridged via add_constraint, and not via
+            # add_constrained_variable(s).
+            return print_active_bridges(io, b, S, offset)
         end
     end
-    if is_constraint_bridged
-        index = MOI.Bridges.bridge_index(b.graph, c_node)
-        B = b.constraint_bridge_types[index]
-        BT = MOI.Bridges.Constraint.concrete_bridge_type(B, F, S)
-        print(io, offset, " * ")
-        _print_unsupported(io, "Unsupported constraint: $F-in-$S\n")
-        println(io, offset, " |  bridged by:")
-        print(io, offset, " |   ")
-        MOI.Utilities.print_with_acronym(io, "$BT\n")
-        println(io, offset, " |  may introduce:")
-        _print_bridge(io, b, BT, offset)
-    else
-        print_active_bridges(io, b, S, offset)
-    end
+    index = MOI.Bridges.bridge_index(b.graph, c_node)
+    B = b.constraint_bridge_types[index]
+    BT = MOI.Bridges.Constraint.concrete_bridge_type(B, F, S)
+    print(io, offset, " * ")
+    _print_unsupported(io, "Unsupported constraint: $F-in-$S\n")
+    println(io, offset, " |  bridged by:")
+    print(io, offset, " |   ")
+    MOI.Utilities.print_with_acronym(io, "$BT\n")
+    println(io, offset, " |  may introduce:")
+    _print_bridge(io, b, BT, offset)
     return
 end
 
