@@ -322,6 +322,116 @@ function test_print_graph_stdout()
     return
 end
 
+struct ModelPOIIssue201{T} <: MOI.ModelLike
+    supports_equal_to::Bool
+    supports_parameter::Bool
+    parameter::Vector{T}
+    equal_to::Vector{T}
+    function ModelPOIIssue201{T}(;
+        supports_equal_to::Bool = true,
+        supports_parameter::Bool = true,
+    ) where {T}
+        return new{T}(supports_equal_to, supports_parameter, T[], T[])
+    end
+end
+
+function MOI.supports_add_constrained_variable(
+    model::ModelPOIIssue201{T},
+    ::Type{MOI.Parameter{T}},
+) where {T}
+    return model.supports_parameter
+end
+
+function MOI.supports_add_constrained_variable(
+    model::ModelPOIIssue201{T},
+    ::Type{MOI.EqualTo{T}},
+) where {T}
+    return model.supports_equal_to
+end
+
+function MOI.supports_constraint(
+    model::ModelPOIIssue201{T},
+    ::Type{MOI.ScalarAffineFunction{T}},
+    ::Type{MOI.EqualTo{T}},
+) where {T}
+    return model.supports_equal_to
+end
+
+MOI.get(::ModelPOIIssue201, ::MOI.ObjectiveFunctionType) = nothing
+
+function MOI.get(
+    model::ModelPOIIssue201{T},
+    ::MOI.ListOfConstraintTypesPresent,
+) where {T}
+    ret = Tuple{Type,Type}[]
+    if !isempty(model.parameter)
+        push!(ret, (MOI.VariableIndex, MOI.Parameter{T}))
+    end
+    if !isempty(model.equal_to)
+        push!(ret, (MOI.VariableIndex, MOI.EqualTo{T}))
+    end
+    return ret
+end
+
+function MOI.get(
+    model::ModelPOIIssue201{T},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Parameter{T}},
+) where {T}
+    return length(model.parameter)
+end
+
+function MOI.get(
+    model::ModelPOIIssue201{T},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{T}},
+) where {T}
+    return length(model.equal_to)
+end
+
+function MOI.add_constrained_variable(
+    model::ModelPOIIssue201{T},
+    set::MOI.Parameter{T},
+) where {T}
+    push!(model.parameter, set.value)
+    x = MOI.VariableIndex(length(model.parameter))
+    return x, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x.value)
+end
+
+function MOI.add_constrained_variable(
+    model::ModelPOIIssue201{T},
+    set::MOI.EqualTo{T},
+) where {T}
+    push!(model.equal_to, set.value)
+    x = MOI.VariableIndex(length(model.equal_to))
+    return x, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x.value)
+end
+
+function test_parametricoptinterface_issue_201_case_1()
+    model = ModelPOIIssue201{Float64}(; supports_equal_to = false)
+    model = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+    @test sprint(MOI.Bridges.print_active_bridges, model) ==
+          " * Supported variable: MOI.Parameter{Float64}\n"
+    return
+end
+
+function test_parametricoptinterface_issue_201_case_2()
+    model = ModelPOIIssue201{Float64}(; supports_equal_to = true)
+    model = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+    @test sprint(MOI.Bridges.print_active_bridges, model) ==
+          " * Supported variable: MOI.Parameter{Float64}\n"
+    return
+end
+
+function test_parametricoptinterface_issue_201_case_3()
+    model = ModelPOIIssue201{Float64}(; supports_parameter = false)
+    model = MOI.Bridges.full_bridge_optimizer(model, Float64)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+    @test sprint(MOI.Bridges.print_active_bridges, model) ==
+          " * Unsupported variable: MOI.Parameter{Float64}\n |  bridged by:\n |    MOIB.Variable.ParameterToEqualToBridge{Float64}\n |  may introduce:\n |   * Supported variable: MOI.EqualTo{Float64}\n"
+    return
+end
+
 end
 
 TestBridgesDebug.runtests()
