@@ -419,6 +419,16 @@ function test_unsupported_objectives()
     return
 end
 
+function test_unsupported_kwarg()
+    @test_throws(
+        ErrorException(
+            "The SDPA file format does not support the keyword arguments: :foo => 1",
+        ),
+        SDPA.Model(; foo = 1),
+    )
+    return
+end
+
 end  # module
 
 TestSDPA.runtests()

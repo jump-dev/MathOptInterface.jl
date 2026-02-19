@@ -726,6 +726,16 @@ function test_unsupported_variable_types()
     return
 end
 
+function test_unsupported_kwarg()
+    @test_throws(
+        ErrorException(
+            "The CBF file format does not support the keyword arguments: :foo => 1",
+        ),
+        CBF.Model(; foo = 1),
+    )
+    return
+end
+
 end  # module
 
 TestCBF.runtests()

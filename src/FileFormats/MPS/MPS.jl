@@ -154,7 +154,14 @@ function Model(;
     generic_names::Bool = false,
     quadratic_format::QuadraticFormat = kQuadraticFormatGurobi,
     coefficient_type::Type{T} = Float64,
+    kwargs...,
 ) where {T}
+    if !isempty(kwargs)
+        error(
+            "The MPS file format does not support the keyword arguments: ",
+            kwargs...,
+        )
+    end
     model = Model{T}()
     model.ext[:MPS_OPTIONS] =
         Options(warn, print_objsense, generic_names, quadratic_format)

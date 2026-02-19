@@ -63,7 +63,15 @@ end
 
 Create an empty instance of `FileFormats.CBF.Model`.
 """
-Model(; kwargs...) = Model{Float64}()
+function Model(; kwargs...)
+    if !isempty(kwargs)
+        error(
+            "The CBF file format does not support the keyword arguments: ",
+            kwargs...,
+        )
+    end
+    return Model{Float64}()
+end
 
 Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.CBF.Model")
 
