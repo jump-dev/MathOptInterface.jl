@@ -11,8 +11,7 @@ using Test
 import JSON
 import JSONSchema
 import MathOptInterface as MOI
-
-const MOF = MOI.FileFormats.MOF
+import MathOptInterface.FileFormats: MOF
 
 const TEST_MOF_FILE = "test.mof.json"
 
@@ -1597,7 +1596,7 @@ function test_use_nlp_block()
     return
 end
 
-function test_AAA_int()
+function test_coefficient_type_int()
     _test_model_equality(
         """
         variables: x, y
@@ -1610,6 +1609,36 @@ function test_AAA_int()
         ["c1", "c2", "c3"];
         coefficient_type = Int,
     )
+    return
+end
+
+function test_generic_names()
+    for (C, R, generic_names) in [
+        (["C1", "C2"], ["R1"], true),
+        (["x", "y"], ["c"], false),
+    ]
+        model = MOF.Model(; generic_names)
+        MOI.Utilities.loadfromstring!(
+            model,
+            """
+            variables: x, y
+            minobjective: x
+            c: x + y == 1.0
+            y >= 2.0
+            """,
+        )
+        data = JSON.parse(sprint(write, model))
+        for (i, xi) in enumerate(data["variables"])
+            @test xi["name"] == C[i]
+        end
+        i = 0
+        for ci in data["constraints"]
+            if ci["function"]["type"] != "Variable"
+                i += 1
+                @test ci["name"] == R[i]
+            end
+        end
+    end
     return
 end
 

@@ -113,13 +113,20 @@ struct Options
     warn::Bool
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation
     use_nlp_block::Union{Bool,Nothing}
+    generic_names::Bool
 end
 
 function get_options(m::Model)
     return get(
         m.model.ext,
         :MOF_OPTIONS,
-        Options(false, false, MOI.Nonlinear.SparseReverseMode(), nothing),
+        Options(
+            false,
+            false,
+            MOI.Nonlinear.SparseReverseMode(),
+            nothing,
+            false,
+        ),
     )
 end
 
@@ -131,6 +138,7 @@ end
             MOI.Nonlinear.SparseReverseMode(),
         use_nlp_block::Union{Bool,Nothing} = nothing,
         coefficient_type::Type{T} = Float64,
+        generic_names::Bool = false,
     ) where {T}
 
 Create an empty instance of FileFormats.MOF.Model.
@@ -152,6 +160,10 @@ Keyword arguments are:
 
  - `coefficient_type::Type{T} = Float64`: the supported type to use when reading
    and writing files.
+
+ - `generic_names::Bool=false`: strip all names in the model and replace them
+   with the generic names `C\$i` and `R\$i` for the i'th column and row
+   respectively.
 """
 function Model(;
     print_compact::Bool = false,
@@ -159,10 +171,16 @@ function Model(;
     differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
     use_nlp_block::Union{Bool,Nothing} = nothing,
     coefficient_type::Type{T} = Float64,
+    generic_names::Bool = false,
 ) where {T}
     model = MOI.Utilities.UniversalFallback(InnerModel{T}())
-    model.model.ext[:MOF_OPTIONS] =
-        Options(print_compact, warn, differentiation_backend, use_nlp_block)
+    model.model.ext[:MOF_OPTIONS] = Options(
+        print_compact,
+        warn,
+        differentiation_backend,
+        use_nlp_block,
+        generic_names,
+    )
     return model
 end
 

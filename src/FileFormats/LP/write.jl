@@ -342,15 +342,19 @@ Write `model` to `io` in the LP file format.
 """
 function Base.write(io::IO, model::Model{T}) where {T}
     options = get_options(model)
-    FileFormats.create_unique_names(
-        model,
-        warn = options.warn,
-        replacements = [
-            s -> match(_START_REG, s) !== nothing ? "_" * s : s,
-            s -> replace(s, _NAME_REG => "_"),
-            s -> s[1:min(length(s), options.maximum_length)],
-        ],
-    )
+    if options.generic_names
+        FileFormats.create_generic_names(model)
+    else
+        FileFormats.create_unique_names(
+            model,
+            warn = options.warn,
+            replacements = [
+                s -> match(_START_REG, s) !== nothing ? "_" * s : s,
+                s -> replace(s, _NAME_REG => "_"),
+                s -> s[1:min(length(s), options.maximum_length)],
+            ],
+        )
+    end
     variable_names = Dict{MOI.VariableIndex,String}(
         index => MOI.get(model, MOI.VariableName(), index) for
         index in MOI.get(model, MOI.ListOfVariableIndices())
