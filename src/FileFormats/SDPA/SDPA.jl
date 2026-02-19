@@ -123,7 +123,14 @@ by creating a slack variable by the
 function Model(;
     number_type::Type{T} = Float64,
     coefficient_type::Type{S} = number_type,
+    kwargs...,
 ) where {T,S}
+    if !isempty(kwargs)
+        error(
+            "The SDPA file format does not support the keyword arguments: ",
+            kwargs...,
+        )
+    end
     model = Model{S}()
     model.ext[:SDPA_OPTIONS] = Options()
     return model

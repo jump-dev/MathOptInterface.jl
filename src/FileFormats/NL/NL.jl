@@ -148,7 +148,13 @@ mutable struct Model <: MOI.ModelLike
     use_nlp_block::Bool
     complementarity_constraints::Vector{Vector{Int}}
 
-    function Model(; use_nlp_block::Bool = true)
+    function Model(; use_nlp_block::Bool = true, kwargs...)
+        if !isempty(kwargs)
+            error(
+                "The NL file format does not support the keyword arguments: ",
+                kwargs...,
+            )
+        end
         return new(
             "",
             _NLExpr(false, _NLTerm[], Dict{MOI.VariableIndex,Float64}(), 0.0),
