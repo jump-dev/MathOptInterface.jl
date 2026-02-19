@@ -1613,7 +1613,7 @@ function test_coefficient_type_int()
 end
 
 function test_generic_names()
-    for (C, R, generic_names) in [
+    for (C, R, generic_names) in
         [(["C1", "C2"], ["R1"], true), (["x", "y"], ["c"], false)]
         model = MOF.Model(; generic_names)
         MOI.Utilities.loadfromstring!(
