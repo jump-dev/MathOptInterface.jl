@@ -70,10 +70,11 @@ end
 struct Options
     maximum_length::Int
     warn::Bool
+    generic_names::Bool
 end
 
 function get_options(m::Model)
-    default_options = Options(255, false)
+    default_options = Options(255, false, false)
     return get(m.ext, :LP_OPTIONS, default_options)
 end
 
@@ -82,6 +83,7 @@ end
         maximum_length::Int = 255,
         warn::Bool = false,
         coefficient_type::Type{T} = Float64,
+        generic_names::Bool = false,
     ) where {T}
 
 Create an empty instance of FileFormats.LP.Model.
@@ -95,11 +97,16 @@ Keyword arguments are:
 
  - `coefficient_type::Type{T} = Float64`: the supported type to use when reading
    and writing files.
+
+ - `generic_names::Bool=false`: strip all names in the model and replace them
+   with the generic names `C\$i` and `R\$i` for the i'th column and row
+   respectively.
 """
 function Model(;
     maximum_length::Int = 255,
     warn::Bool = false,
     coefficient_type::Type{T} = Float64,
+    generic_names::Bool = false,
     kwargs...,
 ) where {T}
     if !isempty(kwargs)
@@ -109,7 +116,7 @@ function Model(;
         )
     end
     model = Model{T}()
-    options = Options(maximum_length, warn)
+    options = Options(maximum_length, warn, generic_names)
     model.ext[:LP_OPTIONS] = options
     return model
 end

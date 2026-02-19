@@ -11,7 +11,11 @@ Write `model` to `io` in the MathOptFormat file format.
 """
 function Base.write(io::IO, model::Model)
     options = get_options(model)
-    FileFormats.create_unique_names(model, warn = options.warn)
+    if options.generic_names
+        FileFormats.create_generic_names(model)
+    else
+        FileFormats.create_unique_names(model; warn = options.warn)
+    end
     variables, constraints = NamedTuple[], NamedTuple[]
     name_map = _write_variables(variables, model)
     objective = _write_nlpblock(constraints, model, name_map)

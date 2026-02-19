@@ -1793,6 +1793,33 @@ function test_ambiguous_case_3()
     return
 end
 
+function test_generic_names()
+    for (C, R, generic_names) in
+        [(["C1", "C2"], ["R1"], true), (["x", "y"], ["c"], false)]
+        model = LP.Model(; generic_names)
+        MOI.Utilities.loadfromstring!(
+            model,
+            """
+            variables: x, y
+            minobjective: x
+            c: x + y == 1.0
+            y >= 2.0
+            """,
+        )
+        @test sprint(write, model) == """
+        minimize
+        obj: $(C[1])
+        subject to
+        $(R[1]): 1 $(C[1]) + 1 $(C[2]) = 1
+        Bounds
+        $(C[1]) free
+        $(C[2]) >= 2
+        End
+        """
+    end
+    return
+end
+
 function test_get_line_about_pos()
     for (input, output) in [
         "x" => ("x", 1),
