@@ -199,6 +199,42 @@ function test_dimension_mismatch_RSOC()
     return
 end
 
+function test_map_function_SOC()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SOCR{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    ci = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.SecondOrderCone(3),
+    )
+    y = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(:+, Any[x[i]]) for i in 1:3
+    ])
+    g = MOI.Bridges.map_function(model.map[ci], y)
+    @test MOI.Utilities.eval_variables(xi -> abs(xi.value), model, g) ==
+          [3 / sqrt(2), -1 / sqrt(2), 3]
+    return
+end
+
+function test_map_function_RSOC()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.RSOC{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    ci = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.RotatedSecondOrderCone(3),
+    )
+    y = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(:+, Any[x[i]]) for i in 1:3
+    ])
+    g = MOI.Bridges.map_function(model.map[ci], y)
+    @test MOI.Utilities.eval_variables(xi -> abs(xi.value), model, g) ==
+          [3 / sqrt(2), -1 / sqrt(2), 3]
+    return
+end
+
 end  # module
 
 TestConstraintRSOC.runtests()
