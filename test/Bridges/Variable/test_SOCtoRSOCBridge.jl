@@ -184,6 +184,19 @@ function test_ConstraintDualStart()
     return
 end
 
+function test_map_function()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.SOCtoRSOC{Float64}(inner)
+    x, _ = MOI.add_constrained_variables(model, MOI.SecondOrderCone(3))
+    y = MOI.VectorNonlinearFunction([
+        MOI.ScalarNonlinearFunction(:+, Any[x[i]]) for i in 1:3
+    ])
+    g = MOI.Bridges.map_function(model.map[first(x)], y)
+    @test MOI.Utilities.eval_variables(xi -> abs(xi.value), model, g) ==
+          [3 / sqrt(2), -1 / sqrt(2), 3]
+    return
+end
+
 end  # module
 
 TestVariableSOCtoRSOC.runtests()
