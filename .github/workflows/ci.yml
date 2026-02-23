@@ -53,7 +53,7 @@ jobs:
         with:
           version: ${{ matrix.machine.version }}
           arch: ${{ matrix.machine.arch }}
-      - uses: julia-actions/cache@v1
+      - uses: julia-actions/cache@v2
       - if: ${{ matrix.machine.downgrade }}
         uses: julia-actions/julia-downgrade-compat@v2
         with:
