@@ -378,12 +378,18 @@ function test_compute_sparse_sqrt_edge_cases()
         end
         @test isapprox(A, U' * U; atol = 1e-10)
     end
-    A = [-1.0 0.0; 0.0 1.0]
-    B = SparseArrays.sparse(A)
-    @test_throws(
-        MOI.UnsupportedConstraint{typeof(f),typeof(s)},
-        MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
-    )
+    # Test failures
+    for A in [
+        [-1.0 0.0; 0.0 1.0],
+        # Found from test_quadratic_nonconvex_constraint_basic
+        [0.0 -1.0; -1.0 0.0],
+    ]
+        B = SparseArrays.sparse(A)
+        @test_throws(
+            MOI.UnsupportedConstraint{typeof(f),typeof(s)},
+            MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
+        )
+    end
     return
 end
 
