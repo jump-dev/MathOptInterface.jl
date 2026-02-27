@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added an explicit test for method redefinitions instead of parsing logs
   (#2936)
 - Made minor formatting changes to the docs (#2939)
-- Installed Dependabot (#2949), (#2950), (#2951), (#2952), (#2953), (#2954)
+- Installed `Dependabot` (#2949), (#2950), (#2951), (#2952), (#2953), (#2954)
 
 ## v1.49.0 (January 30, 2026)
 
