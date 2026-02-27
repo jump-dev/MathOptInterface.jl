@@ -7,6 +7,36 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.50.0 (February 27, 2026)
+
+### Added
+
+- Added `LDLFactorizations.jl` as a package extension (#2933)
+- Added support for reading defined variables in `.nl` files (#2938)
+- Added `;generic_names` support to LP and MOF file formats (#2947)
+
+### Fixed
+
+- Fix `isapprox` for [ScalarNonlinearFunction`](@ref) and comparison to Number
+  (#2934)
+- Fixed performance issue parsing each line of an MPS file (#2940)
+- Fixed MPS reader to allow the RHS name to be optional when reading (#2942)
+- Fixed [`Bridges.print_active_bridges`](@ref) for some constrained variable
+  cases (#2943)
+- Fixed error messages for unsupported keyword arguments in file format models
+  (#2946)
+- Fixed missing `Utilities.operate` in various `Bridges.Constraint.map_function`
+  (#2948)
+
+### Other
+
+- Added ParallelTestRunner.jl to parallelize the tests (#2932)
+- Removed Julia `1-ubuntu-latest-x64` from CI (#2935)
+- Added an explicit test for method redefinitions instead of parsing logs
+  (#2936)
+- Made minor formatting changes to the docs (#2939)
+- Installed `Dependabot` (#2949), (#2950), (#2951), (#2952), (#2953), (#2954)
+
 ## v1.49.0 (January 30, 2026)
 
 ### Added
