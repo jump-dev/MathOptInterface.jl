@@ -96,14 +96,28 @@ function MOI.delete(
     return
 end
 
+struct UnsafeConstraintFunction end
+
+function MOI.get(model::MOI.ModelLike, ::UnsafeConstraintFunction, ci::MOI.ConstraintIndex)
+    return MOI.get(model, MOI.ConstraintFunction, ci)
+end
+
+function MOI.get(
+    v::VectorOfConstraints{F,S},
+    ::UnsafeConstraintFunction,
+    ci::MOI.ConstraintIndex{F,S},
+) where {F,S}
+    MOI.throw_if_not_valid(v, ci)
+    f, _ = v.constraints[ci]::Tuple{F,S}
+    return f
+end
+
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::MOI.ConstraintFunction,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    MOI.throw_if_not_valid(v, ci)
-    f, _ = v.constraints[ci]::Tuple{F,S}
-    return copy(f)
+    return copy(MOI.get(v, MOI.UnsafeConstraintFunction, ci))
 end
 
 function MOI.get(
