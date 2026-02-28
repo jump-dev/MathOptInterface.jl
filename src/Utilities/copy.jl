@@ -44,13 +44,13 @@ function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map,
-    ::MOI.ConstraintFunction{F},
-) where {F}
+    ::MOI.ConstraintFunction,
+)
     return _pass_attribute(
         dest,
         src,
         index_map,
-        UnsafeConstraintFunction{F}(),
+        UnsafeConstraintFunction(),
     )
 end
 
