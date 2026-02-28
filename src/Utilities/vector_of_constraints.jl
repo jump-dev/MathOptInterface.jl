@@ -99,7 +99,7 @@ end
 struct UnsafeConstraintFunction end
 
 function MOI.get(model::MOI.ModelLike, ::UnsafeConstraintFunction, ci::MOI.ConstraintIndex)
-    return MOI.get(model, MOI.ConstraintFunction, ci)
+    return MOI.get(model, MOI.ConstraintFunction(), ci)
 end
 
 function MOI.get(
@@ -117,7 +117,7 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
-    return copy(MOI.get(v, MOI.UnsafeConstraintFunction, ci))
+    return copy(MOI.get(v, UnsafeConstraintFunction(), ci))
 end
 
 function MOI.get(
