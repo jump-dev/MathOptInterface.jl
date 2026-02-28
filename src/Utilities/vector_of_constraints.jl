@@ -98,7 +98,11 @@ end
 
 struct UnsafeConstraintFunction end
 
-function MOI.get(model::MOI.ModelLike, ::UnsafeConstraintFunction, ci::MOI.ConstraintIndex)
+function MOI.get(
+    model::MOI.ModelLike,
+    ::UnsafeConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
     return MOI.get(model, MOI.ConstraintFunction(), ci)
 end
 

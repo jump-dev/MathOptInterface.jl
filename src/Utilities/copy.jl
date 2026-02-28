@@ -46,12 +46,7 @@ function _pass_attribute(
     index_map,
     ::MOI.ConstraintFunction,
 )
-    return _pass_attribute(
-        dest,
-        src,
-        index_map,
-        UnsafeConstraintFunction(),
-    )
+    return _pass_attribute(dest, src, index_map, UnsafeConstraintFunction())
 end
 
 function _pass_attribute(
