@@ -96,7 +96,7 @@ function MOI.delete(
     return
 end
 
-struct UnsafeConstraintFunction end
+struct UnsafeConstraintFunction <: MOI.AbstractConstraintAttribute end
 
 function MOI.get_fallback(
     model::MOI.ModelLike,

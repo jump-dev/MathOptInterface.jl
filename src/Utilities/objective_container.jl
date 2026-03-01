@@ -116,7 +116,7 @@ function MOI.supports(
     return true
 end
 
-struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} end
+struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} <: MOI.AbstractModelAttribute end
 
 function MOI.get(model::MOI.ModelLike, ::UnsafeObjectiveFunction{F}) where {F}
     return MOI.get(model, MOI.ObjectiveFunction{F}())
