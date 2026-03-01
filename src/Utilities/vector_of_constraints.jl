@@ -98,7 +98,7 @@ end
 
 struct UnsafeConstraintFunction end
 
-function MOI.get(
+function MOI.get_fallback(
     model::MOI.ModelLike,
     ::UnsafeConstraintFunction,
     ci::MOI.ConstraintIndex,
