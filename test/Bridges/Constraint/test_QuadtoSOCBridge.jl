@@ -363,11 +363,11 @@ function test_compute_sparse_sqrt_edge_cases()
         [1.0 0.0; 0.0 2.0],
         # Cholesky works, with pivoting
         [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
-        # Cholesky fails due to 0 eigen value
+        # Cholesky fails due to 0 eigen value. LDL works
         [1.0 1.0; 1.0 1.0],
         # Cholesky succeeds, even though 0 eigen value
         [2.0 2.0; 2.0 2.0],
-        # Cholesky fails because of 0 column/row
+        # Cholesky fails because of 0 column/row. LDL works
         [2.0 0.0; 0.0 0.0],
     ]
         B = SparseArrays.sparse(A)

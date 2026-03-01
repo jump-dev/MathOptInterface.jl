@@ -21,7 +21,11 @@ function MOI.Bridges.Constraint.compute_sparse_sqrt_fallback(
 ) where {F<:MOI.ScalarQuadraticFunction,S<:MOI.AbstractSet}
     n = LinearAlgebra.checksquare(Q)
     factor = LDLFactorizations.ldl(Q)
-    if !LDLFactorizations.factorized(factor) || minimum(factor.D) < 0
+    # Ideally we should use `LDLFactorizations.factorized(factor)` here, but it
+    # has some false negatives. Instead we check that the factorization appeared
+    # to work. This is a heuristic. There might be other cases where check is
+    # insufficient.
+    if minimum(factor.D) < 0 || any(issubnormal, factor.D)
         msg = """
         Unable to transform a quadratic constraint into a SecondOrderCone
         constraint because the quadratic constraint is not convex.
