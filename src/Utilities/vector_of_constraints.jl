@@ -96,16 +96,6 @@ function MOI.delete(
     return
 end
 
-struct UnsafeConstraintFunction <: MOI.AbstractConstraintAttribute end
-
-function MOI.get_fallback(
-    model::MOI.ModelLike,
-    ::UnsafeConstraintFunction,
-    ci::MOI.ConstraintIndex,
-)
-    return MOI.get(model, MOI.ConstraintFunction(), ci)
-end
-
 function MOI.get(
     v::VectorOfConstraints{F,S},
     ::UnsafeConstraintFunction,

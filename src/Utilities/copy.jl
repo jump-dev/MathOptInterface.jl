@@ -40,6 +40,23 @@ function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, index_map)
     return
 end
 
+struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} <:
+       MOI.AbstractModelAttribute end
+
+function MOI.get(model::MOI.ModelLike, ::UnsafeObjectiveFunction{F}) where {F}
+    return MOI.get(model, MOI.ObjectiveFunction{F}())
+end
+
+struct UnsafeConstraintFunction <: MOI.AbstractConstraintAttribute end
+
+function MOI.get_fallback(
+    model::MOI.ModelLike,
+    ::UnsafeConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
+    return MOI.get(model, MOI.ConstraintFunction(), ci)
+end
+
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
