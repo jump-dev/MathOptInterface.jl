@@ -80,7 +80,12 @@ function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
 end
 
 function compute_sparse_sqrt(Q, func, set)
-    factor = LinearAlgebra.cholesky(Q; check = false)
+    factor = try
+        LinearAlgebra.cholesky(Q; check = false)
+    catch
+        msg = "There was an error computing a Cholesky decomposition"
+        throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
+    end
     if !LinearAlgebra.issuccess(factor)
         return compute_sparse_sqrt_fallback(Q, func, set)
     end

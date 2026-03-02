@@ -356,9 +356,7 @@ function test_semidefinite_cholesky_fail()
 end
 
 function test_compute_sparse_sqrt_edge_cases()
-    f = zero(MOI.ScalarQuadraticFunction{Float64})
-    s = MOI.GreaterThan(0.0)
-    for A in [
+    for A in Any[
         # Trivial Cholesky
         [1.0 0.0; 0.0 2.0],
         # Cholesky works, with pivoting
@@ -371,20 +369,29 @@ function test_compute_sparse_sqrt_edge_cases()
         [2.0 0.0; 0.0 0.0],
     ]
         B = SparseArrays.sparse(A)
+        f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
+        s = MOI.GreaterThan(zero(eltype(A)))
         I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s)
-        U = zeros(size(A))
+        U = zeros(eltype(A), size(A))
         for (i, j, v) in zip(I, J, V)
             U[i, j] += v
         end
         @test isapprox(A, U' * U; atol = 1e-10)
     end
     # Test failures
-    for A in [
+    for A in Any[
         [-1.0 0.0; 0.0 1.0],
         # Found from test_quadratic_nonconvex_constraint_basic
         [0.0 -1.0; -1.0 0.0],
+        # Different element type. We could potentially make this work in future,
+        # but it first requires https://github.com/JuliaSmoothOptimizers/LDLFactorizations.jl/pull/142
+        BigFloat[-1.0 0.0; 0.0 1.0],
+        BigFloat[1.0 0.0; 0.0 2.0],
+        BigFloat[1.0 1.0; 1.0 1.0],
     ]
         B = SparseArrays.sparse(A)
+        f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
+        s = MOI.GreaterThan(zero(eltype(A)))
         @test_throws(
             MOI.UnsupportedConstraint{typeof(f),typeof(s)},
             MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
