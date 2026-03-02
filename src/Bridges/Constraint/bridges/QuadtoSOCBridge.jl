@@ -80,22 +80,22 @@ function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
 end
 
 function compute_sparse_sqrt(Q, func, set)
-    factor = try
-        LinearAlgebra.cholesky(Q; check = false)
+    try
+        factor = LinearAlgebra.cholesky(Q; check = false)
+        if !LinearAlgebra.issuccess(factor)
+            return compute_sparse_sqrt_fallback(Q, func, set)
+        end
+        L, p = SparseArrays.sparse(factor.L), factor.p
+        # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
+        # First, compute L'. Note I and J are reversed
+        J, I, V = SparseArrays.findnz(L)
+        # Then, we want to permute the columns of L'. The rows stay in the same
+        # order.
+        return I, p[J], V
     catch
-        msg = "There was an error computing a Cholesky decomposition"
+        msg = "There was an error computing a matrix square root"
         throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
     end
-    if !LinearAlgebra.issuccess(factor)
-        return compute_sparse_sqrt_fallback(Q, func, set)
-    end
-    L, p = SparseArrays.sparse(factor.L), factor.p
-    # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
-    # First, compute L'. Note I and J are reversed
-    J, I, V = SparseArrays.findnz(L)
-    # Then, we want to permute the columns of L'. The rows stay in the same
-    # order.
-    return I, p[J], V
 end
 
 function bridge_constraint(
