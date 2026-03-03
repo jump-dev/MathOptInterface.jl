@@ -75,6 +75,12 @@ function bridge_constraint(
     f::MOI.VariableIndex,
     s::S,
 ) where {T<:Real,S<:Union{MOI.Semicontinuous{T},MOI.Semiinteger{T}}}
+    if !isfinite(s.lower) || !isfinite(s.upper)
+        # We could be cleverer than this, but this is a simple check that should
+        # be sufficient for most cases. We can revisit if anyone complains.
+        msg = "Cannot add constraint $f-in-$s because the set has an open interval. To fix, make sure the lower and upper bounds are both finite."
+        throw(MOI.AddConstraintNotAllowed{MOI.VariableIndex,S}(msg))
+    end
     binary, binary_con = MOI.add_constrained_variable(model, MOI.ZeroOne())
     # var - LB * bin >= 0
     lb = MOI.Utilities.operate(*, T, -s.lower, binary)
@@ -147,10 +153,16 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    ::MOI.ConstraintSet,
+    attr::MOI.ConstraintSet,
     bridge::SemiToBinaryBridge{T,S},
     set::S,
 ) where {T,S}
+    if !isfinite(set.lower) || !isfinite(set.upper)
+        # We could be cleverer than this, but this is a simple check that should
+        # be sufficient for most cases. We can revisit if anyone complains.
+        msg = "Cannot modify the set $set because the set has an open interval. To fix, make sure the lower and upper bounds are both finite."
+        throw(MOI.SetAttributeNotAllowed(attr, msg))
+    end
     bridge.semi_set = set
     MOI.modify(
         model,
