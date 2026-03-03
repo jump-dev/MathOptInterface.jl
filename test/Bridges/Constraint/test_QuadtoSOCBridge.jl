@@ -389,7 +389,6 @@ function test_compute_sparse_sqrt_edge_cases()
         BigFloat[1.0 0.0; 0.0 2.0],
         BigFloat[1.0 1.0; 1.0 1.0],
     ]
-        @show A
         B = SparseArrays.sparse(A)
         f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
         s = MOI.GreaterThan(zero(eltype(A)))
