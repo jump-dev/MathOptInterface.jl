@@ -92,7 +92,10 @@ function compute_sparse_sqrt(Q, func, set)
         # Then, we want to permute the columns of L'. The rows stay in the same
         # order.
         return I, p[J], V
-    catch
+    catch err
+        if err isa MOI.AddConstraintNotAllowed
+            rethrow(err)
+        end
         msg = "There was an error computing a matrix square root"
         throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
     end
