@@ -80,7 +80,7 @@ function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
 end
 
 function compute_sparse_sqrt(Q, func, set)
-    # There's a big try-catch here because `cholesky` can fail even if
+    # There's a big try-catch here because Cholesky can fail even if
     # `check = false`. As one example, it currently (v1.12) fails with
     # `BigFloat`. Similarly, we want to guard against errors in
     # `compute_sparse_sqrt_fallback`.
