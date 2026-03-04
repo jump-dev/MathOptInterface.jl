@@ -7,11 +7,12 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.50.0 (February 27, 2026)
+## v1.50.0 (March 4, 2026)
 
 ### Added
 
-- Added `LDLFactorizations.jl` as a package extension (#2933)
+- Added `LDLFactorizations.jl` as a package extension (#2933), (#2956), (#2959),
+  (#2961)
 - Added support for reading defined variables in `.nl` files (#2938)
 - Added `;generic_names` support to LP and MOF file formats (#2947)
 
@@ -27,15 +28,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (#2946)
 - Fixed missing `Utilities.operate` in various `Bridges.Constraint.map_function`
   (#2948)
+- Fixed a bug with open intervals in `Bridges.Constraint.SemiToBinaryBridge`
+  (#2963)
 
 ### Other
 
-- Added ParallelTestRunner.jl to parallelize the tests (#2932)
+- Added ParallelTestRunner.jl to parallelize the tests (#2932), (#2960)
 - Removed Julia `1-ubuntu-latest-x64` from CI (#2935)
 - Added an explicit test for method redefinitions instead of parsing logs
   (#2936)
 - Made minor formatting changes to the docs (#2939)
-- Installed `Dependabot` (#2949), (#2950), (#2951), (#2952), (#2953), (#2954)
+- Installed `Dependabot` (#2949), (#2950), (#2951), (#2952), (#2953), (#2954),
+  (#2958)
 
 ## v1.49.0 (January 30, 2026)
 
