@@ -386,7 +386,6 @@ function test_compute_sparse_sqrt_edge_cases()
         # Different element type. We could potentially make this work in future,
         # but it first requires https://github.com/JuliaSmoothOptimizers/LDLFactorizations.jl/pull/142
         BigFloat[-1.0 0.0; 0.0 1.0],
-        BigFloat[1.0 0.0; 0.0 2.0],
         BigFloat[1.0 1.0; 1.0 1.0],
     ]
         B = SparseArrays.sparse(A)
