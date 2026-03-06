@@ -3,6 +3,11 @@ uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 version = "1.50.1"
 
 [deps]
+<<<<<<< HEAD
+=======
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CliqueTrees = "60701a23-6482-424a-84db-faee86b9b1f8"
+>>>>>>> 26563e3e (Pivoted sparse Cholesky for QuadtoSOCBridge.)
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -23,10 +28,12 @@ LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 
 [extensions]
 MathOptInterfaceBenchmarkToolsExt = "BenchmarkTools"
+MathOptInterfaceCliqueTreesExt = "CliqueTrees"
 MathOptInterfaceLDLFactorizationsExt = "LDLFactorizations"
 
 [compat]
 BenchmarkTools = "1"
+CliqueTrees = "1.17"
 CodecBzip2 = "0.6, 0.7, 0.8"
 CodecZlib = "0.6, 0.7"
 ForwardDiff = "1"
@@ -47,9 +54,11 @@ julia = "1.10"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+CliqueTrees = "60701a23-6482-424a-84db-faee86b9b1f8"
 LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 
 [targets]
-test = ["BenchmarkTools", "LDLFactorizations", "JSONSchema", "ParallelTestRunner"]
+test = ["BenchmarkTools", "CliqueTrees", "LDLFactorizations", "JSONSchema", "ParallelTestRunner"]
