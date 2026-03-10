@@ -475,6 +475,258 @@ function test_scalar_penalty_relaxation_vector_objective()
     return
 end
 
+function test_relax_vector_epigraph_cones()
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in SecondOrderCone(3)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x + 1.0 * a, y, z] in SecondOrderCone(3)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in RotatedSecondOrderCone(3)
+        """,
+        """
+        variables: x, y, z, a, b
+        minobjective: 1.0 * a + 1.0 * b
+        c1: [1.0 * x + 1.0 * a, y + 1.0 * b, z] in RotatedSecondOrderCone(3)
+        [a, b] in Nonnegatives(2)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in NormOneCone(3)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x + 1.0 * a, y, z] in NormOneCone(3)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in NormInfinityCone(3)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x + 1.0 * a, y, z] in NormInfinityCone(3)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in NormCone(1.5, 3)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x + 1.0 * a, y, z] in NormCone(1.5, 3)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in NormSpectralCone(1, 2)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x + 1.0 * a, y, z] in NormSpectralCone(1, 2)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in NormNuclearCone(1, 2)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x + 1.0 * a, y, z] in NormNuclearCone(1, 2)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x * x, 1.0 * y, 1.0 * z] in NormCone(1.5, 3)
+        """,
+        """
+        variables: x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * x * x + 1.0 * a, 1.0 * y, 1.0 * z] in NormCone(1.5, 3)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    return
+end
+
+function test_relax_vector_hypograph_cones()
+    _test_roundtrip(
+        """
+        variables: t, x, y, z
+        c1: [1.0 * t, x, y, z] in RootDetConeTriangle(2)
+        """,
+        """
+        variables: t, x, y, z, a
+        minobjective: 1.0 * a
+        c1: [1.0 * t + -1.0 * a, x, y, z] in RootDetConeTriangle(2)
+        [a] in Nonnegatives(1)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: t, u, x, y, z
+        c1: [1.0 * t, u, x, y, z] in LogDetConeTriangle(2)
+        """,
+        """
+        variables: t, u, x, y, z, a, b
+        minobjective: 1.0 * a + 1.0 * b
+        c1: [1.0 * t + -1.0 * a, u + 1.0 * b, x, y, z] in LogDetConeTriangle(2)
+        [a, b] in Nonnegatives(2)
+        """,
+    )
+    return
+end
+
+function test_relax_nonnegatives()
+    _test_roundtrip(
+        """
+        variables: x, y
+        c1: [1.0 * x, y] in Nonnegatives(2)
+        """,
+        """
+        variables: x, y, a, b
+        minobjective: 1.0 * a + 1.0 * b
+        c1: [1.0 * x + 1.0 * a, y + 1.0 * b] in Nonnegatives(2)
+        [a, b] in Nonnegatives(2)
+        """,
+    )
+    return
+end
+
+function test_relax_nonpositives()
+    _test_roundtrip(
+        """
+        variables: x, y
+        c1: [1.0 * x, y] in Nonpositives(2)
+        """,
+        """
+        variables: x, y, a, b
+        minobjective: 1.0 * a + 1.0 * b
+        c1: [1.0 * x + -1.0 * a, y + -1.0 * b] in Nonpositives(2)
+        [a, b] in Nonnegatives(2)
+        """,
+    )
+    return
+end
+
+function test_relax_geometric_mean_cone()
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in GeometricMeanCone(3)
+        """,
+        """
+        variables: x, y, z, a, b, c
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c
+        c1: [1.0 * x + -1.0 * a, y + 1.0 * b, z + 1.0 * c] in GeometricMeanCone(3)
+        [a, b, c] in Nonnegatives(3)
+        """,
+    )
+    return
+end
+
+function test_relax_both_sides()
+    _test_roundtrip(
+        """
+        variables: x, y
+        c1: [1.0 * x, y] in Zeros(2)
+        """,
+        """
+        variables: x, y, a, b, c, d
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c + 1.0 * d
+        c1: [1.0 * x + 1.0 * a + -1.0 * b, y + 1.0 * c + -1.0 * d] in Zeros(2)
+        [a, b, c, d] in Nonnegatives(4)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in ExponentialCone()
+        """,
+        """
+        variables: x, y, z, a, b, c, d, e, f
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c + 1.0 * d + 1.0 * e + 1.0 * f
+        c1: [1.0 * x + 1.0 * a + -1.0 * b, y + 1.0 * c + -1.0 * d, z + 1.0 * e + -1.0 * f] in ExponentialCone()
+        [a, b, c, d, e, f] in Nonnegatives(6)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in DualExponentialCone()
+        """,
+        """
+        variables: x, y, z, a, b, c, d, e, f
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c + 1.0 * d + 1.0 * e + 1.0 * f
+        c1: [1.0 * x + 1.0 * a + -1.0 * b, y + 1.0 * c + -1.0 * d, z + 1.0 * e + -1.0 * f] in DualExponentialCone()
+        [a, b, c, d, e, f] in Nonnegatives(6)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in PowerCone(0.5)
+        """,
+        """
+        variables: x, y, z, a, b, c, d, e, f
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c + 1.0 * d + 1.0 * e + 1.0 * f
+        c1: [1.0 * x + 1.0 * a + -1.0 * b, y + 1.0 * c + -1.0 * d, z + 1.0 * e + -1.0 * f] in PowerCone(0.5)
+        [a, b, c, d, e, f] in Nonnegatives(6)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in DualPowerCone(0.5)
+        """,
+        """
+        variables: x, y, z, a, b, c, d, e, f
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c + 1.0 * d + 1.0 * e + 1.0 * f
+        c1: [1.0 * x + 1.0 * a + -1.0 * b, y + 1.0 * c + -1.0 * d, z + 1.0 * e + -1.0 * f] in DualPowerCone(0.5)
+        [a, b, c, d, e, f] in Nonnegatives(6)
+        """,
+    )
+    _test_roundtrip(
+        """
+        variables: x, y, z
+        c1: [1.0 * x, y, z] in HyperRectangle([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
+        """,
+        """
+        variables: x, y, z, a, b, c, d, e, f
+        minobjective: 1.0 * a + 1.0 * b + 1.0 * c + 1.0 * d + 1.0 * e + 1.0 * f
+        c1: [1.0 * x + 1.0 * a + -1.0 * b, y + 1.0 * c + -1.0 * d, z + 1.0 * e + -1.0 * f] in HyperRectangle([0.0, 0.0, 0.0], [1.0, 1.0, 1.0])
+        [a, b, c, d, e, f] in Nonnegatives(6)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestPenaltyRelaxation.runtests()

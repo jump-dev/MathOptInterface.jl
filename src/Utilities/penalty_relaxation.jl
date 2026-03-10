@@ -187,9 +187,51 @@ function _relax_constraint(
     return [x]
 end
 
+function _slack_vector(set::MOI.AbstractVectorSet)
+    ret = Pair{Int,Int}[]
+    for i in 1:MOI.dimension(set)
+        push!(ret, i => +1)
+        push!(ret, i => -1)
+    end
+    return ret
+end
+
+_slack_vector(set::MOI.Nonnegatives) = [i => +1 for i in 1:MOI.dimension(set)]
+_slack_vector(set::MOI.Nonpositives) = [i => -1 for i in 1:MOI.dimension(set)]
+_slack_vector(::MOI.SecondOrderCone) = [1 => +1]
+_slack_vector(::MOI.RotatedSecondOrderCone) = [1 => +1, 2 => +1]
+_slack_vector(::MOI.NormOneCone) = [1 => +1]
+_slack_vector(::MOI.NormInfinityCone) = [1 => +1]
+_slack_vector(::MOI.NormCone) = [1 => +1]
+_slack_vector(::MOI.NormSpectralCone) = [1 => +1]
+_slack_vector(::MOI.NormNuclearCone) = [1 => +1]
+_slack_vector(::MOI.RootDetConeTriangle) = [1 => -1]
+_slack_vector(::MOI.LogDetConeTriangle) = [1 => -1, 2 => +1]
+
+function _slack_vector(set::MOI.GeometricMeanCone)
+    ret = [i => +1 for i in 1:MOI.dimension(set)]
+    ret[1] = (1 => -1)
+    return ret
+end
+
+function _relax_constraint(
+    ::Type{T},
+    model::MOI.ModelLike,
+    ci::MOI.ConstraintIndex{F,<:MOI.AbstractVectorSet},
+) where {T,F<:Union{MOI.VectorAffineFunction{T},MOI.VectorQuadraticFunction{T}}}
+    set = MOI.get(model, MOI.ConstraintSet(), ci)
+    slack = _slack_vector(set)
+    y, _ = MOI.add_constrained_variables(model, MOI.Nonnegatives(length(slack)))
+    for (i, (row, weight)) in enumerate(slack)
+        change = MOI.MultirowChange(y[i], [(Int64(row), weight * one(T))])
+        MOI.modify(model, ci, change)
+    end
+    return y
+end
+
 function MOI.modify(
     model::MOI.ModelLike,
-    ci::MOI.ConstraintIndex{F,<:MOI.AbstractScalarSet},
+    ci::MOI.ConstraintIndex{F},
     relax::ScalarPenaltyRelaxation{T},
 ) where {
     T,
@@ -197,6 +239,8 @@ function MOI.modify(
         MOI.ScalarAffineFunction{T},
         MOI.ScalarQuadraticFunction{T},
         MOI.ScalarNonlinearFunction,
+        MOI.VectorAffineFunction{T},
+        MOI.VectorQuadraticFunction{T},
     },
 }
     x = _relax_constraint(T, model, ci)
