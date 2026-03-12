@@ -6,30 +6,28 @@
 
 module MathOptInterfaceCliqueTreesExt
 
-import CliqueTrees.Multifrontal: ChordalCholesky
-import LinearAlgebra: RowMaximum, cholesky!
+import CliqueTrees
+import LinearAlgebra
 import MathOptInterface as MOI
-import SparseArrays: findnz, sparse
+import SparseArrays
 
-function MOI.Bridges.Constraint.compute_sparse_sqrt_fallback(
+MOI.Utilities.is_defined(::MOI.Utilities.CliqueTreesExt) = true
+
+function MOI.Utilities.compute_sparse_sqrt(
+    ::MOI.Utilities.CliqueTreesExt,
     Q::AbstractMatrix,
-    ::F,
-    ::S,
-) where {F<:MOI.ScalarQuadraticFunction,S<:MOI.AbstractSet}
-    G = cholesky!(ChordalCholesky(Q), RowMaximum())
-    U = sparse(G.U) * G.P
-
+)
+    G = LinearAlgebra.cholesky!(
+        CliqueTrees.Multifrontal.ChordalCholesky(Q),
+        LinearAlgebra.RowMaximum(),
+    )
+    U = SparseArrays.sparse(G.U) * G.P
     # Verify the factorization reconstructs Q. This catches indefinite
     # matrices where the diagonal is all zeros (e.g., [0 -1; -1 0]).
     if !isapprox(Q, U' * U; atol = 1e-10)
-        msg = """
-        Unable to transform a quadratic constraint into a SecondOrderCone
-        constraint because the quadratic constraint is not convex.
-        """
-        throw(MOI.UnsupportedConstraint{F,S}(msg))
+        return nothing
     end
-
-    return findnz(U)
+    return SparseArrays.findnz(U)
 end
 
 end  # module

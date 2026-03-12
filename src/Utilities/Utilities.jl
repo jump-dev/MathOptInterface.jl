@@ -70,5 +70,6 @@ include("lazy_iterators.jl")
 include("set_dot.jl")
 
 include("distance_to_set.jl")
+include("sparse_square_root.jl")
 
 end # module
