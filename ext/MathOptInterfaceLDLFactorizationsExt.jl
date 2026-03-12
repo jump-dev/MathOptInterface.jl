@@ -11,39 +11,19 @@ import LinearAlgebra
 import MathOptInterface as MOI
 import SparseArrays
 
-# The type signature of this function is not important, so long as it is more
-# specific than the (untyped) generic fallback with the error pointing to
-# LDLFactorizations.jl
-function MOI.Bridges.Constraint.compute_sparse_sqrt_fallback(
+MOI.Utilities.is_defined(::MOI.Utilities.LDLFactorizationsExt) = true
+
+function MOI.Utilities.compute_sparse_sqrt(
+    ::MOI.Utilities.LDLFactorizationsExt,
     Q::AbstractMatrix,
-    ::F,
-    ::S,
-) where {F<:MOI.ScalarQuadraticFunction,S<:MOI.AbstractSet}
+)
     n = LinearAlgebra.checksquare(Q)
     factor = LDLFactorizations.ldl(Q)
-    # Ideally we should use `LDLFactorizations.factorized(factor)` here, but it
-    # has some false negatives. Instead we check that the factorization appeared
-    # to work. This is a heuristic. There might be other cases where check is
-    # insufficient.
-    if minimum(factor.D) < 0 || any(issubnormal, factor.D)
-        msg = """
-        Unable to transform a quadratic constraint into a SecondOrderCone
-        constraint because the quadratic constraint is not convex.
-        """
-        throw(MOI.UnsupportedConstraint{F,S}(msg))
+    if !LDLFactorizations.factorized(factor) || minimum(factor.D) < 0
+        return nothing
     end
-    # We have Q = P' * L * D * L' * P. We want to find Q = U' * U, so
-    # U = sqrt(D) * L' * P. First, compute L'. Note I and J are reversed:
-    J, I, V = SparseArrays.findnz(factor.L)
-    # Except L doesn't include the identity along the diagonal. Add it back.
-    append!(J, 1:n)
-    append!(I, 1:n)
-    append!(V, ones(n))
-    # Now scale by sqrt(D)
-    for (k, i) in enumerate(I)
-        V[k] *= sqrt(factor.D[i, i])
-    end
-    # Finally, permute the columns of L'. The rows stay in the same order.
+    L = sqrt.(factor.D) * LinearAlgebra.UnitLowerTriangular(factor.L)
+    J, I, V = SparseArrays.findnz(SparseArrays.sparse(L))
     return I, factor.P[J], V
 end
 
