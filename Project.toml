@@ -28,7 +28,7 @@ MathOptInterfaceLDLFactorizationsExt = "LDLFactorizations"
 
 [compat]
 BenchmarkTools = "1"
-CliqueTrees = "1.17"
+CliqueTrees = "1.13"
 CodecBzip2 = "0.6, 0.7, 0.8"
 CodecZlib = "0.6, 0.7"
 ForwardDiff = "1"

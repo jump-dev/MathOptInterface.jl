@@ -44,7 +44,7 @@ If unsuccessful, this function returns `nothing`.
 
 ## Extensions
 
-By default, this function attempts to use a `LinearAlgebra.cholesky`. If that
+By default, this function attempts to use a Cholesky decomposition. If that
 fails, it may optionally use various extension packages.
 
 These extension packages must be loaded before calling `compute_sparse_sqrt`.
@@ -52,7 +52,7 @@ These extension packages must be loaded before calling `compute_sparse_sqrt`.
 The extensions currently supported are:
 
  * The LDL routine in `LDLFactorizations.jl`
- * The pivoted cholesky in `CliqueTrees.jl`
+ * The pivoted Cholesky in `CliqueTrees.jl`
 """
 function compute_sparse_sqrt(Q::AbstractMatrix)
     # There's a big try-catch here because Cholesky can fail even if
