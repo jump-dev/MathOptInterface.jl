@@ -100,10 +100,10 @@ function compute_sparse_sqrt(Q, ::F, ::S) where {F,S}
     if (ret = MOI.Utilities.compute_sparse_sqrt(Q)) !== nothing
         return ret
     elseif !MOI.Utilities.is_defined(MOI.Utilities.LDLFactorizationsExt())
-        msg =_error_msg(MOI.Utilities.LDLFactorizationsExt())
+        msg = _error_msg(MOI.Utilities.LDLFactorizationsExt())
         return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
     elseif !MOI.Utilities.is_defined(MOI.Utilities.CliqueTreesExt())
-        msg =_error_msg(MOI.Utilities.CliqueTreesExt())
+        msg = _error_msg(MOI.Utilities.CliqueTreesExt())
         return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
     end
     msg = """

@@ -22,8 +22,8 @@ function MOI.Utilities.compute_sparse_sqrt(
         LinearAlgebra.RowMaximum(),
     )
     U = SparseArrays.sparse(G.U) * G.P
-    # Verify the factorization reconstructs Q. This catches indefinite
-    # matrices where the diagonal is all zeros (e.g., [0 -1; -1 0]).
+    # Verify the factorization reconstructs Q. We don't have something like
+    # LinearAlgebra.issuccess(G)
     if !isapprox(Q, U' * U; atol = 1e-10)
         return nothing
     end

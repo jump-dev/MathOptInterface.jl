@@ -480,7 +480,7 @@ function test_clique_trees_early_zero_pivot()
     x = MOI.add_variables(model, 3)
     # (x[1] + x[2])^2 + x[3]^2 = x[1]^2 + 2*x[1]*x[2] + x[2]^2 + x[3]^2
     # Q = [1 1 0; 1 1 0; 0 0 1]
-    f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2] + 0.5 * x[3] * x[3]
+    f = sum(0.5 * x[i] * x[i] for i in 1:3) + 1.0 * x[1] * x[2]
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
     F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
     ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
