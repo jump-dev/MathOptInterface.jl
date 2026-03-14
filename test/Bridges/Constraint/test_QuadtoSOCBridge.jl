@@ -6,12 +6,13 @@
 
 module TestConstraintQuadToSOC
 
-import LinearAlgebra
-import SparseArrays
 using Test
 
+import CliqueTrees
 import LDLFactorizations
+import LinearAlgebra
 import MathOptInterface as MOI
+import SparseArrays
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -383,11 +384,7 @@ function test_compute_sparse_sqrt_edge_cases()
         [-1.0 0.0; 0.0 1.0],
         # Found from test_quadratic_nonconvex_constraint_basic
         [0.0 -1.0; -1.0 0.0],
-        # Different element type. We could potentially make this work in future,
-        # but it first requires https://github.com/JuliaSmoothOptimizers/LDLFactorizations.jl/pull/142
         BigFloat[-1.0 0.0; 0.0 1.0],
-        BigFloat[1.0 0.0; 0.0 2.0],
-        BigFloat[1.0 1.0; 1.0 1.0],
     ]
         B = SparseArrays.sparse(A)
         f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
@@ -400,17 +397,96 @@ function test_compute_sparse_sqrt_edge_cases()
     return
 end
 
-function test_compute_sparse_sqrt_fallback()
-    # Test the default fallback that is hit when LDLFactorizations isn't loaded.
-    # We could put the test somewhere else so it runs before this file is
-    # loaded, but that's pretty flakey for a long-term solution. Instead, we're
-    # going to abuse the lack of a strong type signature to hit it:
-    f = zero(MOI.ScalarAffineFunction{Float64})
-    A = SparseArrays.sparse([-1.0 0.0; 0.0 1.0])
-    @test_throws(
-        MOI.AddConstraintNotAllowed{typeof(f),MOI.GreaterThan{Float64}},
-        MOI.Bridges.Constraint.compute_sparse_sqrt(A, f, MOI.GreaterThan(0.0)),
-    )
+function test_ldlfactorizations_compute_sparse_sqrt_edge_cases()
+    ext = MOI.Utilities.LDLFactorizationsExt()
+    for A in AbstractMatrix[
+        [1.0 0.0; 0.0 2.0],
+        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
+        # [1.0 1.0; 1.0 1.0],
+        # [2.0 2.0; 2.0 2.0],
+        # [2.0 0.0; 0.0 0.0],
+    ]
+        I, J, V = MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A))
+        U = zeros(eltype(A), size(A))
+        for (i, j, v) in zip(I, J, V)
+            U[i, j] += v
+        end
+        @test isapprox(A, U' * U; atol = 1e-10)
+    end
+    # Test failures
+    for A in Any[
+        [-1.0 0.0; 0.0 1.0],
+        [0.0 -1.0; -1.0 0.0],
+        BigFloat[-1.0 0.0; 0.0 1.0],
+        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
+    ]
+        @test MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A)) ===
+              nothing
+    end
+    return
+end
+
+function test_clique_trees_compute_sparse_sqrt_edge_cases()
+    ext = MOI.Utilities.CliqueTreesExt()
+    for A in AbstractMatrix[
+        [1.0 0.0; 0.0 2.0],
+        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
+        [1.0 1.0; 1.0 1.0],
+        [2.0 2.0; 2.0 2.0],
+        [2.0 0.0; 0.0 0.0],
+        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
+        BigFloat[1.0 0.0; 0.0 2.0],
+        BigFloat[1.0 1.0; 1.0 1.0],
+    ]
+        I, J, V = MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A))
+        U = zeros(eltype(A), size(A))
+        for (i, j, v) in zip(I, J, V)
+            U[i, j] += v
+        end
+        @test isapprox(A, U' * U; atol = 1e-10)
+    end
+    # Test failures
+    for A in Any[
+        [-1.0 0.0; 0.0 1.0],
+        [0.0 -1.0; -1.0 0.0],
+        BigFloat[-1.0 0.0; 0.0 1.0],
+    ]
+        @test MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A)) ===
+              nothing
+    end
+    return
+end
+
+function test_clique_trees_semidefinite_cholesky_fail()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    sum_y = 1.0 * y[1] + 1.0 * y[2]
+    @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
+    return
+end
+
+function test_clique_trees_early_zero_pivot()
+    # This matrix has an early zero pivot that causes LDLFactorizations to
+    # halt early, but CliqueTrees' pivoted Cholesky handles it correctly.
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    # (x[1] + x[2])^2 + x[3]^2 = x[1]^2 + 2*x[1]*x[2] + x[2]^2 + x[3]^2
+    # Q = [1 1 0; 1 1 0; 0 0 1]
+    f = sum(0.5 * x[i] * x[i] for i in 1:3) + 1.0 * x[1] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    # Verify the constraint was created successfully
+    @test MOI.output_dimension(g) == 5  # [1, rhs, Ux...]
     return
 end
 

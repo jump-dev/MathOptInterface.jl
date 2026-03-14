@@ -60,8 +60,8 @@ end
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
 
-function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
-    msg = """
+function _error_msg(::MOI.Utilities.LDLFactorizationsExt)
+    return """
     Unable to transform a quadratic constraint into a SecondOrderCone
     constraint because the quadratic constraint is not strongly convex and
     our Cholesky decomposition failed.
@@ -76,36 +76,41 @@ function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
     LDLFactorizations.jl is not included by default because it is licensed
     under the LGPL.
     """
-    return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
 end
 
-function compute_sparse_sqrt(Q, func, set)
-    # There's a big try-catch here because Cholesky can fail even if
-    # `check = false`. As one example, it currently (v1.12) fails with
-    # `BigFloat`. Similarly, we want to guard against errors in
-    # `compute_sparse_sqrt_fallback`.
-    #
-    # The try-catch isn't a performance concern because the alternative is not
-    # being able to reformulate the problem.
-    try
-        factor = LinearAlgebra.cholesky(Q; check = false)
-        if !LinearAlgebra.issuccess(factor)
-            return compute_sparse_sqrt_fallback(Q, func, set)
-        end
-        L, p = SparseArrays.sparse(factor.L), factor.p
-        # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
-        # First, compute L'. Note I and J are reversed
-        J, I, V = SparseArrays.findnz(L)
-        # Then, we want to permute the columns of L'. The rows stay in the same
-        # order.
-        return I, p[J], V
-    catch err
-        if err isa MOI.AddConstraintNotAllowed
-            rethrow(err)
-        end
-        msg = "There was an error computing a matrix square root"
-        throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
+function _error_msg(::MOI.Utilities.CliqueTreesExt)
+    return """
+    Unable to transform a quadratic constraint into a SecondOrderCone
+    constraint because the quadratic constraint is not strongly convex and
+    our Cholesky decomposition failed.
+
+    If the constraint is convex but not strongly convex, you can work-around
+    this issue by manually installing and loading `CliqueTrees.jl`:
+    ```julia
+    import Pkg; Pkg.add("CliqueTrees")
+    using CliqueTrees
+    ```
+
+    CliqueTrees.jl is not included by default because it contains a number of
+    heavy dependencies.
+    """
+end
+
+function compute_sparse_sqrt(Q, ::F, ::S) where {F,S}
+    if (ret = MOI.Utilities.compute_sparse_sqrt(Q)) !== nothing
+        return ret
+    elseif !MOI.Utilities.is_defined(MOI.Utilities.LDLFactorizationsExt())
+        msg = _error_msg(MOI.Utilities.LDLFactorizationsExt())
+        return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
+    elseif !MOI.Utilities.is_defined(MOI.Utilities.CliqueTreesExt())
+        msg = _error_msg(MOI.Utilities.CliqueTreesExt())
+        return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
     end
+    msg = """
+    Unable to transform a quadratic constraint into a SecondOrderCone
+    constraint because the quadratic constraint is not convex.
+    """
+    return throw(MOI.UnsupportedConstraint{F,S}(msg))
 end
 
 function bridge_constraint(
