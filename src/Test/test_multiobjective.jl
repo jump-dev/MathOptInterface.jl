@@ -424,4 +424,6 @@ function setup_test(
     return
 end
 
-version_added(::typeof(test_multiobjective_vector_nonlinear_modify)) = v"1.50.0"
+function version_added(::typeof(test_multi_objective_solve_and_objective_value))
+    return v"1.50.0"
+end
