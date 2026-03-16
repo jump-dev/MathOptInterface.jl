@@ -382,7 +382,7 @@ version_added(::typeof(test_multiobjective_vector_nonlinear_modify)) = v"1.19.0"
 
 function test_multi_objective_solve_and_objective_value(
     model::MOI.ModelLike,
-    ::Config{T},
+    config::Config{T},
 ) where {T}
     F = MOI.VectorAffineFunction{T}
     @requires _supports(config, MOI.optimize!)
