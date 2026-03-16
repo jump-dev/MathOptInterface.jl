@@ -379,3 +379,49 @@ function test_multiobjective_vector_nonlinear_modify(
 end
 
 version_added(::typeof(test_multiobjective_vector_nonlinear_modify)) = v"1.19.0"
+
+function test_multi_objective_solve_and_objective_value(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    F = MOI.VectorAffineFunction{T}
+    @requires _supports(config, MOI.optimize!)
+    @requires MOI.supports(model, MOI.ObjectiveFunction{F}())
+    x = MOI.add_variables(model, 3)
+    MOI.add_constraint.(model, x, MOI.Interval(zero(T), one(T)))
+    f = sum(one(T) * x[i] for i in 1:3)
+    MOI.add_constraint(model, f, MOI.LessThan(T(2)))
+    g = MOI.Utilities.vectorize([
+        T(3) * x[1],
+        T(3) * x[1] + T(1) * x[2] + T(2) * x[3],
+    ])
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(g)}(), g)
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.ResultCount()) > 0
+    for i in 1:MOI.get(model, MOI.ResultCount())
+        y = MOI.Utilities.eval_variables(model, g) do xi
+            return MOI.get(model, MOI.VariablePrimal(i), xi)
+        end
+        @test isapprox(MOI.get(model, MOI.ObjectiveValue()), y)
+    end
+    return
+end
+
+function setup_test(
+    ::typeof(test_multi_objective_solve_and_objective_value),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T}
+    MOIU.set_mock_optimize!(
+        model,
+        mock -> MOIU.mock_optimize!(
+            mock,
+            MOI.OPTIMAL,
+            (MOI.FEASIBLE_POINT, T[1, 0, 1]),
+        ),
+    )
+    return
+end
+
+version_added(::typeof(test_multiobjective_vector_nonlinear_modify)) = v"1.50.0"
