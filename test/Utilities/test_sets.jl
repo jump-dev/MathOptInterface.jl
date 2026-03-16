@@ -257,6 +257,19 @@ function test_set_dot_scaling(n = 10)
     return
 end
 
+function test_lazy_scalar_set()
+    set = MOI.LazyScalarSet(MOI.GreaterThan(1.0))
+    set_2 = copy(set)
+    @test set_2 == set
+    @test MOI.Utilities.supports_shift_constant(typeof(set))
+    set = MOI.Utilities.shift_constant(set, 2.0)
+    @test set_2 != set
+    @test set == MOI.LazyScalarSet(MOI.GreaterThan(3.0))
+    set = MOI.LazyScalarSet(MOI.Integer())
+    @test !MOI.Utilities.supports_shift_constant(typeof(set))
+    return
+end
+
 end  # module
 
 TestUtilitiesSets.runtests()
