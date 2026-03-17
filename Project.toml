@@ -19,9 +19,11 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [weakdeps]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 
 [extensions]
 MathOptInterfaceBenchmarkToolsExt = "BenchmarkTools"
+MathOptInterfaceLDLFactorizationsExt = "LDLFactorizations"
 
 [compat]
 BenchmarkTools = "1"
@@ -30,6 +32,7 @@ CodecZlib = "0.6, 0.7"
 ForwardDiff = "1"
 JSON = "0.21, 1"
 JSONSchema = "1"
+LDLFactorizations = "0.10"
 LinearAlgebra = "1"
 MutableArithmetics = "1"
 NaNMath = "0.3, 1"
@@ -44,8 +47,9 @@ julia = "1.10"
 
 [extras]
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+LDLFactorizations = "40e66cde-538c-5869-a4ad-c39174c6795b"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 
 [targets]
-test = ["BenchmarkTools", "JSONSchema", "ParallelTestRunner"]
+test = ["BenchmarkTools", "LDLFactorizations", "JSONSchema", "ParallelTestRunner"]
