@@ -60,25 +60,6 @@ end
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
 
-function compute_sparse_sqrt_fallback(Q, ::F, ::S) where {F,S}
-    msg = """
-    Unable to transform a quadratic constraint into a SecondOrderCone
-    constraint because the quadratic constraint is not strongly convex and
-    our Cholesky decomposition failed.
-
-    If the constraint is convex but not strongly convex, you can work-around
-    this issue by manually installing and loading `LDLFactorizations.jl`:
-    ```julia
-    import Pkg; Pkg.add("LDLFactorizations")
-    using LDLFactorizations
-    ```
-
-    LDLFactorizations.jl is not included by default because it is licensed
-    under the LGPL.
-    """
-    return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
-end
-
 function compute_sparse_sqrt(Q, func, set)
     # There's a big try-catch here because Cholesky can fail even if
     # `check = false`. As one example, it currently (v1.12) fails with
@@ -88,10 +69,7 @@ function compute_sparse_sqrt(Q, func, set)
     # The try-catch isn't a performance concern because the alternative is not
     # being able to reformulate the problem.
     try
-        factor = LinearAlgebra.cholesky(Q; check = false)
-        if !LinearAlgebra.issuccess(factor)
-            return compute_sparse_sqrt_fallback(Q, func, set)
-        end
+        factor = LinearAlgebra.cholesky(Q)
         L, p = SparseArrays.sparse(factor.L), factor.p
         # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
         # First, compute L'. Note I and J are reversed
@@ -99,11 +77,12 @@ function compute_sparse_sqrt(Q, func, set)
         # Then, we want to permute the columns of L'. The rows stay in the same
         # order.
         return I, p[J], V
-    catch err
-        if err isa MOI.AddConstraintNotAllowed
-            rethrow(err)
-        end
-        msg = "There was an error computing a matrix square root"
+    catch
+        msg = """
+        Unable to transform a quadratic constraint into a SecondOrderCone
+        constraint because the quadratic constraint is not strongly convex and
+        our Cholesky decomposition failed.
+        """
         throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
     end
 end

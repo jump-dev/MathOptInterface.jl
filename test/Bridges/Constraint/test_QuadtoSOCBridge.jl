@@ -10,7 +10,6 @@ import LinearAlgebra
 import SparseArrays
 using Test
 
-import LDLFactorizations
 import MathOptInterface as MOI
 
 function runtests()
@@ -345,13 +344,16 @@ function test_semidefinite_cholesky_fail()
     model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
     x = MOI.add_variables(model, 2)
     f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
-    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
-    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
-    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
-    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
-    y = MOI.get(inner, MOI.ListOfVariableIndices())
-    sum_y = 1.0 * y[1] + 1.0 * y[2]
-    @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
+    @test_throws(
+        MOI.UnsupportedConstraint,
+        MOI.add_constraint(model, f, MOI.LessThan(1.0)),
+    )
+    # F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    # ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    # g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    # y = MOI.get(inner, MOI.ListOfVariableIndices())
+    # sum_y = 1.0 * y[1] + 1.0 * y[2]
+    # @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
     return
 end
 
@@ -361,12 +363,8 @@ function test_compute_sparse_sqrt_edge_cases()
         [1.0 0.0; 0.0 2.0],
         # Cholesky works, with pivoting
         [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
-        # Cholesky fails due to 0 eigen value. LDL works
-        [1.0 1.0; 1.0 1.0],
         # Cholesky succeeds, even though 0 eigen value
         [2.0 2.0; 2.0 2.0],
-        # Cholesky fails because of 0 column/row. LDL works
-        [2.0 0.0; 0.0 0.0],
     ]
         B = SparseArrays.sparse(A)
         f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
@@ -381,6 +379,8 @@ function test_compute_sparse_sqrt_edge_cases()
     # Test failures
     for A in Any[
         [-1.0 0.0; 0.0 1.0],
+        [1.0 1.0; 1.0 1.0],
+        [2.0 0.0; 0.0 0.0],
         # Found from test_quadratic_nonconvex_constraint_basic
         [0.0 -1.0; -1.0 0.0],
         # Different element type. We could potentially make this work in future,
@@ -397,20 +397,6 @@ function test_compute_sparse_sqrt_edge_cases()
             MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
         )
     end
-    return
-end
-
-function test_compute_sparse_sqrt_fallback()
-    # Test the default fallback that is hit when LDLFactorizations isn't loaded.
-    # We could put the test somewhere else so it runs before this file is
-    # loaded, but that's pretty flakey for a long-term solution. Instead, we're
-    # going to abuse the lack of a strong type signature to hit it:
-    f = zero(MOI.ScalarAffineFunction{Float64})
-    A = SparseArrays.sparse([-1.0 0.0; 0.0 1.0])
-    @test_throws(
-        MOI.AddConstraintNotAllowed{typeof(f),MOI.GreaterThan{Float64}},
-        MOI.Bridges.Constraint.compute_sparse_sqrt(A, f, MOI.GreaterThan(0.0)),
-    )
     return
 end
 
