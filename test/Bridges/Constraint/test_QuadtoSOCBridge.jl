@@ -426,6 +426,36 @@ function test_clique_trees_compute_sparse_sqrt_edge_cases()
     return
 end
 
+function test_compute_sparse_sqrt_edge_cases()
+    for A in AbstractMatrix[
+        [1.0 0.0; 0.0 2.0],
+        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
+        [1.0 1.0; 1.0 1.0],
+        [2.0 2.0; 2.0 2.0],
+        [2.0 0.0; 0.0 0.0],
+        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
+        BigFloat[1.0 0.0; 0.0 2.0],
+        BigFloat[1.0 1.0; 1.0 1.0],
+    ]
+        I, J, V = MOI.Utilities.compute_sparse_sqrt(SparseArrays.sparse(A))
+        U = zeros(eltype(A), size(A))
+        for (i, j, v) in zip(I, J, V)
+            U[i, j] += v
+        end
+        @test isapprox(A, U' * U; atol = 1e-10)
+    end
+    # Test failures
+    for A in Any[
+        [-1.0 0.0; 0.0 1.0],
+        [0.0 -1.0; -1.0 0.0],
+        BigFloat[-1.0 0.0; 0.0 1.0],
+    ]
+        @test MOI.Utilities.compute_sparse_sqrt(SparseArrays.sparse(A)) ===
+              nothing
+    end
+    return
+end
+
 function test_clique_trees_semidefinite_cholesky_fail()
     inner = MOI.Utilities.Model{Float64}()
     model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
