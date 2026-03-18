@@ -60,59 +60,6 @@ end
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
 
-function _error_msg(::MOI.Utilities.LDLFactorizationsExt)
-    return """
-    Unable to transform a quadratic constraint into a SecondOrderCone
-    constraint because the quadratic constraint is not strongly convex and
-    our Cholesky decomposition failed.
-
-    If the constraint is convex but not strongly convex, you can work-around
-    this issue by manually installing and loading `LDLFactorizations.jl`:
-    ```julia
-    import Pkg; Pkg.add("LDLFactorizations")
-    using LDLFactorizations
-    ```
-
-    LDLFactorizations.jl is not included by default because it is licensed
-    under the LGPL.
-    """
-end
-
-function _error_msg(::MOI.Utilities.CliqueTreesExt)
-    return """
-    Unable to transform a quadratic constraint into a SecondOrderCone
-    constraint because the quadratic constraint is not strongly convex and
-    our Cholesky decomposition failed.
-
-    If the constraint is convex but not strongly convex, you can work-around
-    this issue by manually installing and loading `CliqueTrees.jl`:
-    ```julia
-    import Pkg; Pkg.add("CliqueTrees")
-    using CliqueTrees
-    ```
-
-    CliqueTrees.jl is not included by default because it contains a number of
-    heavy dependencies.
-    """
-end
-
-function compute_sparse_sqrt(Q, ::F, ::S) where {F,S}
-    if (ret = MOI.Utilities.compute_sparse_sqrt(Q)) !== nothing
-        return ret
-    elseif !MOI.Utilities.is_defined(MOI.Utilities.LDLFactorizationsExt())
-        msg = _error_msg(MOI.Utilities.LDLFactorizationsExt())
-        return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
-    elseif !MOI.Utilities.is_defined(MOI.Utilities.CliqueTreesExt())
-        msg = _error_msg(MOI.Utilities.CliqueTreesExt())
-        return throw(MOI.AddConstraintNotAllowed{F,S}(msg))
-    end
-    msg = """
-    Unable to transform a quadratic constraint into a SecondOrderCone
-    constraint because the quadratic constraint is not convex.
-    """
-    return throw(MOI.UnsupportedConstraint{F,S}(msg))
-end
-
 function bridge_constraint(
     ::Type{QuadtoSOCBridge{T}},
     model,
@@ -137,8 +84,46 @@ function bridge_constraint(
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
         ) for term in func.affine_terms
     ]
-    I, J, V = compute_sparse_sqrt(LinearAlgebra.Symmetric(Q), func, set)
-    for (i, j, v) in zip(I, J, V)
+    sqrt_ret = MOI.Utilities.compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
+    if sqrt_ret === nothing
+        msg = """
+        ## SecondOrderCone reformulation
+
+        We tried to reformulate the quadratic constraint into a SecondOrderCone,
+        but this failed because the quadratic constraint is not strongly convex
+        and our matrix factorization failed.
+
+        ## Package extensions
+
+        If the constraint is convex but not strongly convex, you can work-around
+        this issue by manually installing and loading one of the following
+        packages.
+
+        ### LDLFactorizations.jl
+
+        Currently active: $(MOI.Utilities.is_defined(MOI.Utilities.LDLFactorizationsExt()))
+
+        ```julia
+        import Pkg; Pkg.add("LDLFactorizations")
+        using LDLFactorizations
+        ```
+        LDLFactorizations.jl is not included by default because it is licensed
+        under the LGPL.
+
+        ### CliqueTrees.jl
+
+        Currently active: $(MOI.Utilities.is_defined(MOI.Utilities.CliqueTreesExt()))
+
+        ```julia
+        import Pkg; Pkg.add("CliqueTrees")
+        using CliqueTrees
+        ```
+        CliqueTrees.jl is not included by default because it contains a number of
+        heavy dependencies.
+        """
+        return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
+    end
+    for (i, j, v) in zip(sqrt_ret[1], sqrt_ret[2], sqrt_ret[3])
         push!(
             vector_terms,
             MOI.VectorAffineTerm(
