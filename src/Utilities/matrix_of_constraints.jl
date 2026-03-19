@@ -246,6 +246,23 @@ and [`MOI.VectorConstantChange`](@ref) for [`MatrixOfConstraints`](@ref).
 """
 function modify_constants end
 
+"""
+    modify_coefficients(
+        coefficients,
+        row::Integer,
+        col::Integer,
+        new_coefficient,
+    )::Bool
+
+Modify `coefficients` in-place to store `new_coefficient` at position
+`(row, col)`. Return `true` if the entry existed and was modified, and `false`
+if no entry exists at `(row, col)` in the sparse structure and `new_coefficient` is nonzero.
+
+This function must be implemented to enable
+[`MOI.ScalarCoefficientChange`](@ref) for [`MatrixOfConstraints`](@ref).
+"""
+function modify_coefficients end
+
 ###
 ### Interface for the .sets field
 ###
@@ -694,6 +711,29 @@ function MOI.modify(
         modify_constants(model.constants, rows(model, ci), change.new_constant)
     catch
         throw(MOI.ModifyConstraintNotAllowed(ci, change))
+    end
+    return
+end
+
+function MOI.modify(
+    model::MatrixOfConstraints,
+    ci::MOI.ConstraintIndex,
+    change::MOI.ScalarCoefficientChange,
+)
+    if !modify_coefficients(
+        model.coefficients,
+        rows(model, ci),
+        change.variable.value,
+        change.new_coefficient,
+    )
+        throw(
+            MOI.ModifyConstraintNotAllowed(
+                ci,
+                change,
+                "cannot set a new non-zero coefficient because no entry " *
+                "exists in the sparse matrix of `MatrixOfConstraints`",
+            ),
+        )
     end
     return
 end

@@ -161,6 +161,22 @@ function load_terms(
     return
 end
 
+function modify_coefficients(
+    A::Union{MutableSparseMatrixCSC{Tv},SparseArrays.SparseMatrixCSC{Tv}},
+    row::Integer,
+    col::Integer,
+    new_coefficient::Tv,
+) where {Tv}
+    idx = _first_in_column(A, row, col)
+    range = SparseArrays.nzrange(A, col)
+    r = _shift(row, OneBasedIndexing(), _indexing(A))
+    if idx <= last(range) && A.rowval[idx] == r
+        A.nzval[idx] = new_coefficient
+        return true
+    end
+    return iszero(new_coefficient)
+end
+
 """
     Base.convert(
         ::Type{SparseMatrixCSC{Tv,Ti}},
@@ -189,6 +205,17 @@ _indexing(A::MutableSparseMatrixCSC) = A.indexing
 
 _indexing(::SparseArrays.SparseMatrixCSC) = OneBasedIndexing()
 
+"""
+    _first_in_column(
+        A::Union{MutableSparseMatrixCSC,SparseArrays.SparseMatrixCSC},
+        row::Integer,
+        col::Integer,
+    )
+
+Return the index of the first non-zero entry in the column `col` that has a row
+index greater than or equal to `row`.
+If no such entry exists, return `last(SparseArrays.nzrange(A, col)) + 1`.
+"""
 function _first_in_column(
     A::Union{MutableSparseMatrixCSC,SparseArrays.SparseMatrixCSC},
     row::Integer,
