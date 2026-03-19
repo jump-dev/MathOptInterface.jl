@@ -169,6 +169,7 @@ function MOI.delete(
     model::MOI.ModelLike,
     bridge::ReifiedCountDistinctToMILPBridge,
 )
+    # Delete is okay before `final_touch`
     for ci in bridge.equal_to
         MOI.delete(model, ci)
     end

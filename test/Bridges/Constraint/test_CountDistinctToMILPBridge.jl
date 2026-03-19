@@ -185,6 +185,19 @@ function test_resolve_with_modified_not_equal_to()
     return
 end
 
+function test_delete_before_final_touch()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.CountDistinctToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, Int, 2, 1 * x[1], x[2])
+    c = MOI.add_constraint(model, f, MOI.CountDistinct(3))
+    MOI.delete(model, c)
+    @test MOI.is_valid(model, x[1])
+    @test !MOI.is_valid(model, c)
+    MOI.Bridges.final_touch(model)
+    return
+end
+
 end  # module
 
 TestConstraintCountDistinct.runtests()

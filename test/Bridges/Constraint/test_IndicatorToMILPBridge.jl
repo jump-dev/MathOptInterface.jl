@@ -298,6 +298,7 @@ function test_delete_before_final_touch()
     )
     MOI.delete(model, c)
     @test !MOI.is_valid(model, c)
+    MOI.Bridges.final_touch(model)
     return
 end
 

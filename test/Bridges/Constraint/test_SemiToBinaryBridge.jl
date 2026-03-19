@@ -334,6 +334,18 @@ function test_open_interval()
     return
 end
 
+function test_delete_before_final_touch()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.SemiToBinary{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.Semicontinuous(1.0, 2.0))
+    MOI.delete(model, c)
+    @test MOI.is_valid(model, x)
+    @test !MOI.is_valid(model, c)
+    MOI.Bridges.final_touch(model)
+    return
+end
+
 end  # module
 
 TestConstraintSemiToBinary.runtests()

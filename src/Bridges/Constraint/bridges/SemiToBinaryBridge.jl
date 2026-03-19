@@ -186,6 +186,7 @@ function MOI.get(
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::SemiToBinaryBridge)
+    # Delete is okay, even though we call `final_touch`
     if bridge.integer_index !== nothing
         MOI.delete(model, bridge.integer_index)
     end

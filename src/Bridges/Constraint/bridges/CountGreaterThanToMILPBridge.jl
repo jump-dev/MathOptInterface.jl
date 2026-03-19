@@ -108,6 +108,7 @@ function MOI.get(
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::CountGreaterThanToMILPBridge)
+    # Delete is okay before `final_touch`
     MOI.delete.(model, bridge.greater_than)
     empty!(bridge.greater_than)
     MOI.delete.(model, bridge.equal_to)

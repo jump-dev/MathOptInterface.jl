@@ -127,6 +127,19 @@ function test_runtests_error_affine()
     return
 end
 
+function test_delete_before_final_touch()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.CountBelongsToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    f = MOI.Utilities.operate(vcat, Int, 2, 1 * x[1], x[2])
+    c = MOI.add_constraint(model, f, MOI.CountBelongs(3, Set([2, 4])))
+    MOI.delete(model, c)
+    @test MOI.is_valid(model, x[1])
+    @test !MOI.is_valid(model, c)
+    MOI.Bridges.final_touch(model)
+    return
+end
+
 end  # module
 
 TestConstraintCountBelongs.runtests()

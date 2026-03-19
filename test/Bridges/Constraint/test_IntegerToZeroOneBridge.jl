@@ -94,6 +94,18 @@ function test_final_touch_twice()
     return
 end
 
+function test_delete_before_final_touch()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.IntegerToZeroOne{Int}(inner)
+    x, cx = MOI.add_constrained_variable(model, MOI.Integer())
+    MOI.add_constraint(model, x, MOI.Interval(1, 3))
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, x)
+    @test !MOI.is_valid(model, cx)
+    MOI.Bridges.final_touch(model)
+    return
+end
+
 end  # module
 
 TestConstraintIntegerToZeroOne.runtests()
