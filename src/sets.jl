@@ -2884,6 +2884,7 @@ julia> MOI.add_constraint(
            1.0 * x,
            MOI.LazyScalarSet(MOI.GreaterThan(1.0)),
        )
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LazyScalarSet{MathOptInterface.GreaterThan{Float64}}}(1)
 ```
 """
 struct LazyScalarSet{S<:AbstractScalarSet} <: AbstractScalarSet
