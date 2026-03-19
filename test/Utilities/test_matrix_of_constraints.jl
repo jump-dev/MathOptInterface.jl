@@ -729,9 +729,15 @@ function test_modify_scalar_coefficient_change_no_entry()
     c = MOI.add_constraint(model, func, set)
     MOI.Utilities.final_touch(model, nothing)
     MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 0))
+    change = MOI.ScalarCoefficientChange(y, 3)
     @test_throws(
-        MOI.ModifyConstraintNotAllowed,
-        MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 3)),
+        MOI.ModifyConstraintNotAllowed(
+            c,
+            change,
+            "cannot set a new non-zero coefficient because no entry " *
+            "exists in the sparse matrix of `MatrixOfConstraints`",
+        ),
+        MOI.modify(model, c, change),
     )
     return
 end
