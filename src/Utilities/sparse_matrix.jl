@@ -172,14 +172,9 @@ function modify_coefficients(
     r = _shift(row, OneBasedIndexing(), _indexing(A))
     if idx <= last(range) && A.rowval[idx] == r
         A.nzval[idx] = new_coefficient
-    elseif !iszero(new_coefficient)
-        error(
-            "Cannot set a new non-zero coefficient at ($row, $col) because " *
-            "no entry exists in the sparse matrix. Adding new entries to a " *
-            "`MutableSparseMatrixCSC` after `final_touch` is not supported.",
-        )
+        return true
     end
-    return
+    return iszero(new_coefficient)
 end
 
 """
