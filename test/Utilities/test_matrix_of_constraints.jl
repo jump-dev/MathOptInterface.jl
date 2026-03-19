@@ -636,6 +636,106 @@ function test_set_types_fallback()
     return
 end
 
+function test_modify_scalar_coefficient_change()
+    model = MOI.Utilities.GenericOptimizer{
+        Int,
+        MOI.Utilities.ObjectiveContainer{Int},
+        MOI.Utilities.VariablesContainer{Int},
+        MOI.Utilities.MatrixOfConstraints{
+            Int,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Int,
+                Int,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            MOI.Utilities.Hyperrectangle{Int},
+            ScalarSets{Int},
+        },
+    }()
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    func = 2x + 3y
+    set = MOI.EqualTo(1)
+    c = MOI.add_constraint(model, func, set)
+    MOI.Utilities.final_touch(model, nothing)
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f ≈ 2x + 3y
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 5))
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f ≈ 5x + 3y
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 0))
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f ≈ 5x + 0y
+    return
+end
+
+function test_modify_scalar_coefficient_change_zero_based()
+    model = MOI.Utilities.GenericOptimizer{
+        Float64,
+        MOI.Utilities.ObjectiveContainer{Float64},
+        MOI.Utilities.VariablesContainer{Float64},
+        MOI.Utilities.MatrixOfConstraints{
+            Float64,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Float64,
+                Int,
+                MOI.Utilities.ZeroBasedIndexing,
+            },
+            MOI.Utilities.Hyperrectangle{Float64},
+            ScalarSets{Float64},
+        },
+    }()
+    src = MOI.Utilities.Model{Float64}()
+    MOI.Utilities.loadfromstring!(
+        src,
+        """
+variables: x, y
+minobjective: x + y
+c: x + 2.0 * y <= 3.0
+""",
+    )
+    index_map = MOI.copy_to(model, src)
+    c = MOI.get(model, MOI.ConstraintIndex, "c")
+    x = index_map[MOI.get(src, MOI.VariableIndex, "x")]
+    y = index_map[MOI.get(src, MOI.VariableIndex, "y")]
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f ≈ 1.0x + 2.0y
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, 4.0))
+    f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test f ≈ 4.0x + 2.0y
+    return
+end
+
+function test_modify_scalar_coefficient_change_no_entry()
+    model = MOI.Utilities.GenericOptimizer{
+        Int,
+        MOI.Utilities.ObjectiveContainer{Int},
+        MOI.Utilities.VariablesContainer{Int},
+        MOI.Utilities.MatrixOfConstraints{
+            Int,
+            MOI.Utilities.MutableSparseMatrixCSC{
+                Int,
+                Int,
+                MOI.Utilities.OneBasedIndexing,
+            },
+            MOI.Utilities.Hyperrectangle{Int},
+            ScalarSets{Int},
+        },
+    }()
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    func = 2x
+    set = MOI.EqualTo(1)
+    c = MOI.add_constraint(model, func, set)
+    MOI.Utilities.final_touch(model, nothing)
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 0))
+    @test_throws(
+        MOI.ModifyConstraintNotAllowed,
+        MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 3)),
+    )
+    return
+end
+
 function test_modify_vectorsets()
     model = _new_VectorSets()
     src = MOI.Utilities.Model{Int}()

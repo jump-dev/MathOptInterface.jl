@@ -161,6 +161,27 @@ function load_terms(
     return
 end
 
+function modify_coefficients(
+    A::Union{MutableSparseMatrixCSC{Tv},SparseArrays.SparseMatrixCSC{Tv}},
+    row::Integer,
+    col::Integer,
+    new_coefficient::Tv,
+) where {Tv}
+    idx = _first_in_column(A, row, col)
+    range = SparseArrays.nzrange(A, col)
+    r = _shift(row, OneBasedIndexing(), _indexing(A))
+    if idx <= last(range) && A.rowval[idx] == r
+        A.nzval[idx] = new_coefficient
+    elseif !iszero(new_coefficient)
+        error(
+            "Cannot set a new non-zero coefficient at ($row, $col) because " *
+            "no entry exists in the sparse matrix. Adding new entries to a " *
+            "`MutableSparseMatrixCSC` after `final_touch` is not supported.",
+        )
+    end
+    return
+end
+
 """
     Base.convert(
         ::Type{SparseMatrixCSC{Tv,Ti}},

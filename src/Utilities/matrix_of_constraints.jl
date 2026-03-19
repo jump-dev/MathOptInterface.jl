@@ -246,6 +246,22 @@ and [`MOI.VectorConstantChange`](@ref) for [`MatrixOfConstraints`](@ref).
 """
 function modify_constants end
 
+"""
+    modify_coefficients(
+        coefficients,
+        row::Integer,
+        col::Integer,
+        new_coefficient,
+    )
+
+Modify `coefficients` in-place to store `new_coefficient` at position
+`(row, col)`.
+
+This function must be implemented to enable
+[`MOI.ScalarCoefficientChange`](@ref) for [`MatrixOfConstraints`](@ref).
+"""
+function modify_coefficients end
+
 ###
 ### Interface for the .sets field
 ###
@@ -692,6 +708,24 @@ function MOI.modify(
 )
     try
         modify_constants(model.constants, rows(model, ci), change.new_constant)
+    catch
+        throw(MOI.ModifyConstraintNotAllowed(ci, change))
+    end
+    return
+end
+
+function MOI.modify(
+    model::MatrixOfConstraints,
+    ci::MOI.ConstraintIndex,
+    change::MOI.ScalarCoefficientChange,
+)
+    try
+        modify_coefficients(
+            model.coefficients,
+            rows(model, ci),
+            change.variable.value,
+            change.new_coefficient,
+        )
     catch
         throw(MOI.ModifyConstraintNotAllowed(ci, change))
     end
