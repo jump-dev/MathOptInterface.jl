@@ -129,6 +129,7 @@ function MOI.get(
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::BinPackingToMILPBridge)
+    # Delete is okay before `final_touch`
     MOI.delete.(model, bridge.less_than)
     empty!(bridge.less_than)
     MOI.delete.(model, bridge.equal_to)
