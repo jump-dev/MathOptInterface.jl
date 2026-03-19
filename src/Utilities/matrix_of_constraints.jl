@@ -709,8 +709,18 @@ function MOI.modify(
 )
     try
         modify_constants(model.constants, rows(model, ci), change.new_constant)
-    catch
-        throw(MOI.ModifyConstraintNotAllowed(ci, change))
+    catch err
+        if err isa MethodError
+            throw(
+                MOI.ModifyConstraintNotAllowed(
+                    ci,
+                    change,
+                    "`modify_constants` is not implemented for " *
+                    "`$(typeof(model.constants))`",
+                ),
+            )
+        end
+        rethrow(err)
     end
     return
 end
