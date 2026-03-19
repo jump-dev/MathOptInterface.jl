@@ -210,6 +210,17 @@ _indexing(A::MutableSparseMatrixCSC) = A.indexing
 
 _indexing(::SparseArrays.SparseMatrixCSC) = OneBasedIndexing()
 
+"""
+    _first_in_column(
+        A::Union{MutableSparseMatrixCSC,SparseArrays.SparseMatrixCSC},
+        row::Integer,
+        col::Integer,
+    )
+
+Return the index of the first non-zero entry in the column `col` that has a row
+index greater than or equal to `row`.
+If no such entry exists, return `last(SparseArrays.nzrange(A, col)) + 1`.
+"""
 function _first_in_column(
     A::Union{MutableSparseMatrixCSC,SparseArrays.SparseMatrixCSC},
     row::Integer,
