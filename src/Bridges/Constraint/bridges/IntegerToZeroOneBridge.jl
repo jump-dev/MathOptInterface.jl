@@ -103,7 +103,7 @@ function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, ::IntegerToZeroOneBridge)
 end
 
 function MOI.delete(model::MOI.ModelLike, bridge::IntegerToZeroOneBridge)
-    if bridge.last_bounds !== nothing
+    if bridge.last_bounds === nothing
         return  # We're deleting the bridge before final_touch
     end
     MOI.delete(model, bridge.ci)
