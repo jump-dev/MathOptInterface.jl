@@ -707,11 +707,8 @@ function MOI.modify(
     ci::MOI.ConstraintIndex,
     change::Union{MOI.ScalarConstantChange,MOI.VectorConstantChange},
 )
-    ret = modify_constants(
-        model.constants,
-        rows(model, ci),
-        change.new_constant,
-    )
+    ret =
+        modify_constants(model.constants, rows(model, ci), change.new_constant)
     if ret == _ModifyConstantsNotImplemented()
         msg = "`modify_constants` is not implemented for `$(typeof(model.constants))`"
         throw(MOI.ModifyConstraintNotAllowed(ci, change, msg))
