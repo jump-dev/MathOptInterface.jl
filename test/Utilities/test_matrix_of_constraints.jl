@@ -665,6 +665,7 @@ function test_modify_scalar_coefficient_change()
     @test f ≈ 5x + 3y
     MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 0))
     f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test MOI.Utilities.is_canonical(f)
     @test f ≈ 5x + 0y
     return
 end
@@ -901,14 +902,19 @@ function test_modify_multirow_change_to_zero()
     index_map = MOI.copy_to(model, src)
     ci = index_map[c]
     x1 = index_map[x[1]]
+    x2 = index_map[x[2]]
     MOI.modify(model, ci, MOI.MultirowChange(x1, [(1, 0)]))
     f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    @test MOI.Utilities.is_canonical(f)
+    @test length(f.terms) == 3
     coefs = Dict(
         (t.output_index, t.scalar_term.variable) => t.scalar_term.coefficient
         for t in f.terms
     )
-    @test coefs[(1, x1)] == 0
+    @test !haskey(coefs, (1, x1))
     @test coefs[(2, x1)] == 4
+    @test coefs[(1, x2)] == 3
+    @test coefs[(2, x2)] == 5
     return
 end
 

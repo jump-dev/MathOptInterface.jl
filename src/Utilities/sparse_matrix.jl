@@ -239,7 +239,8 @@ function extract_function(
             continue
         end
         r = _shift(A.rowval[idx], _indexing(A), OneBasedIndexing())
-        if r == row
+        # `modify_coefficients` can create zeros
+        if r == row && !iszero(A.nzval[idx])
             push!(
                 func.terms,
                 MOI.ScalarAffineTerm(A.nzval[idx], MOI.VariableIndex(col)),
@@ -266,10 +267,14 @@ function _extract_column_as_function(
     func = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], constant)
     for i in SparseArrays.nzrange(A, col)
         row = _shift(A.rowval[i], _indexing(A), OneBasedIndexing())
-        push!(
-            func.terms,
-            MOI.ScalarAffineTerm(value_map(A.nzval[i]), MOI.VariableIndex(row)),
-        )
+        val = value_map(A.nzval[i])
+        # `modify_coefficients` can create zeros
+        if !iszero(val)
+            push!(
+                func.terms,
+                MOI.ScalarAffineTerm(val, MOI.VariableIndex(row)),
+            )
+        end
     end
     return func
 end
@@ -293,16 +298,19 @@ function extract_function(
             if row != rows[output_index]
                 continue
             end
-            push!(
-                func.terms,
-                MOI.VectorAffineTerm(
-                    output_index,
-                    MOI.ScalarAffineTerm(
-                        A.nzval[idx[col]],
-                        MOI.VariableIndex(col),
+            # `modify_coefficients` can create zeros
+            if !iszero(A.nzval[idx[col]])
+                push!(
+                    func.terms,
+                    MOI.VectorAffineTerm(
+                        output_index,
+                        MOI.ScalarAffineTerm(
+                            A.nzval[idx[col]],
+                            MOI.VariableIndex(col),
+                        ),
                     ),
-                ),
-            )
+                )
+            end
             idx[col] += 1
         end
     end
