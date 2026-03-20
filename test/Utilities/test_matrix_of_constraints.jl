@@ -848,8 +848,8 @@ function test_modify_multirow_change()
     MOI.modify(model, ci, MOI.MultirowChange(x1, [(1, 7), (2, 8)]))
     f = MOI.get(model, MOI.ConstraintFunction(), ci)
     coefs = Dict(
-        (t.output_index, t.scalar_term.variable) => t.scalar_term.coefficient
-        for t in f.terms
+        (t.output_index, t.scalar_term.variable) =>
+            t.scalar_term.coefficient for t in f.terms
     )
     @test coefs[(1, x1)] == 7
     @test coefs[(2, x1)] == 8
@@ -876,8 +876,8 @@ function test_modify_multirow_change_single_row()
     MOI.modify(model, ci, MOI.MultirowChange(x2, [(2, 9)]))
     f = MOI.get(model, MOI.ConstraintFunction(), ci)
     coefs = Dict(
-        (t.output_index, t.scalar_term.variable) => t.scalar_term.coefficient
-        for t in f.terms
+        (t.output_index, t.scalar_term.variable) =>
+            t.scalar_term.coefficient for t in f.terms
     )
     x1 = index_map[x[1]]
     @test coefs[(1, x1)] == 2
@@ -908,8 +908,8 @@ function test_modify_multirow_change_to_zero()
     @test MOI.Utilities.is_canonical(f)
     @test length(f.terms) == 3
     coefs = Dict(
-        (t.output_index, t.scalar_term.variable) => t.scalar_term.coefficient
-        for t in f.terms
+        (t.output_index, t.scalar_term.variable) =>
+            t.scalar_term.coefficient for t in f.terms
     )
     @test !haskey(coefs, (1, x1))
     @test coefs[(2, x1)] == 4

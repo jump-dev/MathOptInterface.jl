@@ -270,10 +270,7 @@ function _extract_column_as_function(
         val = value_map(A.nzval[i])
         # `modify_coefficients` can create zeros
         if !iszero(val)
-            push!(
-                func.terms,
-                MOI.ScalarAffineTerm(val, MOI.VariableIndex(row)),
-            )
+            push!(func.terms, MOI.ScalarAffineTerm(val, MOI.VariableIndex(row)))
         end
     end
     return func
