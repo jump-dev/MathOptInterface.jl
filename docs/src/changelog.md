@@ -32,6 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed a bug with open intervals in `Bridges.Constraint.SemiToBinaryBridge`
   (#2963)
 - Fixed deleting some bridges before `Bridges.final_touch` was called (#2974)
+- Fixed a bug so that we re-throw appropriate errors when modifying constant
+  vector in [`Utilities.MatrixOfConstraints`](@ref) (#2976)
 
 ### Other
 
