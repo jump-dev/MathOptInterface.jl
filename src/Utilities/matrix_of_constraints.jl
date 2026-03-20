@@ -707,10 +707,11 @@ function MOI.modify(
     ci::MOI.ConstraintIndex,
     change::Union{MOI.ScalarConstantChange,MOI.VectorConstantChange},
 )
-    try
+    ret =
         modify_constants(model.constants, rows(model, ci), change.new_constant)
-    catch
-        throw(MOI.ModifyConstraintNotAllowed(ci, change))
+    if ret == _ModifyConstantsNotImplemented()
+        msg = "`modify_constants` is not implemented for `$(typeof(model.constants))`"
+        throw(MOI.ModifyConstraintNotAllowed(ci, change, msg))
     end
     return
 end
@@ -737,6 +738,15 @@ function MOI.modify(
     end
     return
 end
+
+# See https://github.com/jump-dev/MathOptInterface.jl/pull/2976
+# Ideally we would have made it so that `modify_constants` operated like
+# `modify_coefficients` and returned a `Bool` indicating success. But we didn't,
+# so here's a hacky work-around to catch if the method is not implemented
+# without resorting to a try-catch.
+struct _ModifyConstantsNotImplemented end
+
+modify_constants(args...) = _ModifyConstantsNotImplemented()
 
 function modify_constants(
     b::AbstractVector{T},

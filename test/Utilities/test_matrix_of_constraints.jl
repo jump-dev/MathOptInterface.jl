@@ -763,6 +763,31 @@ function test_modify_vectorsets()
     return
 end
 
+function test_modify_constants_bounds_error()
+    model = _new_VectorSets()
+    src = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(src, 2)
+    c = MOI.add_constraint(
+        src,
+        MOI.VectorAffineFunction{Int}(
+            MOI.VectorAffineTerm.(1, MOI.ScalarAffineTerm.(1, x)),
+            [1, 3],
+        ),
+        MOI.SecondOrderCone(2),
+    )
+    index_map = MOI.copy_to(model, src)
+    resize!(model.constraints.constants, 0)
+    @test_throws(
+        BoundsError,
+        MOI.modify(
+            model.constraints,
+            index_map[c],
+            MOI.VectorConstantChange([4, 5]),
+        ),
+    )
+    return
+end
+
 function test_modify_set_constants()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variables(model, 3)
@@ -789,8 +814,13 @@ function test_modify_set_constants()
     index_map = MOI.copy_to(cache, model)
     ci = index_map[p_ref]
     change = MOI.VectorConstantChange([4.0, 5.0, 6.0])
+    constants_type = typeof(cache.constraints.constants)
     @test_throws(
-        MOI.ModifyConstraintNotAllowed(ci, change),
+        MOI.ModifyConstraintNotAllowed(
+            ci,
+            change,
+            "`modify_constants` is not implemented for `$constants_type`",
+        ),
         MOI.modify(cache, ci, change),
     )
     return
