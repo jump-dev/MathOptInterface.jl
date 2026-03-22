@@ -739,6 +739,32 @@ function MOI.modify(
     return
 end
 
+function MOI.modify(
+    model::MatrixOfConstraints,
+    ci::MOI.ConstraintIndex,
+    change::MOI.MultirowChange,
+)
+    r = rows(model, ci)
+    for (output_index, new_coefficient) in change.new_coefficients
+        if !modify_coefficients(
+            model.coefficients,
+            r[output_index],
+            change.variable.value,
+            new_coefficient,
+        )
+            throw(
+                MOI.ModifyConstraintNotAllowed(
+                    ci,
+                    change,
+                    "cannot set a new non-zero coefficient because no entry " *
+                    "exists in the sparse matrix of `MatrixOfConstraints`",
+                ),
+            )
+        end
+    end
+    return
+end
+
 # See https://github.com/jump-dev/MathOptInterface.jl/pull/2976
 # Ideally we would have made it so that `modify_constants` operated like
 # `modify_coefficients` and returned a `Bool` indicating success. But we didn't,

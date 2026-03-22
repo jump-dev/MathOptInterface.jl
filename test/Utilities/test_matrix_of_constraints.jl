@@ -665,6 +665,7 @@ function test_modify_scalar_coefficient_change()
     @test f ≈ 5x + 3y
     MOI.modify(model, c, MOI.ScalarCoefficientChange(y, 0))
     f = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test MOI.Utilities.is_canonical(f)
     @test f ≈ 5x + 0y
     return
 end
@@ -822,6 +823,124 @@ function test_modify_set_constants()
             "`modify_constants` is not implemented for `$constants_type`",
         ),
         MOI.modify(cache, ci, change),
+    )
+    return
+end
+
+function test_modify_multirow_change()
+    model = _new_VectorSets()
+    src = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(src, 2)
+    terms = [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x[1])),
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3, x[2])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(4, x[1])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(5, x[2])),
+    ]
+    func = MOI.VectorAffineFunction(terms, [0, 0])
+    c = MOI.add_constraint(src, func, MOI.Nonnegatives(2))
+    index_map = MOI.copy_to(model, src)
+    ci = index_map[c]
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    @test length(f.terms) == 4
+    x1 = index_map[x[1]]
+    x2 = index_map[x[2]]
+    MOI.modify(model, ci, MOI.MultirowChange(x1, [(1, 7), (2, 8)]))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    coefs = Dict(
+        (t.output_index, t.scalar_term.variable) =>
+            t.scalar_term.coefficient for t in f.terms
+    )
+    @test coefs[(1, x1)] == 7
+    @test coefs[(2, x1)] == 8
+    @test coefs[(1, x2)] == 3
+    @test coefs[(2, x2)] == 5
+    return
+end
+
+function test_modify_multirow_change_single_row()
+    model = _new_VectorSets()
+    src = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(src, 2)
+    terms = [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x[1])),
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3, x[2])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(4, x[1])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(5, x[2])),
+    ]
+    func = MOI.VectorAffineFunction(terms, [0, 0])
+    c = MOI.add_constraint(src, func, MOI.Nonnegatives(2))
+    index_map = MOI.copy_to(model, src)
+    ci = index_map[c]
+    x2 = index_map[x[2]]
+    MOI.modify(model, ci, MOI.MultirowChange(x2, [(2, 9)]))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    coefs = Dict(
+        (t.output_index, t.scalar_term.variable) =>
+            t.scalar_term.coefficient for t in f.terms
+    )
+    x1 = index_map[x[1]]
+    @test coefs[(1, x1)] == 2
+    @test coefs[(2, x1)] == 4
+    @test coefs[(1, x2)] == 3
+    @test coefs[(2, x2)] == 9
+    return
+end
+
+function test_modify_multirow_change_to_zero()
+    model = _new_VectorSets()
+    src = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(src, 2)
+    terms = [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x[1])),
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(3, x[2])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(4, x[1])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(5, x[2])),
+    ]
+    func = MOI.VectorAffineFunction(terms, [0, 0])
+    c = MOI.add_constraint(src, func, MOI.Nonnegatives(2))
+    index_map = MOI.copy_to(model, src)
+    ci = index_map[c]
+    x1 = index_map[x[1]]
+    x2 = index_map[x[2]]
+    MOI.modify(model, ci, MOI.MultirowChange(x1, [(1, 0)]))
+    f = MOI.get(model, MOI.ConstraintFunction(), ci)
+    @test MOI.Utilities.is_canonical(f)
+    @test length(f.terms) == 3
+    coefs = Dict(
+        (t.output_index, t.scalar_term.variable) =>
+            t.scalar_term.coefficient for t in f.terms
+    )
+    @test !haskey(coefs, (1, x1))
+    @test coefs[(2, x1)] == 4
+    @test coefs[(1, x2)] == 3
+    @test coefs[(2, x2)] == 5
+    return
+end
+
+function test_modify_multirow_change_no_entry()
+    model = _new_VectorSets()
+    src = MOI.Utilities.Model{Int}()
+    x = MOI.add_variables(src, 3)
+    terms = [
+        MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(2, x[1])),
+        MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(4, x[1])),
+    ]
+    func = MOI.VectorAffineFunction(terms, [0, 0])
+    c = MOI.add_constraint(src, func, MOI.Nonnegatives(2))
+    index_map = MOI.copy_to(model, src)
+    ci = index_map[c]
+    x3 = index_map[x[3]]
+    MOI.modify(model, ci, MOI.MultirowChange(x3, [(1, 0)]))
+    change = MOI.MultirowChange(x3, [(1, 5)])
+    @test_throws(
+        MOI.ModifyConstraintNotAllowed(
+            ci,
+            change,
+            "cannot set a new non-zero coefficient because no entry " *
+            "exists in the sparse matrix of `MatrixOfConstraints`",
+        ),
+        MOI.modify(model, ci, change),
     )
     return
 end
