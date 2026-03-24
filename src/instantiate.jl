@@ -124,8 +124,6 @@ function _instantiate_and_check(optimizer_constructor::OptimizerWithAttributes)
     return optimizer
 end
 
-struct IfIncrementalInterfaceNotSupported{T} end
-
 """
     instantiate(
         optimizer_constructor,
@@ -179,10 +177,11 @@ function instantiate(
     end
     optimizer = _instantiate_and_check(optimizer_constructor)
     if !isnothing(with_bridge_type) && isnothing(with_cache_type)
-        with_cache_type = T
+        with_cache_type = with_bridge_type
         cache_only_if_incremental_interface_not_supported = true
     end
-    if cache_only_if_incremental_interface_not_supported && !supports_incremental_interface(optimizer)
+    if cache_only_if_incremental_interface_not_supported &&
+       !supports_incremental_interface(optimizer)
         with_cache_type = nothing
         cache = default_cache(optimizer, with_cache_type)
         optimizer = Utilities.CachingOptimizer(cache, optimizer)
