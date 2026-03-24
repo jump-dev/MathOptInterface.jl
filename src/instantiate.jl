@@ -181,8 +181,10 @@ function instantiate(
         cache_only_if_incremental_interface_not_supported = true
     end
     if cache_only_if_incremental_interface_not_supported &&
-       !supports_incremental_interface(optimizer)
-        with_cache_type = nothing
+       supports_incremental_interface(optimizer)
+       with_cache_type = nothing
+   end
+   if !isnothing(with_cache_type)
         cache = default_cache(optimizer, with_cache_type)
         optimizer = Utilities.CachingOptimizer(cache, optimizer)
     end
