@@ -551,6 +551,27 @@ function test_parse_V()
     return
 end
 
+function test_parse_V_constant()
+    model = NL._CacheModel()
+    io = IOBuffer("V2 0 0\nn0\n")
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test length(model.defined_variables) == 1
+    @test model.defined_variables[2] === 0.0
+    return
+end
+
+function test_parse_V_variable()
+    model = NL._CacheModel()
+    NL._resize_variables(model, 2)
+    io = IOBuffer("V1 0 0\nv0\n")
+    seekstart(io)
+    NL._parse_section(io, model)
+    @test length(model.defined_variables) == 1
+    @test model.defined_variables[1] === MOI.VariableIndex(1)
+    return
+end
+
 function test_parse_L()
     model = NL._CacheModel()
     io = IOBuffer()
