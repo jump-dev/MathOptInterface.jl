@@ -17,7 +17,7 @@ mutable struct _CacheModel
     objective::Expr
     sense::MOI.OptimizationSense
     complements_map::Dict{Int,Int}
-    defined_variables::Dict{Int,Expr}
+    defined_variables::Dict{Int,Union{Float64,MOI.VariableIndex,Expr}}
 
     function _CacheModel()
         return new(
@@ -33,7 +33,7 @@ mutable struct _CacheModel
             :(),
             MOI.FEASIBILITY_SENSE,
             Dict{Int,Int}(),
-            Dict{Int,Expr}(),
+            Dict{Int,Union{Float64,MOI.VariableIndex,Expr}}(),
         )
     end
 end
