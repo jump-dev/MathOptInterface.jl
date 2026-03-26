@@ -8,6 +8,7 @@ module TestBenchmarks
 
 using Test
 
+import BenchmarkTools
 import MathOptInterface as MOI
 
 function runtests()

@@ -3,7 +3,6 @@ uuid = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 version = "1.50.0"
 
 [deps]
-BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -17,6 +16,12 @@ Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[weakdeps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+
+[extensions]
+MathOptInterfaceBenchmarkToolsExt = "BenchmarkTools"
 
 [compat]
 BenchmarkTools = "1"
@@ -38,8 +43,9 @@ Test = "1"
 julia = "1.10"
 
 [extras]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
 ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 
 [targets]
-test = ["JSONSchema", "ParallelTestRunner"]
+test = ["BenchmarkTools", "JSONSchema", "ParallelTestRunner"]

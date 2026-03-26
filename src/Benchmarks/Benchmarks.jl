@@ -6,7 +6,6 @@
 
 module Benchmarks
 
-import BenchmarkTools
 import MathOptInterface as MOI
 
 const BENCHMARKS = Dict{String,Function}()
@@ -22,26 +21,24 @@ arguments, and returns a new instance of the optimizer you wish to benchmark.
 
 Use `exclude` to exclude a subset of benchmarks.
 
+## BenchmarkTools
+
+To use this function you must first install and load the `BenchmarkTools.jl`
+package.
+
 ## Example
 
 ```julia
-julia> MOI.Benchmarks.suite() do
-           return GLPK.Optimizer()
-       end
+julia> import BenchmarkTools, GLPK, Gurobi
+
+julia> MOI.Benchmarks.suite(GLPK.Optimizer)
 
 julia> MOI.Benchmarks.suite(; exclude = [r"delete"]) do
            return Gurobi.Optimizer()
        end
 ```
 """
-function suite(new_model::Function; exclude::Vector{Regex} = Regex[])
-    group = BenchmarkTools.BenchmarkGroup()
-    for (name, func) in BENCHMARKS
-        any(occursin.(exclude, Ref(name))) && continue
-        group[name] = BenchmarkTools.@benchmarkable $func($new_model)
-    end
-    return group
-end
+function suite end
 
 """
     create_baseline(suite, name::String; directory::String = ""; kwargs...)
@@ -50,12 +47,17 @@ Run all benchmarks in `suite` and save to files called `name` in `directory`.
 
 Extra `kwargs` are based to `BenchmarkTools.run`.
 
+## BenchmarkTools
+
+To use this function you must first install and load the `BenchmarkTools.jl`
+package.
+
 ## Example
 
 ```julia
-julia> import GLPK
+julia> import BenchmarkTools, GLPK
 
-julia> my_suite = MOI.Benchmarks.suite(() -> GLPK.Optimizer());
+julia> my_suite = MOI.Benchmarks.suite(GLPK.Optimizer);
 
 julia> MOI.Benchmarks.create_baseline(
            my_suite,
@@ -65,21 +67,7 @@ julia> MOI.Benchmarks.create_baseline(
        )
 ```
 """
-function create_baseline(
-    suite::BenchmarkTools.BenchmarkGroup,
-    name::String;
-    directory::String = "",
-    kwargs...,
-)
-    BenchmarkTools.tune!(suite)
-    BenchmarkTools.save(
-        joinpath(directory, name * "_params.json"),
-        BenchmarkTools.params(suite),
-    )
-    results = BenchmarkTools.run(suite; kwargs...)
-    BenchmarkTools.save(joinpath(directory, name * "_baseline.json"), results)
-    return
-end
+function create_baseline end
 
 """
     compare_against_baseline(
@@ -95,12 +83,17 @@ A report summarizing the comparison is written to `report_filename` in
 
 Extra `kwargs` are based to `BenchmarkTools.run`.
 
+## BenchmarkTools
+
+To use this function you must first install and load the `BenchmarkTools.jl`
+package.
+
 ## Example
 
 ```julia
-julia> import GLPK
+julia> import BenchmarkTools, GLPK
 
-julia> my_suite = MOI.Benchmarks.suite(() -> GLPK.Optimizer());
+julia> my_suite = MOI.Benchmarks.suite(GLPK.Optimizer);
 
 julia> MOI.Benchmarks.compare_against_baseline(
            my_suite,
@@ -110,42 +103,7 @@ julia> MOI.Benchmarks.compare_against_baseline(
        )
 ```
 """
-function compare_against_baseline(
-    suite::BenchmarkTools.BenchmarkGroup,
-    name::String;
-    directory::String = "",
-    report_filename::String = "report.txt",
-    kwargs...,
-)
-    params_filename = joinpath(directory, name * "_params.json")
-    baseline_filename = joinpath(directory, name * "_baseline.json")
-    if !isfile(params_filename) || !isfile(baseline_filename)
-        error("You create a baseline with `create_baseline` first.")
-    end
-    BenchmarkTools.loadparams!(
-        suite,
-        BenchmarkTools.load(params_filename)[1],
-        :evals,
-        :samples,
-    )
-    new_results = BenchmarkTools.run(suite; kwargs...)
-    old_results = BenchmarkTools.load(baseline_filename)[1]
-    open(joinpath(directory, report_filename), "w") do io
-        println(stdout, "\n========== Results ==========")
-        println(io, "\n========== Results ==========")
-        for key in keys(new_results)
-            judgement = BenchmarkTools.judge(
-                BenchmarkTools.median(new_results[key]),
-                BenchmarkTools.median(old_results[key]),
-            )
-            println(stdout, "\n", key)
-            println(io, "\n", key)
-            show(stdout, MIME"text/plain"(), judgement)
-            show(io, MIME"text/plain"(), judgement)
-        end
-    end
-    return
-end
+function compare_against_baseline end
 
 ###
 ### Benchmarks

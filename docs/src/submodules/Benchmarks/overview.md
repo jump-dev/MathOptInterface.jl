@@ -9,13 +9,29 @@ DocTestFilters = [r"MathOptInterface|MOI"]
 # The `Benchmarks` submodule
 
 To aid the development of efficient solver wrappers, MathOptInterface provides
-benchmarking capability. Benchmarking a wrapper follows a two-step process.
+a suite of benchmarks in the `MOI.Benchmarks` submodule.
+
+!!! warning
+    To use this submodule you must first install and load
+    [BenchmarkTools.jl](https://github.com/juliaci/benchmarktools.jl).
+    ```julia
+    import Pkg
+    Pkg.add("BenchmarkTools")
+    import BenchmarkTools
+    ```
+
+## Benchmarking a solver wrapper
+
+Benchmarking a wrapper follows a two-step process.
 
 First, prior to making changes, create a baseline for the benchmark results on a
 given benchmark suite as follows:
 
 ```julia
-using SolverPackage  # Replace with your choice of solver.
+# You must load BenchmarkTools.jl to enable MOI.Benchmarks
+import BenchmarkTools
+# Replace `SolverPackage` with your choice of solver
+using SolverPackage
 import MathOptInterface as MOI
 
 suite = MOI.Benchmarks.suite() do
@@ -33,6 +49,7 @@ Second, after making changes to the package, re-run the benchmark suite and
 compare to the prior saved results:
 
 ```julia
+import BenchmarkTools
 using SolverPackage
 import MathOptInterface as MOI
 
