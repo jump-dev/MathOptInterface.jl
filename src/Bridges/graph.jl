@@ -330,7 +330,22 @@ constrained on creation, or as a free variable followed by a constraint.
 """
 function is_variable_edge_best(graph::Graph, node::VariableNode)
     _compute_bellman_ford(graph)
-    return graph.variable_dist[node.index] == _dist(graph, node)
+    # This is the cost of adding a constrained variable
+    dist_as_variable = graph.variable_dist[node.index]
+    # This is the cost of adding the constraint, if we were to add it.
+    dist_as_constraint = INFINITY
+    # If free variables are bridged but the functionize bridge was not
+    # added, constraint_node is `ConstraintNode(INVALID_NODE_INDEX)`.
+    constraint_node = graph.variable_constraint_node[node.index]
+    if constraint_node.index != INVALID_NODE_INDEX
+        dist_as_constraint = _dist(graph, constraint_node)
+        if dist_as_constraint != INFINITY
+            dist_as_constraint += graph.variable_constraint_cost[node.index]
+        end
+    end
+    # We should prefer the variable bridge ONLY if the cost is strictly less
+    # than bridging via constraints.
+    return dist_as_variable < dist_as_constraint
 end
 
 function _updated_dist(

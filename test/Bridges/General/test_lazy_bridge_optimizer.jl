@@ -1306,6 +1306,11 @@ MOI.Utilities.@model(
 
 function _test_constrained_variables_in_RSOC(T)
     bridged = MOI.Bridges.full_bridge_optimizer(NoRSOCModel{T}(), T)
+    # Remove the constraint bridge to force via Variable bridges.
+    MOI.Bridges.remove_bridge(
+        bridged,
+        MOI.Bridges.Constraint.RSOCtoSOCBridge{T},
+    )
     @test MOI.supports_constraint(
         bridged,
         MOI.VectorOfVariables,
