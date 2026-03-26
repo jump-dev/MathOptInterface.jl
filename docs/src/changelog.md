@@ -7,6 +7,12 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.50.1 (March 27, 2026)
+
+### Fixed
+
+- Fixed reading defined variables in `.nl` files that are not expressions (#2980)
+
 ## v1.50.0 (March 23, 2026)
 
 ### Added
