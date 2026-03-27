@@ -177,7 +177,7 @@ function bridge_constraint(
     ]
     sqrt_ret = _compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
     if sqrt_ret === nothing
-        msg = _get_sqrt_error_message(is_defined(CliqueTrees()))
+        msg = _get_sqrt_error_message(is_defined(_CliqueTrees()))
         return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
     end
     for (i, j, v) in zip(sqrt_ret[1], sqrt_ret[2], sqrt_ret[3])
