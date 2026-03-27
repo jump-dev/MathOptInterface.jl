@@ -9,7 +9,6 @@ module TestConstraintQuadToSOC
 using Test
 
 import CliqueTrees
-import LDLFactorizations
 import LinearAlgebra
 import MathOptInterface as MOI
 import SparseArrays
@@ -342,12 +341,13 @@ function test_semidefinite_cholesky_fail()
 end
 
 function test_linear_algebra_compute_sparse_sqrt_edge_cases()
-    ext = MOI.Utilities.LinearAlgebraExt()
+    ext = MOI.Bridges.Constraint.LinearAlgebraExt()
     for A in AbstractMatrix[
         [1.0 0.0; 0.0 2.0],
         [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
     ]
-        I, J, V = MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A))
+        Q = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(ext, Q)
         U = zeros(eltype(A), size(A))
         for (i, j, v) in zip(I, J, V)
             U[i, j] += v
@@ -361,42 +361,13 @@ function test_linear_algebra_compute_sparse_sqrt_edge_cases()
         BigFloat[-1.0 0.0; 0.0 1.0],
         [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
     ]
-        @test MOI.Utilities.compute_sparse_sqrt(ext, A) === nothing
-    end
-    return
-end
-
-function test_ldlfactorizations_compute_sparse_sqrt_edge_cases()
-    ext = MOI.Utilities.LDLFactorizationsExt()
-    for A in AbstractMatrix[
-        [1.0 0.0; 0.0 2.0],
-        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
-        # [1.0 1.0; 1.0 1.0],
-        # [2.0 2.0; 2.0 2.0],
-        # [2.0 0.0; 0.0 0.0],
-    ]
-        I, J, V = MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A))
-        U = zeros(eltype(A), size(A))
-        for (i, j, v) in zip(I, J, V)
-            U[i, j] += v
-        end
-        @test isapprox(A, U' * U; atol = 1e-10)
-    end
-    # Test failures
-    for A in Any[
-        [-1.0 0.0; 0.0 1.0],
-        [0.0 -1.0; -1.0 0.0],
-        BigFloat[-1.0 0.0; 0.0 1.0],
-        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
-    ]
-        @test MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A)) ===
-              nothing
+        @test MOI.Bridges.Constraint.compute_sparse_sqrt(ext, A) === nothing
     end
     return
 end
 
 function test_clique_trees_compute_sparse_sqrt_edge_cases()
-    ext = MOI.Utilities.CliqueTreesExt()
+    ext = MOI.Bridges.Constraint.CliqueTrees()
     for A in AbstractMatrix[
         [1.0 0.0; 0.0 2.0],
         [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
@@ -407,7 +378,8 @@ function test_clique_trees_compute_sparse_sqrt_edge_cases()
         BigFloat[1.0 0.0; 0.0 2.0],
         BigFloat[1.0 1.0; 1.0 1.0],
     ]
-        I, J, V = MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A))
+        Q = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(ext, Q)
         U = zeros(eltype(A), size(A))
         for (i, j, v) in zip(I, J, V)
             U[i, j] += v
@@ -420,8 +392,8 @@ function test_clique_trees_compute_sparse_sqrt_edge_cases()
         [0.0 -1.0; -1.0 0.0],
         BigFloat[-1.0 0.0; 0.0 1.0],
     ]
-        @test MOI.Utilities.compute_sparse_sqrt(ext, SparseArrays.sparse(A)) ===
-              nothing
+        Q = SparseArrays.sparse(A)
+        @test MOI.Bridges.Constraint.compute_sparse_sqrt(ext, Q) === nothing
     end
     return
 end
@@ -437,7 +409,8 @@ function test_compute_sparse_sqrt_edge_cases()
         BigFloat[1.0 0.0; 0.0 2.0],
         BigFloat[1.0 1.0; 1.0 1.0],
     ]
-        I, J, V = MOI.Utilities.compute_sparse_sqrt(SparseArrays.sparse(A))
+        Q = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(Q)
         U = zeros(eltype(A), size(A))
         for (i, j, v) in zip(I, J, V)
             U[i, j] += v
@@ -450,8 +423,8 @@ function test_compute_sparse_sqrt_edge_cases()
         [0.0 -1.0; -1.0 0.0],
         BigFloat[-1.0 0.0; 0.0 1.0],
     ]
-        @test MOI.Utilities.compute_sparse_sqrt(SparseArrays.sparse(A)) ===
-              nothing
+        Q = SparseArrays.sparse(A)
+        @test MOI.Bridges.Constraint.compute_sparse_sqrt(Q) === nothing
     end
     return
 end
@@ -486,6 +459,26 @@ function test_clique_trees_early_zero_pivot()
     g = MOI.get(inner, MOI.ConstraintFunction(), ci)
     # Verify the constraint was created successfully
     @test MOI.output_dimension(g) == 5  # [1, rhs, Ux...]
+    return
+end
+
+function test_clique_trees_error_message()
+    for flag in (true, false)
+        msg = MOI.Bridges.Constraint._get_sqrt_error_message(flag)
+        @test occursin("CliqueTrees", msg) == !flag
+    end
+    return
+end
+
+struct _DummyCliqueTrees <: MOI.Bridges.Constraint.AbstractExt end
+
+function test_is_defined_default_fallback()
+    @test !MOI.Bridges.Constraint.is_defined(_DummyCliqueTrees())
+    Q = ones(2, 2)
+    @test_throws(
+        MethodError,
+        MOI.Bridges.Constraint.compute_sparse_sqrt(_DummyCliqueTrees(), Q),
+    )
     return
 end
 

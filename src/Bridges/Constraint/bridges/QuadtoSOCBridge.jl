@@ -60,6 +60,97 @@ end
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
 
+abstract type AbstractExt end
+
+is_defined(::AbstractExt) = false
+
+struct CliqueTrees <: AbstractExt end
+
+struct LinearAlgebraExt <: AbstractExt end
+
+is_defined(::LinearAlgebraExt) = true
+
+function compute_sparse_sqrt(::LinearAlgebraExt, Q::AbstractMatrix)
+    factor = LinearAlgebra.cholesky(Q; check = false)
+    if !LinearAlgebra.issuccess(factor)
+        return nothing
+    end
+    L, p = SparseArrays.sparse(factor.L), factor.p
+    # We have Q = P' * L * L' * P. We want to find Q = U' * U, so U = L' * P
+    # First, compute L'. Note I and J are reversed
+    J, I, V = SparseArrays.findnz(L)
+    # Then, we want to permute the columns of L'. The rows stay in the same
+    # order.
+    return I, p[J], V
+end
+
+"""
+    compute_sparse_sqrt(Q::AbstractMatrix)
+
+Attempts to compute a sparse square root such that `Q = A' * A`.
+
+## Return value
+
+If successful, this function returns an `(I, J, V)` triplet of the sparse `A`
+matrix.
+
+If unsuccessful, this function returns `nothing`.
+
+## Extensions
+
+By default, this function attempts to use a Cholesky decomposition. If that
+fails, it may optionally use various extension packages.
+
+These extension packages must be loaded before calling `compute_sparse_sqrt`.
+
+The extensions currently supported are:
+
+ * The pivoted Cholesky in `CliqueTrees.jl`
+"""
+function compute_sparse_sqrt(Q::AbstractMatrix)
+    # There's a big try-catch here because Cholesky can fail even if
+    # `check = false`. The try-catch isn't a performance concern because the
+    # alternative is not being able to reformulate the problem.
+    for ext in (LinearAlgebraExt(), CliqueTrees())
+        if is_defined(ext)
+            try
+                if (ret = compute_sparse_sqrt(ext, Q)) !== nothing
+                    return ret
+                end
+            catch
+            end
+        end
+    end
+    return nothing
+end
+
+function _get_sqrt_error_message(is_clique_trees_defined::Bool)
+    msg = """
+    ## SecondOrderCone reformulation
+
+    We tried to reformulate the quadratic constraint into a SecondOrderCone,
+    but this failed because the quadratic constraint is not strongly convex
+    and our matrix factorization failed.
+    """
+    if is_clique_trees_defined
+        return msg
+    end
+    clique_trees = """
+
+    ## CliqueTrees.jl
+
+    If the constraint is convex but not strongly convex, you can work-around
+    this issue by manually installing and loading `CliqueTrees.jl`:
+    ```julia
+    import Pkg; Pkg.add("CliqueTrees")
+    using CliqueTrees
+    ```
+    CliqueTrees.jl is not included by default because it contains a number of
+    heavy dependencies.
+    """
+    return msg * clique_trees
+end
+
 function bridge_constraint(
     ::Type{QuadtoSOCBridge{T}},
     model,
@@ -84,43 +175,9 @@ function bridge_constraint(
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
         ) for term in func.affine_terms
     ]
-    sqrt_ret = MOI.Utilities.compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
+    sqrt_ret = compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
     if sqrt_ret === nothing
-        msg = """
-        ## SecondOrderCone reformulation
-
-        We tried to reformulate the quadratic constraint into a SecondOrderCone,
-        but this failed because the quadratic constraint is not strongly convex
-        and our matrix factorization failed.
-
-        ## Package extensions
-
-        If the constraint is convex but not strongly convex, you can work-around
-        this issue by manually installing and loading one of the following
-        packages.
-
-        ### LDLFactorizations.jl
-
-        Currently active: $(MOI.Utilities.is_defined(MOI.Utilities.LDLFactorizationsExt()))
-
-        ```julia
-        import Pkg; Pkg.add("LDLFactorizations")
-        using LDLFactorizations
-        ```
-        LDLFactorizations.jl is not included by default because it is licensed
-        under the LGPL.
-
-        ### CliqueTrees.jl
-
-        Currently active: $(MOI.Utilities.is_defined(MOI.Utilities.CliqueTreesExt()))
-
-        ```julia
-        import Pkg; Pkg.add("CliqueTrees")
-        using CliqueTrees
-        ```
-        CliqueTrees.jl is not included by default because it contains a number of
-        heavy dependencies.
-        """
+        msg = _get_sqrt_error_message(is_defined(CliqueTrees()))
         return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
     end
     for (i, j, v) in zip(sqrt_ret[1], sqrt_ret[2], sqrt_ret[3])

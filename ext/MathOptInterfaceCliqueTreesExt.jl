@@ -11,10 +11,10 @@ import LinearAlgebra
 import MathOptInterface as MOI
 import SparseArrays
 
-MOI.Utilities.is_defined(::MOI.Utilities.CliqueTreesExt) = true
+MOI.Bridges.Constraint.is_defined(::MOI.Bridges.Constraint.CliqueTrees) = true
 
-function MOI.Utilities.compute_sparse_sqrt(
-    ::MOI.Utilities.CliqueTreesExt,
+function MOI.Bridges.Constraint.compute_sparse_sqrt(
+    ::MOI.Bridges.Constraint.CliqueTrees,
     Q::AbstractMatrix,
 )
     G = LinearAlgebra.cholesky!(
