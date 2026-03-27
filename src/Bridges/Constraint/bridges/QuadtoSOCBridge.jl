@@ -60,17 +60,17 @@ end
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{QuadtoSOCBridge{T},OT}
 
-abstract type AbstractExt end
+abstract type _AbstractExt end
 
-is_defined(::AbstractExt) = false
+is_defined(::_AbstractExt) = false
 
-struct CliqueTrees <: AbstractExt end
+struct _CliqueTrees <: _AbstractExt end
 
-struct LinearAlgebraExt <: AbstractExt end
+struct _LinearAlgebra <: _AbstractExt end
 
-is_defined(::LinearAlgebraExt) = true
+is_defined(::_LinearAlgebra) = true
 
-function compute_sparse_sqrt(::LinearAlgebraExt, Q::AbstractMatrix)
+function _compute_sparse_sqrt(::_LinearAlgebra, Q::AbstractMatrix)
     factor = LinearAlgebra.cholesky(Q; check = false)
     if !LinearAlgebra.issuccess(factor)
         return nothing
@@ -85,7 +85,7 @@ function compute_sparse_sqrt(::LinearAlgebraExt, Q::AbstractMatrix)
 end
 
 """
-    compute_sparse_sqrt(Q::AbstractMatrix)
+    _compute_sparse_sqrt(Q::AbstractMatrix)
 
 Attempts to compute a sparse square root such that `Q = A' * A`.
 
@@ -101,20 +101,20 @@ If unsuccessful, this function returns `nothing`.
 By default, this function attempts to use a Cholesky decomposition. If that
 fails, it may optionally use various extension packages.
 
-These extension packages must be loaded before calling `compute_sparse_sqrt`.
+These extension packages must be loaded before calling `_compute_sparse_sqrt`.
 
 The extensions currently supported are:
 
  * The pivoted Cholesky in `CliqueTrees.jl`
 """
-function compute_sparse_sqrt(Q::AbstractMatrix)
+function _compute_sparse_sqrt(Q::AbstractMatrix)
     # There's a big try-catch here because Cholesky can fail even if
     # `check = false`. The try-catch isn't a performance concern because the
     # alternative is not being able to reformulate the problem.
-    for ext in (LinearAlgebraExt(), CliqueTrees())
+    for ext in (_LinearAlgebra(), _CliqueTrees())
         if is_defined(ext)
             try
-                if (ret = compute_sparse_sqrt(ext, Q)) !== nothing
+                if (ret = _compute_sparse_sqrt(ext, Q)) !== nothing
                     return ret
                 end
             catch
@@ -175,7 +175,7 @@ function bridge_constraint(
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
         ) for term in func.affine_terms
     ]
-    sqrt_ret = compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
+    sqrt_ret = _compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
     if sqrt_ret === nothing
         msg = _get_sqrt_error_message(is_defined(CliqueTrees()))
         return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
