@@ -6,11 +6,12 @@
 
 module TestConstraintQuadToSOC
 
-import LinearAlgebra
-import SparseArrays
 using Test
 
+import CliqueTrees
+import LinearAlgebra
 import MathOptInterface as MOI
+import SparseArrays
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -26,32 +27,17 @@ end
 include("../utilities.jl")
 
 function test_error_for_nonconvex_quadratic_constraints()
-    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
-    bridged_mock = MOI.Bridges.Constraint.QuadtoSOC{Float64}(mock)
-    x = MOI.add_variable(bridged_mock)
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variable(model)
+    F = MOI.ScalarQuadraticFunction{Float64}
     @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constraint(
-            bridged_mock,
-            MOI.ScalarQuadraticFunction(
-                [MOI.ScalarQuadraticTerm(1.0, x, x)],
-                MOI.ScalarAffineTerm{Float64}[],
-                0.0,
-            ),
-            MOI.GreaterThan(0.0),
-        )
+        MOI.UnsupportedConstraint{F,MOI.GreaterThan{Float64}},
+        MOI.add_constraint(model, 1.0 * x * x, MOI.GreaterThan(0.0))
     )
     @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constraint(
-            bridged_mock,
-            MOI.ScalarQuadraticFunction(
-                [MOI.ScalarQuadraticTerm(-1.0, x, x)],
-                MOI.ScalarAffineTerm{Float64}[],
-                0.0,
-            ),
-            MOI.LessThan(0.0),
-        )
+        MOI.UnsupportedConstraint{F,MOI.LessThan{Float64}},
+        MOI.add_constraint(model, -1.0 * x * x, MOI.LessThan(0.0))
     )
     return
 end
@@ -344,32 +330,24 @@ function test_semidefinite_cholesky_fail()
     model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
     x = MOI.add_variables(model, 2)
     f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
-    @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constraint(model, f, MOI.LessThan(1.0)),
-    )
-    # F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
-    # ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
-    # g = MOI.get(inner, MOI.ConstraintFunction(), ci)
-    # y = MOI.get(inner, MOI.ListOfVariableIndices())
-    # sum_y = 1.0 * y[1] + 1.0 * y[2]
-    # @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    sum_y = 1.0 * y[1] + 1.0 * y[2]
+    @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
     return
 end
 
-function test_compute_sparse_sqrt_edge_cases()
-    for A in Any[
-        # Trivial Cholesky
+function test_linear_algebra_compute_sparse_sqrt_edge_cases()
+    ext = MOI.Bridges.Constraint._LinearAlgebra()
+    for A in AbstractMatrix[
         [1.0 0.0; 0.0 2.0],
-        # Cholesky works, with pivoting
         [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
-        # Cholesky succeeds, even though 0 eigen value
-        [2.0 2.0; 2.0 2.0],
     ]
-        B = SparseArrays.sparse(A)
-        f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
-        s = MOI.GreaterThan(zero(eltype(A)))
-        I, J, V = MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s)
+        Q = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint._compute_sparse_sqrt(ext, Q)
         U = zeros(eltype(A), size(A))
         for (i, j, v) in zip(I, J, V)
             U[i, j] += v
@@ -379,23 +357,128 @@ function test_compute_sparse_sqrt_edge_cases()
     # Test failures
     for A in Any[
         [-1.0 0.0; 0.0 1.0],
-        [1.0 1.0; 1.0 1.0],
-        [2.0 0.0; 0.0 0.0],
-        # Found from test_quadratic_nonconvex_constraint_basic
         [0.0 -1.0; -1.0 0.0],
-        # Different element type. We could potentially make this work in future,
-        # but it first requires https://github.com/JuliaSmoothOptimizers/LDLFactorizations.jl/pull/142
         BigFloat[-1.0 0.0; 0.0 1.0],
+        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
+    ]
+        @test MOI.Bridges.Constraint._compute_sparse_sqrt(ext, A) === nothing
+    end
+    return
+end
+
+function test_clique_trees_compute_sparse_sqrt_edge_cases()
+    ext = MOI.Bridges.Constraint._CliqueTrees()
+    for A in AbstractMatrix[
+        [1.0 0.0; 0.0 2.0],
+        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
+        [1.0 1.0; 1.0 1.0],
+        [2.0 2.0; 2.0 2.0],
+        [2.0 0.0; 0.0 0.0],
+        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
+        BigFloat[1.0 0.0; 0.0 2.0],
         BigFloat[1.0 1.0; 1.0 1.0],
     ]
-        B = SparseArrays.sparse(A)
-        f = zero(MOI.ScalarQuadraticFunction{eltype(A)})
-        s = MOI.GreaterThan(zero(eltype(A)))
-        @test_throws(
-            MOI.UnsupportedConstraint{typeof(f),typeof(s)},
-            MOI.Bridges.Constraint.compute_sparse_sqrt(B, f, s),
-        )
+        Q = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint._compute_sparse_sqrt(ext, Q)
+        U = zeros(eltype(A), size(A))
+        for (i, j, v) in zip(I, J, V)
+            U[i, j] += v
+        end
+        @test isapprox(A, U' * U; atol = 1e-10)
     end
+    # Test failures
+    for A in Any[
+        [-1.0 0.0; 0.0 1.0],
+        [0.0 -1.0; -1.0 0.0],
+        BigFloat[-1.0 0.0; 0.0 1.0],
+    ]
+        Q = SparseArrays.sparse(A)
+        @test MOI.Bridges.Constraint._compute_sparse_sqrt(ext, Q) === nothing
+    end
+    return
+end
+
+function test_compute_sparse_sqrt_edge_cases()
+    for A in AbstractMatrix[
+        [1.0 0.0; 0.0 2.0],
+        [1.0 0.0 1.0; 0.0 1.0 1.0; 1.0 1.0 3.0],
+        [1.0 1.0; 1.0 1.0],
+        [2.0 2.0; 2.0 2.0],
+        [2.0 0.0; 0.0 0.0],
+        [1.0 1.0 0.0; 1.0 1.0 0.0; 0.0 0.0 1.0],
+        BigFloat[1.0 0.0; 0.0 2.0],
+        BigFloat[1.0 1.0; 1.0 1.0],
+    ]
+        Q = SparseArrays.sparse(A)
+        I, J, V = MOI.Bridges.Constraint._compute_sparse_sqrt(Q)
+        U = zeros(eltype(A), size(A))
+        for (i, j, v) in zip(I, J, V)
+            U[i, j] += v
+        end
+        @test isapprox(A, U' * U; atol = 1e-10)
+    end
+    # Test failures
+    for A in Any[
+        [-1.0 0.0; 0.0 1.0],
+        [0.0 -1.0; -1.0 0.0],
+        BigFloat[-1.0 0.0; 0.0 1.0],
+    ]
+        Q = SparseArrays.sparse(A)
+        @test MOI.Bridges.Constraint._compute_sparse_sqrt(Q) === nothing
+    end
+    return
+end
+
+function test_clique_trees_semidefinite_cholesky_fail()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    y = MOI.get(inner, MOI.ListOfVariableIndices())
+    sum_y = 1.0 * y[1] + 1.0 * y[2]
+    @test isapprox(g, MOI.Utilities.vectorize([1.0, 1.0, sum_y, 0.0]))
+    return
+end
+
+function test_clique_trees_early_zero_pivot()
+    # This matrix has an early zero pivot that causes LDLFactorizations to
+    # halt early, but CliqueTrees' pivoted Cholesky handles it correctly.
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    # (x[1] + x[2])^2 + x[3]^2 = x[1]^2 + 2*x[1]*x[2] + x[2]^2 + x[3]^2
+    # Q = [1 1 0; 1 1 0; 0 0 1]
+    f = sum(0.5 * x[i] * x[i] for i in 1:3) + 1.0 * x[1] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    # Verify the constraint was created successfully
+    @test MOI.output_dimension(g) == 5  # [1, rhs, Ux...]
+    return
+end
+
+function test_clique_trees_error_message()
+    for flag in (true, false)
+        msg = MOI.Bridges.Constraint._get_sqrt_error_message(flag)
+        @test occursin("CliqueTrees", msg) == !flag
+    end
+    return
+end
+
+struct _DummyCliqueTrees <: MOI.Bridges.Constraint._AbstractExt end
+
+function test_is_defined_default_fallback()
+    @test !MOI.Bridges.Constraint.is_defined(_DummyCliqueTrees())
+    Q = ones(2, 2)
+    @test_throws(
+        MethodError,
+        MOI.Bridges.Constraint._compute_sparse_sqrt(_DummyCliqueTrees(), Q),
+    )
     return
 end
 
