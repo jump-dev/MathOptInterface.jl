@@ -5,6 +5,29 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 """
+    QuadtoSOCSquareRoot <: MOI.AbstractConstraintAttribute
+
+Constraint attribute to override the square root method used by
+[`QuadtoSOCBridge`](@ref) for a specific quadratic constraint.
+
+When set, this takes precedence over the default behavior of trying all
+available methods. When not set, [`MOI.get`](@ref) returns `nothing`.
+
+## Example
+
+```julia
+c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+MOI.set(
+    model,
+    MOI.Bridges.Constraint.QuadtoSOCSquareRoot(),
+    c,
+    MOI.Bridges.Constraint._LinearAlgebra(),
+)
+```
+"""
+struct QuadtoSOCSquareRoot <: MOI.AbstractConstraintAttribute end
+
+"""
     QuadtoSOCBridge{T} <: Bridges.Constraint.AbstractBridge
 
 `QuadtoSOCBridge` converts quadratic inequalities
@@ -46,15 +69,22 @@ Therefore, `QuadtoSOCBridge` implements the following reformulations:
 
 This bridge errors if `Q` is not positive definite.
 """
-struct QuadtoSOCBridge{T} <: AbstractBridge
-    soc::MOI.ConstraintIndex{
-        MOI.VectorAffineFunction{T},
-        MOI.RotatedSecondOrderCone,
+mutable struct QuadtoSOCBridge{T} <: AbstractBridge
+    soc::Union{
+        Nothing,
+        MOI.ConstraintIndex{
+            MOI.VectorAffineFunction{T},
+            MOI.RotatedSecondOrderCone,
+        },
     }
     dimension::Int  # dimension of the SOC constraint
     less_than::Bool # whether the constraint was ≤ or ≥
     set_constant::T # the constant that was on the set
     index_to_variable_map::Vector{MOI.VariableIndex}
+    # Stored for final_touch
+    func::MOI.ScalarQuadraticFunction{T}
+    set::Union{MOI.LessThan{T},MOI.GreaterThan{T}}
+    method::Union{Nothing,_AbstractExt}
 end
 
 const QuadtoSOC{T,OT<:MOI.ModelLike} =
@@ -157,13 +187,63 @@ function bridge_constraint(
     func::MOI.ScalarQuadraticFunction{T},
     set::Union{MOI.LessThan{T},MOI.GreaterThan{T}},
 ) where {T}
+    # Delay reformulation until `final_touch` so that the
+    # `QuadtoSOCSquareRoot` attribute can override the method first.
     less_than = set isa MOI.LessThan{T}
+    set_constant = MOI.constant(set)
+    MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
+    return QuadtoSOCBridge{T}(
+        nothing,
+        0,
+        less_than,
+        set_constant,
+        MOI.VariableIndex[],
+        func,
+        set,
+        nothing,
+    )
+end
+
+MOI.supports(::MOI.ModelLike, ::QuadtoSOCSquareRoot, ::Type{<:QuadtoSOCBridge}) =
+    true
+
+function MOI.set(
+    ::MOI.ModelLike,
+    ::QuadtoSOCSquareRoot,
+    bridge::QuadtoSOCBridge,
+    value::Union{Nothing,_AbstractExt},
+)
+    bridge.method = value
+    return
+end
+
+function MOI.get(
+    ::MOI.ModelLike,
+    ::QuadtoSOCSquareRoot,
+    bridge::QuadtoSOCBridge,
+)
+    return bridge.method
+end
+
+MOI.Bridges.needs_final_touch(::QuadtoSOCBridge) = true
+
+function MOI.Bridges.final_touch(
+    bridge::QuadtoSOCBridge{T},
+    model::MOI.ModelLike,
+) where {T}
+    if bridge.soc !== nothing
+        return
+    end
+    func = bridge.func
+    set = bridge.set
+    less_than = bridge.less_than
     scale = less_than ? -1 : 1
     Q, index_to_variable_map =
         _matrix_from_quadratic_terms(func.quadratic_terms)
     if !less_than
         LinearAlgebra.rmul!(Q, -1)
     end
+    bridge.index_to_variable_map = index_to_variable_map
     # Construct the VectorAffineFunction. We're aiming for:
     #  |          1  |
     #  | -a^T x + ub | ∈ RotatedSecondOrderCone()
@@ -175,10 +255,15 @@ function bridge_constraint(
             MOI.ScalarAffineTerm(scale * term.coefficient, term.variable),
         ) for term in func.affine_terms
     ]
-    sqrt_ret = _compute_sparse_sqrt(LinearAlgebra.Symmetric(Q))
+    Q_sym = LinearAlgebra.Symmetric(Q)
+    sqrt_ret = if bridge.method !== nothing
+        _compute_sparse_sqrt(bridge.method, Q_sym)
+    else
+        _compute_sparse_sqrt(Q_sym)
+    end
     if sqrt_ret === nothing
         msg = _get_sqrt_error_message(is_defined(_CliqueTrees()))
-        return throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
+        throw(MOI.UnsupportedConstraint{typeof(func),typeof(set)}(msg))
     end
     for (i, j, v) in zip(sqrt_ret[1], sqrt_ret[2], sqrt_ret[3])
         push!(
@@ -190,19 +275,13 @@ function bridge_constraint(
         )
     end
     # This is the [1, ub, 0] vector...
-    set_constant = MOI.constant(set)
-    MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
+    set_constant = bridge.set_constant
     vector_constant = vcat(one(T), -scale * set_constant, zeros(T, size(Q, 1)))
     f = MOI.VectorAffineFunction(vector_terms, vector_constant)
-    dimension = MOI.output_dimension(f)
-    soc = MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(dimension))
-    return QuadtoSOCBridge(
-        soc,
-        dimension,
-        less_than,
-        set_constant,
-        index_to_variable_map,
-    )
+    bridge.dimension = MOI.output_dimension(f)
+    bridge.soc =
+        MOI.add_constraint(model, f, MOI.RotatedSecondOrderCone(bridge.dimension))
+    return
 end
 
 function _matrix_from_quadratic_terms(
@@ -267,13 +346,13 @@ end
 
 # Attributes, Bridge acting as a model
 function MOI.get(
-    ::QuadtoSOCBridge{T},
+    bridge::QuadtoSOCBridge{T},
     ::MOI.NumberOfConstraints{
         MOI.VectorAffineFunction{T},
         MOI.RotatedSecondOrderCone,
     },
 )::Int64 where {T}
-    return 1
+    return bridge.soc === nothing ? 0 : 1
 end
 
 function MOI.get(
@@ -283,12 +362,21 @@ function MOI.get(
         MOI.RotatedSecondOrderCone,
     },
 ) where {T}
+    if bridge.soc === nothing
+        return MOI.ConstraintIndex{
+            MOI.VectorAffineFunction{T},
+            MOI.RotatedSecondOrderCone,
+        }[]
+    end
     return [bridge.soc]
 end
 
 # References
 function MOI.delete(model::MOI.ModelLike, bridge::QuadtoSOCBridge)
-    MOI.delete(model, bridge.soc)
+    if bridge.soc !== nothing
+        MOI.delete(model, bridge.soc)
+        bridge.soc = nothing
+    end
     return
 end
 
@@ -485,6 +573,9 @@ function MOI.get(
     attr::MOI.ConstraintFunction,
     b::QuadtoSOCBridge{T},
 ) where {T}
+    if b.soc === nothing
+        return copy(b.func)
+    end
     f = MOI.get(model, attr, b.soc)
     fs = MOI.Utilities.eachscalar(f)
     q = zero(MOI.ScalarQuadraticFunction{T})

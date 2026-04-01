@@ -31,13 +31,19 @@ function test_error_for_nonconvex_quadratic_constraints()
     model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
     x = MOI.add_variable(model)
     F = MOI.ScalarQuadraticFunction{Float64}
+    # Error is now thrown at final_touch, not add_constraint
+    MOI.add_constraint(model, 1.0 * x * x, MOI.GreaterThan(0.0))
     @test_throws(
         MOI.UnsupportedConstraint{F,MOI.GreaterThan{Float64}},
-        MOI.add_constraint(model, 1.0 * x * x, MOI.GreaterThan(0.0))
+        MOI.Bridges.final_touch(model),
     )
+    MOI.empty!(model)
+    MOI.add_variable(model)
+    x = MOI.get(model, MOI.ListOfVariableIndices())[1]
+    MOI.add_constraint(model, -1.0 * x * x, MOI.LessThan(0.0))
     @test_throws(
         MOI.UnsupportedConstraint{F,MOI.LessThan{Float64}},
-        MOI.add_constraint(model, -1.0 * x * x, MOI.LessThan(0.0))
+        MOI.Bridges.final_touch(model),
     )
     return
 end
@@ -65,6 +71,7 @@ function test_quadratic_constraints_with_2_variables()
         ),
     )
     MOI.Test.test_constraint_qcp_duplicate_off_diagonal(bridged_mock, config)
+    MOI.Bridges.final_touch(bridged_mock)
     ci = first(
         MOI.get(
             mock,
@@ -164,6 +171,7 @@ function test_fill_reducing_permutation()
     Q = Float64[2 1 1; 1 2 0; 1 0 2]
     f = 0.5 * x' * Q * x
     MOI.add_constraint(bridge, f, MOI.LessThan(2.0))
+    MOI.Bridges.final_touch(bridge)
     indices = MOI.get(
         model,
         MOI.ListOfConstraintIndices{
@@ -331,6 +339,7 @@ function test_semidefinite_cholesky_fail()
     x = MOI.add_variables(model, 2)
     f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    MOI.Bridges.final_touch(model)
     F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
     ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
     g = MOI.get(inner, MOI.ConstraintFunction(), ci)
@@ -435,6 +444,7 @@ function test_clique_trees_semidefinite_cholesky_fail()
     x = MOI.add_variables(model, 2)
     f = 0.5 * x[1] * x[1] + 1.0 * x[1] * x[2] + 0.5 * x[2] * x[2]
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    MOI.Bridges.final_touch(model)
     F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
     ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
     g = MOI.get(inner, MOI.ConstraintFunction(), ci)
@@ -454,6 +464,7 @@ function test_clique_trees_early_zero_pivot()
     # Q = [1 1 0; 1 1 0; 0 0 1]
     f = sum(0.5 * x[i] * x[i] for i in 1:3) + 1.0 * x[1] * x[2]
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    MOI.Bridges.final_touch(model)
     F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
     ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
     g = MOI.get(inner, MOI.ConstraintFunction(), ci)
@@ -479,6 +490,68 @@ function test_is_defined_default_fallback()
         MethodError,
         MOI.Bridges.Constraint._compute_sparse_sqrt(_DummyCliqueTrees(), Q),
     )
+    return
+end
+
+function test_quad_to_soc_square_root_attribute()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    attr = MOI.Bridges.Constraint.QuadtoSOCSquareRoot()
+    F = MOI.ScalarQuadraticFunction{Float64}
+    S = MOI.LessThan{Float64}
+    @test MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+    # Default is nothing
+    @test MOI.get(model, attr, c) === nothing
+    # Set to _LinearAlgebra
+    la = MOI.Bridges.Constraint._LinearAlgebra()
+    MOI.set(model, attr, c, la)
+    @test MOI.get(model, attr, c) === la
+    # final_touch uses the specified method
+    MOI.Bridges.final_touch(model)
+    F2, S2 = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F2,S2}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    @test MOI.output_dimension(g) == 4  # [1, rhs, Ux...]
+    return
+end
+
+function test_quad_to_soc_square_root_attribute_clique_trees()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    attr = MOI.Bridges.Constraint.QuadtoSOCSquareRoot()
+    ct = MOI.Bridges.Constraint._CliqueTrees()
+    MOI.set(model, attr, c, ct)
+    @test MOI.get(model, attr, c) === ct
+    MOI.Bridges.final_touch(model)
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(inner, MOI.ConstraintFunction(), ci)
+    @test MOI.output_dimension(g) == 4
+    return
+end
+
+function test_quad_to_soc_square_root_attribute_reset()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.QuadtoSOC{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    f = 1.0 * x[1] * x[1] + 1.0 * x[2] * x[2]
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    attr = MOI.Bridges.Constraint.QuadtoSOCSquareRoot()
+    la = MOI.Bridges.Constraint._LinearAlgebra()
+    MOI.set(model, attr, c, la)
+    # Reset to nothing (default behavior)
+    MOI.set(model, attr, c, nothing)
+    @test MOI.get(model, attr, c) === nothing
+    MOI.Bridges.final_touch(model)
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.RotatedSecondOrderCone
+    ci = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    @test ci isa MOI.ConstraintIndex
     return
 end
 
