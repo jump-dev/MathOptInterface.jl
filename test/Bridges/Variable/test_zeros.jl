@@ -51,6 +51,7 @@ function test_bridge_error_handler()
         ErrorException("abc") => false,
         MOI.GetAttributeNotAllowed(MOI.ObjectiveSense()) => false,
         MOI.GetAttributeNotAllowed(MOI.ConstraintFunction()) => true,
+        MOI.GetAttributeNotAllowed(MOI.ConstraintSet()) => true,
     )
         @test_throws err try
             @assert false

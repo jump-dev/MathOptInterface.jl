@@ -146,7 +146,7 @@ function MOI.get(
     bridge::AbstractBridge,
 )
     message = _attribute_error_message(attr, typeof(bridge), "accessing")
-    return throw(ArgumentError(message))
+    return throw(MOI.GetAttributeNotAllowed(attr, message))
 end
 
 function MOI.get(
