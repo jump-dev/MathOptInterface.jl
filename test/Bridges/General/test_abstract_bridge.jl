@@ -71,10 +71,7 @@ function MOI.get(
     return [bridge.ci]
 end
 
-function MOI.delete(
-    model::MOI.ModelLike,
-    bridge::_NoUnbridgeTestBridge,
-)
+function MOI.delete(model::MOI.ModelLike, bridge::_NoUnbridgeTestBridge)
     MOI.delete(model, bridge.ci)
     return
 end
