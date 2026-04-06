@@ -1086,9 +1086,27 @@ end
 
 _add_to_function(::ScalarAffineFunction, ::Any) = nothing
 
-# This is a very rough-and-ready conversion function that only works for very
-# basic expressions, such as those created by
-# `convert(ScalarNonlinearFunction, f)`.
+function _to_scalar_affine(::Type{ScalarAffineFunction{T}}, x::Real) where {T}
+    return ScalarAffineFunction{T}(ScalarAffineTerm{T}[], T(x))
+end
+
+function _to_scalar_affine(
+    ::Type{ScalarAffineFunction{T}},
+    x::VariableIndex,
+) where {T}
+    return ScalarAffineFunction{T}(x)
+end
+
+function _to_scalar_affine(
+    ::Type{ScalarAffineFunction{T}},
+    f::ScalarNonlinearFunction,
+) where {T}
+    return convert(ScalarAffineFunction{T}, f)
+end
+
+# This conversion function handles expressions created by
+# `convert(ScalarNonlinearFunction, f)` and also expressions using `:+`, `:-`,
+# and `:*` operators with affine structure.
 function Base.convert(
     ::Type{ScalarAffineFunction{T}},
     f::ScalarNonlinearFunction,
@@ -1096,6 +1114,15 @@ function Base.convert(
     if f.head == :* && length(f.args) == 2
         term = convert(ScalarAffineTerm{T}, f)
         return ScalarAffineFunction{T}([term], zero(T))
+    end
+    if f.head == :- && length(f.args) == 2
+        lhs = _to_scalar_affine(ScalarAffineFunction{T}, f.args[1])
+        rhs = _to_scalar_affine(ScalarAffineFunction{T}, f.args[2])
+        return Utilities.operate(-, T, lhs, rhs)
+    end
+    if f.head == :- && length(f.args) == 1
+        inner = _to_scalar_affine(ScalarAffineFunction{T}, f.args[1])
+        return Utilities.operate(-, T, inner)
     end
     if f.head != :+
         throw(InexactError(:convert, ScalarAffineFunction{T}, f))

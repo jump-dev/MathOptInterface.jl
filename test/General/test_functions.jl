@@ -371,6 +371,17 @@ function test_convert_ScalarNonlinearFunction_ScalarAffineFunction()
             convert(MOI.ScalarAffineFunction{Float64}, f_error),
         )
     end
+    # Test :- support (binary subtraction and unary negation)
+    f_sub = MOI.ScalarNonlinearFunction(:-, Any[x, 1.0])
+    @test convert(MOI.ScalarAffineFunction{Float64}, f_sub) ≈ 1.0 * x - 1.0
+    f_sub2 = MOI.ScalarNonlinearFunction(
+        :-,
+        Any[MOI.ScalarNonlinearFunction(:+, Any[x, y]), 2.0],
+    )
+    @test convert(MOI.ScalarAffineFunction{Float64}, f_sub2) ≈
+          1.0 * x + 1.0 * y - 2.0
+    f_neg = MOI.ScalarNonlinearFunction(:-, Any[x])
+    @test convert(MOI.ScalarAffineFunction{Float64}, f_neg) ≈ -1.0 * x
     return
 end
 
