@@ -239,6 +239,7 @@ _runtests_error_handler(err, ::Bool) = rethrow(err)
 function _runtests_error_handler(
     err::Union{
         MOI.GetAttributeNotAllowed{MOI.ConstraintFunction},
+        MOI.GetAttributeNotAllowed{MOI.ConstraintSet},
         MOI.GetAttributeNotAllowed{MOI.ConstraintPrimalStart},
     },
     cannot_unbridge::Bool,
