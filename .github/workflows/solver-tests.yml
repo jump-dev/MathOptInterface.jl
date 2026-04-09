@@ -167,6 +167,16 @@ jobs:
            pip3 install torch_geometric
            echo "JULIA_CONDAPKG_BACKEND=Null" >> $GITHUB_ENV
            echo "JULIA_PYTHONCALL_EXE=python3" >> $GITHUB_ENV
+      # Setup MosekTools.jl
+      - name: Setup MosekTools
+        if: ${{ matrix.package == 'MosekTools' }}
+        shell: bash
+        run: |
+          {
+            echo "MOSEKLM_LICENSE_FILE<<EOF"
+            echo "${{ secrets.MOSEK_LICENSE }}"
+            echo "EOF"
+          } >> $GITHUB_ENV
       # Setup Xpress.jl
       - name: Setup Xpress
         if: ${{ matrix.package == 'Xpress' }}
