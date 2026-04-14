@@ -203,3 +203,21 @@ Additional solvers put additional restrictions:
    but they will normalize to the legal letters on write
 
 **We choose to allow any valid UTF-8 names.**
+
+### Brackets in identifiers
+
+In the CPLEX specification, `[]` are not allowed in identifiers. However, they
+are fairly common in names because of naming conventions like `x[1,2]`.
+Supporting `[` in an identifier when it is not the starting character is fairly
+trivial since it can't be ambiguous with any other syntax. However, deciding
+whether `]` is part of an idenfitier or represents a closing bracket from a
+quadratic term is quite tricky.
+
+Consider the case: `[ x * x] + y]`. Is that the valid `"x"^2 + "y]"` or the
+corrupt `"x" * "x]" + "y"` where we're missing a multiplying variable on `"y"`?
+
+Gurobi supports `[]` in identifiers because the require identifiers to be
+separated by whitespace. Since we allow juxtaposed tokens without whitespace, it
+follows that we cannot easily support `]` in identifiers.
+
+**We choose not to allow `[]` in identifiers.**
