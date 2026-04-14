@@ -210,7 +210,7 @@ In the CPLEX specification, `[]` are not allowed in identifiers. However, they
 are fairly common in names because of naming conventions like `x[1,2]`.
 Supporting `[` in an identifier when it is not the starting character is fairly
 trivial since it can't be ambiguous with any other syntax. However, deciding
-whether `]` is part of an idenfitier or represents a closing bracket from a
+whether `]` is part of an identifier or represents a closing bracket from a
 quadratic term is quite tricky.
 
 Consider the case: `[ x * x] + y]`. Is that the valid `"x"^2 + "y]"` or the
