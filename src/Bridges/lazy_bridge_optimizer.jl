@@ -293,8 +293,17 @@ function node(
             )
         end
     else
-        # We add `+1` as we treat constrained variables as constraints.
-        set_variable_constraint_node(b.graph, variable_node, node(b, F, S), 1)
+        # Add a node to the graph so we can convert a constrained variable into
+        # a free variable plus a constraint. In MOI v1.50 and earlier, the cost
+        # associated with this node was +1. However, practice has shown that we
+        # want to encourage constraint bridges over variable bridges, and
+        # penalizing the switch from constrained variable to constraint with an
+        # additional +1 meant we often used a bridge like Variable.Vectorize.
+        # With +0 here, it's now better to use Constraint.Vectorize.
+        #
+        # For more details, see:
+        # https://github.com/jump-dev/ParametricOptInterface.jl/issues/201
+        set_variable_constraint_node(b.graph, variable_node, node(b, F, S), +0)
     end
     for (i, BT) in enumerate(b.variable_bridge_types)
         if Variable.supports_constrained_variable(BT, S)
