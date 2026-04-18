@@ -2866,6 +2866,33 @@ function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
     return
 end
 
+"""
+    LazyScalarSet(set::AbstractScalarSet) <: AbstractScalarSet
+
+A set that wraps an inner `set` with a hint that the constraint can be treated
+lazily by the solver.
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.add_constraint(
+           model,
+           1.0 * x,
+           MOI.LazyScalarSet(MOI.GreaterThan(1.0)),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.ScalarAffineFunction{Float64}, MathOptInterface.LazyScalarSet{MathOptInterface.GreaterThan{Float64}}}(1)
+```
+"""
+struct LazyScalarSet{S<:AbstractScalarSet} <: AbstractScalarSet
+    set::S
+end
+
+Base.copy(set::LazyScalarSet) = LazyScalarSet(copy(set.set))
+
 # TODO(odow): these are not necessarily isbits. They may not be safe to return
 # without copying if the number is BigFloat, for example.
 function Base.copy(

@@ -90,6 +90,16 @@ end
 
 supports_shift_constant(::Type{<:MOI.Parameter}) = true
 
+function supports_shift_constant(
+    ::Type{MOI.LazyScalarSet{S}},
+) where {S<:MOI.AbstractScalarSet}
+    return supports_shift_constant(S)
+end
+
+function shift_constant(set::MOI.LazyScalarSet, constant)
+    return MOI.LazyScalarSet(shift_constant(set.set, constant))
+end
+
 """
     ScalarLinearSet{T}
 

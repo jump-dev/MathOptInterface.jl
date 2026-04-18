@@ -60,6 +60,7 @@ The one-dimensional set types implemented in MathOptInterface.jl are:
 | [`ZeroOne()`](@ref)            | ``\{ 0, 1 \}``                         |
 | [`Semicontinuous(l, u)`](@ref) | ``\{ 0\} \cup [l, u]``                 |
 | [`Semiinteger(l, u)`](@ref)    | ``\{ 0\} \cup \{l,l+1,\ldots,u-1,u\}`` |
+| [`LazyScalarSet(set)`](@ref)    | ``set``                               |
 
 ## Vector cones
 
