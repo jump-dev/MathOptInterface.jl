@@ -981,9 +981,6 @@ function _add_bound(
 end
 
 function _add_bound(cache::_ReadCache, x::MOI.VariableIndex, set::MOI.LessThan)
-    if set.upper < 0
-        delete!(cache.variable_with_default_bound, x)
-    end
     if isfinite(set.upper)
         MOI.add_constraint(cache.model, x, set)
     end
