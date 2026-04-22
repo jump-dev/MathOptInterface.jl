@@ -26,7 +26,7 @@ MathOptInterfaceBenchmarkToolsExt = "BenchmarkTools"
 MathOptInterfaceCliqueTreesExt = "CliqueTrees"
 
 [compat]
-BenchmarkTools = "1"
+BenchmarkTools = "1.0.1"
 CliqueTrees = "1.17"
 CodecBzip2 = "0.6, 0.7, 0.8"
 CodecZlib = "0.6, 0.7"
