@@ -626,7 +626,7 @@ function test_read_model2()
     ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Interval{Float64}}(2)
     @test !MOI.is_valid(model, ci)
     @test MOI.get(model, MOI.VariableName(), MOI.VariableIndex(8)) == "V8"
-    @test model.variables.lower[8] == -Inf
+    @test model.variables.lower[8] == 0.0
     @test model.variables.upper[8] == -3
     obj_type = MOI.get(model, MOI.ObjectiveFunctionType())
     obj_func = MOI.get(model, MOI.ObjectiveFunction{obj_type}())
@@ -895,17 +895,17 @@ function test_reading_bounds()
     # Test upper bound
     _test_round_trip("x <= 1", "Bounds\n0 <= x <= 1\nEnd")
     _test_round_trip("x <= 0", "Bounds\nx = 0\nEnd")
-    _test_round_trip("x <= -1", "Bounds\n-infinity <= x <= -1\nEnd")
+    _test_round_trip("x <= -1", "Bounds\n0 <= x <= -1\nEnd")
     _test_round_trip("x < 1", "Bounds\n0 <= x <= 1\nEnd")
     _test_round_trip("x < 0", "Bounds\nx = 0\nEnd")
-    _test_round_trip("x < -1", "Bounds\n-infinity <= x <= -1\nEnd")
+    _test_round_trip("x < -1", "Bounds\n0 <= x <= -1\nEnd")
     # Test reversed upper bound
     _test_round_trip("1 >= x", "Bounds\n0 <= x <= 1\nEnd")
     _test_round_trip("0 >= x", "Bounds\nx = 0\nEnd")
-    _test_round_trip("-1 >= x", "Bounds\n-infinity <= x <= -1\nEnd")
+    _test_round_trip("-1 >= x", "Bounds\n0 <= x <= -1\nEnd")
     _test_round_trip("1 > x", "Bounds\n0 <= x <= 1\nEnd")
     _test_round_trip("0 > x", "Bounds\nx = 0\nEnd")
-    _test_round_trip("-1 > x", "Bounds\n-infinity <= x <= -1\nEnd")
+    _test_round_trip("-1 > x", "Bounds\n0 <= x <= -1\nEnd")
     # Test equality
     _test_round_trip("x == 1", "Bounds\nx = 1\nEnd")
     _test_round_trip("x == 0", "Bounds\nx = 0\nEnd")
