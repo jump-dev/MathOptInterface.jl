@@ -7,6 +7,42 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.51.0 (April 24, 2026)
+
+### Breaking
+
+- Move BenchmarkTools.jl to a package extension (#2982)
+
+  This is a breaking change because it requires the user to install and load
+  BenchmarkTools.jl.
+
+  We justify releasing it in a minor release of MathOptInterface because we
+  assess that there are very few users of it, and because it should be used
+  only during package development by advanced users.
+
+  We reserve the right to revert this commit in a future release of MOI if it
+  causes problems in the ecosystem, so please let us know if you were using
+  `MOI.Benchmarks` in some critical run-time system.
+
+### Added
+
+- Added an extension for CliqueTrees.jl (#2967)
+- Added support for `-` in `convert` (#2987)
+
+### Fixed
+
+- Fixed a bug to now throw `GetAttributeNotAllowed` in `AbstractBridge` getters
+  (#2988)
+- Fixed reading variable with a negative upper bound in LP files(#2994)
+
+### Other
+
+- Bumped `codecov/codecov-action` from 5 to 6 (#2984)
+- Added MosekTools setup to solver-tests workflow (#2990)
+- Replaced CompatHelper with dependabot (#2991)
+- Documented why `[]` are not allowed in identifiers in LP format (#2993)
+- Updated PrecompileTools compatibility version (#2995)
+
 ## v1.50.1 (March 27, 2026)
 
 ### Fixed
