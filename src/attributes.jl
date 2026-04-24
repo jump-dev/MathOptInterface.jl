@@ -1658,7 +1658,7 @@ solution `result_index`.
 ## PrimalStatus
 
 Before quering this attribute you should first check [`PrimalStatus`](@ref) to
-confirm that a primal solution is avaiable.
+confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
@@ -1698,7 +1698,7 @@ the dual solution `result_index`.
 ## DualStatus
 
 Before quering this attribute you should first check [`DualStatus`](@ref) to
-confirm that a dual solution is avaiable.
+confirm that a dual solution is available.
 
 If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
@@ -2083,7 +2083,7 @@ An [`AbstractVariableAttribute`](@ref) for the variable's primal value in result
 ## PrimalStatus
 
 Before quering this attribute you should first check [`PrimalStatus`](@ref) to
-confirm that a primal solution is avaiable.
+confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
@@ -2174,7 +2174,7 @@ variable in result `result_index`, with respect to a basic solution.
 ## PrimalStatus
 
 Before quering this attribute you should first check [`PrimalStatus`](@ref) to
-confirm that a primal solution is avaiable.
+confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
@@ -2377,7 +2377,7 @@ due to numerical tolerances they may not be identical.)
 ## PrimalStatus
 
 Before quering this attribute you should first check [`PrimalStatus`](@ref) to
-confirm that a primal solution is avaiable.
+confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
@@ -2423,7 +2423,7 @@ result `result_index`.
 ## DualStatus
 
 Before quering this attribute you should first check [`DualStatus`](@ref) to
-confirm that a dual solution is avaiable.
+confirm that a dual solution is available.
 
 If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
@@ -3324,7 +3324,7 @@ Both values are useful in different circumstances.
 ## DualStatus
 
 Before quering this attribute you should first check [`DualStatus`](@ref) to
-confirm that a dual solution is avaiable.
+confirm that a dual solution is available.
 
 If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
 this attribute is undefined.
