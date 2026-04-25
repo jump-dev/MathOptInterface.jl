@@ -72,6 +72,7 @@ ZeroOne
 Semicontinuous
 Semiinteger
 Parameter
+LazyScalarSet
 ```
 
 ## Vector sets

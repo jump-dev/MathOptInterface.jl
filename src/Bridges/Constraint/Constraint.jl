@@ -72,6 +72,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     #       It is also really useful only to PATHSolver.jl, which could add this
     #       to MOI.ListOfRequiredBridges.
     MOI.Bridges.add_bridge(model, IntegerToZeroOneBridge{T})
+    MOI.Bridges.add_bridge(model, LazyScalarSetBridge{T})
     MOI.Bridges.add_bridge(model, LessToGreaterBridge{T})
     if T <: AbstractFloat  # See note in docstring of AbstractToIntervalBridge
         MOI.Bridges.add_bridge(model, LessToIntervalBridge{T})
