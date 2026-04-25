@@ -42,6 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced CompatHelper with `dependabot.yml` (#2991)
 - Documented why `[]` are not allowed in identifiers in LP format (#2993)
 - Updated PrecompileTools compatibility version (#2995)
+- Fix a common typo: `avaiable -> available` (#2997)
 
 ## v1.50.1 (March 27, 2026)
 
