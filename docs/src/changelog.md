@@ -33,7 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a bug to now throw `GetAttributeNotAllowed` in `AbstractBridge` getters
   (#2988)
-- Fixed reading variable with a negative upper bound in LP files(#2994)
+- Fixed reading variable with a negative upper bound in LP files (#2994)
 
 ### Other
 
