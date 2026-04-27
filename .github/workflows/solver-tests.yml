@@ -172,11 +172,10 @@ jobs:
         if: ${{ matrix.package == 'MosekTools' }}
         shell: bash
         run: |
-          {
-            echo "MOSEKLM_LICENSE_FILE<<EOF"
-            echo "${{ secrets.MOSEK_LICENSE }}"
-            echo "EOF"
-          } >> $GITHUB_ENV
+          mkdir ~/mosek
+          echo "${MOSEK_LICENSE}" > ~/mosek/mosek.lic
+        env:
+          MOSEK_LICENSE: ${{ secrets.MOSEK_LICENSE }}
       # Setup Xpress.jl
       - name: Setup Xpress
         if: ${{ matrix.package == 'Xpress' }}
