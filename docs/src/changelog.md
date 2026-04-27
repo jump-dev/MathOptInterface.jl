@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Other
 
 - Bumped `codecov/codecov-action` from 5 to 6 (#2984)
-- Added MosekTools setup to solver-tests workflow (#2990), (#2998)
+- Added MosekTools setup to solver-tests workflow (#2990), (#2998), (#3000)
 - Replaced CompatHelper with `dependabot.yml` (#2991)
 - Documented why `[]` are not allowed in identifiers in LP format (#2993)
 - Updated PrecompileTools compatibility version (#2995)
