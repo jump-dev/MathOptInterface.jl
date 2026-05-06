@@ -2477,6 +2477,46 @@ function test_issue_2870_relative_entropy()
     return
 end
 
+MOI.Utilities.@model(
+    NonnegOnlyModel,
+    (),
+    (),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction,)
+)
+
+function test_nested_lazy_bridge_optimizer_cost()
+    # When the inner model is itself a `LazyBridgeOptimizer` that needs to
+    # bridge a set, the outer `LazyBridgeOptimizer` must take the inner
+    # bridging cost into account when computing edge costs in its own graph,
+    # not assume zero cost just because the inner reports `supports`.
+    T = Float64
+    # Solver supporting only `Nonnegatives`-constrained variables.
+    inner = MOI.Bridges.LazyBridgeOptimizer(NonnegOnlyModel{T}())
+    MOI.Bridges.add_bridge(
+        inner,
+        MOI.Bridges.Variable.NonposToNonnegBridge{T},
+    )
+    @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonnegatives}()) == 0.0
+    @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    cache = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+        inner,
+    )
+    @test MOI.get(cache, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    outer = MOI.Bridges.LazyBridgeOptimizer(cache)
+    @test MOI.get(outer, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.Bridges.bridging_cost(
+        outer.graph,
+        MOI.Bridges.node(outer, MOI.Nonpositives),
+    ) == 1.0
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
