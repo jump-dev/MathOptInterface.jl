@@ -1532,6 +1532,19 @@ function test_write_complements_VectorNonlinearFunction()
     return
 end
 
+function test_VariableBridgingCost()
+    model = NL.Model()
+    S = MOI.LessThan{Float64}
+    attr = MOI.VariableBridgingCost{S}()
+    @test MOI.get(model, attr) == 0
+    attr = MOI.ConstraintBridgingCost{MOI.VariableIndex,S}()
+    @test MOI.get(model, attr) == 0
+    S = MOI.SecondOrderCone
+    attr = MOI.VariableBridgingCost{S}()
+    @test isinf(MOI.get(model, attr))
+    return
+end
+
 function test_unsupported_kwarg()
     @test_throws(
         ErrorException(

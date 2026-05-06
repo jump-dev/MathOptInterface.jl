@@ -2477,6 +2477,232 @@ function test_issue_2870_relative_entropy()
     return
 end
 
+MOI.Utilities.@model(
+    NonnegOnlyModel,
+    (),
+    (),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction,)
+)
+
+function test_nested_lazy_bridge_optimizer_cost()
+    # When the inner model is itself a `LazyBridgeOptimizer` that needs to
+    # bridge a set, the outer `LazyBridgeOptimizer` must take the inner
+    # bridging cost into account when computing edge costs in its own graph,
+    # not assume zero cost just because the inner reports `supports`.
+    T = Float64
+    # Solver supporting only `Nonnegatives`-constrained variables and
+    # `VAF`-in-`Nonnegatives` constraints. `Nonpositives` is bridged via
+    # `NonposToNonneg` in both forms, so the inner reports `supports` for
+    # `Nonpositives` but with a `1.0` bridging cost.
+    inner = MOI.Bridges.LazyBridgeOptimizer(NonnegOnlyModel{T}())
+    MOI.Bridges.add_bridge(inner, MOI.Bridges.Variable.NonposToNonnegBridge{T})
+    MOI.Bridges.add_bridge(
+        inner,
+        MOI.Bridges.Constraint.NonposToNonnegBridge{T},
+    )
+    @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonnegatives}()) == 0.0
+    @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.get(
+        inner,
+        MOI.ConstraintBridgingCost{
+            MOI.VectorAffineFunction{T},
+            MOI.Nonpositives,
+        }(),
+    ) == 1.0
+    cache = MOI.Utilities.CachingOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+        inner,
+    )
+    @test MOI.get(cache, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.get(
+        cache,
+        MOI.ConstraintBridgingCost{
+            MOI.VectorAffineFunction{T},
+            MOI.Nonpositives,
+        }(),
+    ) == 1.0
+    outer = MOI.Bridges.LazyBridgeOptimizer(cache)
+    @test MOI.get(outer, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.Bridges.bridging_cost(
+        outer.graph,
+        MOI.Bridges.node(outer, MOI.Nonpositives),
+    ) == 1.0
+    # Add a constraint bridge in `outer` whose target is
+    # `VAF-in-Nonpositives`. The bridge's edge cost in `outer.graph` must
+    # reflect the inner cost (1.0) of `VAF-in-Nonpositives`, so bridging
+    # `SAF-in-LessThan{T}` costs 1.0 (bridge) + 1.0 (inner) = 2.0. Without
+    # the fix it would be wrongly reported as 1.0.
+    MOI.Bridges.add_bridge(outer, MOI.Bridges.Constraint.VectorizeBridge{T})
+    @test MOI.get(
+        outer,
+        MOI.ConstraintBridgingCost{
+            MOI.ScalarAffineFunction{T},
+            MOI.LessThan{T},
+        }(),
+    ) == 2.0
+    @test MOI.Bridges.bridging_cost(
+        outer.graph,
+        MOI.Bridges.node(outer, MOI.ScalarAffineFunction{T}, MOI.LessThan{T}),
+    ) == 2.0
+    @test MOI.Bridges.is_bridged(
+        outer,
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
+    )
+    # Sanity check: with `MOI.Utilities.Model` as inner (which natively
+    # supports `SAF-in-LessThan{T}` so the inner bridging cost is `0`), the
+    # choice differs: `outer_native` does not need to bridge
+    # `SAF-in-LessThan{T}` and the cost is `0.0`, while `outer` above must
+    # use `Constraint.VectorizeBridge` and pays `2.0`.
+    outer_native = MOI.Bridges.LazyBridgeOptimizer(MOI.Utilities.Model{T}())
+    MOI.Bridges.add_bridge(
+        outer_native,
+        MOI.Bridges.Constraint.VectorizeBridge{T},
+    )
+    @test MOI.get(
+        outer_native,
+        MOI.ConstraintBridgingCost{
+            MOI.ScalarAffineFunction{T},
+            MOI.LessThan{T},
+        }(),
+    ) == 0.0
+    @test !MOI.Bridges.is_bridged(
+        outer_native,
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
+    )
+    return
+end
+
+# A minimal model whose only purpose is to report custom non-zero values for
+# `VariableBridgingCost` and `ConstraintBridgingCost`. Its constructor takes
+# dictionaries that map set types (resp. `(F, S)` tuples) to a `Float64` cost,
+# so tests can vary the inner costs and observe how the bridge selection in an
+# outer `LazyBridgeOptimizer` changes.
+mutable struct CostModel{T} <: MOI.ModelLike
+    var_costs::Dict{Type,Float64}
+    con_costs::Dict{Tuple{Type,Type},Float64}
+end
+
+function CostModel{T}(;
+    var_costs::Dict{Type,Float64} = Dict{Type,Float64}(),
+    con_costs::Dict{Tuple{Type,Type},Float64} = Dict{Tuple{Type,Type},Float64}(),
+) where {T}
+    return CostModel{T}(var_costs, con_costs)
+end
+
+function MOI.supports_add_constrained_variable(
+    model::CostModel,
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    return haskey(model.var_costs, S)
+end
+
+function MOI.supports_add_constrained_variables(
+    model::CostModel,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    return haskey(model.var_costs, S)
+end
+
+function MOI.supports_add_constrained_variables(
+    model::CostModel,
+    ::Type{MOI.Reals},
+)
+    return haskey(model.var_costs, MOI.Reals)
+end
+
+function MOI.supports_constraint(
+    model::CostModel,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return haskey(model.con_costs, (F, S))
+end
+
+function MOI.get(
+    model::CostModel,
+    ::MOI.VariableBridgingCost{S},
+) where {S<:MOI.AbstractSet}
+    return get(model.var_costs, S, Inf)
+end
+
+function MOI.get(
+    model::CostModel,
+    ::MOI.ConstraintBridgingCost{F,S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return get(model.con_costs, (F, S), Inf)
+end
+
+function test_custom_cost_model_bridge_selection()
+    # Outer wraps a `CostModel` that supports `VAF-in-RSOC` and `VAF-in-PSD`
+    # but NOT `VAF-in-SOC`. With both `SOCtoRSOCBridge` (cost 1) and
+    # `SOCtoPSDBridge` (cost 10) in `outer`, the choice for `VAF-in-SOC`
+    # depends on the inner costs of `RSOC` and `PSD`: when both inner costs
+    # are 0, `SOCtoRSOC` wins (1 < 10); when the inner cost of `RSOC` is
+    # high enough, `SOCtoPSD` becomes cheaper.
+    T = Float64
+    F = MOI.VectorAffineFunction{T}
+    # Case 1: both inner costs are 0. `SOCtoRSOC` should be selected.
+    model1 = CostModel{T}(;
+        con_costs = Dict{Tuple{Type,Type},Float64}(
+            (F, MOI.RotatedSecondOrderCone) => 0.0,
+            (F, MOI.PositiveSemidefiniteConeTriangle) => 0.0,
+        ),
+    )
+    outer1 = MOI.Bridges.LazyBridgeOptimizer(model1)
+    MOI.Bridges.add_bridge(outer1, MOI.Bridges.Constraint.SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(outer1, MOI.Bridges.Constraint.SOCtoPSDBridge{T})
+    @test MOI.get(
+        outer1,
+        MOI.ConstraintBridgingCost{F,MOI.SecondOrderCone}(),
+    ) == 1.0
+    @test MOI.Bridges.bridge_type(outer1, F, MOI.SecondOrderCone) <:
+          MOI.Bridges.Constraint.SOCtoRSOCBridge{T}
+    # Case 2: inner cost of `RSOC` is 15. The path via `SOCtoRSOC` becomes
+    # 1 + 15 = 16, which is more expensive than `SOCtoPSD` at 10 + 0 = 10,
+    # so the bridge selection flips to `SOCtoPSD`.
+    model2 = CostModel{T}(;
+        con_costs = Dict{Tuple{Type,Type},Float64}(
+            (F, MOI.RotatedSecondOrderCone) => 15.0,
+            (F, MOI.PositiveSemidefiniteConeTriangle) => 0.0,
+        ),
+    )
+    outer2 = MOI.Bridges.LazyBridgeOptimizer(model2)
+    MOI.Bridges.add_bridge(outer2, MOI.Bridges.Constraint.SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(outer2, MOI.Bridges.Constraint.SOCtoPSDBridge{T})
+    @test MOI.get(
+        outer2,
+        MOI.ConstraintBridgingCost{F,MOI.SecondOrderCone}(),
+    ) == 10.0
+    @test MOI.Bridges.bridge_type(outer2, F, MOI.SecondOrderCone) <:
+          MOI.Bridges.Constraint.SOCtoPSDBridge{T}
+    # Case 3: same bridges, but now `PSD` is also expensive (cost 12). The
+    # path via `SOCtoRSOC` is 1 + 5 = 6 and the path via `SOCtoPSD` is
+    # 10 + 12 = 22, so `SOCtoRSOC` wins again.
+    model3 = CostModel{T}(;
+        con_costs = Dict{Tuple{Type,Type},Float64}(
+            (F, MOI.RotatedSecondOrderCone) => 5.0,
+            (F, MOI.PositiveSemidefiniteConeTriangle) => 12.0,
+        ),
+    )
+    outer3 = MOI.Bridges.LazyBridgeOptimizer(model3)
+    MOI.Bridges.add_bridge(outer3, MOI.Bridges.Constraint.SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(outer3, MOI.Bridges.Constraint.SOCtoPSDBridge{T})
+    @test MOI.get(
+        outer3,
+        MOI.ConstraintBridgingCost{F,MOI.SecondOrderCone}(),
+    ) == 6.0
+    @test MOI.Bridges.bridge_type(outer3, F, MOI.SecondOrderCone) <:
+          MOI.Bridges.Constraint.SOCtoRSOCBridge{T}
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
