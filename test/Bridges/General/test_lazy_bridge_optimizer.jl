@@ -2497,10 +2497,7 @@ function test_nested_lazy_bridge_optimizer_cost()
     T = Float64
     # Solver supporting only `Nonnegatives`-constrained variables.
     inner = MOI.Bridges.LazyBridgeOptimizer(NonnegOnlyModel{T}())
-    MOI.Bridges.add_bridge(
-        inner,
-        MOI.Bridges.Variable.NonposToNonnegBridge{T},
-    )
+    MOI.Bridges.add_bridge(inner, MOI.Bridges.Variable.NonposToNonnegBridge{T})
     @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonnegatives}()) == 0.0
     @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
     cache = MOI.Utilities.CachingOptimizer(
