@@ -2495,22 +2495,87 @@ function test_nested_lazy_bridge_optimizer_cost()
     # bridging cost into account when computing edge costs in its own graph,
     # not assume zero cost just because the inner reports `supports`.
     T = Float64
-    # Solver supporting only `Nonnegatives`-constrained variables.
+    # Solver supporting only `Nonnegatives`-constrained variables and
+    # `VAF`-in-`Nonnegatives` constraints. `Nonpositives` is bridged via
+    # `NonposToNonneg` in both forms, so the inner reports `supports` for
+    # `Nonpositives` but with a `1.0` bridging cost.
     inner = MOI.Bridges.LazyBridgeOptimizer(NonnegOnlyModel{T}())
     MOI.Bridges.add_bridge(inner, MOI.Bridges.Variable.NonposToNonnegBridge{T})
+    MOI.Bridges.add_bridge(
+        inner,
+        MOI.Bridges.Constraint.NonposToNonnegBridge{T},
+    )
     @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonnegatives}()) == 0.0
     @test MOI.get(inner, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.get(
+        inner,
+        MOI.ConstraintBridgingCost{
+            MOI.VectorAffineFunction{T},
+            MOI.Nonpositives,
+        }(),
+    ) == 1.0
     cache = MOI.Utilities.CachingOptimizer(
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
         inner,
     )
     @test MOI.get(cache, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
+    @test MOI.get(
+        cache,
+        MOI.ConstraintBridgingCost{
+            MOI.VectorAffineFunction{T},
+            MOI.Nonpositives,
+        }(),
+    ) == 1.0
     outer = MOI.Bridges.LazyBridgeOptimizer(cache)
     @test MOI.get(outer, MOI.VariableBridgingCost{MOI.Nonpositives}()) == 1.0
     @test MOI.Bridges.bridging_cost(
         outer.graph,
         MOI.Bridges.node(outer, MOI.Nonpositives),
     ) == 1.0
+    # Add a constraint bridge in `outer` whose target is
+    # `VAF-in-Nonpositives`. The bridge's edge cost in `outer.graph` must
+    # reflect the inner cost (1.0) of `VAF-in-Nonpositives`, so bridging
+    # `SAF-in-LessThan{T}` costs 1.0 (bridge) + 1.0 (inner) = 2.0. Without
+    # the fix it would be wrongly reported as 1.0.
+    MOI.Bridges.add_bridge(outer, MOI.Bridges.Constraint.VectorizeBridge{T})
+    @test MOI.get(
+        outer,
+        MOI.ConstraintBridgingCost{
+            MOI.ScalarAffineFunction{T},
+            MOI.LessThan{T},
+        }(),
+    ) == 2.0
+    @test MOI.Bridges.bridging_cost(
+        outer.graph,
+        MOI.Bridges.node(outer, MOI.ScalarAffineFunction{T}, MOI.LessThan{T}),
+    ) == 2.0
+    @test MOI.Bridges.is_bridged(
+        outer,
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
+    )
+    # Sanity check: with `MOI.Utilities.Model` as inner (which natively
+    # supports `SAF-in-LessThan{T}` so the inner bridging cost is `0`), the
+    # choice differs: `outer_native` does not need to bridge
+    # `SAF-in-LessThan{T}` and the cost is `0.0`, while `outer` above must
+    # use `Constraint.VectorizeBridge` and pays `2.0`.
+    outer_native = MOI.Bridges.LazyBridgeOptimizer(MOI.Utilities.Model{T}())
+    MOI.Bridges.add_bridge(
+        outer_native,
+        MOI.Bridges.Constraint.VectorizeBridge{T},
+    )
+    @test MOI.get(
+        outer_native,
+        MOI.ConstraintBridgingCost{
+            MOI.ScalarAffineFunction{T},
+            MOI.LessThan{T},
+        }(),
+    ) == 0.0
+    @test !MOI.Bridges.is_bridged(
+        outer_native,
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
+    )
     return
 end
 
