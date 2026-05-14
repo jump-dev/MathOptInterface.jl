@@ -269,29 +269,26 @@ function node(
         if iszero(inner_cost)
             return VariableNode(0)
         end
-        # The inner model supports `S` but with a non-zero bridging cost.
-        # Create a leaf node whose distance is `inner_cost` so that bridges
-        # that emit constrained variables in `S` account for it.
-        cached = get(b.variable_node, (S,), nothing)
-        if cached !== nothing
-            return cached
-        end
-        new_node = add_node(b.graph, VariableNode)
-        b.variable_node[(S,)] = new_node
-        push!(b.variable_types, (S,))
-        b.graph.variable_dist[new_node.index] = inner_cost
-        return new_node
+    else
+        inner_cost = nothing
     end
     # If (S,) is stored in .variable_node, we've already added the node
     # previously.
     variable_node = get(b.variable_node, (S,), nothing)
     if variable_node !== nothing
+        # The inner model supports `S` but with a non-zero bridging cost.
+        # Create a leaf node whose distance is `inner_cost` so that bridges
+        # that emit constrained variables in `S` account for it.
         return variable_node
     end
     # This is a new (S,). We need to add it to the graph.
     variable_node = add_node(b.graph, VariableNode)
     b.variable_node[(S,)] = variable_node
     push!(b.variable_types, (S,))
+    if !isnothing(inner_cost)
+        b.graph.variable_dist[variable_node.index] = inner_cost
+        return variable_node
+    end
     F = MOI.Utilities.variable_function_type(S)
     if is_bridged(b, MOI.Reals)
         # The solver doesn't support adding free variables.
@@ -341,18 +338,8 @@ function node(
         if iszero(inner_cost)
             return ConstraintNode(0)
         end
-        # The inner model supports `F`-in-`S` but with a non-zero bridging cost.
-        # Create a leaf node whose distance is `inner_cost` so that bridges
-        # that emit `F`-in-`S` constraints account for it.
-        cached = get(b.constraint_node, (F, S), nothing)
-        if cached !== nothing
-            return cached
-        end
-        new_node = add_node(b.graph, ConstraintNode)
-        b.constraint_node[(F, S)] = new_node
-        push!(b.constraint_types, (F, S))
-        b.graph.constraint_dist[new_node.index] = inner_cost
-        return new_node
+    else
+        inner_cost = nothing
     end
     # If (F, S) is stored in .constraint_node, we've already added the node
     # previously.
@@ -364,6 +351,13 @@ function node(
     constraint_node = add_node(b.graph, ConstraintNode)
     b.constraint_node[(F, S)] = constraint_node
     push!(b.constraint_types, (F, S))
+    if !isnothing(inner_cost)
+        # The inner model supports `F`-in-`S` but with a non-zero bridging cost.
+        # Create a leaf node whose distance is `inner_cost` so that bridges
+        # that emit `F`-in-`S` constraints account for it.
+        b.graph.constraint_dist[constraint_node.index] = inner_cost
+        return constraint_node
+    end
     for (i, BT) in enumerate(b.constraint_bridge_types)
         if MOI.supports_constraint(BT, F, S)
             edge = _edge(b, i, Constraint.concrete_bridge_type(BT, F, S))::Edge
