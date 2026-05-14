@@ -276,9 +276,6 @@ function node(
     # previously.
     variable_node = get(b.variable_node, (S,), nothing)
     if variable_node !== nothing
-        # The inner model supports `S` but with a non-zero bridging cost.
-        # Create a leaf node whose distance is `inner_cost` so that bridges
-        # that emit constrained variables in `S` account for it.
         return variable_node
     end
     # This is a new (S,). We need to add it to the graph.
@@ -286,6 +283,9 @@ function node(
     b.variable_node[(S,)] = variable_node
     push!(b.variable_types, (S,))
     if !isnothing(inner_cost)
+        # The inner model supports `S` but with a non-zero bridging cost.
+        # Create a leaf node whose distance is `inner_cost` so that bridges
+        # that emit constrained variables in `S` account for it.
         b.graph.variable_dist[variable_node.index] = inner_cost
         return variable_node
     end
