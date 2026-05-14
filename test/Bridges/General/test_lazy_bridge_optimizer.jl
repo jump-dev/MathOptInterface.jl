@@ -2579,6 +2579,130 @@ function test_nested_lazy_bridge_optimizer_cost()
     return
 end
 
+# A minimal model whose only purpose is to report custom non-zero values for
+# `VariableBridgingCost` and `ConstraintBridgingCost`. Its constructor takes
+# dictionaries that map set types (resp. `(F, S)` tuples) to a `Float64` cost,
+# so tests can vary the inner costs and observe how the bridge selection in an
+# outer `LazyBridgeOptimizer` changes.
+mutable struct CostModel{T} <: MOI.ModelLike
+    var_costs::Dict{Type,Float64}
+    con_costs::Dict{Tuple{Type,Type},Float64}
+end
+
+function CostModel{T}(;
+    var_costs::Dict{Type,Float64} = Dict{Type,Float64}(),
+    con_costs::Dict{Tuple{Type,Type},Float64} = Dict{Tuple{Type,Type},Float64}(),
+) where {T}
+    return CostModel{T}(var_costs, con_costs)
+end
+
+function MOI.supports_add_constrained_variable(
+    model::CostModel,
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    return haskey(model.var_costs, S)
+end
+
+function MOI.supports_add_constrained_variables(
+    model::CostModel,
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    return haskey(model.var_costs, S)
+end
+
+function MOI.supports_add_constrained_variables(
+    model::CostModel,
+    ::Type{MOI.Reals},
+)
+    return haskey(model.var_costs, MOI.Reals)
+end
+
+function MOI.supports_constraint(
+    model::CostModel,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return haskey(model.con_costs, (F, S))
+end
+
+function MOI.get(
+    model::CostModel,
+    ::MOI.VariableBridgingCost{S},
+) where {S<:MOI.AbstractSet}
+    return get(model.var_costs, S, Inf)
+end
+
+function MOI.get(
+    model::CostModel,
+    ::MOI.ConstraintBridgingCost{F,S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return get(model.con_costs, (F, S), Inf)
+end
+
+function test_custom_cost_model_bridge_selection()
+    # Outer wraps a `CostModel` that supports `VAF-in-RSOC` and `VAF-in-PSD`
+    # but NOT `VAF-in-SOC`. With both `SOCtoRSOCBridge` (cost 1) and
+    # `SOCtoPSDBridge` (cost 10) in `outer`, the choice for `VAF-in-SOC`
+    # depends on the inner costs of `RSOC` and `PSD`: when both inner costs
+    # are 0, `SOCtoRSOC` wins (1 < 10); when the inner cost of `RSOC` is
+    # high enough, `SOCtoPSD` becomes cheaper.
+    T = Float64
+    F = MOI.VectorAffineFunction{T}
+    # Case 1: both inner costs are 0. `SOCtoRSOC` should be selected.
+    model1 = CostModel{T}(;
+        con_costs = Dict{Tuple{Type,Type},Float64}(
+            (F, MOI.RotatedSecondOrderCone) => 0.0,
+            (F, MOI.PositiveSemidefiniteConeTriangle) => 0.0,
+        ),
+    )
+    outer1 = MOI.Bridges.LazyBridgeOptimizer(model1)
+    MOI.Bridges.add_bridge(outer1, MOI.Bridges.Constraint.SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(outer1, MOI.Bridges.Constraint.SOCtoPSDBridge{T})
+    @test MOI.get(
+        outer1,
+        MOI.ConstraintBridgingCost{F,MOI.SecondOrderCone}(),
+    ) == 1.0
+    @test MOI.Bridges.bridge_type(outer1, F, MOI.SecondOrderCone) <:
+          MOI.Bridges.Constraint.SOCtoRSOCBridge{T}
+    # Case 2: inner cost of `RSOC` is 15. The path via `SOCtoRSOC` becomes
+    # 1 + 15 = 16, which is more expensive than `SOCtoPSD` at 10 + 0 = 10,
+    # so the bridge selection flips to `SOCtoPSD`.
+    model2 = CostModel{T}(;
+        con_costs = Dict{Tuple{Type,Type},Float64}(
+            (F, MOI.RotatedSecondOrderCone) => 15.0,
+            (F, MOI.PositiveSemidefiniteConeTriangle) => 0.0,
+        ),
+    )
+    outer2 = MOI.Bridges.LazyBridgeOptimizer(model2)
+    MOI.Bridges.add_bridge(outer2, MOI.Bridges.Constraint.SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(outer2, MOI.Bridges.Constraint.SOCtoPSDBridge{T})
+    @test MOI.get(
+        outer2,
+        MOI.ConstraintBridgingCost{F,MOI.SecondOrderCone}(),
+    ) == 10.0
+    @test MOI.Bridges.bridge_type(outer2, F, MOI.SecondOrderCone) <:
+          MOI.Bridges.Constraint.SOCtoPSDBridge{T}
+    # Case 3: same bridges, but now `PSD` is also expensive (cost 12). The
+    # path via `SOCtoRSOC` is 1 + 5 = 6 and the path via `SOCtoPSD` is
+    # 10 + 12 = 22, so `SOCtoRSOC` wins again.
+    model3 = CostModel{T}(;
+        con_costs = Dict{Tuple{Type,Type},Float64}(
+            (F, MOI.RotatedSecondOrderCone) => 5.0,
+            (F, MOI.PositiveSemidefiniteConeTriangle) => 12.0,
+        ),
+    )
+    outer3 = MOI.Bridges.LazyBridgeOptimizer(model3)
+    MOI.Bridges.add_bridge(outer3, MOI.Bridges.Constraint.SOCtoRSOCBridge{T})
+    MOI.Bridges.add_bridge(outer3, MOI.Bridges.Constraint.SOCtoPSDBridge{T})
+    @test MOI.get(
+        outer3,
+        MOI.ConstraintBridgingCost{F,MOI.SecondOrderCone}(),
+    ) == 6.0
+    @test MOI.Bridges.bridge_type(outer3, F, MOI.SecondOrderCone) <:
+          MOI.Bridges.Constraint.SOCtoRSOCBridge{T}
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
