@@ -880,6 +880,14 @@ function MOI.get(model::Model, attr::MOI.AbstractModelAttribute)
     return MOI.get(inner, attr)
 end
 
+# It doesn't need the inner model
+function MOI.get(
+    model::Model,
+    attr::Union{MOI.VariableBridgingCost,MOI.ConstraintBridgingCost},
+)
+    return MOI.get_fallback(model, attr)
+end
+
 function MOI.get(
     model::Model,
     attr::MOI.AbstractConstraintAttribute,
