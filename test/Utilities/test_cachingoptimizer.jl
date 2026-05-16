@@ -1465,6 +1465,27 @@ function test_rethrow_set_model_attribute()
     return
 end
 
+function test_BridgingCost_NO_OPTIMIZER()
+    cache = MOI.Utilities.Model{Float64}()
+    model = MOI.Utilities.CachingOptimizer(cache, MOI.Utilities.AUTOMATIC)
+    @test MOI.Utilities.state(model) == MOI.Utilities.NO_OPTIMIZER
+    @test MOI.get(model, MOI.VariableBridgingCost{MOI.LessThan{Float64}}()) ==
+          0.0
+    @test MOI.get(model, MOI.VariableBridgingCost{MOI.LessThan{Int}}()) == Inf
+    @test MOI.get(
+        model,
+        MOI.ConstraintBridgingCost{
+            MOI.VariableIndex,
+            MOI.LessThan{Float64},
+        }(),
+    ) == 0.0
+    @test MOI.get(
+        model,
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.LessThan{Int}}(),
+    ) == Inf
+    return
+end
+
 end  # module
 
 TestCachingOptimizer.runtests()
