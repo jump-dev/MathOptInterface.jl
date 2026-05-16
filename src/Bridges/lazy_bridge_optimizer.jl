@@ -255,7 +255,9 @@ function node(
     @nospecialize(b::LazyBridgeOptimizer),
     @nospecialize(S::Type{<:MOI.AbstractSet}),
 )
-    # If we support the set, the node is 0.
+    # If we support the set, the node is 0 unless the inner model reports a
+    # non-zero `VariableBridgingCost` (which can happen when the inner model is
+    # itself a bridge optimizer that needs to bridge `S`).
     if (
         S <: MOI.AbstractScalarSet &&
         MOI.supports_add_constrained_variable(b.model, S)
@@ -263,7 +265,12 @@ function node(
         S <: MOI.AbstractVectorSet &&
         MOI.supports_add_constrained_variables(b.model, S)
     )
-        return VariableNode(0)
+        inner_cost = MOI.get(b.model, MOI.VariableBridgingCost{S}())::Float64
+        if iszero(inner_cost)
+            return VariableNode(0)
+        end
+    else
+        inner_cost = nothing
     end
     # If (S,) is stored in .variable_node, we've already added the node
     # previously.
@@ -275,6 +282,13 @@ function node(
     variable_node = add_node(b.graph, VariableNode)
     b.variable_node[(S,)] = variable_node
     push!(b.variable_types, (S,))
+    if !isnothing(inner_cost)
+        # The inner model supports `S` but with a non-zero bridging cost.
+        # Create a leaf node whose distance is `inner_cost` so that bridges
+        # that emit constrained variables in `S` account for it.
+        b.graph.variable_dist[variable_node.index] = inner_cost
+        return variable_node
+    end
     F = MOI.Utilities.variable_function_type(S)
     if is_bridged(b, MOI.Reals)
         # The solver doesn't support adding free variables.
@@ -315,9 +329,17 @@ function node(
     @nospecialize(F::Type{<:MOI.AbstractFunction}),
     @nospecialize(S::Type{<:MOI.AbstractSet}),
 )
-    # If we support the constraint type, the node is 0.
+    # If we support the constraint type, the node is 0 unless the inner model
+    # reports a non-zero `ConstraintBridgingCost` (which can happen when the
+    # inner model is itself a bridge optimizer that needs to bridge `F`-in-`S`).
     if MOI.supports_constraint(b.model, F, S)
-        return ConstraintNode(0)
+        inner_cost =
+            MOI.get(b.model, MOI.ConstraintBridgingCost{F,S}())::Float64
+        if iszero(inner_cost)
+            return ConstraintNode(0)
+        end
+    else
+        inner_cost = nothing
     end
     # If (F, S) is stored in .constraint_node, we've already added the node
     # previously.
@@ -329,6 +351,13 @@ function node(
     constraint_node = add_node(b.graph, ConstraintNode)
     b.constraint_node[(F, S)] = constraint_node
     push!(b.constraint_types, (F, S))
+    if !isnothing(inner_cost)
+        # The inner model supports `F`-in-`S` but with a non-zero bridging cost.
+        # Create a leaf node whose distance is `inner_cost` so that bridges
+        # that emit `F`-in-`S` constraints account for it.
+        b.graph.constraint_dist[constraint_node.index] = inner_cost
+        return constraint_node
+    end
     for (i, BT) in enumerate(b.constraint_bridge_types)
         if MOI.supports_constraint(BT, F, S)
             edge = _edge(b, i, Constraint.concrete_bridge_type(BT, F, S))::Edge
