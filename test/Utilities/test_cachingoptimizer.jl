@@ -1474,10 +1474,7 @@ function test_BridgingCost_NO_OPTIMIZER()
     @test MOI.get(model, MOI.VariableBridgingCost{MOI.LessThan{Int}}()) == Inf
     @test MOI.get(
         model,
-        MOI.ConstraintBridgingCost{
-            MOI.VariableIndex,
-            MOI.LessThan{Float64},
-        }(),
+        MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.LessThan{Float64}}(),
     ) == 0.0
     @test MOI.get(
         model,
