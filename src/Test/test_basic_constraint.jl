@@ -117,8 +117,10 @@ _set(::Type{MOI.RotatedSecondOrderCone}) = MOI.RotatedSecondOrderCone(3)
 _set(::Type{MOI.GeometricMeanCone}) = MOI.GeometricMeanCone(3)
 _set(::Type{MOI.ExponentialCone}) = MOI.ExponentialCone()
 _set(::Type{MOI.DualExponentialCone}) = MOI.DualExponentialCone()
-_set(::Type{MOI.PowerCone}) = MOI.PowerCone(0.5)
-_set(::Type{MOI.DualPowerCone}) = MOI.DualPowerCone(0.5)
+_set(::Type{T}, ::Type{MOI.PowerCone}) where {T} = MOI.PowerCone(T(1//2))
+function _set(::Type{T}, ::Type{MOI.DualPowerCone}) where {T}
+    return MOI.DualPowerCone(T(1//2))
+end
 _set(::Type{MOI.RelativeEntropyCone}) = MOI.RelativeEntropyCone(3)
 _set(::Type{MOI.NormSpectralCone}) = MOI.NormSpectralCone(2, 3)
 _set(::Type{MOI.NormNuclearCone}) = MOI.NormNuclearCone(2, 3)
