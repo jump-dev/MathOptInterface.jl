@@ -392,4 +392,57 @@ function test_attribute_unsupported_constraint(model::MOI.ModelLike, ::Config)
     return
 end
 
+"""
+    test_attribute_VariableBridgingCost(model::MOI.ModelLike, config::Config)
+
+Test that, for every set `S` that the model claims to support via
+`supports_add_constrained_variable(s)`, the corresponding
+[`MOI.VariableBridgingCost`](@ref) attribute returns a finite value.
+
+This is the variable-side analogue of the
+`ConstraintBridgingCost` check in `_basic_constraint_test_helper`.
+The fallback works for most model but it may need
+custom method for some MOI layer (see
+https://github.com/jump-dev/MathOptInterface.jl/pull/3001#issuecomment-4468198935)
+This test is here to catch that.
+"""
+function test_attribute_VariableBridgingCost(
+    model::MOI.ModelLike,
+    ::Config{T},
+) where {T}
+    scalar_sets = Type{<:MOI.AbstractScalarSet}[
+        MOI.GreaterThan{T},
+        MOI.LessThan{T},
+        MOI.EqualTo{T},
+        MOI.Interval{T},
+        MOI.Integer,
+        MOI.ZeroOne,
+        MOI.Semicontinuous{T},
+        MOI.Semiinteger{T},
+    ]
+    vector_sets = Type{<:MOI.AbstractVectorSet}[
+        MOI.Reals,
+        MOI.Zeros,
+        MOI.Nonnegatives,
+        MOI.Nonpositives,
+        MOI.SecondOrderCone,
+        MOI.RotatedSecondOrderCone,
+        MOI.ExponentialCone,
+        MOI.PositiveSemidefiniteConeTriangle,
+    ]
+    for S in scalar_sets
+        if MOI.supports_add_constrained_variable(model, S)
+            @test MOI.get(model, MOI.VariableBridgingCost{S}()) < Inf
+        end
+    end
+    for S in vector_sets
+        if MOI.supports_add_constrained_variables(model, S)
+            @test MOI.get(model, MOI.VariableBridgingCost{S}()) < Inf
+        end
+    end
+    return
+end
+
+version_added(::typeof(test_attribute_VariableBridgingCost)) = v"1.52.0"
+
 version_added(::typeof(test_attribute_unsupported_constraint)) = v"1.9.0"

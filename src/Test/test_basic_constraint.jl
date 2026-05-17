@@ -253,6 +253,16 @@ function _basic_constraint_test_helper(
     ###
     @requires MOI.supports_constraint(model, F, S)
     ###
+    ### Test MOI.ConstraintBridgingCost
+    ###
+    # If `supports_constraint(F, S)` returns `true`, then the model must be
+    # able to handle that pair (possibly via bridging), so the bridging cost
+    # must be finite. The fallback works for most model but it may need
+    # custom method for some MOI layer (see
+    # https://github.com/jump-dev/MathOptInterface.jl/pull/3001#issuecomment-4468198935)
+    # This test is here to catch that.
+    @test MOI.get(model, MOI.ConstraintBridgingCost{F,S}()) < Inf
+    ###
     ### Test MOI.NumberOfConstraints
     ###
     @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
