@@ -38,7 +38,7 @@ function test_basic(T)
         MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
     )
     bridged_mock = MOI.Bridges.Constraint.IntervalToHyperRectangle{T}(mock)
-    config = MOI.Test.Config()
+    config = MOI.Test.Config(T)
     MOI.Test.runtests(
         bridged_mock,
         config,

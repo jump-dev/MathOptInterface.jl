@@ -374,6 +374,36 @@ end
 
 function MOI.get(
     uf::UniversalFallback,
+    attr::MOI.ConstraintBridgingCost{F,S},
+) where {F,S}
+    if MOI.supports_constraint(uf.model, F, S)
+        return MOI.get(uf.model, attr)
+    end
+    return 0.0
+end
+
+function MOI.get(
+    uf::UniversalFallback,
+    attr::MOI.VariableBridgingCost{S},
+) where {S<:MOI.AbstractScalarSet}
+    if MOI.supports_add_constrained_variable(uf.model, S)
+        return MOI.get(uf.model, attr)
+    end
+    return 0.0
+end
+
+function MOI.get(
+    uf::UniversalFallback,
+    attr::MOI.VariableBridgingCost{S},
+) where {S<:MOI.AbstractVectorSet}
+    if MOI.supports_add_constrained_variables(uf.model, S)
+        return MOI.get(uf.model, attr)
+    end
+    return 0.0
+end
+
+function MOI.get(
+    uf::UniversalFallback,
     attr::MOI.AbstractConstraintAttribute,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}

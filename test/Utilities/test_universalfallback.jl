@@ -530,6 +530,48 @@ function test_set_inner_constraint_attribute()
     return
 end
 
+function test_bridging_cost_consistent_with_supports()
+    # `UniversalFallback.supports_constraint` and
+    # `supports_add_constrained_variable(s)` accept absolutely anything by
+    # forwarding through their `is_bridged`-style catch-all. The bridging-cost
+    # attributes must agree: they should never return `Inf` for a pair that
+    # `supports_*` claims to support, because that would make
+    # `LazyBridgeOptimizer` treat the node as unreachable and break graph
+    # construction. Use `Model{BigFloat}` so the inner model genuinely does
+    # not support `*Cone{Float64}`, exercising the case where
+    # `UniversalFallback` extends support beyond the inner.
+    model = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{BigFloat}())
+    for (F, S) in (
+        # inner supports natively
+        (MOI.ScalarAffineFunction{BigFloat}, MOI.LessThan{BigFloat}),
+        (MOI.VectorOfVariables, MOI.PowerCone{BigFloat}),
+        # inner does not support; UF stores in its own dict
+        (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}),
+        (MOI.VectorOfVariables, MOI.PowerCone{Float64}),
+        (MOI.VectorAffineFunction{BigFloat}, MOI.Test.UnknownVectorSet),
+    )
+        @test MOI.supports_constraint(model, F, S)
+        @test MOI.get(model, MOI.ConstraintBridgingCost{F,S}()) < Inf
+    end
+    for S in (
+        MOI.GreaterThan{BigFloat},
+        MOI.Integer,
+        MOI.GreaterThan{Float64},  # not natively supported by Model{BigFloat}
+    )
+        @test MOI.supports_add_constrained_variable(model, S)
+        @test MOI.get(model, MOI.VariableBridgingCost{S}()) < Inf
+    end
+    for S in (
+        MOI.Nonnegatives,
+        MOI.PowerCone{BigFloat},
+        MOI.PowerCone{Float64},  # not natively supported by Model{BigFloat}
+    )
+        @test MOI.supports_add_constrained_variables(model, S)
+        @test MOI.get(model, MOI.VariableBridgingCost{S}()) < Inf
+    end
+    return
+end
+
 end  # module
 
 TestUniversalFallback.runtests()
