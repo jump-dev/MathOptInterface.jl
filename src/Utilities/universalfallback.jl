@@ -372,15 +372,6 @@ function MOI.get(
     return _get(uf, attr)
 end
 
-# `UniversalFallback` claims to support every `(F, S)` constraint pair and every
-# constrained-variable set via its catch-all `supports_constraint` /
-# `supports_add_constrained_variable(s)`. The bridging-cost attributes must
-# agree with that: if the inner model genuinely supports the pair/set, defer to
-# it; otherwise, `UniversalFallback` itself supports it (by caching the
-# constraint in its own dict), so the cost is `0.0`. The generic
-# `AbstractModelAttribute` getter above would otherwise forward to the inner
-# model — whose `get_fallback` returns `Inf` for unsupported pairs — even
-# though `UniversalFallback` claims support.
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ConstraintBridgingCost{F,S},

@@ -1542,6 +1542,17 @@ function test_unsupported_kwarg()
     return
 end
 
+function test_VariableBridgingCost()
+    model = NL.Model()
+    attr = MOI.VariableBridgingCost{MOI.LessThan{Float64}}()
+    @test MOI.get(model, attr) == 0
+    attr = MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.LessThan{Float64}}()
+    @test MOI.get(model, attr) == 0
+    attr = MOI.VariableBridgingCost{MOI.SecondOrderCone}()
+    @test isinf(MOI.get(model, attr))
+    return
+end
+
 end
 
 TestNLModel.runtests()

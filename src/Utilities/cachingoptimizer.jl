@@ -899,6 +899,16 @@ end
 
 function MOI.get(
     model::CachingOptimizer,
+    attr::Union{MOI.VariableBridgingCost,MOI.ConstraintBridgingCost},
+)::Float64
+    if state(model) == NO_OPTIMIZER
+        return MOI.get(model.model_cache, attr)
+    end
+    return MOI.get(model.optimizer, attr)
+end
+
+function MOI.get(
+    model::CachingOptimizer,
     attr::MOI.TerminationStatus,
 )::MOI.TerminationStatusCode
     if state(model) == NO_OPTIMIZER
