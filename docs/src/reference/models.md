@@ -58,6 +58,8 @@ ListOfConstraintAttributesSet
 ListOfConstraintsWithAttributeSet
 UserDefinedFunction
 ListOfSupportedNonlinearOperators
+ConstraintBridgingCost
+VariableBridgingCost
 ```
 
 ## Optimizer interface
