@@ -7,6 +7,18 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.51.1 (May 29, 2026)
+
+### Fixed
+
+- Fixed basic tests with [`PowerCone`](@ref) (#3003)
+- Fixed various getters for [`VariableBridgingCost`](@ref) and
+  [`ConstraintBridgingCost`](@ref). This release adds new tests, which may cause
+  the tests of some dependent packages to break because of a common bug in how
+  layers should compute the costs of bridging variable and constraints. If you
+  need help fixing a package with broken tests, please open a GitHub issue.
+  (#3001), (#3004)
+
 ## v1.51.0 (April 27, 2026)
 
 ### Breaking

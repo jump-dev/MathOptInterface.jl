@@ -3271,7 +3271,27 @@ end
 
 attribute_value_type(::DualStatus) = ResultStatusCode
 
-# Cost of bridging constrained variable in S
+"""
+    VariableBridgingCost{S<:AbstractSet}()::Float64
+
+An [`AbstractModelAttribute`](@ref) for the cost or bridging a variable in a set
+of type `S`.
+
+## Implementation
+
+There is a default fallback which returns `0.0` if
+[`supports_add_constrained_variable`](@ref) or
+[`supports_add_constrained_variables`](@ref) is `true` and `Inf` if `false`.
+
+Therefore, you should implement this method only if your optimizer does
+something unusual.
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.VariableBridgingCost{S})::Float64
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
+"""
 struct VariableBridgingCost{S<:AbstractSet} <: AbstractModelAttribute end
 
 attribute_value_type(::VariableBridgingCost) = Float64
@@ -3290,7 +3310,26 @@ function get_fallback(
     return supports_add_constrained_variables(model, S) ? 0.0 : Inf
 end
 
-# Cost of bridging F-in-S constraints
+"""
+    ConstraintBridgingCost{F<:AbstractFunction,S<:AbstractSet}()::Float64
+
+An [`AbstractModelAttribute`](@ref) for the cost or bridging a constraint of
+type `F` in `S`.
+
+## Implementation
+
+There is a default fallback which returns `0.0` if [`supports_constraint`](@ref)
+is `true` and `Inf` if `false`.
+
+Therefore, you should implement this method only if your optimizer does
+something unusual.
+
+Optimizers should implement the following methods:
+```
+MOI.get(::Optimizer, ::MOI.ConstraintBridgingCost{F,S})::Float64
+```
+They should not implement [`set`](@ref) or [`supports`](@ref).
+"""
 struct ConstraintBridgingCost{F<:AbstractFunction,S<:AbstractSet} <:
        AbstractModelAttribute end
 
