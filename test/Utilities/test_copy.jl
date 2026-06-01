@@ -482,7 +482,7 @@ function test_create_variables_using_supports_add_constrained_variable()
           Type[MOI.Nonpositives, MOI.Zeros, MOI.Nonnegatives]
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Nonnegatives)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Nonnegatives}()) ==
-          2.0
+          1.0
     @test MOI.supports_constraint(
         bridged_dest,
         MOI.VectorOfVariables,
@@ -546,7 +546,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test MOI.get(
         bridged_dest,
         MOI.VariableBridgingCost{MOI.GreaterThan{Float64}}(),
-    ) == 1.0
+    ) == 0.0
     @test MOI.get(
         bridged_dest,
         MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
@@ -560,7 +560,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test MOI.get(
         bridged_dest,
         MOI.VariableBridgingCost{MOI.LessThan{Float64}}(),
-    ) == 1.0
+    ) == 0.0
     @test MOI.get(
         bridged_dest,
         MOI.ConstraintBridgingCost{MOI.VariableIndex,MOI.LessThan{Float64}}(),

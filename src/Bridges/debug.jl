@@ -664,7 +664,7 @@ function print_active_bridges(
             # The constraint can be both variable bridged and constraint
             # bridged. Which is cheaper?
             v_node = b.variable_node[(S,)]
-            if bridging_cost(b.graph, v_node) <= bridging_cost(b.graph, c_node)
+            if MOI.Bridges.is_variable_edge_best(b.graph, v_node)
                 return print_active_bridges(io, b, S, offset)
             end
         else
