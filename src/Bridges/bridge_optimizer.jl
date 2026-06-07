@@ -219,6 +219,147 @@ function supports_bridging_objective_function(
 end
 
 """
+    reserve_variable_index(model::MOI.ModelLike)::MOI.VariableIndex
+
+Return a `MOI.VariableIndex` that is guaranteed not to collide with any
+variable currently in `model` nor any variable that will be added to `model`
+later.
+
+This is used by bridge optimizers to allocate identities for bridged
+variables that do not collide with the inner model's namespace, so that
+multiple bridge layers can be stacked.
+
+The default implementation adds a variable and immediately deletes it,
+relying on the fact that MOI models do not recycle deleted variable
+indices.
+"""
+function reserve_variable_index(model::MOI.ModelLike)
+    vi = MOI.add_variable(model)
+    MOI.delete(model, vi)
+    return vi
+end
+
+function reserve_variable_index(b::AbstractBridgeOptimizer)
+    return reserve_variable_index(b.model)
+end
+
+"""
+    reserve_constraint_index(
+        model::MOI.ModelLike,
+        ::Type{F},
+        ::Type{S},
+    )::MOI.ConstraintIndex{F,S} where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+
+Return a `MOI.ConstraintIndex{F,S}` that is guaranteed not to collide with
+any constraint currently in `model` nor any constraint of the same `(F, S)`
+type that will be added later.
+
+This is used by bridge optimizers to allocate identities for force-bridged
+or constraint-bridged `(F, S)` constraints that do not collide with the
+inner model's namespace, so that multiple bridge layers can be stacked.
+
+The default implementation adds a dummy `F`-in-`S` constraint and
+immediately deletes it (along with any temporary variables created to build
+the dummy), relying on the fact that MOI models do not recycle deleted
+constraint indices.
+
+Reservation can be skipped when the inner model supports neither `(F, S)`
+as a constraint nor constrained-variables-in-`S`, in which case no
+colliding `ConstraintIndex{F,S}` can ever be produced by the inner model.
+
+For function types `F` and set types `S` not handled by the default,
+specialize this method on the model type.
+"""
+function reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return _default_reserve_constraint_index(model, F, S)
+end
+
+function reserve_constraint_index(
+    b::AbstractBridgeOptimizer,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    return reserve_constraint_index(b.model, F, S)
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+) where {S<:MOI.AbstractScalarSet}
+    vi = MOI.add_variable(model)
+    ci = MOI.add_constraint(model, vi, _dummy_set(S))
+    MOI.delete(model, vi)  # also deletes ci
+    return ci
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{S},
+) where {S<:MOI.AbstractVectorSet}
+    set = _dummy_set(S)
+    vis = MOI.add_variables(model, MOI.dimension(set))
+    ci = MOI.add_constraint(model, MOI.VectorOfVariables(vis), set)
+    MOI.delete(model, ci)
+    for vi in vis
+        MOI.delete(model, vi)
+    end
+    return ci
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractScalarFunction,S<:MOI.AbstractScalarSet}
+    ci = MOI.add_constraint(model, zero(F), _dummy_set(S))
+    MOI.delete(model, ci)
+    return ci
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractVectorFunction,S<:MOI.AbstractVectorSet}
+    set = _dummy_set(S)
+    f = MOI.Utilities.zero_with_output_dimension(F, MOI.dimension(set))
+    ci = MOI.add_constraint(model, f, set)
+    MOI.delete(model, ci)
+    return ci
+end
+
+"""
+    _dummy_set(::Type{S}) where {S<:MOI.AbstractSet}
+
+Return a trivial instance of `S` used as a placeholder when reserving a
+`ConstraintIndex{F,S}` via [`_reserve_dummy_constraint`](@ref). Sets whose
+constructor requires parameters that cannot be defaulted must specialize
+this method (or skip reservation entirely if the inner model does not
+support the corresponding constraint).
+"""
+function _dummy_set end
+
+_dummy_set(::Type{S}) where {T,S<:MOI.EqualTo{T}} = S(zero(T))
+_dummy_set(::Type{S}) where {T,S<:MOI.GreaterThan{T}} = S(zero(T))
+_dummy_set(::Type{S}) where {T,S<:MOI.LessThan{T}} = S(zero(T))
+_dummy_set(::Type{S}) where {T,S<:MOI.Interval{T}} = S(zero(T), zero(T))
+_dummy_set(::Type{MOI.Integer}) = MOI.Integer()
+_dummy_set(::Type{MOI.ZeroOne}) = MOI.ZeroOne()
+_dummy_set(::Type{S}) where {T,S<:MOI.Semicontinuous{T}} = S(zero(T), zero(T))
+_dummy_set(::Type{S}) where {T,S<:MOI.Semiinteger{T}} = S(zero(T), zero(T))
+_dummy_set(::Type{S}) where {T,S<:MOI.Parameter{T}} = S(zero(T))
+_dummy_set(::Type{MOI.Reals}) = MOI.Reals(1)
+_dummy_set(::Type{MOI.Zeros}) = MOI.Zeros(1)
+_dummy_set(::Type{MOI.Nonnegatives}) = MOI.Nonnegatives(1)
+_dummy_set(::Type{MOI.Nonpositives}) = MOI.Nonpositives(1)
+
+"""
     bridge_type(
         b::AbstractBridgeOptimizer,
         F::Type{<:MOI.AbstractFunction},
