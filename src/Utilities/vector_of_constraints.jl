@@ -73,7 +73,7 @@ function MOI.add_constraint(
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
     # We canonicalize the constraint so that solvers can avoid having to
     # canonicalize it most of the time (they can check if they need to with
-    # `is_canonical`.
+    # `is_canonical`).
     # Note that the canonicalization is not guaranteed if for instance
     # `modify` is called and adds a new term.
     # See https://github.com/jump-dev/MathOptInterface.jl/pull/1118

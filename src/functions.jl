@@ -360,7 +360,7 @@ function Base.copy(f::ScalarNonlinearFunction)
             # We need some sort of hint so that the next time we see this on the
             # stack we evaluate it using the args in `result_stack`. One option
             # would be a custom type. Or we can just wrap in (,) and then check
-            # for a Tuple, which isn't (curretly) a valid argument.
+            # for a Tuple, which isn't (currently) a valid argument.
             push!(stack, (arg,))
             for child in arg.args
                 push!(stack, child)
