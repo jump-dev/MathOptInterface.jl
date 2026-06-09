@@ -1072,9 +1072,17 @@ function canonicalize!(
 end
 
 function canonicalize!(f::MOI.ScalarNonlinearFunction)
-    for (i, arg) in enumerate(f.args)
-        if !is_canonical(arg)
-            f.args[i] = canonicalize!(arg)
+    # Don't use recursion here. This gets called for all scalar nonlinear
+    # constraints.
+    stack = MOI.ScalarNonlinearFunction[f]
+    while !isempty(stack)
+        g = pop!(stack)
+        for (i, arg) in enumerate(g.args)
+            if arg isa MOI.ScalarNonlinearFunction
+                push!(stack, arg)
+            elseif !is_canonical(arg)
+                g.args[i] = canonicalize!(arg)
+            end
         end
     end
     return f
