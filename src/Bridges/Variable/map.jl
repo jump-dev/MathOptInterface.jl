@@ -57,15 +57,17 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     index_in_vector::Vector{Int64}
     bridges::Vector{Union{Nothing,AbstractBridge}}
     sets::Vector{Union{Nothing,Type}}
-    # Parent context (slot) of the bridge that created this slot, 0 if root
-    parent_index::Vector{Int64}
-    current_context::Int64
-    constraint_context::Dict{MOI.ConstraintIndex,Int64}
     # If `nothing`, it cannot be computed because some bridges does not support it
     unbridged_function::Union{
         Nothing,
         Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}},
     }
+    # Parent context (slot) of the bridge that created this slot, 0 if root
+    parent_index::Vector{Int64}
+    # Current bridge, 0 otherwise.
+    current_context::Int64
+    # Context of constraint bridged by constraint bridges
+    constraint_context::Dict{MOI.ConstraintIndex,Int64}
     # Same as in `MOI.Utilities.VariablesContainer`
     set_mask::Vector{UInt16}
 end
@@ -80,10 +82,10 @@ function Map()
         Int64[],
         Union{Nothing,AbstractBridge}[],
         Union{Nothing,Type}[],
+        Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}}(),
         Int64[],
         0,
         Dict{MOI.ConstraintIndex,Int64}(),
-        Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}}(),
         UInt16[],
     )
 end
