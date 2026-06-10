@@ -8,6 +8,29 @@
     Map <: AbstractDict{MOI.VariableIndex, AbstractBridge}
 
 Mapping between bridged variables and the bridge that bridged the variable.
+
+## Outer / inner index spaces
+
+The user-facing ("outer") `VariableIndex` and `ConstraintIndex` namespaces are
+independent from the ones used by `b.model` ("inner"). When no variable bridge
+has ever been added to this `Map` the two namespaces coincide (identity
+mapping) and no translation is performed. As soon as the first variable bridge
+is added, [`activate_variable_mapping!`](@ref) is called: every existing
+inner variable is copied into [`outer_to_inner`](@ref) and
+[`inner_to_outer`](@ref) as an identity entry, and from that point on the
+two namespaces drift apart: bridged variables get a fresh outer index with no
+inner counterpart, non-bridged variables get a fresh outer index recorded
+alongside their inner index.
+
+Constraint indices follow the same rule per `(F, S)` pair. The first force-
+bridged `CI{VariableIndex, S}` or `CI{VectorOfVariables, S}` triggers
+[`activate_constraint_mapping!`](@ref) for that `(F, S)`: all existing inner
+`CI{F, S}` are copied in as identity entries; afterwards the outer and inner
+`CI{F, S}` namespaces are independent.
+
+Outer-only entries (bridged variables, force-bridged constraints) appear as
+keys in `outer_to_inner` with a sentinel value of `0` (and are absent from
+`inner_to_outer`).
 """
 mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # Bridged constrained variables
@@ -46,6 +69,21 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     vector_of_variables_length::Vector{Int64}
     # Same as in `MOI.Utilities.VariablesContainer`
     set_mask::Vector{UInt16}
+    # Outer (user-facing) -> inner (`b.model`) translation. Empty until the
+    # first variable bridge is added, at which point existing inner variables
+    # are added as identity. After activation, every variable in the outer
+    # namespace has an entry here (bridged ones map to the sentinel `0`).
+    outer_to_inner::MOI.Utilities.IndexMap
+    # Reverse of `outer_to_inner` for the entries that have an inner
+    # counterpart (i.e., bridged outer-only entries are absent).
+    inner_to_outer::MOI.Utilities.IndexMap
+    # Next available outer `VariableIndex.value` once variable mapping has
+    # been activated; `0` until then.
+    next_outer_variable::Int64
+    # Per-`(F, S)` next available outer `ConstraintIndex{F, S}.value`. A
+    # missing entry means that `(F, S)` is in identity mode; presence means
+    # constraint mapping has been activated for `(F, S)`.
+    next_outer_constraint::Dict{Tuple{DataType,DataType},Int64}
 end
 
 function Map()
@@ -61,6 +99,10 @@ function Map()
         Int64[],
         Int64[],
         UInt16[],
+        MOI.Utilities.IndexMap(),
+        MOI.Utilities.IndexMap(),
+        0,
+        Dict{Tuple{DataType,DataType},Int64}(),
     )
 end
 
@@ -85,7 +127,123 @@ function Base.empty!(map::Map)
     empty!(map.vector_of_variables_map)
     empty!(map.vector_of_variables_length)
     empty!(map.set_mask)
+    map.outer_to_inner = MOI.Utilities.IndexMap()
+    map.inner_to_outer = MOI.Utilities.IndexMap()
+    map.next_outer_variable = 0
+    empty!(map.next_outer_constraint)
     return map
+end
+
+"""
+    is_variable_mapping_active(map::Map)::Bool
+
+Return `true` once at least one variable bridge has been added (and hence
+the outer/inner translation has been materialized).
+"""
+is_variable_mapping_active(map::Map) = map.next_outer_variable != 0
+
+"""
+    is_constraint_mapping_active(map::Map, ::Type{F}, ::Type{S})::Bool
+
+Return `true` once at least one `CI{F, S}` has been force-bridged at this
+layer (and hence the outer/inner translation for `(F, S)` has been
+materialized).
+"""
+function is_constraint_mapping_active(
+    map::Map,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    return haskey(map.next_outer_constraint, (F, S))
+end
+
+"""
+    activate_variable_mapping!(map::Map, model::MOI.ModelLike)
+
+Materialize identity mappings for every variable currently in `model`, so
+that subsequent outer-only or inner-only allocations can extend the two
+namespaces independently. No-op if the mapping is already active.
+
+`model` is the inner model that this `Map` translates against (typically
+`b.model` of the enclosing `AbstractBridgeOptimizer`).
+"""
+function activate_variable_mapping!(map::Map, model::MOI.ModelLike)
+    if is_variable_mapping_active(map)
+        return
+    end
+    max_value = Int64(0)
+    for inner_vi in MOI.get(model, MOI.ListOfVariableIndices())
+        map.outer_to_inner[inner_vi] = inner_vi
+        map.inner_to_outer[inner_vi] = inner_vi
+        if inner_vi.value > max_value
+            max_value = inner_vi.value
+        end
+    end
+    map.next_outer_variable = max_value + 1
+    return
+end
+
+"""
+    activate_constraint_mapping!(
+        map::Map,
+        model::MOI.ModelLike,
+        ::Type{F},
+        ::Type{S},
+    )
+
+Materialize identity mappings for every `CI{F, S}` currently in `model`.
+Called when the first `CI{F, S}` is force-bridged at this layer. No-op if
+already active for `(F, S)`.
+"""
+function activate_constraint_mapping!(
+    map::Map,
+    model::MOI.ModelLike,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    if is_constraint_mapping_active(map, F, S)
+        return
+    end
+    max_value = Int64(0)
+    for inner_ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        map.outer_to_inner[inner_ci] = inner_ci
+        map.inner_to_outer[inner_ci] = inner_ci
+        if inner_ci.value > max_value
+            max_value = inner_ci.value
+        end
+    end
+    map.next_outer_constraint[(F, S)] = max_value + 1
+    return
+end
+
+"""
+    next_outer_variable!(map::Map)::Int64
+
+Return a fresh `Int64` value to use as a `VariableIndex.value` in the outer
+namespace and advance the internal counter.
+"""
+function next_outer_variable!(map::Map)
+    @assert is_variable_mapping_active(map)
+    value = map.next_outer_variable
+    map.next_outer_variable = value + 1
+    return value
+end
+
+"""
+    next_outer_constraint!(map::Map, ::Type{F}, ::Type{S})::Int64
+
+Return a fresh `Int64` value to use as a `ConstraintIndex{F, S}.value` in
+the outer namespace and advance the internal `(F, S)` counter.
+"""
+function next_outer_constraint!(
+    map::Map,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    @assert is_constraint_mapping_active(map, F, S)
+    value = map.next_outer_constraint[(F, S)]
+    map.next_outer_constraint[(F, S)] = value + 1
+    return value
 end
 
 function bridge_index(map::Map, vi::MOI.VariableIndex)
