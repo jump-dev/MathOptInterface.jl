@@ -2099,11 +2099,11 @@ end
 
 function add_bridged_constraint(b, BridgeType, f, s)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
-    # `MOI.VectorOfVariables` constraint indices have negative indices
-    # to distinguish between the indices of the inner model.
-    # However, they can clash between the indices created by the variable
-    # so we use the last argument to inform the constraint bridge mapping about
-    # indices already taken by variable bridges.
+    # For `VectorOfVariables` constraints, both `Variable.bridges` (vector
+    # of constrained-on-creation variables) and `Constraint.bridges` may
+    # allocate a `CI{VOV, S}` for the same `S`. The last argument lets the
+    # constraint map skip indices already in use by `Variable.bridges` so
+    # the two layers never assign the same `ci.value`.
     ci = Constraint.add_key_for_bridge(
         Constraint.bridges(b)::Constraint.Map,
         bridge,

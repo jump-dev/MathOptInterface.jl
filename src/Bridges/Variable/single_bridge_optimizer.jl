@@ -14,11 +14,6 @@ This is in contrast with the [`MOI.Bridges.LazyBridgeOptimizer`](@ref),
 which only bridges the variables constrained on creation if they are supported
 by the bridge `BT` and unsupported by `model`.
 
-!!! warning
-    Two `SingleBridgeOptimizer`s cannot be used together as both of them assume
-    that the underlying model only returns variable indices with nonnegative
-    values. Use [`MOI.Bridges.LazyBridgeOptimizer`](@ref) instead.
-
 ## Example
 
 ```jldoctest var_singlebridgeoptimizer
