@@ -464,12 +464,49 @@ function MOI.Utilities.final_touch(b::AbstractBridgeOptimizer, index_map)
 end
 
 # References
+"""
+    _to_inner_var(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)::MOI.VariableIndex
+
+Translate an outer `VariableIndex` to its inner counterpart for forwarding
+to `b.model`. When the variable mapping is inactive (or `b` does not own a
+`Variable.Map`), returns `vi` unchanged. The caller is responsible for
+having already established that `vi` is not bridged at `b`'s layer.
+"""
+function _to_inner_var(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
+    map = Variable.bridges(b)
+    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+        return map.outer_to_inner[vi]
+    end
+    return vi
+end
+
+"""
+    _to_outer_var(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)::MOI.VariableIndex
+
+Translate an inner `VariableIndex` returned by `b.model` into the outer
+namespace. When the variable mapping is inactive, returns `vi` unchanged.
+"""
+function _to_outer_var(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
+    map = Variable.bridges(b)
+    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+        return map.inner_to_outer[vi]
+    end
+    return vi
+end
+
 function MOI.is_valid(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     if is_bridged(b, vi)
         return haskey(Variable.bridges(b), vi)
-    else
-        return MOI.is_valid(b.model, vi)
     end
+    map = Variable.bridges(b)
+    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+        # Outer/inner translation is in effect. Outer `vi` must be in
+        # `outer_to_inner` to be valid; the entry then points to the inner
+        # `VariableIndex` to check.
+        haskey(map.outer_to_inner, vi) || return false
+        return MOI.is_valid(b.model, map.outer_to_inner[vi])
+    end
+    return MOI.is_valid(b.model, vi)
 end
 
 function MOI.is_valid(
@@ -2237,23 +2274,46 @@ function MOI.modify(
 end
 
 # Variables
+
+"""
+    _record_inner_variable!(b::AbstractBridgeOptimizer, inner_vi::MOI.VariableIndex)
+
+If variable mapping is active in `b`, allocate a fresh outer `VariableIndex`
+value and record the bidirectional mapping. Otherwise (identity mode, or `b`
+does not own a `Variable.Map` at all), return `inner_vi` unchanged.
+"""
+function _record_inner_variable!(
+    b::AbstractBridgeOptimizer,
+    inner_vi::MOI.VariableIndex,
+)
+    map = Variable.bridges(b)
+    if !(map isa Variable.Map) || !Variable.is_variable_mapping_active(map)
+        return inner_vi
+    end
+    outer_vi = MOI.VariableIndex(Variable.next_outer_variable!(map))
+    map.outer_to_inner[outer_vi] = inner_vi
+    map.inner_to_outer[inner_vi] = outer_vi
+    return outer_vi
+end
+
+# Variables
 function MOI.add_variable(b::AbstractBridgeOptimizer)
     if is_bridged(b, MOI.Reals)
         variables, constraint = MOI.add_constrained_variables(b, MOI.Reals(1))
         @assert isone(length(variables))
         return first(variables)
-    else
-        return MOI.add_variable(b.model)
     end
+    inner_vi = MOI.add_variable(b.model)
+    return _record_inner_variable!(b, inner_vi)
 end
 
 function MOI.add_variables(b::AbstractBridgeOptimizer, n)
     if is_bridged(b, MOI.Reals)
         variables, constraint = MOI.add_constrained_variables(b, MOI.Reals(n))
         return variables
-    else
-        return MOI.add_variables(b.model, n)
     end
+    inner_vis = MOI.add_variables(b.model, n)
+    return MOI.VariableIndex[_record_inner_variable!(b, vi) for vi in inner_vis]
 end
 
 # Split in two to avoid ambiguity
@@ -2284,10 +2344,25 @@ function MOI.add_constrained_variables(
     set::MOI.AbstractVectorSet,
 )
     if !is_bridged(b, typeof(set))
-        return MOI.add_constrained_variables(b.model, set)
+        inner_vis, inner_ci = MOI.add_constrained_variables(b.model, set)
+        outer_vis = MOI.VariableIndex[
+            _record_inner_variable!(b, vi) for vi in inner_vis
+        ]
+        # The constraint index value of `inner_ci` may need translating once
+        # we plumb constraint mapping; for now identity since this branch
+        # doesn't go through a variable bridge.
+        return outer_vis, inner_ci
     end
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        # Activate the outer/inner variable translation map at this layer
+        # before allocating the new bridged variables. This ensures every
+        # variable visible to the user from now on lives in the outer
+        # namespace.
+        Variable.activate_variable_mapping!(
+            Variable.bridges(b)::Variable.Map,
+            b.model,
+        )
         # `MOI.VectorOfVariables` constraint indices have negative indices
         # to distinguish between the indices of the inner model.
         # However, they can clash between the indices created by the variable
@@ -2323,10 +2398,25 @@ function MOI.add_constrained_variable(
     set::MOI.AbstractScalarSet,
 )
     if !is_bridged(b, typeof(set))
-        return MOI.add_constrained_variable(b.model, set)
+        inner_vi, inner_ci = MOI.add_constrained_variable(b.model, set)
+        outer_vi = _record_inner_variable!(b, inner_vi)
+        # `CI{VariableIndex, S}.value == vi.value` by MOI convention; if we
+        # translated the variable, translate the constraint identically.
+        outer_ci = if outer_vi === inner_vi
+            inner_ci
+        else
+            MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(outer_vi.value)
+        end
+        return outer_vi, outer_ci
     end
     if is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        # Activate the outer/inner variable translation at this layer before
+        # allocating the new bridged variable.
+        Variable.activate_variable_mapping!(
+            Variable.bridges(b)::Variable.Map,
+            b.model,
+        )
         return Variable.add_key_for_bridge(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(
