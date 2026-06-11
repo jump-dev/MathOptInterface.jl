@@ -82,19 +82,15 @@ function test_derivative()
         # :^
         op(:^, sin_x, 2)=>op(:*, 2.0, sin_x, cos_x),
         op(:^, sin_x, 1)=>cos_x,
-        op(
-            :^,
-            x,
-            x,
-        )=>op(:+, op(:*, x, op(:^, x, x-1)), op(:*, op(:^, x, x), op(:log, x))),
+        op(:^, x, x)=>op(
+            :+,
+            op(:*, x, op(:^, x, x-1)),
+            op(:*, op(:^, x, x), op(:log, x)),
+        ),
         op(:^, x, 3)=>3.0*x*x,
         # :/
         op(:/, x, 2)=>0.5,
-        op(
-            :/,
-            op(:^, x, 2),
-            op(:+, x, 1),
-        )=>op(
+        op(:/, op(:^, x, 2), op(:+, x, 1))=>op(
             :/,
             op(:-, op(:*, 2, x, op(:+, x, 1)), op(:^, x, 2)),
             op(:^, op(:+, x, 1), 2),
@@ -102,27 +98,25 @@ function test_derivative()
         # :ifelse
         op(:ifelse, z, 1.0*x*x, x)=>op(:ifelse, z, 2.0*x, 1.0),
         # :atan
-        op(
-            :atan,
-            x,
-            sin_x,
-        )=>op(
+        op(:atan, x, sin_x)=>op(
             :/,
             op(:+, op(:*, x, cos_x), sin_x),
             op(:+, op(:^, x, 2), op(:^, sin_x, 2)),
         ),
         # :min
-        op(
-            :min,
-            x,
-            1.0*x*x,
-        )=>op(:ifelse, op(:(<=), x, op(:min, x, 1.0*x*x)), 1.0, 2.0*x),
+        op(:min, x, 1.0*x*x)=>op(
+            :ifelse,
+            op(:(<=), x, op(:min, x, 1.0*x*x)),
+            1.0,
+            2.0*x,
+        ),
         # :max
-        op(
-            :max,
-            x,
-            1.0*x*x,
-        )=>op(:ifelse, op(:(>=), x, op(:max, x, 1.0*x*x)), 1.0, 2.0*x),
+        op(:max, x, 1.0*x*x)=>op(
+            :ifelse,
+            op(:(>=), x, op(:max, x, 1.0*x*x)),
+            1.0,
+            2.0*x,
+        ),
         # comparisons
         op(:(>=), x, y)=>false,
         op(:(==), x, y)=>false,
