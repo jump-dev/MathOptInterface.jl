@@ -65,7 +65,14 @@ function is_bridged end
 Return a `Bool` indicating whether `vi` is bridged. The variable is said to be
 bridged if it is a variable of `b` but not a variable of `b.model`.
 """
-is_bridged(::AbstractBridgeOptimizer, vi::MOI.VariableIndex) = vi.value < 0
+function is_bridged(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
+    map = Variable.bridges(b)
+    # Fast path: when no variable bridges are in use, the answer is `false`
+    # without any dictionary lookup. This preserves the cost of the no-bridges
+    # case from before the negative-index convention was removed.
+    Variable.has_bridges(map) || return false
+    return haskey(map, vi)
+end
 
 """
     is_bridged(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
@@ -84,40 +91,33 @@ function is_bridged(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
-    # There are a few cases for which we should return `false`:
-    # 1) It was added as variables constrained on creation to `b.model`,
-    #    In this case, `is_bridged(b, S)` is `false` and `ci.value >= 0`.
-    # 2) It was added as constraint on a non-bridged variable to `b.model`,
-    #    In this case, `is_bridged(b, F, S)` is `false` and `ci.value >= 0`.
-    # and a few cases for which we should return `true`:
-    # 3) It was added with a variable bridge,
-    #    In this case, `is_bridged(b, S)` is `true` and `ci.value < 0`.
-    # 4) It was added as constraint on a bridged variable so it was force-bridged,
-    #    In this case, `ci.value < 0`.
-    # 5) It was added with a constraint bridge,
-    #    In this case, `is_bridged(b, F, S)` is `true` and  `ci.value >= 0` (the variable is non-bridged, otherwise, the constraint would have been force-bridged).
-    # So
-    # * if, `ci.value < 0` then it is case 3) or 4) and we return `true`.
-    # * Otherwise,
-    #   - if `is_bridged(b, S)` and `is_bridged(b, F, S)` then 1) and 2) are
-    #     not possible so we are in case 5) and we return `true`.
-    #   - if `!is_bridged(b, F, S)`, then 5) is not possible and we return `false`.
-    #   - if `!is_bridged(b, S)` and `is_bridged(b, F, S)`, then it is either case 1)
-    #     or 5). They cannot both be the cases as one cannot add two `VariableIndex`
-    #     with the same set type on the same variable (this is ensured by
-    #     `_check_double_single_variable`). Therefore, we can safely determine
-    #     whether it is bridged with `haskey(Constraint.bridges(b), ci)`.
-    return ci.value < 0 || (
-        is_bridged(b, MOI.VariableIndex, S) &&
-        (is_bridged(b, S) || haskey(Constraint.bridges(b), ci))
-    )
+    # Three possibilities (the historical 5-case logic collapses with the
+    # removal of the negative-index convention):
+    #
+    # * cases 3 & 4 — variable bridge involvement: by MOI convention the
+    #   `ci.value` of a `VariableIndex` constraint equals the constrained
+    #   variable's `vi.value`. If that variable is bridged, the constraint
+    #   was either created by `add_key_for_bridge` (case 3) or
+    #   force-bridged because it was added on a bridged variable (case 4).
+    # * case 5 — constraint bridge: looked up in `Constraint.bridges`.
+    # * cases 1 & 2 — passes through to the inner model.
+    map = Variable.bridges(b)
+    if Variable.has_bridges(map) &&
+       haskey(map, MOI.VariableIndex(ci.value))
+        return true
+    end
+    return haskey(Constraint.bridges(b), ci)
 end
 
 function is_bridged(
-    ::AbstractBridgeOptimizer,
+    b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
 ) where {S}
-    return ci.value < 0
+    map = Variable.bridges(b)
+    if Variable.has_bridges(map) && haskey(map.vov_to_slot, (S, ci.value))
+        return true
+    end
+    return haskey(Constraint.bridges(b), ci)
 end
 
 """
@@ -168,21 +168,34 @@ end
 """
     is_variable_bridged(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
 
-Returns whether `ci` is the constraint of a bridged constrained variable. That
-is, if it was returned by `Variable.add_key_for_bridge` or
-`Variable.add_keys_for_bridge`. Note that it is not equivalent to
-`ci.value < 0` as, it can also simply be a constraint on a bridged variable.
+Returns whether `ci` is a constraint whose owning bridge is in
+[`Variable.bridges(b)`](@ref). That is, if it was returned by
+`Variable.add_key_for_bridge`, `Variable.add_keys_for_bridge`, or is a
+constraint added on a bridged variable (force-bridged).
 """
 is_variable_bridged(::AbstractBridgeOptimizer, ::MOI.ConstraintIndex) = false
 
 function is_variable_bridged(
     b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
 )
-    # It can be a constraint corresponding to bridged constrained variables so
-    # we `check` with `haskey(Constraint.bridges(b), ci)` whether this is the
-    # case.
-    return ci.value < 0 && !haskey(Constraint.bridges(b), ci)
+    map = Variable.bridges(b)
+    Variable.has_bridges(map) || return false
+    # `ci` is a variable-bridge-owned constraint iff the variable is bridged
+    # AND `ci` was *not* stored as a constraint bridge (which would mean it
+    # was force-bridged on a bridged variable via `add_bridged_constraint`).
+    return haskey(map, MOI.VariableIndex(ci.value)) &&
+           !haskey(Constraint.bridges(b), ci)
+end
+
+function is_variable_bridged(
+    b::AbstractBridgeOptimizer,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
+) where {S}
+    map = Variable.bridges(b)
+    Variable.has_bridges(map) || return false
+    return haskey(map.vov_to_slot, (S, ci.value)) &&
+           !haskey(Constraint.bridges(b), ci)
 end
 
 """
@@ -216,6 +229,129 @@ function supports_bridging_objective_function(
     ::Type{<:MOI.AbstractFunction},
 )
     return false
+end
+
+"""
+    reserve_variable_index(model::MOI.ModelLike)::MOI.VariableIndex
+
+Return a `MOI.VariableIndex` that is guaranteed not to collide with any
+variable currently in `model` nor any variable that will be added to `model`
+later.
+
+This is used by bridge optimizers to allocate identities for bridged
+variables that do not collide with the inner model's namespace, so that
+multiple bridge layers can be stacked.
+
+The default implementation adds a variable and immediately deletes it,
+relying on the fact that MOI models do not recycle deleted variable
+indices.
+"""
+function reserve_variable_index(model::MOI.ModelLike)
+    vi = MOI.add_variable(model)
+    MOI.delete(model, vi)
+    return vi
+end
+
+function reserve_variable_index(b::AbstractBridgeOptimizer)
+    return reserve_variable_index(b.model)
+end
+
+"""
+    reserve_constraint_index(
+        model::MOI.ModelLike,
+        ::Type{F},
+        set::S,
+    )::MOI.ConstraintIndex{F,S} where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+
+Return a `MOI.ConstraintIndex{F,S}` that is guaranteed not to collide with
+any constraint currently in `model` nor any constraint of the same `(F, S)`
+type that will be added later.
+
+This is used by bridge optimizers to allocate identities for force-bridged
+or constraint-bridged `(F, S)` constraints that do not collide with the
+inner model's namespace, so that multiple bridge layers can be stacked.
+
+`set` must be a valid instance of `S` (e.g., the same instance the caller
+intends to constrain). It is used to build a dummy `F`-in-`S` constraint
+that is immediately deleted (along with any temporary variables created
+to build the dummy), relying on the fact that MOI models do not recycle
+deleted constraint indices.
+
+Reservation can be skipped when the inner model supports neither `(F, S)`
+as a constraint nor constrained-variables-in-`S`, in which case no
+colliding `ConstraintIndex{F,S}` can ever be produced by the inner model.
+
+For function types `F` not handled by the default implementation,
+specialize this method on the model type.
+"""
+function reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{F},
+    set::MOI.AbstractSet,
+) where {F<:MOI.AbstractFunction}
+    return _default_reserve_constraint_index(model, F, set)
+end
+
+function reserve_constraint_index(
+    b::AbstractBridgeOptimizer,
+    ::Type{F},
+    set::MOI.AbstractSet,
+) where {F<:MOI.AbstractFunction}
+    return reserve_constraint_index(b.model, F, set)
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{MOI.VariableIndex},
+    set::MOI.AbstractScalarSet,
+)
+    vi = MOI.add_variable(model)
+    ci = MOI.add_constraint(model, vi, set)
+    MOI.delete(model, vi)  # also deletes ci
+    return ci
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{MOI.VectorOfVariables},
+    set::MOI.AbstractVectorSet,
+)
+    S = typeof(set)
+    if !MOI.supports_constraint(model, MOI.VectorOfVariables, S) &&
+       !MOI.supports_add_constrained_variables(model, S)
+        # The inner model cannot produce a colliding `CI{VOV, S}`, so no
+        # reservation is needed. The sentinel `ci.value == 0` signals to
+        # the caller that it must allocate a local index.
+        return MOI.ConstraintIndex{MOI.VectorOfVariables,S}(0)
+    end
+    vis = MOI.add_variables(model, MOI.dimension(set))
+    ci = MOI.add_constraint(model, MOI.VectorOfVariables(vis), set)
+    MOI.delete(model, ci)
+    for vi in vis
+        MOI.delete(model, vi)
+    end
+    return ci
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{F},
+    set::MOI.AbstractScalarSet,
+) where {F<:MOI.AbstractScalarFunction}
+    ci = MOI.add_constraint(model, zero(F), set)
+    MOI.delete(model, ci)
+    return ci
+end
+
+function _default_reserve_constraint_index(
+    model::MOI.ModelLike,
+    ::Type{F},
+    set::MOI.AbstractVectorSet,
+) where {F<:MOI.AbstractVectorFunction}
+    f = MOI.Utilities.zero_with_output_dimension(F, MOI.dimension(set))
+    ci = MOI.add_constraint(model, f, set)
+    MOI.delete(model, ci)
+    return ci
 end
 
 """
@@ -757,7 +893,8 @@ function MOI.delete(
         else
             delete!(Constraint.bridges(b)::Constraint.Map, ci)
         end
-        if F === MOI.VariableIndex && ci.value < 0
+        if F === MOI.VariableIndex &&
+           haskey(Variable.bridges(b), MOI.VariableIndex(ci.value))
             # Constraint on a bridged variable so we need to remove the flag
             # if it is a bound
             MOI.delete(Variable.bridges(b), ci)
@@ -2288,16 +2425,21 @@ function MOI.add_constrained_variables(
     end
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
-        # `MOI.VectorOfVariables` constraint indices have negative indices
-        # to distinguish between the indices of the inner model.
-        # However, they can clash between the indices created by the variable
-        # so we use the last argument to inform the variable bridge mapping about
-        # indices already taken by constraint bridges.
+        # Reserve a vector of variable indices and a VectorOfVariables
+        # constraint index from the inner model so that they don't collide
+        # with anything in the inner namespace (including bridged variables
+        # from any inner bridge layer).
+        dim = MOI.dimension(set)
+        variables = MOI.VariableIndex[
+            reserve_variable_index(b.model) for _ in 1:dim
+        ]
+        ci = reserve_constraint_index(b.model, MOI.VectorOfVariables, set)
         return Variable.add_keys_for_bridge(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(BridgeType, b, set),
             set,
-            !Base.Fix1(haskey, Constraint.bridges(b)),
+            variables,
+            ci,
         )
     else
         variables = MOI.add_variables(b, MOI.dimension(set))
@@ -2327,6 +2469,11 @@ function MOI.add_constrained_variable(
     end
     if is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        # Reserve a variable index from the inner model so it doesn't
+        # collide with the inner namespace. The corresponding scalar
+        # constraint shares `ci.value == vi.value` by MOI convention, so
+        # no separate constraint reservation is needed.
+        variable = reserve_variable_index(b.model)
         return Variable.add_key_for_bridge(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(
@@ -2335,6 +2482,7 @@ function MOI.add_constrained_variable(
                 set,
             ),
             set,
+            variable,
         )
     else
         variable = MOI.add_variable(b)
