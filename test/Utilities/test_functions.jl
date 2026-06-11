@@ -2044,6 +2044,19 @@ function test_ScalarNonlinearFunction_is_canonical()
         f = MOI.ScalarNonlinearFunction(:sin, Any[f])
     end
     @test MOI.Utilities.is_canonical(f)
+    @test MOI.Utilities.canonicalize!(f) isa MOI.ScalarNonlinearFunction
+    g = MOI.ScalarNonlinearFunction(:^, Any[1.0 * x + 1.0 * x, 2])
+    for _ in 1:100_000
+        g = MOI.ScalarNonlinearFunction(:sin, Any[g])
+    end
+    @test !MOI.Utilities.is_canonical(g)
+    MOI.Utilities.canonicalize!(g)
+    h = MOI.ScalarNonlinearFunction(:^, Any[2.0 * x, 2])
+    for _ in 1:100_000
+        h = MOI.ScalarNonlinearFunction(:sin, Any[h])
+    end
+    @test MOI.Utilities.is_canonical(h)
+    @test isapprox(g, h)
     return
 end
 
