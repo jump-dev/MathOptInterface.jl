@@ -452,10 +452,13 @@ function substitute_variables(
     x::MOI.VariableIndex,
 ) where {F<:Function}
     f = variable_map(x)
-    if f != x
-        error("Cannot substitute `$x` as it is bridged into `$f`.")
+    if f isa MOI.VariableIndex
+        # `f` may differ from `x` when the bridge optimizer translates
+        # between its outer and inner variable index spaces; a plain
+        # renaming is allowed in contexts that require a `VariableIndex`.
+        return f
     end
-    return x
+    error("Cannot substitute `$x` as it is bridged into `$f`.")
 end
 
 # This method is used when submitting `HeuristicSolution`.
