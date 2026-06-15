@@ -85,15 +85,20 @@ function test_subsitution_of_variables()
     @test MOI.get(mock, DummyModelAttribute()) ≈ 2.0y + 3.0
 
     z = MOI.add_variable(bridged)
-    for (attr, index) in
-        [(DummyVariableAttribute(), z), (DummyConstraintAttribute(), c2x)]
+    # `z` lives in `bridged`'s outer index space; to talk to `mock` directly
+    # we need the corresponding index of the inner model.
+    z_inner = MOI.get(mock, MOI.ListOfVariableIndices())[2]
+    for (attr, index, inner_index) in [
+        (DummyVariableAttribute(), z, z_inner),
+        (DummyConstraintAttribute(), c2x, c2x),
+    ]
         MOI.set(bridged, attr, index, 1.0x)
         @test MOI.get(bridged, attr, index) ≈ 1.0x
-        @test MOI.get(mock, attr, index) ≈ 1.0y + 1.0
+        @test MOI.get(mock, attr, inner_index) ≈ 1.0y + 1.0
 
         MOI.set(bridged, attr, [index], [3.0x + 1.0z])
         @test MOI.get(bridged, attr, [index])[1] ≈ 3.0x + 1.0z
-        @test MOI.get(mock, attr, [index])[1] ≈ 3.0y + 1.0z + 3.0
+        @test MOI.get(mock, attr, [inner_index])[1] ≈ 3.0y + 1.0z_inner + 3.0
     end
     return
 end
@@ -126,13 +131,18 @@ function test_CallbackVariablePrimal()
     x, _ = MOI.add_constrained_variable(bridged, MOI.GreaterThan(1.0))
     y = MOI.get(mock, MOI.ListOfVariableIndices())[1]
     z = MOI.add_variable(bridged)
+    # `z` lives in `bridged`'s outer index space; to talk to `mock` directly
+    # we need the corresponding index of the inner model.
+    z_inner = MOI.get(mock, MOI.ListOfVariableIndices())[2]
     attr = MOI.CallbackVariablePrimal(nothing)
     @test_throws(
-        ErrorException("No mock callback primal is set for variable `$z`."),
+        ErrorException(
+            "No mock callback primal is set for variable `$z_inner`.",
+        ),
         MOI.get(bridged, attr, z),
     )
     MOI.set(mock, attr, y, 1.0)
-    MOI.set(mock, attr, z, 2.0)
+    MOI.set(mock, attr, z_inner, 2.0)
     @test MOI.get(bridged, attr, z) == 2.0
     err = ArgumentError(
         "Variable bridge of type `$(typeof(MOI.Bridges.bridge(bridged, x)))` " *
