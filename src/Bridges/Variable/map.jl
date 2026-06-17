@@ -135,19 +135,19 @@ function Base.empty!(map::Map)
 end
 
 """
-    is_variable_mapping_active(map::Map)::Bool
-
-Return `true` once at least one variable bridge has been added (and hence
-the outer/inner translation has been materialized).
-"""
-is_variable_mapping_active(map::Map) = map.next_outer_variable != 0
-
-"""
     is_constraint_mapping_active(map::Map, ::Type{F}, ::Type{S})::Bool
 
 Return `true` once at least one `CI{F, S}` has been force-bridged at this
 layer (and hence the outer/inner translation for `(F, S)` has been
 materialized).
+
+Note that this is strictly stronger than [`has_bridges`](@ref): the latter
+is `true` as soon as any variable bridge exists, while constraint mapping
+only activates for the specific `(F, S)` pairs whose outer and inner
+namespaces have diverged because a `VariableIndex`/`VectorOfVariables`
+constraint was force-bridged. Regular `F`-in-`S` constraints are bridged
+per *type*, never per *instance*, so their namespaces never diverge and
+this stays `false` for them.
 """
 function is_constraint_mapping_active(
     map::Map,
@@ -168,7 +168,12 @@ namespaces independently. No-op if the mapping is already active.
 `b.model` of the enclosing `AbstractBridgeOptimizer`).
 """
 function activate_variable_mapping!(map::Map, model::MOI.ModelLike)
-    if is_variable_mapping_active(map)
+    # `has_bridges` flips to `true` only inside `add_key_for_bridge` (which
+    # pushes to `map.info`), and that always runs *after* this function in
+    # `add_constrained_variable`. So on the first variable bridge this is
+    # still `false` and we populate; any nested re-entry (a variable bridge
+    # that itself adds constrained variables) sees `true` and is a no-op.
+    if has_bridges(map)
         return
     end
     max_value = Int64(0)
@@ -223,7 +228,7 @@ Return a fresh `Int64` value to use as a `VariableIndex.value` in the outer
 namespace and advance the internal counter.
 """
 function next_outer_variable!(map::Map)
-    @assert is_variable_mapping_active(map)
+    @assert has_bridges(map)
     value = map.next_outer_variable
     map.next_outer_variable = value + 1
     return value
