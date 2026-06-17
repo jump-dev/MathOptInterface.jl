@@ -471,11 +471,12 @@ Translate an outer index (in `b`'s user-facing namespace) to its inner
 counterpart (`b.model`'s namespace). Returns `idx` unchanged when no
 translation is in effect at this layer:
 
-* For a `VariableIndex`, the variable mapping must be active
-  (`Variable.is_variable_mapping_active(map)`) AND `idx` must not refer to
-  an outer-only bridged variable (`idx.value < 0`).
-* For a `ConstraintIndex{F, S}`, the constraint mapping for `(F, S)` must
-  be active AND `idx.value >= 0`.
+* For a `VariableIndex`, only when variable bridges are used
+  (`Variable.has_bridges(map)`). The caller is responsible for having
+  already established that `idx` is not bridged at `b`'s layer.
+* For a `ConstraintIndex{F, S}`, only when the constraint mapping for
+  `(F, S)` has been activated (see
+  [`Variable.is_constraint_mapping_active`](@ref)).
 
 This is the canonical "if variable bridges are used, use the index map;
 else return the index unchanged" helper.
@@ -485,9 +486,7 @@ function outer_to_inner(
     vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       vi.value > 0 &&
-       Variable.is_variable_mapping_active(map)
+    if Variable.has_bridges(map)
         return map.outer_to_inner[vi]
     end
     return vi
@@ -498,8 +497,7 @@ function outer_to_inner(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       ci.value > 0 &&
+    if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
         return map.outer_to_inner[ci]
     end
@@ -529,7 +527,7 @@ function inner_to_outer(
     vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+    if Variable.has_bridges(map)
         return map.inner_to_outer[vi]
     end
     return vi
@@ -540,7 +538,8 @@ function inner_to_outer(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if map isa Variable.Map && Variable.is_constraint_mapping_active(map, F, S)
+    if Variable.has_bridges(map) &&
+       Variable.is_constraint_mapping_active(map, F, S)
         return map.inner_to_outer[ci]
     end
     return ci
@@ -625,10 +624,7 @@ namespace. When `recursive_model(b) !== b` (for example,
 (see [`bridged_variable_function`](@ref)) so this is the identity.
 """
 function _to_inner_value(b::AbstractBridgeOptimizer, value)
-    map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       Variable.is_variable_mapping_active(map) &&
-       recursive_model(b) === b
+    if Variable.has_bridges(Variable.bridges(b)) && recursive_model(b) === b
         return MOI.Utilities.map_indices(_OuterToInner(b), value)
     end
     return value
@@ -644,8 +640,7 @@ unchanged; the caller is expected to substitute them out via
 [`unbridged_function`](@ref).
 """
 function _from_inner_value(b::AbstractBridgeOptimizer, value)
-    map = Variable.bridges(b)
-    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+    if Variable.has_bridges(Variable.bridges(b))
         return MOI.Utilities.map_indices(_TotalInnerToOuter(b), value)
     end
     return value
@@ -688,8 +683,7 @@ is active, regardless of `recursive_model(b)`, because such functions are
 never rewritten by [`bridged_function`](@ref).
 """
 function _to_inner_index_function(b::AbstractBridgeOptimizer, f)
-    map = Variable.bridges(b)
-    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+    if Variable.has_bridges(Variable.bridges(b))
         return MOI.Utilities.map_indices(_OuterToInner(b), f)
     end
     return f
@@ -711,7 +705,7 @@ function _record_inner_constraint!(
     inner_ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if map isa Variable.Map &&
+    if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
         outer_ci =
             MOI.ConstraintIndex{F,S}(Variable.next_outer_constraint!(map, F, S))
@@ -734,7 +728,7 @@ function MOI.is_valid(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
         return haskey(Variable.bridges(b), vi)
     end
     map = Variable.bridges(b)
-    if map isa Variable.Map && Variable.is_variable_mapping_active(map)
+    if Variable.has_bridges(map)
         # Outer/inner translation is in effect. Outer `vi` must be in
         # `outer_to_inner` to be valid; the entry then points to the inner
         # index to forward.
@@ -801,9 +795,7 @@ function _inner_index_or_nothing(
     vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       vi.value > 0 &&
-       Variable.is_variable_mapping_active(map)
+    if Variable.has_bridges(map)
         return get(map.outer_to_inner.var_map, vi, nothing)
     end
     return vi
@@ -814,8 +806,7 @@ function _inner_index_or_nothing(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       ci.value > 0 &&
+    if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
         if haskey(map.outer_to_inner.con_map, ci)
             return map.outer_to_inner.con_map[ci]
@@ -1076,7 +1067,7 @@ function _remove_inner_variable_mapping!(
     vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if !(map isa Variable.Map) || !Variable.is_variable_mapping_active(map)
+    if !Variable.has_bridges(map)
         return
     end
     inner_vi = get(map.outer_to_inner.var_map, vi, nothing)
@@ -1239,8 +1230,7 @@ function _get_all_including_bridged(
         key = inner_variable
         if !haskey(bridge_var_map, key)
             map_b = Variable.bridges(b)
-            if map_b isa Variable.Map &&
-               Variable.is_variable_mapping_active(map_b) &&
+            if Variable.has_bridges(map_b) &&
                haskey(map_b.inner_to_outer, key)
                 key = map_b.inner_to_outer[key]
             end
@@ -2363,7 +2353,7 @@ function _outer_variable_for_name_lookup(
     vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if !(map isa Variable.Map) || !Variable.is_variable_mapping_active(map)
+    if !Variable.has_bridges(map)
         return vi
     end
     if haskey(map.inner_to_outer.var_map, vi)
@@ -2861,16 +2851,17 @@ end
 """
     _record_inner_variable!(b::AbstractBridgeOptimizer, inner_vi::MOI.VariableIndex)
 
-If variable mapping is active in `b`, allocate a fresh outer `VariableIndex`
-value and record the bidirectional mapping. Otherwise (identity mode, or `b`
-does not own a `Variable.Map` at all), return `inner_vi` unchanged.
+If `b` uses variable bridges (`Variable.has_bridges`), allocate a fresh
+outer `VariableIndex` value and record the bidirectional mapping.
+Otherwise (identity mode, or `b` does not own a `Variable.Map` at all),
+return `inner_vi` unchanged.
 """
 function _record_inner_variable!(
     b::AbstractBridgeOptimizer,
     inner_vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if !(map isa Variable.Map) || !Variable.is_variable_mapping_active(map)
+    if !Variable.has_bridges(map)
         return inner_vi
     end
     outer_vi = MOI.VariableIndex(Variable.next_outer_variable!(map))
