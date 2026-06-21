@@ -65,7 +65,9 @@ function is_bridged end
 Return a `Bool` indicating whether `vi` is bridged. The variable is said to be
 bridged if it is a variable of `b` but not a variable of `b.model`.
 """
-is_bridged(::AbstractBridgeOptimizer, vi::MOI.VariableIndex) = vi.value < 0
+function is_bridged(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
+    return Variable.is_bridged_variable(Variable.bridges(b), vi)
+end
 
 """
     is_bridged(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
@@ -84,40 +86,31 @@ function is_bridged(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
-    # There are a few cases for which we should return `false`:
-    # 1) It was added as variables constrained on creation to `b.model`,
-    #    In this case, `is_bridged(b, S)` is `false` and `ci.value >= 0`.
-    # 2) It was added as constraint on a non-bridged variable to `b.model`,
-    #    In this case, `is_bridged(b, F, S)` is `false` and `ci.value >= 0`.
-    # and a few cases for which we should return `true`:
-    # 3) It was added with a variable bridge,
-    #    In this case, `is_bridged(b, S)` is `true` and `ci.value < 0`.
-    # 4) It was added as constraint on a bridged variable so it was force-bridged,
-    #    In this case, `ci.value < 0`.
-    # 5) It was added with a constraint bridge,
-    #    In this case, `is_bridged(b, F, S)` is `true` and  `ci.value >= 0` (the variable is non-bridged, otherwise, the constraint would have been force-bridged).
-    # So
-    # * if, `ci.value < 0` then it is case 3) or 4) and we return `true`.
-    # * Otherwise,
-    #   - if `is_bridged(b, S)` and `is_bridged(b, F, S)` then 1) and 2) are
-    #     not possible so we are in case 5) and we return `true`.
-    #   - if `!is_bridged(b, F, S)`, then 5) is not possible and we return `false`.
-    #   - if `!is_bridged(b, S)` and `is_bridged(b, F, S)`, then it is either case 1)
-    #     or 5). They cannot both be the cases as one cannot add two `VariableIndex`
-    #     with the same set type on the same variable (this is ensured by
-    #     `_check_double_single_variable`). Therefore, we can safely determine
-    #     whether it is bridged with `haskey(Constraint.bridges(b), ci)`.
-    return ci.value < 0 || (
-        is_bridged(b, MOI.VariableIndex, S) &&
-        (is_bridged(b, S) || haskey(Constraint.bridges(b), ci))
-    )
+    # By MOI convention, a `CI{VariableIndex, S}` shares its `value` with the
+    # constrained variable. There are three possibilities:
+    #  * the variable is bridged: the constraint was either created by a
+    #    variable bridge or force-bridged because it was added on a bridged
+    #    variable. Either way it is bridged.
+    #  * the variable is not bridged but the constraint was added with a
+    #    constraint bridge: it lives in `Constraint.bridges(b)`.
+    #  * otherwise it passes through to `b.model` and is not bridged.
+    if is_bridged(b, MOI.VariableIndex(ci.value))
+        return true
+    end
+    return haskey(Constraint.bridges(b), ci)
 end
 
 function is_bridged(
-    ::AbstractBridgeOptimizer,
+    b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
 ) where {S}
-    return ci.value < 0
+    # A `CI{VectorOfVariables, S}` is bridged if it is a vector of constrained
+    # variables (stored in `Variable.bridges(b)`) or a force-/constraint-
+    # bridged constraint (stored in `Constraint.bridges(b)`).
+    if MOI.is_valid(Variable.bridges(b), ci)
+        return true
+    end
+    return haskey(Constraint.bridges(b), ci)
 end
 
 """
@@ -170,19 +163,29 @@ end
 
 Returns whether `ci` is the constraint of a bridged constrained variable. That
 is, if it was returned by `Variable.add_key_for_bridge` or
-`Variable.add_keys_for_bridge`. Note that it is not equivalent to
-`ci.value < 0` as, it can also simply be a constraint on a bridged variable.
+`Variable.add_keys_for_bridge`. This is *not* the same as a constraint that
+was merely force-bridged on a bridged variable (that one lives in
+`Constraint.bridges(b)`).
 """
 is_variable_bridged(::AbstractBridgeOptimizer, ::MOI.ConstraintIndex) = false
 
 function is_variable_bridged(
     b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{<:Union{MOI.VariableIndex,MOI.VectorOfVariables}},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
 )
-    # It can be a constraint corresponding to bridged constrained variables so
-    # we `check` with `haskey(Constraint.bridges(b), ci)` whether this is the
-    # case.
-    return ci.value < 0 && !haskey(Constraint.bridges(b), ci)
+    # The constraint of a bridged constrained scalar variable shares its
+    # `value` with the variable. Exclude force-bridged constraints, which are
+    # stored in `Constraint.bridges(b)`.
+    return is_bridged(b, MOI.VariableIndex(ci.value)) &&
+           !haskey(Constraint.bridges(b), ci)
+end
+
+function is_variable_bridged(
+    b::AbstractBridgeOptimizer,
+    ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
+)
+    return MOI.is_valid(Variable.bridges(b), ci) &&
+           !haskey(Constraint.bridges(b), ci)
 end
 
 """
@@ -1136,7 +1139,8 @@ function MOI.delete(
         else
             delete!(Constraint.bridges(b)::Constraint.Map, ci)
         end
-        if F === MOI.VariableIndex && ci.value < 0
+        if F === MOI.VariableIndex &&
+           is_bridged(b, MOI.VariableIndex(ci.value))
             # Constraint on a bridged variable so we need to remove the flag
             # if it is a bound
             MOI.delete(Variable.bridges(b), ci)
@@ -2476,17 +2480,24 @@ end
 """
     _is_available_constraint_index(b, ci::MOI.ConstraintIndex)
 
-Return `true` if `ci` can be allocated by `Constraint.add_key_for_bridge`
-without clashing with an index already in use in the outer namespace: by
-the variable bridges (constrained-on-creation vectors of variables) or by
-an identity entry copied when the `(F, S)` constraint mapping was
-activated.
+Return `true` if `ci` can be allocated (by `Constraint.add_key_for_bridge`
+for a force-bridged constraint, or by `Variable.add_keys_for_bridge` for a
+vector of constrained variables) without clashing with an index already in
+use in the outer `(F, S)` namespace, namely:
+
+  * a vector of constrained variables in `Variable.bridges(b)`,
+  * a force-/constraint-bridged constraint in `Constraint.bridges(b)`,
+  * an inner constraint translated into the outer namespace when the
+    `(F, S)` constraint mapping was activated.
 """
 function _is_available_constraint_index(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     if MOI.is_valid(Variable.bridges(b), ci)
+        return false
+    end
+    if haskey(Constraint.bridges(b), ci)
         return false
     end
     map = Variable.bridges(b)
@@ -2926,28 +2937,33 @@ function MOI.add_constrained_variables(
     end
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
+        v_map = Variable.bridges(b)::Variable.Map
         # Activate the outer/inner variable translation map at this layer
         # before allocating the new bridged variables. This ensures every
         # variable visible to the user from now on lives in the outer
         # namespace.
-        Variable.activate_variable_mapping!(
-            Variable.bridges(b)::Variable.Map,
+        Variable.activate_variable_mapping!(v_map, b.model)
+        # The constrained-variable `CI{VectorOfVariables, S}` shares the outer
+        # `(VOV, S)` namespace with inner passthrough constraints and force-
+        # bridged constraints. Activate the constraint mapping for `(VOV, S)`
+        # so that inner indices are translated out of the way, and pass
+        # `_is_available_constraint_index` so the allocation skips any value
+        # already taken by `Constraint.bridges` or by an inner constraint.
+        Variable.activate_constraint_mapping!(
+            v_map,
             b.model,
+            MOI.VectorOfVariables,
+            typeof(set),
         )
-        # `MOI.VectorOfVariables` constraint indices have negative indices
-        # to distinguish between the indices of the inner model.
-        # However, they can clash between the indices created by the variable
-        # so we use the last argument to inform the variable bridge mapping about
-        # indices already taken by constraint bridges.
         return Variable.add_keys_for_bridge(
-            Variable.bridges(b)::Variable.Map,
+            v_map,
             () -> Variable.bridge_constrained_variable(
                 BridgeType,
                 recursive_model(b),
                 set,
             ),
             set,
-            !Base.Fix1(haskey, Constraint.bridges(b)),
+            Base.Fix1(_is_available_constraint_index, b),
         )
     else
         variables = MOI.add_variables(b, MOI.dimension(set))
@@ -3112,10 +3128,21 @@ function unbridged_variable_function(
     func = Variable.unbridged_function(Variable.bridges(b)::Variable.Map, vi)
     if func === nothing
         return vi
-    else
-        # If two variable bridges are chained, `func` may still contain
-        # variables to unbridge.
+    elseif recursive_model(b) === b
+        # `LazyBridgeOptimizer`: the bridges created their variables through
+        # `b`, so `func` is expressed in `b`'s outer namespace and may chain
+        # through further bridge-created (outer) variables that still need
+        # unbridging. These all have distinct outer values.
         return unbridged_function(b, func)
+    else
+        # `SingleBridgeOptimizer`: the bridge created its variables directly
+        # in `b.model`, so the `unbridged_function` map is keyed by inner
+        # variables while `func` is already expressed in terms of the final
+        # outer bridged variables. We must NOT re-process `func`: an outer
+        # bridged variable and an inner bridge-created variable can share the
+        # same positive value, so looking `func`'s variables up in the map
+        # would wrongly match and recurse forever.
+        return func
     end
 end
 
