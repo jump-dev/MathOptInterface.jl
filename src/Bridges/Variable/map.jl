@@ -28,25 +28,29 @@ bridged `CI{VariableIndex, S}` or `CI{VectorOfVariables, S}` triggers
 `CI{F, S}` are copied in as identity entries; afterwards the outer and inner
 `CI{F, S}` namespaces are independent.
 
-Outer-only entries (bridged variables, force-bridged constraints) appear as
-keys in `outer_to_inner` with a sentinel value of `0` (and are absent from
-`inner_to_outer`).
+## Internal slot indexing
+
+Bridged variables are identified by a **positive** outer `VariableIndex.value`
+allocated from the shared outer counter (see [`next_outer_variable!`](@ref)).
+Internally, the per-bridge data is stored in dense `Vector`s indexed by a
+1-based `slot`. [`variable_to_slot`](@ref) maps an outer value to its slot and
+[`slot_to_variable`](@ref) is the inverse (parallel to `bridges`). A bridged
+variable is **outer-only**: it has no entry in `outer_to_inner`/`inner_to_outer`.
 """
 mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
-    # Bridged constrained variables
-    # `i` ->  `0`: `VariableIndex(-i)` was added with `add_constrained_variable`.
-    # `i` -> `-j`: `VariableIndex(-i)` was the first variable of
+    # `slot` ->  `0`: the variable at `slot` was added with `add_constrained_variable`.
+    # `slot` -> `-j`: the variable at `slot` was the first variable of
     #              `add_constrained_variables` with a
-    #              `ConstraintIndex{MOI.VectorOfVariables}(-j)`.
-    # `i` ->  `j`: `VariableIndex(-i)` was the `j`th  variable of
-    #             ` add_constrained_variables`.
+    #              `ConstraintIndex{MOI.VectorOfVariables}(j)` (note: `j > 0`).
+    # `slot` ->  `j`: the variable at `slot` was the `j`th variable of
+    #             `add_constrained_variables`.
     info::Vector{Int64}
-    # `i` ->  `-1`: `VariableIndex(-i)` was deleted.
-    # `i` ->  `0`: `VariableIndex(-i)` was added with `add_constrained_variable`.
-    # `i` ->  `j`: `VariableIndex(-i)` is the `j`th  variable of a constrained
+    # `slot` ->  `-1`: the variable at `slot` was deleted.
+    # `slot` ->  `0`: the variable at `slot` was added with `add_constrained_variable`.
+    # `slot` ->  `j`: the variable at `slot` is the `j`th variable of a constrained
     #               vector of variables, taking deletion into account.
     index_in_vector::Vector{Int64}
-    # `i` -> `bridge`: `VariableIndex(-i)` was bridged by `bridge`.
+    # `slot` -> `bridge`: the variable at `slot` was bridged by `bridge`.
     bridges::Vector{Union{Nothing,AbstractBridge}}
     sets::Vector{Union{Nothing,Type}}
     # If `nothing`, it cannot be computed because some bridges does not support it
@@ -61,7 +65,7 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # Context of constraint bridged by constraint bridges
     constraint_context::Dict{MOI.ConstraintIndex,Int64}
     # `(ci::ConstraintIndex{MOI.VectorOfVariables}).value` ->
-    # the first variable index
+    # the `slot` of the first variable
     # and `0` if it is the index of a constraint bridge
     vector_of_variables_map::Vector{Int64}
     # `(ci::ConstraintIndex{MOI.VectorOfVariables}).value` ->
@@ -69,6 +73,11 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     vector_of_variables_length::Vector{Int64}
     # Same as in `MOI.Utilities.VariablesContainer`
     set_mask::Vector{UInt16}
+    # outer `VariableIndex.value` of a bridged variable -> its `slot`.
+    variable_to_slot::Dict{Int64,Int64}
+    # `slot` -> outer `VariableIndex.value` (inverse of `variable_to_slot`,
+    # parallel to `bridges`).
+    slot_to_variable::Vector{Int64}
     # Outer (user-facing) -> inner (`b.model`) translation. Empty until the
     # first variable bridge is added, at which point existing inner variables
     # are added as identity. After activation, every variable in the outer
@@ -99,6 +108,8 @@ function Map()
         Int64[],
         Int64[],
         UInt16[],
+        Dict{Int64,Int64}(),
+        Int64[],
         MOI.Utilities.IndexMap(),
         MOI.Utilities.IndexMap(),
         0,
@@ -127,6 +138,8 @@ function Base.empty!(map::Map)
     empty!(map.vector_of_variables_map)
     empty!(map.vector_of_variables_length)
     empty!(map.set_mask)
+    empty!(map.variable_to_slot)
+    empty!(map.slot_to_variable)
     map.outer_to_inner = MOI.Utilities.IndexMap()
     map.inner_to_outer = MOI.Utilities.IndexMap()
     map.next_outer_variable = 0
@@ -251,19 +264,39 @@ function next_outer_constraint!(
     return value
 end
 
+"""
+    is_bridged_variable(map, vi::MOI.VariableIndex)::Bool
+
+Return `true` if `vi` is (or was) a variable bridged by `map`. Unlike
+[`haskey`](@ref), this stays `true` after the variable is deleted (the
+outer index is never reused), matching the role of the former
+`vi.value < 0` test.
+"""
+is_bridged_variable(map::Map, vi::MOI.VariableIndex) =
+    haskey(map.variable_to_slot, vi.value)
+
+# Internal `slot` of the bridged variable `vi`, i.e. the index into the dense
+# per-bridge `Vector`s. Errors if `vi` is not a bridged variable.
+_slot(map::Map, vi::MOI.VariableIndex) = map.variable_to_slot[vi.value]
+
+# Outer `VariableIndex` stored at `slot`.
+_variable(map::Map, slot::Integer) = MOI.VariableIndex(map.slot_to_variable[slot])
+
 function bridge_index(map::Map, vi::MOI.VariableIndex)
-    index = map.info[-vi.value]
+    slot = _slot(map, vi)
+    index = map.info[slot]
     if index ≤ 0
-        return -vi.value
+        return slot
     else
-        return -vi.value - index + 1
+        return slot - index + 1
     end
 end
 
 function Base.haskey(map::Map, vi::MOI.VariableIndex)
-    return -length(map.bridges) ≤ vi.value ≤ -1 &&
+    slot = get(map.variable_to_slot, vi.value, 0)
+    return slot != 0 &&
            map.bridges[bridge_index(map, vi)] !== nothing &&
-           map.index_in_vector[-vi.value] != -1
+           map.index_in_vector[slot] != -1
 end
 
 function Base.getindex(map::Map, vi::MOI.VariableIndex)
@@ -271,7 +304,8 @@ function Base.getindex(map::Map, vi::MOI.VariableIndex)
 end
 
 function Base.delete!(map::Map, vi::MOI.VariableIndex)
-    if iszero(map.info[-vi.value])
+    slot = _slot(map, vi)
+    if iszero(map.info[slot])
         # Delete scalar variable
         index = bridge_index(map, vi)
         map.bridges[index] = nothing
@@ -282,18 +316,17 @@ function Base.delete!(map::Map, vi::MOI.VariableIndex)
     else
         # Delete variable in vector and resize vector
         map.vector_of_variables_length[-map.info[bridge_index(map, vi)]] -= 1
-        for i in (-vi.value):length(map.index_in_vector)
-            if map.index_in_vector[i] == -1
+        for s in slot:length(map.index_in_vector)
+            if map.index_in_vector[s] == -1
                 continue
-            elseif bridge_index(map, vi) !=
-                   bridge_index(map, MOI.VariableIndex(-i))
+            elseif bridge_index(map, vi) != bridge_index(map, _variable(map, s))
                 break
             end
-            map.index_in_vector[i] -= 1
+            map.index_in_vector[s] -= 1
         end
     end
-    map.set_mask[-vi.value] = MOI.Utilities._DELETED_VARIABLE
-    map.index_in_vector[-vi.value] = -1
+    map.set_mask[slot] = MOI.Utilities._DELETED_VARIABLE
+    map.index_in_vector[slot] = -1
     return map
 end
 
@@ -306,8 +339,9 @@ function Base.delete!(map::Map, vis::Vector{MOI.VariableIndex})
         )
     end
     for vi in vis
-        map.set_mask[-vi.value] = MOI.Utilities._DELETED_VARIABLE
-        map.index_in_vector[-vi.value] = -1
+        slot = _slot(map, vi)
+        map.set_mask[slot] = MOI.Utilities._DELETED_VARIABLE
+        map.index_in_vector[slot] = -1
     end
     map.bridges[bridge_index(map, first(vis))] = nothing
     map.sets[bridge_index(map, first(vis))] = nothing
@@ -319,7 +353,7 @@ function Base.keys(map::Map)
         vi -> haskey(map, vi),
         MOI.Utilities.lazy_map(
             MOI.VariableIndex,
-            i -> MOI.VariableIndex(-i),
+            slot -> _variable(map, slot),
             eachindex(map.bridges),
         ),
     )
@@ -329,12 +363,12 @@ Base.length(map::Map) = count(bridge -> bridge !== nothing, map.bridges)
 
 function number_of_variables(map::Map)
     num = 0
-    for i in eachindex(map.bridges)
-        if map.bridges[i] !== nothing
-            if iszero(map.info[i])
+    for slot in eachindex(map.bridges)
+        if map.bridges[slot] !== nothing
+            if iszero(map.info[slot])
                 num += 1
             else
-                num += length_of_vector_of_variables(map, MOI.VariableIndex(-i))
+                num += length_of_vector_of_variables(map, _variable(map, slot))
             end
         end
     end
@@ -354,7 +388,7 @@ function Base.iterate(map::Map, state = 1)
     if state > length(map.bridges)
         return nothing
     else
-        return MOI.VariableIndex(-state) => map.bridges[state], state + 1
+        return _variable(map, state) => map.bridges[state], state + 1
     end
 end
 
@@ -399,28 +433,31 @@ function first_variable(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables},
 )
-    return MOI.VariableIndex(map.vector_of_variables_map[-ci.value])
+    return _variable(map, map.vector_of_variables_map[ci.value])
 end
 
 function constraint(map::Map, vi::MOI.VariableIndex)
     S = constrained_set(map, vi)::Type{<:MOI.AbstractSet}
     F = MOI.Utilities.variable_function_type(S)
     index = bridge_index(map, vi)
-    constraint_index = map.info[index]
-    if iszero(constraint_index)
-        constraint_index = -index
+    info = map.info[index]
+    if iszero(info)
+        # Scalar: by MOI convention `ci.value == vi.value`.
+        return MOI.ConstraintIndex{F,S}(map.slot_to_variable[index])
+    else
+        # Vector: `info == -ci.value`.
+        return MOI.ConstraintIndex{F,S}(-info)
     end
-    return MOI.ConstraintIndex{F,S}(constraint_index)
 end
 
 function MOI.is_valid(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,S},
 ) where {S}
-    if !(-ci.value in eachindex(map.vector_of_variables_map))
+    if !(ci.value in eachindex(map.vector_of_variables_map))
         return false
     end
-    index = -map.vector_of_variables_map[-ci.value]
+    index = map.vector_of_variables_map[ci.value]
     return index in eachindex(map.bridges) &&
            !isnothing(map.bridges[index]) &&
            map.sets[index] === S
@@ -430,7 +467,7 @@ function MOI.is_valid(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
-    index = -ci.value
+    index = get(map.variable_to_slot, ci.value, 0)
     return index in eachindex(map.bridges) &&
            !isnothing(map.bridges[index]) &&
            map.sets[index] === S
@@ -466,7 +503,7 @@ function MOI.add_constraint(
     ::S,
 ) where {T,S<:_BOUNDED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
-    index = -vi.value
+    index = _slot(map, vi)
     mask = map.set_mask[index]
     MOI.Utilities._throw_if_lower_bound_set(vi, S, mask, T)
     MOI.Utilities._throw_if_upper_bound_set(vi, S, mask, T)
@@ -492,7 +529,7 @@ function MOI.delete(
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {T,S<:_BOUNDED_VARIABLE_SCALAR_SETS{T}}
     flag = MOI.Utilities._single_variable_flag(S)
-    map.set_mask[-ci.value] &= ~flag
+    map.set_mask[_slot(map, MOI.VariableIndex(ci.value))] &= ~flag
     return
 end
 
@@ -504,7 +541,7 @@ Return the list of constraints corresponding to bridged variables in `S`.
 function constraints_with_set(map::Map, S::Type{<:MOI.AbstractSet})
     F = MOI.Utilities.variable_function_type(S)
     return MOI.ConstraintIndex{F,S}[
-        constraint(map, MOI.VariableIndex(-i)) for
+        constraint(map, _variable(map, i)) for
         i in eachindex(map.sets) if map.sets[i] == S
     ]
 end
@@ -544,7 +581,7 @@ function has_keys(map::Map, vis::Vector{MOI.VariableIndex})
             vis,
         ) &&
         all(vi -> haskey(map, vi), vis) &&
-        all(i -> vis[i].value < vis[i-1].value, 2:length(vis))
+        all(i -> _slot(map, vis[i]) == _slot(map, vis[i-1]) + 1, 2:length(vis))
     )
 end
 
@@ -572,7 +609,7 @@ end
 Return the index of `vi` in the vector of variables in which it was bridged.
 """
 function index_in_vector_of_variables(map::Map, vi::MOI.VariableIndex)
-    return MOI.Bridges.IndexInVector(map.index_in_vector[-vi.value])
+    return MOI.Bridges.IndexInVector(map.index_in_vector[_slot(map, vi)])
 end
 
 """
@@ -607,9 +644,14 @@ function add_key_for_bridge(
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
     push!(map.set_mask, 0x0000)
+    # Allocate the positive outer index for the new bridged variable and
+    # record the outer <-> slot bijection. Must be done after pushing to
+    # `map.info` so that `has_bridges(map)` is `true`.
+    value = next_outer_variable!(map)
+    push!(map.slot_to_variable, value)
+    map.variable_to_slot[value] = bridge_index
+    variable = MOI.VariableIndex(value)
     map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
-    index = -bridge_index
-    variable = MOI.VariableIndex(index)
     if map.unbridged_function !== nothing
         mappings = unbridged_map(something(map.bridges[bridge_index]), variable)
         if mappings === nothing
@@ -624,7 +666,7 @@ function add_key_for_bridge(
         end
     end
     MOI.add_constraint(map, variable, set)
-    return variable, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(index)
+    return variable, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(value)
 end
 
 """
@@ -654,20 +696,28 @@ function add_keys_for_bridge(
     push!(map.parent_index, map.current_context)
     bridge_index = Int64(length(map.parent_index))
     F = MOI.VectorOfVariables
+    # Allocate a positive `CI{VectorOfVariables, S}` value for this vector of
+    # constrained variables, skipping (with placeholders) the values that
+    # `is_available` reports as already taken (by constraint bridges or by
+    # the inner model). `vector_of_variables_map` stays dense, indexed by the
+    # (positive) `ci.value`.
     while !is_available(
-        MOI.ConstraintIndex{F,S}(-length(map.vector_of_variables_map) - 1),
+        MOI.ConstraintIndex{F,S}(length(map.vector_of_variables_map) + 1),
     )
         push!(map.vector_of_variables_map, 0)
         push!(map.vector_of_variables_length, 0)
     end
-    push!(map.vector_of_variables_map, -bridge_index)
+    push!(map.vector_of_variables_map, bridge_index)
     push!(map.vector_of_variables_length, MOI.dimension(set))
-    constraint_index = -length(map.vector_of_variables_map)
-    push!(map.info, constraint_index)
+    constraint_index = length(map.vector_of_variables_map)
+    push!(map.info, -constraint_index)
     push!(map.index_in_vector, 1)
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
     push!(map.set_mask, 0x0000)
+    value = next_outer_variable!(map)
+    push!(map.slot_to_variable, value)
+    map.variable_to_slot[value] = bridge_index
     for i in 2:MOI.dimension(set)
         push!(map.parent_index, 0)
         push!(map.info, i)
@@ -675,10 +725,13 @@ function add_keys_for_bridge(
         push!(map.bridges, nothing)
         push!(map.sets, nothing)
         push!(map.set_mask, 0x0000)
+        value_i = next_outer_variable!(map)
+        push!(map.slot_to_variable, value_i)
+        map.variable_to_slot[value_i] = bridge_index + i - 1
     end
     map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
     variables = MOI.VariableIndex[
-        MOI.VariableIndex(-(bridge_index - 1 + i)) for i in 1:MOI.dimension(set)
+        _variable(map, bridge_index - 1 + i) for i in 1:MOI.dimension(set)
     ]
     if map.unbridged_function !== nothing
         mappings =
@@ -714,14 +767,13 @@ Return `MOI.VectorOfVariables(vis)` where `vis` is the vector of bridged
 variables corresponding to `ci`.
 """
 function function_for(map::Map, ci::MOI.ConstraintIndex{MOI.VectorOfVariables})
-    index = map.vector_of_variables_map[-ci.value]
+    first_slot = map.vector_of_variables_map[ci.value]
     variables = MOI.VariableIndex[]
-    for i in index:-1:(-length(map.bridges))
-        vi = MOI.VariableIndex(i)
-        if map.index_in_vector[-vi.value] == -1
+    for slot in first_slot:length(map.bridges)
+        if map.index_in_vector[slot] == -1
             continue
-        elseif bridge_index(map, vi) == -index
-            push!(variables, vi)
+        elseif bridge_index(map, _variable(map, slot)) == first_slot
+            push!(variables, _variable(map, slot))
         else
             break
         end
@@ -870,3 +922,7 @@ register_context(::EmptyMap, ::MOI.ConstraintIndex) = nothing
 call_in_context(::EmptyMap, ::MOI.ConstraintIndex, f::Function) = f()
 
 MOI.is_valid(::EmptyMap, ::MOI.ConstraintIndex) = false
+
+Base.haskey(::EmptyMap, ::MOI.VariableIndex) = false
+
+is_bridged_variable(::EmptyMap, ::MOI.VariableIndex) = false

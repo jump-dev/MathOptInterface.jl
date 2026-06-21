@@ -54,8 +54,6 @@ end
 
 _index(ci::MOI.ConstraintIndex) = ci.value
 
-_index(ci::MOI.ConstraintIndex{MOI.VectorOfVariables}) = -ci.value
-
 function Base.haskey(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
     return 1 <= _index(ci) <= length(map.bridges) &&
            map.bridges[_index(ci)] !== nothing &&
@@ -125,10 +123,6 @@ function _iterate_sv(
 end
 
 _index(index, F, S) = MOI.ConstraintIndex{F,S}(index)
-
-function _index(index, F::Type{MOI.VectorOfVariables}, S)
-    return MOI.ConstraintIndex{F,S}(-index)
-end
 
 function _iterate(map::Map, state = 1)
     while state ≤ length(map.bridges) && map.bridges[state] === nothing
@@ -243,7 +237,7 @@ Return the list of all keys that correspond to
 function vector_of_variables_constraints(map::Map)
     return MOI.Utilities.lazy_map(
         MOI.ConstraintIndex{MOI.VectorOfVariables},
-        i -> MOI.ConstraintIndex{map.constraint_types[i]...}(-i),
+        i -> MOI.ConstraintIndex{map.constraint_types[i]...}(i),
         Base.Iterators.Filter(
             i ->
                 map.bridges[i] !== nothing &&
@@ -292,7 +286,7 @@ function _ensure_available(
     ::Type{S},
     is_available::Function,
 ) where {S}
-    while !is_available(MOI.ConstraintIndex{F,S}(-length(map.bridges) - 1))
+    while !is_available(MOI.ConstraintIndex{F,S}(length(map.bridges) + 1))
         push!(map.bridges, nothing)
         push!(map.constraint_types, (F, S))
     end
