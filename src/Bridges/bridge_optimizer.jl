@@ -1203,9 +1203,11 @@ function _get_all_including_bridged(
             push!(user_only_variables, user_variable)
             n = Variable.length_of_vector_of_variables(map, user_variable)
             for i in 1:(n-1)
+                # Members of a bridged vector of variables have consecutive
+                # ascending outer values.
                 push!(
                     user_only_variables,
-                    MOI.VariableIndex(user_variable.value - i),
+                    MOI.VariableIndex(user_variable.value + i),
                 )
             end
         else
@@ -1229,21 +1231,31 @@ function _get_all_including_bridged(
         # `bridge_var_map` is keyed by the indices the bridges received from
         # `recursive_model(b)`. For a `SingleBridgeOptimizer` that is
         # `b.model` (inner indices); for a `LazyBridgeOptimizer` it is `b`
-        # itself (outer indices). Try the raw inner index first, then its
-        # outer translation.
-        key = inner_variable
-        if !haskey(bridge_var_map, key)
-            map_b = Variable.bridges(b)
-            if Variable.has_bridges(map_b) &&
-               haskey(map_b.inner_to_outer, key)
-                key = map_b.inner_to_outer[key]
-            end
+        # itself (outer indices). Translate `inner_variable` to the outer
+        # namespace (identity for a bridge-created inner variable, which has
+        # no outer counterpart) before the lookup. We must NOT "try the raw
+        # inner index first": under positive indexing an inner variable may
+        # coincidentally share a value with an unrelated outer key, which
+        # would produce a wrong (duplicate) match.
+        map_b = Variable.bridges(b)
+        key = if Variable.has_bridges(map_b)
+            get(map_b.inner_to_outer.var_map, inner_variable, inner_variable)
+        else
+            inner_variable
         end
         outer_variable = get(bridge_var_map, key, missing)
         # If there is a chain of variable bridges, the `outer_variable` may need
-        # to be mapped.
-        while haskey(bridge_var_map, outer_variable)
-            outer_variable = bridge_var_map[outer_variable]
+        # to be mapped further. This only happens for a `LazyBridgeOptimizer`
+        # (`recursive_model(b) === b`), where the chained variables all live in
+        # the distinct outer namespace. For a `SingleBridgeOptimizer` the map
+        # is a single hop from an inner created variable to its outer user
+        # variable, and following the chain would loop forever when the two
+        # share a value (for example, an identity bridge: `bridge_var_map[1]
+        # == 1`).
+        if recursive_model(b) === b
+            while haskey(bridge_var_map, outer_variable)
+                outer_variable = bridge_var_map[outer_variable]
+            end
         end
         if ismissing(outer_variable)
             # Not a bridge-created variable: report its outer translation
@@ -1259,10 +1271,11 @@ function _get_all_including_bridged(
             # variable in the bridge. Report it back to the user.
             push!(ret, outer_variable)
             # `outer_variable` might represent the start of a VectorOfVariables
-            # if multiple user-variables were bridged. Add them all.
+            # if multiple user-variables were bridged. Add them all. Members
+            # have consecutive ascending outer values.
             n = Variable.length_of_vector_of_variables(map, outer_variable)
             for i in 1:(n-1)
-                push!(ret, MOI.VariableIndex(outer_variable.value - i))
+                push!(ret, MOI.VariableIndex(outer_variable.value + i))
             end
         end
     end
@@ -1314,6 +1327,15 @@ function _remove_bridged(list, bridge, attr)
     end
     return
 end
+
+# The variable list returned by `_get_all_including_bridged` is already
+# expressed in the outer namespace and excludes the bridges' internal
+# variables, so there is nothing to remove here. (Removing the bridges' inner
+# variables would be incorrect under positive indexing, where an inner
+# variable may share a value with an outer user variable; under the old
+# negative indexing this method was a no-op because the namespaces were
+# value-disjoint.)
+_remove_bridged(list, bridge, ::MOI.ListOfVariableIndices) = nothing
 
 # The tactic for this function is to first query all possible indices, and then
 # to filter out the indices that have been bridged.
@@ -2367,9 +2389,9 @@ function _outer_variable_for_name_lookup(
         variables = MOI.get(bridge_, MOI.ListOfVariableIndices())
         position = findfirst(isequal(vi), variables)
         if position !== nothing
-            # Bridged vectors of variables use consecutive (descending)
-            # outer values starting at the first variable.
-            return MOI.VariableIndex(outer_vi.value - (position - 1))
+            # Bridged vectors of variables use consecutive ascending outer
+            # values starting at the first variable.
+            return MOI.VariableIndex(outer_vi.value + (position - 1))
         end
     end
     return vi

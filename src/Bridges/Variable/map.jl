@@ -86,8 +86,9 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # Reverse of `outer_to_inner` for the entries that have an inner
     # counterpart (i.e., bridged outer-only entries are absent).
     inner_to_outer::MOI.Utilities.IndexMap
-    # Next available outer `VariableIndex.value` once variable mapping has
-    # been activated; `0` until then.
+    # Next available outer `VariableIndex.value`. Defaults to `1`;
+    # `activate_variable_mapping!` resets it above the inner model's existing
+    # variables when the first variable bridge is added.
     next_outer_variable::Int64
     # Per-`(F, S)` next available outer `ConstraintIndex{F, S}.value`. A
     # missing entry means that `(F, S)` is in identity mode; presence means
@@ -112,7 +113,7 @@ function Map()
         Int64[],
         MOI.Utilities.IndexMap(),
         MOI.Utilities.IndexMap(),
-        0,
+        1,
         Dict{Tuple{DataType,DataType},Int64}(),
     )
 end
@@ -142,7 +143,7 @@ function Base.empty!(map::Map)
     empty!(map.slot_to_variable)
     map.outer_to_inner = MOI.Utilities.IndexMap()
     map.inner_to_outer = MOI.Utilities.IndexMap()
-    map.next_outer_variable = 0
+    map.next_outer_variable = 1
     empty!(map.next_outer_constraint)
     return map
 end
@@ -581,7 +582,9 @@ function has_keys(map::Map, vis::Vector{MOI.VariableIndex})
             vis,
         ) &&
         all(vi -> haskey(map, vi), vis) &&
-        all(i -> _slot(map, vis[i]) == _slot(map, vis[i-1]) + 1, 2:length(vis))
+        # Members of a vector have strictly ascending outer values (they are
+        # consecutive at creation; a subset stays ascending after deletions).
+        all(i -> vis[i].value > vis[i-1].value, 2:length(vis))
     )
 end
 
