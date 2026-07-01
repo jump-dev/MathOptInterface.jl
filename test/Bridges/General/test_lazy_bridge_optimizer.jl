@@ -1255,7 +1255,7 @@ function test_StandardSDPAModel_with_bridges_and_caching()
     MOI.Utilities.reset_optimizer(cached, bridged)
     MOI.Utilities.attach_optimizer(cached)
     vi_bridged = first(MOI.get(bridged, MOI.ListOfVariableIndices()))
-    @test vi_bridged == MOI.VariableIndex(-1)
+    @test vi_bridged == MOI.VariableIndex(1)
     @test cached.model_to_optimizer_map[vi_cache] == vi_bridged
     @test cached.optimizer_to_model_map[vi_bridged] == vi_cache
     vis_sdpa = MOI.get(model, MOI.ListOfVariableIndices())
@@ -1501,20 +1501,31 @@ function _test_context_substitution(T)
     @test MOI.Bridges.call_in_context(bridged, x, bridge -> f(z)) ≈ f(z)
     @test MOI.Bridges.call_in_context(bridged, y, bridge -> f(z)) === nothing
     attr = InvariantUnderFunctionConversionAttribute()
-    for func in [T(2) * x, T(2) * y, T(2) * z]
+    # `func` is set directly on the inner `model`, so its variables live in the
+    # inner namespace. Getting it back through `bridged` translates them to the
+    # outer namespace (the inner variable becomes the outer `z`; values that are
+    # not variables of the inner model are left as-is), while `call_in_context`
+    # suppresses the variable-bridge substitution. Under the former negative
+    # index encoding the outer and inner namespaces never shared a value, so
+    # this translation was not observable; with positive indices the inner
+    # variable's value can coincide with an outer one, hence the explicit
+    # `(func, expected)` pairs below.
+    inner_z = only(MOI.get(model, MOI.ListOfVariableIndices()))
+    for (func, expected) in
+        [(T(2) * inner_z, T(2) * z), (T(2) * y, T(2) * y), (T(2) * z, T(2) * z)]
         MOI.set(model, attr, aff_ci, func)
         @test MOI.get(model, attr, aff_ci) ≈ func
         @test MOI.Bridges.call_in_context(
             bridged,
             vov_ci,
             bridge -> MOI.get(bridged, attr, vov_ci),
-        ) ≈ func
+        ) ≈ expected
         @test MOI.Bridges.call_in_context(
             bridged,
             y,
             bridge -> MOI.get(bridged, attr, vov_ci),
-        ) ≈ func
-        #@test MOI.Bridges.call_in_context(bridged, z, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ func
+        ) ≈ expected
+        #@test MOI.Bridges.call_in_context(bridged, z, bridge -> MOI.get(bridged, attr, vov_ci)) ≈ expected
     end
     # One Variable bridge in context
     model = NoVariableModel{T}()
@@ -2362,7 +2373,7 @@ function test_issue_2696()
     F, S = MOI.VectorOfVariables, MOI.Nonpositives
     # See MathOptInterface.jl#2696
     d = MOI.ConstraintIndex{F,S}(c.value + 1)
-    @test_broken !MOI.is_valid(b, d)
+    @test !MOI.is_valid(b, d)
     @test MOI.get(b, MOI.ListOfConstraintTypesPresent()) == [(F, S)]
     @test only(MOI.get(b, MOI.ListOfConstraintIndices{F,S}())) == c
     @test MOI.get(b, MOI.NumberOfConstraints{F,S}()) == 1
