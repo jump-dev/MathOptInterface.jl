@@ -1328,14 +1328,18 @@ function _remove_bridged(list, bridge, attr)
     return
 end
 
-# The variable list returned by `_get_all_including_bridged` is already
-# expressed in the outer namespace and excludes the bridges' internal
-# variables, so there is nothing to remove here. (Removing the bridges' inner
-# variables would be incorrect under positive indexing, where an inner
+# Filtering applied to the variable bridges only (`Variable.bridges(b)`). For
+# `ListOfConstraintIndices` it removes the constraints those bridges added,
+# like the generic method. For `ListOfVariableIndices` it is a no-op:
+# `_get_all_including_bridged` already maps `b.model`'s variables back to the
+# outer namespace and excludes the variables created by variable bridges.
+# (Removing them here would be incorrect under positive indexing, where such a
 # variable may share a value with an outer user variable; under the old
-# negative indexing this method was a no-op because the namespaces were
+# negative indexing this was a no-op because the namespaces were
 # value-disjoint.)
-_remove_bridged(list, bridge, ::MOI.ListOfVariableIndices) = nothing
+_remove_variable_bridged(list, bridge, attr) = _remove_bridged(list, bridge, attr)
+
+_remove_variable_bridged(list, bridge, ::MOI.ListOfVariableIndices) = nothing
 
 # The tactic for this function is to first query all possible indices, and then
 # to filter out the indices that have been bridged.
@@ -1348,7 +1352,7 @@ function MOI.get(
 )
     list = _get_all_including_bridged(b, attr)
     for bridge in values(Variable.bridges(b))
-        _remove_bridged(list, bridge, attr)
+        _remove_variable_bridged(list, bridge, attr)
     end
     for bridge in values(Constraint.bridges(b))
         _remove_bridged(list, bridge, attr)
@@ -1752,7 +1756,7 @@ function MOI.set(
         BridgeType = Objective.concrete_bridge_type(b, typeof(func))
         _bridge_objective(b, BridgeType, func)
     else
-        MOI.set(b.model, attr, func)
+        MOI.set(b.model, attr, _to_inner_value(b, func))
     end
     return
 end
