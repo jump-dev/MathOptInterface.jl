@@ -365,23 +365,12 @@ mutable struct PenaltyRelaxation{T}
     warn::Bool
 
     function PenaltyRelaxation(
-        p::Dict{MOI.ConstraintIndex,T};
+        p::Dict{<:MOI.ConstraintIndex,T} = Dict{MOI.ConstraintIndex,Float64}();
         default::Union{Nothing,T} = one(T),
         warn::Bool = true,
     ) where {T}
-        return new{T}(default, p, warn)
+        return new{T}(default, convert(Dict{MOI.ConstraintIndex,T}, p), warn)
     end
-end
-
-function PenaltyRelaxation(; kwargs...)
-    return PenaltyRelaxation(Dict{MOI.ConstraintIndex,Float64}(); kwargs...)
-end
-
-function PenaltyRelaxation(
-    d::Dict{<:MOI.ConstraintIndex,T};
-    kwargs...,
-) where {T}
-    return PenaltyRelaxation(convert(Dict{MOI.ConstraintIndex,T}, d); kwargs...)
 end
 
 function MOI.modify(model::MOI.ModelLike, relax::PenaltyRelaxation{T}) where {T}
