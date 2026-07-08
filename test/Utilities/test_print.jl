@@ -762,6 +762,22 @@ function test_print_constraint_name_unsupported()
     return
 end
 
+function test_print_zero_dimensional_function()
+    for f in Any[
+        MOI.VectorOfVariables(MOI.VariableIndex[]),
+        MOI.VectorAffineFunction(MOI.VectorAffineTerm{Float64}[], Float64[]),
+        MOI.VectorQuadraticFunction(
+            MOI.VectorQuadraticTerm{Float64}[],
+            MOI.VectorAffineTerm{Float64}[],
+            Float64[],
+        ),
+        MOI.VectorNonlinearFunction(MOI.ScalarNonlinearFunction[]),
+    ]
+        @test sprint(show, f) == "┌┐\n\n└┘"
+    end
+    return
+end
+
 end
 
 TestPrint.runtests()

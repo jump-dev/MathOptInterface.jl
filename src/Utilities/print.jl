@@ -268,7 +268,7 @@ function _to_string(
     f::MOI.AbstractVectorFunction,
 )
     rows = map(fi -> _to_string(options, model, fi), scalarize(f))
-    max_length = maximum(length.(rows))
+    max_length = mapreduce(max, length, rows; init = 0)
     s = join(map(r -> string("│", rpad(r, max_length), "│"), rows), '\n')
     return string(
         "┌",
