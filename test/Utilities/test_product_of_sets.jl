@@ -264,7 +264,7 @@ function test_vector_ListOfConstraintIndices()
     VAF = MOI.VectorAffineFunction{Float64}
     @test MOI.get(sets, MOI.ListOfConstraintIndices{VAF,MOI.Zeros}()) ==
           MOI.ConstraintIndex{VAF,MOI.Zeros}[]
-    for (x, S) in zip([[1], [1, 3]], MOI.Utilities.set_types(sets)[1:2])
+    for (x, S) in zip([[1], [1, 2]], MOI.Utilities.set_types(sets)[1:2])
         ci = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
         @test ci == MOI.ConstraintIndex{VAF,S}.(x)
     end
@@ -290,7 +290,93 @@ function test_vector_ListOfConstraintIndices2()
     S = MOI.Utilities.set_types(sets)[2]
     VAF = MOI.VectorAffineFunction{Float64}
     indices = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
-    @test indices == MOI.ConstraintIndex{VAF,S}.([1, 3, 6, 8])
+    @test indices == MOI.ConstraintIndex{VAF,S}.([1, 2, 3, 4])
+end
+
+function test_zero_dimensional_function()
+    sets = _VectorSets{Int}()
+    i = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
+    MOI.Utilities.add_set(sets, i, 0)
+    MOI.Utilities.add_set(sets, i, 2)
+    MOI.Utilities.add_set(sets, i, 0)
+    MOI.Utilities.add_set(sets, i, 1)
+    MOI.Utilities.add_set(sets, i, 0)
+    MOI.Utilities.final_touch(sets)
+    F, S = MOI.VectorAffineFunction{Int}, MOI.Nonnegatives
+    @test (F, S) in MOI.get(sets, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(sets, MOI.NumberOfConstraints{F,S}()) == 5
+    c = MOI.ConstraintIndex{F,S}.(1:5)
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) == c
+    @test all(MOI.is_valid(sets, ci) for ci in c)
+    return
+end
+
+function test_zero_dimensional_function_mix_of_sets()
+    sets = _VectorSets{Int}()
+    i1 = MOI.Utilities.set_index(sets, MOI.Nonpositives)
+    @test i1 == 1  # The tests below explicitly use this ordering.
+    i2 = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
+    @test i2 == 2  # The tests below explicitly use this ordering.
+    i3 = MOI.Utilities.set_index(sets, MOI.EqualTo{Int})
+    @test i3 == 3  # The tests below explicitly use this ordering.
+    MOI.Utilities.add_set(sets, i1, 0)
+    MOI.Utilities.add_set(sets, i1, 2)
+    MOI.Utilities.add_set(sets, i2, 0)
+    MOI.Utilities.add_set(sets, i2, 1)
+    MOI.Utilities.add_set(sets, i1, 0)
+    MOI.Utilities.add_set(sets, i1, 1)
+    MOI.Utilities.add_set(sets, i3)
+    MOI.Utilities.add_set(sets, i1, 0)
+    MOI.Utilities.final_touch(sets)
+    # MOI.Nonpositives
+    F, S = MOI.VectorAffineFunction{Int}, MOI.Nonpositives
+    @test (F, S) in MOI.get(sets, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(sets, MOI.NumberOfConstraints{F,S}()) == 5
+    c = MOI.ConstraintIndex{F,S}.(1:5)
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) == c
+    @test all(MOI.is_valid(sets, ci) for ci in c)
+    @test MOI.Utilities.num_rows(sets, S) == 3
+    @test MOI.Utilities.rows(sets, c[1]) == 1:0
+    @test MOI.Utilities.rows(sets, c[2]) == 1:2
+    @test MOI.Utilities.rows(sets, c[3]) == 3:2
+    @test MOI.Utilities.rows(sets, c[4]) == 3:3
+    @test MOI.Utilities.rows(sets, c[5]) == 4:3
+    # MOI.Nonnegatives
+    F, S = MOI.VectorAffineFunction{Int}, MOI.Nonnegatives
+    @test (F, S) in MOI.get(sets, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(sets, MOI.NumberOfConstraints{F,S}()) == 2
+    c = MOI.ConstraintIndex{F,S}.(1:2)
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) == c
+    @test all(MOI.is_valid(sets, ci) for ci in c)
+    @test MOI.Utilities.num_rows(sets, S) == 1
+    @test MOI.Utilities.rows(sets, c[1]) == 4:3
+    @test MOI.Utilities.rows(sets, c[2]) == 4:4
+    # MOI.EqualTo
+    F, S = MOI.ScalarAffineFunction{Int}, MOI.EqualTo{Int}
+    @test (F, S) in MOI.get(sets, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(sets, MOI.NumberOfConstraints{F,S}()) == 1
+    c = MOI.ConstraintIndex{F,S}.(1:1)
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) == c
+    @test all(MOI.is_valid(sets, ci) for ci in c)
+    @test MOI.Utilities.num_rows(sets, S) == 1
+    @test MOI.Utilities.rows(sets, c[1]) == 5
+    return
+end
+
+function test_zero_dimensional_function_only()
+    sets = _VectorSets{Int}()
+    i = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
+    MOI.Utilities.add_set(sets, i, 0)
+    MOI.Utilities.add_set(sets, i, 0)
+    MOI.Utilities.add_set(sets, i, 0)
+    MOI.Utilities.final_touch(sets)
+    F, S = MOI.VectorAffineFunction{Int}, MOI.Nonnegatives
+    @test (F, S) in MOI.get(sets, MOI.ListOfConstraintTypesPresent())
+    @test MOI.get(sets, MOI.NumberOfConstraints{F,S}()) == 3
+    c = MOI.ConstraintIndex{F,S}.(1:3)
+    @test MOI.get(sets, MOI.ListOfConstraintIndices{F,S}()) == c
+    @test all(MOI.is_valid(sets, ci) for ci in c)
+    return
 end
 
 end
