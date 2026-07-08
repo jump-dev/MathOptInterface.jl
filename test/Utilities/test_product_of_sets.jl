@@ -291,6 +291,7 @@ function test_vector_ListOfConstraintIndices2()
     VAF = MOI.VectorAffineFunction{Float64}
     indices = MOI.get(sets, MOI.ListOfConstraintIndices{VAF,S}())
     @test indices == MOI.ConstraintIndex{VAF,S}.([1, 2, 3, 4])
+    return
 end
 
 function test_zero_dimensional_function()
