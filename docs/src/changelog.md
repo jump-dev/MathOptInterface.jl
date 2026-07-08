@@ -7,6 +7,20 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.51.2 (July 9, 2026)
+
+### Fixed
+- Fixed use of recursion in `canonicalize!(::ScalarNonlinearFunction)` (#3009)
+- Fixed method ambiguity in [`Utilities.PenaltyRelaxation`](@ref) constructor
+  (#3017)
+- Fixed printing of zero-dimensional vector functions (#3020)
+
+### Other
+
+- Fixed typos in comments (#3007)
+- Fixed formatting for new JuliaFormatter release (#3011)
+- Updated GitHub actions (#3012), (#3014)
+
 ## v1.51.1 (May 29, 2026)
 
 ### Fixed
