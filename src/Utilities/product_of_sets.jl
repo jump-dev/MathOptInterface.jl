@@ -88,7 +88,7 @@ MOI.dimension(sets::MixOfScalarSets) = length(sets.set_ids)
 
 rows(::MixOfScalarSets, ci::MOI.ConstraintIndex) = ci.value
 
-function add_set(sets::MixOfScalarSets, i)
+function add_set(sets::MixOfScalarSets, i::Int)::Int64
     push!(sets.set_ids, i)
     return length(sets.set_ids)
 end
@@ -224,7 +224,7 @@ function rows(
     return sets.rows[i][ci.value]
 end
 
-function add_set(sets::OrderedProductOfSets, i, dim = 1)::Int
+function add_set(sets::OrderedProductOfSets, i::Int, dim::Int = 1)::Int64
     @assert !sets.final_touch
     push!(sets.rows[i], 1:dim)
     return length(sets.rows[i])

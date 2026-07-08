@@ -290,11 +290,11 @@ If `S` is not part of the list, return `nothing`.
 function set_index end
 
 """
-    add_set(sets, i)::Int64
+    add_set(sets, i::Int)::Int64
 
 Add a scalar set of type index `i`.
 
-    add_set(sets, i, dim)::Int64
+    add_set(sets, i::Int, dim::Int)::Int64
 
 Add a vector set of type index `i` and dimension `dim`.
 
@@ -387,7 +387,7 @@ function MOI.get(
     return MOI.get(v.sets, attr)
 end
 
-_add_set(sets, i, ::MOI.AbstractScalarFunction) = add_set(sets, i)
+_add_set(sets, i::Int, ::MOI.AbstractScalarFunction) = add_set(sets, i)
 
 function _add_set(sets, i, func::MOI.AbstractVectorFunction)
     return add_set(sets, i, MOI.output_dimension(func))
