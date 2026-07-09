@@ -380,6 +380,25 @@ function test_zero_dimensional_function_only()
     return
 end
 
+function test_ordered_product_of_sets_is_valid()
+    sets = _VectorSets{Int}()
+    i = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
+    MOI.Utilities.add_set(sets, i, 2)
+    MOI.Utilities.final_touch(sets)
+    F, S = MOI.VectorAffineFunction{Int}, MOI.Nonnegatives
+    @test MOI.is_valid(model, MOI.ConstraintIndex{F,S}(1))
+    for ci in MOI.ConstraintIndex[
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
+        MOI.ConstraintIndex{F,S}(-1),
+        MOI.ConstraintIndex{F,S}(0),
+        MOI.ConstraintIndex{F,S}(2),
+        MOI.ConstraintIndex{F,S}(12345),
+    ]
+        @test !MOI.is_valid(model, ci)
+    end
+    return
+end
+
 end
 
 TestProductOfSets.runtests()
