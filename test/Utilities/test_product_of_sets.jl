@@ -386,7 +386,7 @@ function test_ordered_product_of_sets_is_valid()
     MOI.Utilities.add_set(sets, i, 2)
     MOI.Utilities.final_touch(sets)
     F, S = MOI.VectorAffineFunction{Int}, MOI.Nonnegatives
-    @test MOI.is_valid(model, MOI.ConstraintIndex{F,S}(1))
+    @test MOI.is_valid(sets, MOI.ConstraintIndex{F,S}(1))
     for ci in MOI.ConstraintIndex[
         MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}(1),
         MOI.ConstraintIndex{F,S}(-1),
@@ -394,7 +394,7 @@ function test_ordered_product_of_sets_is_valid()
         MOI.ConstraintIndex{F,S}(2),
         MOI.ConstraintIndex{F,S}(12345),
     ]
-        @test !MOI.is_valid(model, ci)
+        @test !MOI.is_valid(sets, ci)
     end
     return
 end
