@@ -203,7 +203,12 @@ end
 
 function MOI.dimension(sets::OrderedProductOfSets)::Int
     @assert sets.final_touch
-    return sum(num_rows(sets, S) for S in set_types(sets); init = 0)
+    for i in reverse(eachindex(sets.rows))
+        if !isempty(sets.rows[i])
+            return last(sets.rows[i][end])
+        end
+    end
+    return 0  # All rows were empty.
 end
 
 function rows(
