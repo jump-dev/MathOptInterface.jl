@@ -255,13 +255,15 @@ Return the number of rows corresponding to a set of type `S`. That is, it is
 the sum of the dimensions of the sets of type `S`.
 """
 function num_rows(sets::OrderedProductOfSets, ::Type{S})::Int where {S}
-    @assert sets.final_touch
     i = set_index(sets, S)::Int
     rows = sets.rows[i]
     if isempty(rows)
         return 0
+    elseif sets.final_touch
+        return max(0, last(rows[end]) - first(rows[1]) + 1)
+    else
+        return mapreduce(length, +, rows)
     end
-    return max(0, last(rows[end]) - first(rows[1]) + 1)
 end
 
 function MOI.get(

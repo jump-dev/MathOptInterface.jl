@@ -328,6 +328,9 @@ function test_zero_dimensional_function_mix_of_sets()
     MOI.Utilities.add_set(sets, i1, 1)
     MOI.Utilities.add_set(sets, i3)
     MOI.Utilities.add_set(sets, i1, 0)
+    @test MOI.Utilities.num_rows(sets, MOI.Nonpositives) == 3
+    @test MOI.Utilities.num_rows(sets, MOI.Nonnegatives) == 1
+    @test MOI.Utilities.num_rows(sets, MOI.EqualTo{Int}) == 1
     MOI.Utilities.final_touch(sets)
     # MOI.Nonpositives
     F, S = MOI.VectorAffineFunction{Int}, MOI.Nonpositives
