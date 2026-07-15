@@ -211,6 +211,18 @@ function MOI.dimension(sets::OrderedProductOfSets)::Int
     return 0  # All rows were empty.
 end
 
+# A backwards-compatible method to ensure callers of `sets.num_rows` still
+# works.
+function Base.getproperty(sets::OrderedProductOfSets, key::Symbol)
+    if key == :num_rows
+        if sets.final_touch
+            return cumsum(num_rows(sets, S) for S in set_types(sets))
+        end
+        return Int[num_rows(sets, S) for S in set_types(sets)]
+    end
+    return getfield(sets, key)
+end
+
 function rows(
     sets::OrderedProductOfSets{T},
     ci::MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S},

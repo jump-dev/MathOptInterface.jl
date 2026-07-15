@@ -402,6 +402,25 @@ function test_ordered_product_of_sets_is_valid()
     return
 end
 
+function test_property_num_sets()
+    sets = _VectorSets{Int}()
+    i1 = MOI.Utilities.set_index(sets, MOI.Nonpositives)
+    i2 = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
+    i3 = MOI.Utilities.set_index(sets, MOI.EqualTo{Int})
+    MOI.Utilities.add_set(sets, i1, 0)
+    MOI.Utilities.add_set(sets, i1, 2)
+    MOI.Utilities.add_set(sets, i2, 0)
+    MOI.Utilities.add_set(sets, i2, 1)
+    MOI.Utilities.add_set(sets, i1, 0)
+    MOI.Utilities.add_set(sets, i1, 1)
+    MOI.Utilities.add_set(sets, i3)
+    MOI.Utilities.add_set(sets, i1, 0)
+    @test sets.num_rows == [3, 1, 1]
+    MOI.Utilities.final_touch(sets)
+    @test sets.num_rows == [3, 4, 5]
+    return
+end
+
 end
 
 TestProductOfSets.runtests()
