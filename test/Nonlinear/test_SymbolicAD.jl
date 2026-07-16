@@ -757,7 +757,7 @@ end
 
 function test_simplify_drops_zeros()
     x, y = MOI.VariableIndex.(1:2)
-    f = MOI.ScalarNonlinearFunction(:/, Any[1.0 * x * x, y])
+    f = MOI.ScalarNonlinearFunction(:/, Any[1.0*x*x, y])
     for F in (
         MOI.ScalarAffineFunction{Float64},
         MOI.ScalarQuadraticFunction{Float64},
@@ -770,9 +770,9 @@ function test_simplify_drops_zeros()
     return
 end
 
-function test_simplify_drops_zeros()
+function test_simplify_drops_ones()
     x, y = MOI.VariableIndex.(1:2)
-    f = MOI.ScalarNonlinearFunction(:/, Any[1.0 * x * x, y])
+    f = MOI.ScalarNonlinearFunction(:/, Any[1.0*x*x, y])
     for F in (
         MOI.ScalarAffineFunction{Float64},
         MOI.ScalarQuadraticFunction{Float64},
