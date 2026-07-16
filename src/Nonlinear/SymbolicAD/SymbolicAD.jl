@@ -167,6 +167,14 @@ _iszero(x::Any)::Bool = _isnum(x) && iszero(x)
 
 _isone(x::Any)::Bool = _isnum(x) && isone(x)
 
+_iszero(x::MOI.ScalarAffineFunction) = iszero(x)
+
+_isone(x::MOI.ScalarAffineFunction) = isone(x)
+
+_iszero(x::MOI.ScalarQuadraticFunction) = iszero(x)
+
+_isone(x::MOI.ScalarQuadraticFunction) = isone(x)
+
 """
     _isexpr(f::Any, head::Symbol[, n::Int])
 

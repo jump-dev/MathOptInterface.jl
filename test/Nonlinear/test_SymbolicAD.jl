@@ -755,6 +755,36 @@ function test_simplify_if_quadratic()
     return
 end
 
+function test_simplify_drops_zeros()
+    x, y = MOI.VariableIndex.(1:2)
+    f = MOI.ScalarNonlinearFunction(:/, Any[1.0 * x * x, y])
+    for F in (
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    )
+        g = MOI.ScalarNonlinearFunction(:+, Any[zero(F), f])
+        @test isapprox(MOI.Nonlinear.SymbolicAD.simplify(g), f)
+        g = MOI.ScalarNonlinearFunction(:+, Any[f, zero(F)])
+        @test isapprox(MOI.Nonlinear.SymbolicAD.simplify(g), f)
+    end
+    return
+end
+
+function test_simplify_drops_zeros()
+    x, y = MOI.VariableIndex.(1:2)
+    f = MOI.ScalarNonlinearFunction(:/, Any[1.0 * x * x, y])
+    for F in (
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    )
+        g = MOI.ScalarNonlinearFunction(:*, Any[one(F), f])
+        @test isapprox(MOI.Nonlinear.SymbolicAD.simplify(g), f)
+        g = MOI.ScalarNonlinearFunction(:*, Any[f, one(F)])
+        @test isapprox(MOI.Nonlinear.SymbolicAD.simplify(g), f)
+    end
+    return
+end
+
 end  # module
 
 TestMathOptSymbolicAD.runtests()
