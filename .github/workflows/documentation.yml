@@ -33,7 +33,7 @@ jobs:
           path: ${{ github.workspace }}/latex-debug-logs
       - uses: vale-cli/vale-action@v2
         with:
-          version: 3.8.0
+          version: 3.11.0
           files: all
           fail_on_error: true
           filter_mode: nofilter
