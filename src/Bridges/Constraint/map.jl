@@ -20,14 +20,23 @@ struct Map <: AbstractDict{MOI.ConstraintIndex,AbstractBridge}
     # of creation so we need `OrderedDict` and not `Dict`.
     # For `VariableIndex` constraints: (variable, set type) -> bridge
     single_variable_constraints::OrderedDict{Tuple{Int64,Type},AbstractBridge}
-    needs_final_touch::OrderedDict{Type,OrderedSet}
+    # The bridges that need a final touch, mapped to the "creation order" of the
+    # constraint they bridge, that is, the order in which `bridge_constraint` was
+    # called (see `_reserve_final_touch_order`). `final_touch` is called on them
+    # in increasing creation order, so that a bridge gets its final touch before
+    # the bridges of the constraints it added. See `final_touch(::Map, ...)`.
+    needs_final_touch::OrderedDict{AbstractBridge,Int}
+    # A counter incremented once per bridged constraint, used to assign the
+    # creation order stored in `needs_final_touch`.
+    final_touch_counter::Base.RefValue{Int}
 
     function Map()
         return new(
             Union{Nothing,AbstractBridge}[],
             Tuple{Type,Type}[],
             OrderedDict{Tuple{Int64,Type},AbstractBridge}(),
-            OrderedDict{Type,OrderedSet}(),
+            OrderedDict{AbstractBridge,Int}(),
+            Ref(0),
         )
     end
 end
@@ -44,6 +53,7 @@ function Base.empty!(map::Map)
     empty!(map.constraint_types)
     empty!(map.single_variable_constraints)
     empty!(map.needs_final_touch)
+    map.final_touch_counter[] = 0
     return map
 end
 
@@ -296,9 +306,10 @@ function add_key_for_bridge(
     bridge::AbstractBridge,
     ::F,
     ::S,
-    is_available::Function,
+    is_available::Function;
+    final_touch_order::Int = _reserve_final_touch_order(map),
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    _register_for_final_touch(map, bridge)
+    _register_for_final_touch(map, bridge, final_touch_order)
     _ensure_available(map, F, S, is_available)
     push!(map.bridges, bridge)
     push!(map.constraint_types, (F, S))
@@ -310,41 +321,69 @@ function add_key_for_bridge(
     bridge::AbstractBridge,
     func::MOI.VariableIndex,
     ::S,
-    ::Function,
+    ::Function;
+    final_touch_order::Int = _reserve_final_touch_order(map),
 ) where {S<:MOI.AbstractScalarSet}
-    _register_for_final_touch(map, bridge)
+    _register_for_final_touch(map, bridge, final_touch_order)
     map.single_variable_constraints[(func.value, S)] = bridge
     return MOI.ConstraintIndex{MOI.VariableIndex,S}(func.value)
 end
 
-function _register_for_final_touch(map::Map, bridge::BT) where {BT}
+"""
+    _reserve_final_touch_order(map::Map)
+
+Return the next "creation order" number. It must be called at the start of
+`add_bridged_constraint`, that is, *before* `bridge_constraint`, so that a bridge
+is given a smaller number than the bridges of the constraints it creates. The
+number is passed to `add_key_for_bridge` as the `final_touch_order` keyword so
+that `final_touch` is called on the bridges in that order.
+"""
+function _reserve_final_touch_order(map::Map)
+    map.final_touch_counter[] += 1
+    return map.final_touch_counter[]
+end
+
+function _register_for_final_touch(map::Map, bridge::AbstractBridge, order::Int)
     if MOI.Bridges.needs_final_touch(bridge)
-        if !haskey(map.needs_final_touch, BT)
-            map.needs_final_touch[BT] = OrderedSet{BT}()
-        end
-        push!(map.needs_final_touch[BT], bridge)
+        map.needs_final_touch[bridge] = order
     end
     return
 end
 
-function _unregister_for_final_touch(b::Map, bridge::BT) where {BT}
+function _unregister_for_final_touch(map::Map, bridge::AbstractBridge)
     if MOI.Bridges.needs_final_touch(bridge)
-        delete!(b.needs_final_touch[BT], bridge)
+        delete!(map.needs_final_touch, bridge)
     end
     return
 end
 
-# Function barrier to iterate over bridges of the same type in an efficient way.
-function _final_touch(bridges, model)
-    for bridge in bridges
-        MOI.Bridges.final_touch(bridge, model)
-    end
-    return
+# Return the bridges that need a final touch, sorted by increasing creation
+# order (the order in which their `bridge_constraint` was called).
+function _sorted_needs_final_touch(map::Map)
+    bridges = collect(keys(map.needs_final_touch))
+    sort!(bridges; by = bridge -> map.needs_final_touch[bridge])
+    return bridges
 end
 
 function MOI.Bridges.final_touch(map::Map, model::MOI.ModelLike)
-    for bridges in values(map.needs_final_touch)
-        _final_touch(bridges, model)
+    # `MOI.Bridges.final_touch(bridge, model)` may add constraints that are
+    # bridged by bridges that themselves need a final touch. These new bridges
+    # are added to `map.needs_final_touch` and must also get their `final_touch`
+    # called (see issue #1980), after the bridge that created them: since they
+    # are created later, they have a larger creation order, so they are sorted
+    # after the current position. We cannot iterate over `map.needs_final_touch`
+    # directly because it may be modified during the iteration, so we snapshot
+    # it into a sorted vector and refresh the snapshot whenever new bridges are
+    # added. The already-touched prefix keeps a smaller creation order, so it is
+    # left unchanged by the refresh and `i` stays valid.
+    bridges = _sorted_needs_final_touch(map)
+    i = 1
+    while i <= length(bridges)
+        MOI.Bridges.final_touch(bridges[i], model)
+        if length(bridges) < length(map.needs_final_touch)
+            bridges = _sorted_needs_final_touch(map)
+        end
+        i += 1
     end
     return
 end

@@ -1961,6 +1961,12 @@ function MOI.supports_constraint(
 end
 
 function add_bridged_constraint(b, BridgeType, f, s)
+    map = Constraint.bridges(b)::Constraint.Map
+    # Reserve the creation order *before* `bridge_constraint` so that this bridge
+    # is given a smaller order than the bridges of the constraints it creates
+    # while being bridged. `final_touch` is then called in that order (see
+    # `Constraint.final_touch`).
+    order = Constraint._reserve_final_touch_order(map)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
     # `MOI.VectorOfVariables` constraint indices have negative indices
     # to distinguish between the indices of the inner model.
@@ -1968,11 +1974,12 @@ function add_bridged_constraint(b, BridgeType, f, s)
     # so we use the last argument to inform the constraint bridge mapping about
     # indices already taken by variable bridges.
     ci = Constraint.add_key_for_bridge(
-        Constraint.bridges(b)::Constraint.Map,
+        map,
         bridge,
         f,
         s,
-        !Base.Fix1(MOI.is_valid, Variable.bridges(b)),
+        !Base.Fix1(MOI.is_valid, Variable.bridges(b));
+        final_touch_order = order,
     )
     Variable.register_context(Variable.bridges(b), ci)
     return ci
