@@ -142,14 +142,13 @@ Utilities.add_set
 Utilities.rows
 Utilities.num_rows
 Utilities.set_with_dimension
-```
-
-```@docs
 Utilities.ProductOfSets
 Utilities.MixOfScalarSets
 Utilities.@mix_of_scalar_sets
 Utilities.OrderedProductOfSets
 Utilities.@product_of_sets
+Utilities.RuntimeProductOfSets
+Utilities.add_set_type
 ```
 
 ## Fallbacks

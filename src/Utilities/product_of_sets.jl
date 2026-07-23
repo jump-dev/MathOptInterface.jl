@@ -320,3 +320,85 @@ function MOI.is_valid(
     end
     return 1 <= ci.value <= length(sets.rows[i])
 end
+
+"""
+    RuntimeProductOfSets{T}()
+
+An alternative to [`Utilities.@product_of_sets`](@ref), in which the set types
+are decided at runtime using [`Utilities.add_set_type`](@ref).
+
+## Examples
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> sets = MOI.Utilities.RuntimeProductOfSets{Int}();
+
+julia> MOI.Utilities.set_types(sets)
+Type[]
+
+julia> MOI.Utilities.add_set_type(sets, MOI.Nonpositives)
+true
+
+julia> MOI.Utilities.set_types(sets)
+1-element Vector{Type}:
+ MathOptInterface.Nonpositives
+```
+"""
+mutable struct RuntimeProductOfSets{T} <: OrderedProductOfSets{T}
+    rows::Vector{Vector{UnitRange{Int}}}
+    final_touch::Bool
+    set_types::Vector{Type}
+
+    function RuntimeProductOfSets{T}() where {T}
+        return new(Vector{UnitRange{Int}}[], false, Type[])
+    end
+end
+
+function set_index(
+    set::RuntimeProductOfSets,
+    ::Type{S},
+) where {S<:MOI.AbstractSet}
+    return findfirst(==(S), set.set_types)
+end
+
+set_types(set::RuntimeProductOfSets) = set.set_types
+
+"""
+    add_set_type(
+        set::RuntimeProductOfSets,
+        ::Type{S},
+    ) where {S<:MOI.AbstractSet}
+
+Declare that the [`Utilities.RuntimeProductOfSets`](@ref) `set` supports the
+[`AbstractSet`](@ref) `S`.
+
+## Examples
+
+```jldoctest
+julia> import MathOptInterface as MOI
+
+julia> sets = MOI.Utilities.RuntimeProductOfSets{Int}();
+
+julia> MOI.Utilities.set_types(sets)
+Type[]
+
+julia> MOI.Utilities.add_set_type(sets, MOI.Nonpositives)
+true
+
+julia> MOI.Utilities.set_types(sets)
+1-element Vector{Type}:
+ MathOptInterface.Nonpositives
+```
+"""
+function add_set_type(
+    set::RuntimeProductOfSets,
+    ::Type{S},
+) where {S<:MOI.AbstractSet}
+    if set_index(set, S) === nothing
+        push!(set.rows, Vector{UnitRange{Int}}[])
+        push!(set.set_types, S)
+        return true
+    end
+    return false
+end
