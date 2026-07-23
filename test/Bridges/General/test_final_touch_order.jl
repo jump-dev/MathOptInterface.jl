@@ -212,7 +212,10 @@ function MOI.Bridges.added_constraint_types(::Type{<:BridgeC})
     return Tuple{Type,Type}[(MOI.VariableIndex, SetB)]
 end
 
-function MOI.get(::BridgeC, ::MOI.NumberOfConstraints{MOI.VariableIndex,SetB})::Int64
+function MOI.get(
+    ::BridgeC,
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,SetB},
+)::Int64
     return 1
 end
 
@@ -264,8 +267,7 @@ function test_final_touch_in_addition_order()
     MOI.add_constraint(model, x[2], SetB())
     MOI.add_constraint(model, x[3], SetA())
     MOI.Utilities.final_touch(model, MOI.Utilities.IndexMap())
-    @test RECORD ==
-          [(:A, x[1].value), (:B, x[2].value), (:A, x[3].value)]
+    @test RECORD == [(:A, x[1].value), (:B, x[2].value), (:A, x[3].value)]
     return
 end
 
