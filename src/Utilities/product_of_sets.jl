@@ -398,7 +398,6 @@ function add_set_type(
     if set_index(set, S) === nothing
         push!(set.rows, Vector{UnitRange{Int}}[])
         push!(set.set_types, S)
-        return true
     end
-    return false
+    return
 end

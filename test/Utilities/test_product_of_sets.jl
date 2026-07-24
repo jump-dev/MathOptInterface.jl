@@ -430,6 +430,9 @@ function test_product_of_sets()
     MOI.Utilities.add_set_type(sets, MOI.EqualTo{Int})
     @test MOI.Utilities.set_types(sets) ==
           Type[MOI.Nonpositives, MOI.Nonnegatives, MOI.EqualTo{Int}]
+    MOI.Utilities.add_set_type(sets, MOI.EqualTo{Int})
+    @test MOI.Utilities.set_types(sets) ==
+          Type[MOI.Nonpositives, MOI.Nonnegatives, MOI.EqualTo{Int}]
     i1 = MOI.Utilities.set_index(sets, MOI.Nonpositives)
     @test i1 == 1  # The tests below explicitly use this ordering.
     i2 = MOI.Utilities.set_index(sets, MOI.Nonnegatives)
