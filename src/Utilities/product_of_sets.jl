@@ -371,7 +371,7 @@ set_types(set::RuntimeProductOfSets) = set.set_types
     ) where {S<:MOI.AbstractSet}
 
 Declare that the [`Utilities.RuntimeProductOfSets`](@ref) `set` supports the
-[`AbstractSet`](@ref) `S`.
+[`MOI.AbstractSet`](@ref) `S`.
 
 ## Examples
 
