@@ -338,7 +338,6 @@ julia> MOI.Utilities.set_types(sets)
 Type[]
 
 julia> MOI.Utilities.add_set_type(sets, MOI.Nonpositives)
-true
 
 julia> MOI.Utilities.set_types(sets)
 1-element Vector{Type}:
@@ -384,7 +383,6 @@ julia> MOI.Utilities.set_types(sets)
 Type[]
 
 julia> MOI.Utilities.add_set_type(sets, MOI.Nonpositives)
-true
 
 julia> MOI.Utilities.set_types(sets)
 1-element Vector{Type}:
