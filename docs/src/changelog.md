@@ -7,6 +7,30 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.52.0 (July 31, 2026)
+
+### Added
+
+- Added [`Utilities.RuntimeProductOfSets`](@ref) (#3026)
+
+### Fixed
+
+- Fixed simplifying zero and one terms in [`Nonlinear.SymbolicAD.simplify!`](@ref)
+  (#3023)
+- Fixed [`Utilities.OrderedProductOfSets`](@ref) to handle zero-dimensional rows
+  (#3022)
+- Fixed support for nested bridges which require `final_touch`. `final_touch` is
+  now called in the order that the bridges were created. (#3027)
+- Fixed various bridges with non-Float64 coefficient type (#3035)
+
+### Other
+
+- Updated GitHub actions (#3024), (#3028)
+- Added support for OrderedCollections@2 (#3029)
+- Fixed formatting for latest JuliaFormatter release (#3031)
+- Improved error messages of various errors. This may break your tests if you
+  rely on string comparisons. Check for the type of error, not the value. (#3036)
+
 ## v1.51.2 (July 17, 2026)
 
 ### Fixed
