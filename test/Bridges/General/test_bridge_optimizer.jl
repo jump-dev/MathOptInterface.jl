@@ -1475,7 +1475,7 @@ MOI.Utilities.@model(
     (),
     (),
     (MOI.VectorAffineFunction,)
-);
+)
 
 function MOI.supports_constraint(
     ::Model2817a,
@@ -1487,8 +1487,8 @@ end
 
 function test_issue_2817a()
     inner = Model2817a{Float64}()
-    model = MOI.Bridges.full_bridge_optimizer(inner, Float64);
-    x, c = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0));
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x, c = MOI.add_constrained_variable(model, MOI.Interval(0.0, 1.0))
     @test isa(
         model.constraint_map[c],
         MOI.Bridges.Constraint.IntervalToHyperRectangleBridge,
@@ -1511,7 +1511,7 @@ MOI.Utilities.@model(
     (MOI.ScalarAffineFunction,),
     (),
     ()
-);
+)
 
 function MOI.supports_constraint(
     ::Model2817b,
@@ -1523,7 +1523,7 @@ end
 
 function test_issue_2817b()
     inner = Model2817b{Float64}()
-    model = MOI.Bridges.full_bridge_optimizer(inner, Float64);
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
     x, c = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
     @test isa(model.constraint_map[c], MOI.Bridges.Constraint.ScalarizeBridge)
     MOI.delete(model, x)
@@ -1544,7 +1544,7 @@ MOI.Utilities.@model(
     (MOI.ScalarAffineFunction,),
     (),
     ()
-);
+)
 
 function MOI.supports_constraint(
     ::Model2817c,
@@ -1556,7 +1556,7 @@ end
 
 function test_issue_2817c()
     inner = Model2817c{Float64}()
-    model = MOI.Bridges.full_bridge_optimizer(inner, Float64);
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
     x, c = MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0))
     @test isa(
         model.constraint_map[c],
