@@ -1968,8 +1968,10 @@ function add_bridged_constraint(b, BridgeType, f, s)
     # To make this happen, we remember how many bridges are already in the
     # vector, and then we insert the bridge into the vector. This is an O(N)
     # operation in the number of new bridges, but it's a pretty rare edge-case,
-    # and the number of new bridges should be small. (And in most common bridges
-    # that need final touch, like the ToMILP bridges, N=0.)
+    # and the number of new bridges should be small. (And most of the time, N=0,
+    # because most bridges that need final touch don't add any bridges that
+    # themselves need final touch. Good examples are the ToMILP bridges that
+    # need variable bounds.)
     n_final_touch = length(map.needs_final_touch)
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
     if MOI.Bridges.needs_final_touch(bridge)
