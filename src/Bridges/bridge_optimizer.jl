@@ -1965,17 +1965,15 @@ function add_bridged_constraint(b, BridgeType, f, s)
     # Okay, this part is a bit tricky. `Constraint.bridge_constraint` might add
     # new constraints which also need `final_touch`. But we need the return
     # value `bridge` to come _before_ them in the `needs_final_touch` vector.
-    # To make this happen, we remember how many bridges are already in the
-    # vector, and then we insert the bridge into the vector. This is an O(N)
-    # operation in the number of new bridges, but it's a pretty rare edge-case,
-    # and the number of new bridges should be small. (And most of the time, N=0,
-    # because most bridges that need final touch don't add any bridges that
-    # themselves need final touch. Good examples are the ToMILP bridges that
-    # need variable bounds.)
-    n_final_touch = length(map.needs_final_touch)
+    # To make this happen, we insert a placeholder before calling
+    # `bridge_constraint` and we replace it by the bridge afterwards.
+    if MOI.Bridges.needs_final_touch(bridge)
+        push!(map.needs_final_touch, nothing)
+        final_touch_idx = length(map.needs_final_touch)
+    end
     bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
     if MOI.Bridges.needs_final_touch(bridge)
-        insert!(map.needs_final_touch, n_final_touch + 1, bridge)
+        map.needs_final_touch[final_touch_idx] = bridge
     end
     # `MOI.VectorOfVariables` constraint indices have negative indices
     # to distinguish between the indices of the inner model.
