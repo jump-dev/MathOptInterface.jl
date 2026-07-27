@@ -71,7 +71,7 @@ function bridge_constraint(
     relentr_func = MOI.Utilities.operate(
         vcat,
         T,
-        zero(MOI.ScalarAffineFunction{Float64}),
+        zero(MOI.ScalarAffineFunction{T}),
         f_scalars[2:end],
         w_func,
     )

@@ -254,7 +254,7 @@ function MOI.Bridges.final_touch(
     scalars = collect(MOI.Utilities.eachscalar(bridge.f))
     bounds = Dict{MOI.VariableIndex,NTuple{2,T}}()
     ret = MOI.Utilities.get_bounds(model, bounds, scalars[1])
-    if MOI.output_dimension(bridge.f) == 3 && ret == (2.0, 2.0)
+    if MOI.output_dimension(bridge.f) == 3 && ret == (T(2), T(2))
         # The special case of
         #   [x, y] in AllDifferent()
         # bridged to

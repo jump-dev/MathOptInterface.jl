@@ -59,13 +59,7 @@ function test_indicator_activate_on_zero()
         typeof(f1),
         typeof(iset1),
     )
-    BT2 = MOI.Bridges.Constraint.concrete_bridge_type(
-        MOI.Bridges.Constraint.IndicatorActiveOnFalseBridge,
-        typeof(f1),
-        typeof(iset1),
-    )
     bridge = MOI.Bridges.Constraint.bridge_constraint(BT, model, f1, iset1)
-    @test BT === BT2
     @test bridge isa BT
     z1comp = bridge.variable
     @test MOI.get(model, MOI.ConstraintFunction(), bridge.zero_one_cons) ==
@@ -95,6 +89,26 @@ function test_runtests()
         z in ZeroOne()
         y in ZeroOne()
         """,
+    )
+    return
+end
+
+function test_runtests_rational()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.IndicatorActiveOnFalseBridge,
+        """
+        variables: x, z
+        ::Rational{Int}: [z, 2 * x] in Indicator{ACTIVATE_ON_ZERO}(LessThan(2 // 1))
+        z in ZeroOne()
+        """,
+        """
+        variables: x, z, y
+        ::Rational{Int}: [y, 2 * x] in Indicator{ACTIVATE_ON_ONE}(LessThan(2 // 1))
+        ::Rational{Int}: z + y in EqualTo(1 // 1)
+        z in ZeroOne()
+        y in ZeroOne()
+        """;
+        eltype = Rational{Int},
     )
     return
 end

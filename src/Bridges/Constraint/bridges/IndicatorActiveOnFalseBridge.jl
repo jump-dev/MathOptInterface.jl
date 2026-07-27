@@ -105,14 +105,6 @@ function concrete_bridge_type(
     return IndicatorActiveOnFalseBridge{T,F,S}
 end
 
-function concrete_bridge_type(
-    ::Type{<:IndicatorActiveOnFalseBridge},
-    ::Type{F},
-    ::Type{MOI.Indicator{MOI.ACTIVATE_ON_ZERO,S}},
-) where {F<:MOI.VectorAffineFunction,S<:MOI.AbstractScalarSet}
-    return IndicatorActiveOnFalseBridge{Float64,F,S}
-end
-
 MOI.get(::IndicatorActiveOnFalseBridge, ::MOI.NumberOfVariables)::Int64 = 1
 
 function MOI.get(b::IndicatorActiveOnFalseBridge, ::MOI.ListOfVariableIndices)
