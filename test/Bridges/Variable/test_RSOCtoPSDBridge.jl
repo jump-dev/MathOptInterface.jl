@@ -25,33 +25,42 @@ include("../utilities.jl")
 
 # Can come from a SOC of dimension 2 which makes more sense
 # FIXME should it be moved to contconic or is RSOC of dimension 2 too exotic ?
-function test_RSOC_of_dimension_2()
-    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
-    bridged_mock = MOI.Bridges.Variable.RSOCtoPSD{Float64}(mock)
+test_RSOC_of_dimension_2_Float64() = _test_RSOC_of_dimension_2(Float64)
+
+test_RSOC_of_dimension_2_Rational() = _test_RSOC_of_dimension_2(Rational{Int})
+
+function _test_RSOC_of_dimension_2(T)
+    mock = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{T}())
+    bridged_mock = MOI.Bridges.Variable.RSOCtoPSD{T}(mock)
     xy, cxy = MOI.add_constrained_variables(
         bridged_mock,
         MOI.RotatedSecondOrderCone(2),
     )
     x, y = xy
-    c = MOI.add_constraint(bridged_mock, 1.0x + 1.0y, MOI.LessThan(1.0))
-    obj = 1.0y
+    c = MOI.add_constraint(
+        bridged_mock,
+        T(1) * x + T(1) * y,
+        MOI.LessThan(T(1)),
+    )
+    obj = T(1) * y
     MOI.set(bridged_mock, MOI.ObjectiveSense(), MOI.MAX_SENSE)
     MOI.set(bridged_mock, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     mock.optimize! =
         (mock::MOI.Utilities.MockOptimizer) -> MOI.Utilities.mock_optimize!(
             mock,
-            [0.0, 2.0],
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}) =>
-                [-1.0],
+            T[0, 2],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-1],
         )
     MOI.optimize!(bridged_mock)
-    @test MOI.get(bridged_mock, MOI.ObjectiveValue()) == 1.0
-    @test MOI.get(bridged_mock, MOI.DualObjectiveValue()) == 1.0
-    @test MOI.get(bridged_mock, MOI.VariablePrimal(), xy) == [0.0, 1.0]
-    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cxy) == [0.0, 1.0]
-    @test MOI.get(bridged_mock, MOI.ConstraintDual(), cxy) == [1.0, 0.0]
-    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), c) == 1.0
-    @test MOI.get(bridged_mock, MOI.ConstraintDual(), c) == -1.0
+    @test MOI.get(bridged_mock, MOI.ObjectiveValue()) == T(1)
+    @test MOI.get(bridged_mock, MOI.DualObjectiveValue()) == T(1)
+    @test MOI.get(bridged_mock, MOI.VariablePrimal(), xy) == T[0, 1]
+    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cxy) == T[0, 1]
+    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cxy) isa Vector{T}
+    @test MOI.get(bridged_mock, MOI.ConstraintDual(), cxy) == T[1, 0]
+    @test MOI.get(bridged_mock, MOI.ConstraintDual(), cxy) isa Vector{T}
+    @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), c) == T(1)
+    @test MOI.get(bridged_mock, MOI.ConstraintDual(), c) == T(-1)
     MOI.set(mock, MOI.ConstraintName(), c, "c")
     var_names = ["a", "b"]
     MOI.set(
@@ -69,10 +78,10 @@ function test_RSOC_of_dimension_2()
     s = """
     variables: a, b
     cab: [a, b] in Nonnegatives(2)
-    c: a + 0.5b <= 1.0
-    maxobjective: 0.5b
+    c::$T: a + 0.5 * b in LessThan($T(1))
+    maxobjective::$T: 0.5 * b
     """
-    model = MOI.Utilities.Model{Float64}()
+    model = MOI.Utilities.Model{T}()
     MOI.Utilities.loadfromstring!(model, s)
     MOI.Test.util_test_models_equal(mock, model, var_names, ["cab", "c"])
     var_names = ["x", "y"]
@@ -86,10 +95,10 @@ function test_RSOC_of_dimension_2()
     s = """
     variables: x, y
     cxy: [x, y] in RotatedSecondOrderCone(2)
-    c: x + y <= 1.0
-    maxobjective: 1.0y
+    c::$T: x + y in LessThan($T(1))
+    maxobjective::$T: 1 * y
     """
-    model = MOI.Utilities.Model{Float64}()
+    model = MOI.Utilities.Model{T}()
     MOI.Utilities.loadfromstring!(model, s)
     MOI.Test.util_test_models_equal(
         bridged_mock,
@@ -105,9 +114,9 @@ function test_RSOC_of_dimension_2()
         (
             (MOI.VectorOfVariables, MOI.Nonnegatives, 0),
             (MOI.VectorOfVariables, MOI.PositiveSemidefiniteConeTriangle, 0),
-            (MOI.VariableIndex, MOI.EqualTo{Float64}, 0),
-            (MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}, 0),
-            (MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}, 1),
+            (MOI.VariableIndex, MOI.EqualTo{T}, 0),
+            (MOI.ScalarAffineFunction{T}, MOI.EqualTo{T}, 0),
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}, 1),
         ),
     )
     return
@@ -271,6 +280,22 @@ function test_runtests()
         constrainedvariable: [t, x, u] in PositiveSemidefiniteConeTriangle(2)
         c: t + 0.5 * u + x <= 1.0
         """,
+    )
+    return
+end
+
+function test_runtests_rational()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Variable.RSOCtoPSDBridge,
+        """
+        constrainedvariable: [t, u, x] in RotatedSecondOrderCone(3)
+        ::Rational{Int}: t + u + x in LessThan(1 // 1)
+        """,
+        """
+        constrainedvariable: [t, x, u] in PositiveSemidefiniteConeTriangle(2)
+        ::Rational{Int}: t + 0.5 * u + x in LessThan(1 // 1)
+        """;
+        eltype = Rational{Int},
     )
     return
 end

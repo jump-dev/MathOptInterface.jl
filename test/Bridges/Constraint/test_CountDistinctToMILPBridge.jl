@@ -198,6 +198,28 @@ function test_delete_before_final_touch()
     return
 end
 
+function test_runtests_VectorOfVariables_NotEqualTo_Rational()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.CountDistinctToMILPBridge,
+        """
+        variables: x, y
+        ::Rational{Int}: [2, x, y] in CountDistinct(3)
+        x in ZeroOne()
+        y in ZeroOne()
+        """,
+        """
+        variables: x, y, z
+        ::Rational{Int}: 0 + 1 * x + -1 * y + -2 * z in LessThan(-1//1)
+        ::Rational{Int}: 0 + -1 * x + 1 * y + 2 * z in LessThan(1 // 1)
+        x in ZeroOne()
+        y in ZeroOne()
+        z in ZeroOne()
+        """;
+        eltype = Rational{Int},
+    )
+    return
+end
+
 end  # module
 
 TestConstraintCountDistinct.runtests()

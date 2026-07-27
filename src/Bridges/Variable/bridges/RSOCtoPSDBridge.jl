@@ -215,12 +215,12 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintPrimal,
-    bridge::RSOCtoPSDBridge,
-)
+    bridge::RSOCtoPSDBridge{T},
+) where {T}
     values = MOI.get(model, attr, bridge.psd)
     set = MOI.get(model, MOI.ConstraintSet(), bridge)
     n = MOI.dimension(set)
-    primal = zeros(n)
+    primal = zeros(T, n)
     for i in 1:n
         primal[i] = values[_variable_map(bridge, MOI.Bridges.IndexInVector(i))]
     end
@@ -233,11 +233,11 @@ end
 function MOI.get(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDual,
-    bridge::RSOCtoPSDBridge,
-)
+    bridge::RSOCtoPSDBridge{T},
+) where {T}
     values = MOI.get(model, attr, bridge.psd)
     n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge))
-    dual = zeros(n)
+    dual = zeros(T, n)
     for i in 1:n
         dual[i] = values[_variable_map(bridge, MOI.Bridges.IndexInVector(i))]
     end

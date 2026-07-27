@@ -505,6 +505,23 @@ function test_runtests()
     return
 end
 
+function test_runtests_rational()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeantoRelEntrBridge,
+        """
+        variables: u, w1, w2
+        ::Rational{Int}: [1 * u, 2 * w1, 3 * w2] in GeometricMeanCone(3)
+        """,
+        """
+        variables: u, w1, w2, y
+        ::Rational{Int}: [0, 2 * w1, 3 * w2, 1 * u + y, 1 * u + y] in RelativeEntropyCone(5)
+        [y] in Nonnegatives(1)
+        """;
+        eltype = Rational{Int},
+    )
+    return
+end
+
 end  # module
 
 TestConstraintGeomeanToRelentr.runtests()
