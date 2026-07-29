@@ -47,9 +47,16 @@ function test_LowerBoundAlreadySet_error()
     err = MOI.LowerBoundAlreadySet{S1,S2}(x)
     @test err isa Exception
     @test sprint(showerror, err) ==
-          "$(typeof(err)): Cannot add `VariableIndex`-in-`$(S2)` constraint " *
-          "for variable $(x) as a `VariableIndex`-in-`$(S1)` constraint was " *
-          "already set for this variable and both constraints set a lower bound."
+          """
+          LowerBoundAlreadySet{
+              $S1,
+              $S2,
+          }
+
+          You cannot add a `VariableIndex`-in-`$(S2)` constraint for variable \
+          $(x) because a `VariableIndex`-in-`$(S1)` constraint was already set \
+          for this variable and both constraints define a lower bound.
+          """
     return
 end
 
@@ -60,9 +67,16 @@ function test_UpperBoundAlreadySet_error()
     err = MOI.UpperBoundAlreadySet{S1,S2}(x)
     @test err isa Exception
     @test sprint(showerror, err) ==
-          "$(typeof(err)): Cannot add `VariableIndex`-in-`$(S2)` constraint " *
-          "for variable $(x) as a `VariableIndex`-in-`$(S1)` constraint was " *
-          "already set for this variable and both constraints set an upper bound."
+          """
+          UpperBoundAlreadySet{
+              $S1,
+              $S2,
+          }
+
+          You cannot add a `VariableIndex`-in-`$(S2)` constraint for variable \
+          $(x) because a `VariableIndex`-in-`$(S1)` constraint was already set \
+          for this variable and both constraints define an upper bound.
+          """
     return
 end
 

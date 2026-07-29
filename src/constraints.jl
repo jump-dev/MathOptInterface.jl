@@ -306,7 +306,7 @@ function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1,S2}) where {S1,S2}
         }
 
         You cannot add a `VariableIndex`-in-`$(S2)` constraint for variable \
-        "$(err.vi) because a `VariableIndex`-in-`$(S1)` constraint was already \
+        $(err.vi) because a `VariableIndex`-in-`$(S1)` constraint was already \
         set for this variable and both constraints define a lower bound.
         """,
     )
@@ -334,7 +334,7 @@ function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1,S2}) where {S1,S2}
         }
 
         You cannot add a `VariableIndex`-in-`$(S2)` constraint for variable \
-        "$(err.vi) because a `VariableIndex`-in-`$(S1)` constraint was already \
+        $(err.vi) because a `VariableIndex`-in-`$(S1)` constraint was already \
         set for this variable and both constraints define an upper bound.
         """,
     )
