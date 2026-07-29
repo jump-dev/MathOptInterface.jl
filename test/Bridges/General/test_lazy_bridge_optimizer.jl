@@ -2704,6 +2704,47 @@ function test_custom_cost_model_bridge_selection()
     return
 end
 
+struct _UnsupportedSet <: MOI.AbstractScalarSet end
+
+function test_bridge_unsupported_constraint()
+    model = MOI.instantiate(
+        MOI.Utilities.Model{Float64};
+        with_bridge_type = Float64,
+    )
+    x = MOI.add_variable(model)
+    err = MOI.UnsupportedConstraint{MOI.VariableIndex,_UnsupportedSet}(model)
+    @test_throws err MOI.add_constraint(model, x, _UnsupportedSet())
+    @test_throws err MOI.add_constrained_variable(model, _UnsupportedSet())
+    ret = """
+    UnsupportedConstraint{
+        MathOptInterface.VariableIndex,
+        $_UnsupportedSet,
+    }
+
+    This constraint type is not supported by the solver.
+
+    To fix this error you must choose a different solver.
+
+    ## More information
+
+    Bridges are enabled, but there are none that can rewrite the constraint into a form supported by the solver.
+
+    The model that we were unable to add the constraint to is:
+
+    MOIB.LazyBridgeOptimizer{MOIU.Model{Float64}}
+    ├ Variable bridges: none
+    ├ Constraint bridges: none
+    ├ Objective bridges: none
+    └ model: MOIU.Model{Float64}
+      ├ ObjectiveSense: FEASIBILITY_SENSE
+      ├ ObjectiveFunctionType: MOI.ScalarAffineFunction{Float64}
+      ├ NumberOfVariables: 1
+      └ NumberOfConstraints: 0
+    """
+    @test sprint(showerror, err) == ret
+    return
+end
+
 end  # module
 
 TestBridgesLazyBridgeOptimizer.runtests()
