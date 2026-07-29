@@ -544,6 +544,22 @@ function is_variable_bridged(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     return is_bridged(b, S) && is_variable_edge_best(b.graph, node(b, S))
 end
 
+function MOI.UnsupportedConstraint{F,S}(
+    model::LazyBridgeOptimizer,
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    msg = """
+    ## More information
+
+    Bridges are enabled, but there are none that can rewrite the \
+    constraint into a form supported by the solver.
+
+    The model that we were unable to add the constraint to is:
+
+    $(sprint(show, model))
+    """
+    return MOI.UnsupportedConstraint{F,S}(msg)
+end
+
 function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     bt = get(b.cached_bridge_type, (S,), nothing)
     if bt !== nothing
@@ -552,7 +568,7 @@ function bridge_type(b::LazyBridgeOptimizer, S::Type{<:MOI.AbstractSet})
     index = bridge_index(b, S)
     if iszero(index)
         F = MOI.Utilities.variable_function_type(S)
-        throw(MOI.UnsupportedConstraint{F,S}())
+        throw(MOI.UnsupportedConstraint{F,S}(b))
     end
     new_bt = Variable.concrete_bridge_type(b.variable_bridge_types[index], S)
     b.cached_bridge_type[(S,)] = new_bt
@@ -570,7 +586,7 @@ function bridge_type(
     end
     index = bridge_index(b, F, S)
     if iszero(index)
-        throw(MOI.UnsupportedConstraint{F,S}())
+        throw(MOI.UnsupportedConstraint{F,S}(b))
     end
     new_bt =
         Constraint.concrete_bridge_type(b.constraint_bridge_types[index], F, S)

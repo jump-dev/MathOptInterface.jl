@@ -243,8 +243,11 @@ end
 function Base.showerror(io::IO, err::ResultIndexBoundsError)
     return print(
         io,
-        "Result index of attribute $(err.attr) out of bounds. There are " *
-        "currently $(err.result_count) solution(s) in the model.",
+        """
+        Result index of attribute $(err.attr) is out of bounds.
+
+        There are currently $(err.result_count) solution(s) in the model.
+        """,
     )
 end
 
@@ -285,8 +288,11 @@ end
 function Base.showerror(io::IO, err::ConflictIndexBoundsError)
     return print(
         io,
-        "Conflict index of attribute $(err.attr) out of bounds. There are " *
-        "currently $(err.conflict_count) conflict(s) in the model.",
+        """
+        Conflict index of attribute $(err.attr) is out of bounds.
+
+        There are currently $(err.conflict_count) conflict(s) in the model.
+        """,
     )
 end
 
@@ -1261,9 +1267,13 @@ end
 function Base.showerror(io::IO, err::OptimizeInProgress)
     return print(
         io,
-        typeof(err),
-        ": Cannot get result as the `MOI.optimize!` has not",
-        " finished.",
+        """
+        Unable to get the attribute $(err.attr) because `MOI.optimize!` in progress.
+
+        This error occurs when you try to query an unsupported attribute from \
+        inside a callback. Consult the solver's documentation to learn which \
+        attributes may be queried inside a callback.
+        """
     )
 end
 
@@ -2633,8 +2643,15 @@ struct FunctionTypeMismatch{F1,F2} <: Exception end
 function Base.showerror(io::IO, err::FunctionTypeMismatch{F1,F2}) where {F1,F2}
     return print(
         io,
-        """$(typeof(err)): Cannot modify functions of different types.
-  Constraint type is $F1 while the replacement function is of type $F2.""",
+        """
+        Cannot modify functions of different types.
+
+        The original function is a $F1
+
+        The replacement function is a $F2
+
+        When modifying the `ConstraintFunction` the types must be the same.
+        """,
     )
 end
 
@@ -2714,9 +2731,16 @@ struct SetTypeMismatch{S1,S2} <: Exception end
 function Base.showerror(io::IO, err::SetTypeMismatch{S1,S2}) where {S1,S2}
     return print(
         io,
-        """$(typeof(err)): Cannot modify sets of different types. Constraint
-  type is $S1 while the replacement set is of type $S2. Use `transform`
-  instead.""",
+        """
+        Cannot modify sets of different types.
+
+        The original set is a $S1
+
+        The replacement set is a $S2
+
+        When modifying the `ConstraintSet` the types must be the same.
+        Alternatively, you may have meant to call `MOI.transform` instead.
+        """,
     )
 end
 

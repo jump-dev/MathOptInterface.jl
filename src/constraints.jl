@@ -35,35 +35,45 @@ the model, that is, that [`supports_constraint`](@ref) returns `false`.
 
 ```jldoctest
 julia> showerror(stdout, MOI.UnsupportedConstraint{MOI.VariableIndex,MOI.ZeroOne}())
-UnsupportedConstraint: `MathOptInterface.VariableIndex`-in-`MathOptInterface.ZeroOne` constraints are not supported by the
-solver you have chosen, and we could not reformulate your model into a
-form that is supported.
+UnsupportedConstraint{
+    MathOptInterface.VariableIndex,
+    MathOptInterface.ZeroOne,
+}
+
+This constraint type is not supported by the solver.
 
 To fix this error you must choose a different solver.
-
 ```
 """
 struct UnsupportedConstraint{F<:AbstractFunction,S<:AbstractSet} <:
        UnsupportedError
     # Human-friendly explanation why the attribute cannot be set
     message::String
-end
 
-UnsupportedConstraint{F,S}() where {F,S} = UnsupportedConstraint{F,S}("")
+    function UnsupportedConstraint{F,S}(
+        msg::String = "",
+    ) where {F<:AbstractFunction,S<:AbstractSet}
+        return new{F,S}(msg)
+    end
+end
 
 function Base.showerror(io::IO, err::UnsupportedConstraint{F,S}) where {F,S}
     print(
         io,
         """
-        UnsupportedConstraint: `$F`-in-`$S` constraints are not supported by the
-        solver you have chosen, and we could not reformulate your model into a
-        form that is supported.
+        UnsupportedConstraint{
+            $F,
+            $S,
+        }
+
+        This constraint type is not supported by the solver.
 
         To fix this error you must choose a different solver.
-
-        $(err.message)
         """,
     )
+    if !isempty(err.message)
+        print(io, "\n", err.message)
+    end
     return
 end
 
@@ -289,10 +299,16 @@ end
 function Base.showerror(io::IO, err::LowerBoundAlreadySet{S1,S2}) where {S1,S2}
     return print(
         io,
-        typeof(err),
-        ": Cannot add `VariableIndex`-in-`$(S2)` constraint for variable ",
-        "$(err.vi) as a `VariableIndex`-in-`$(S1)` constraint was already ",
-        "set for this variable and both constraints set a lower bound.",
+        """
+        LowerBoundAlreadySet{
+            $S1,
+            $S2,
+        }
+
+        You cannot add a `VariableIndex`-in-`$(S2)` constraint for variable \
+        "$(err.vi) because a `VariableIndex`-in-`$(S1)` constraint was already \
+        set for this variable and both constraints define a lower bound.
+        """,
     )
 end
 
@@ -311,10 +327,16 @@ end
 function Base.showerror(io::IO, err::UpperBoundAlreadySet{S1,S2}) where {S1,S2}
     return print(
         io,
-        typeof(err),
-        ": Cannot add `VariableIndex`-in-`$(S2)` constraint for variable ",
-        "$(err.vi) as a `VariableIndex`-in-`$(S1)` constraint was already ",
-        "set for this variable and both constraints set an upper bound.",
+        """
+        UpperBoundAlreadySet{
+            $S1,
+            $S2,
+        }
+
+        You cannot add a `VariableIndex`-in-`$(S2)` constraint for variable \
+        "$(err.vi) because a `VariableIndex`-in-`$(S1)` constraint was already \
+        set for this variable and both constraints define an upper bound.
+        """,
     )
 end
 

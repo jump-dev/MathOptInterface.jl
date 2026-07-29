@@ -67,13 +67,14 @@ function test_errors_UnsupportedConstraint()
         MOI.add_constraint(model, vi, MOI.EqualTo(0)),
     )
     msg = """
-    UnsupportedConstraint: `$(MOI.VariableIndex)`-in-`$(MOI.EqualTo{Int})` constraints are not supported by the
-    solver you have chosen, and we could not reformulate your model into a
-    form that is supported.
+    UnsupportedConstraint{
+        $(MOI.VariableIndex),
+        $(MOI.EqualTo{Int}),
+    }
+
+    This constraint type is not supported by the solver.
 
     To fix this error you must choose a different solver.
-
-
     """
     try
         MOI.add_constraint(model, vi, MOI.EqualTo(0))
@@ -297,22 +298,25 @@ function test_errors_show_SetAttributeNotAllowed()
 end
 
 function test_errors_ResultIndexBoundsError()
-    @test sprint(
-        showerror,
-        MOI.ResultIndexBoundsError(MOI.VariablePrimal(1), 0),
-    ) ==
-          "Result index of attribute MathOptInterface.VariablePrimal(1) out of" *
-          " bounds. There are currently 0 solution(s) in the model."
+    err = MOI.ResultIndexBoundsError(MOI.VariablePrimal(1), 0)
+    @test sprint(showerror, err) ==
+          """
+          Result index of attribute MathOptInterface.VariablePrimal(1) is out of bounds.
+
+          There are currently 0 solution(s) in the model.
+          """
+    return
 end
 
 function test_errors_ConflictIndexBoundsError()
-    @test sprint(
-        showerror,
-        MOI.ConflictIndexBoundsError(MOI.ConstraintConflictStatus(1), 0),
-    ) ==
-          "Conflict index of attribute " *
-          "MathOptInterface.ConstraintConflictStatus(1) out of bounds. " *
-          "There are currently 0 conflict(s) in the model."
+    err = MOI.ConflictIndexBoundsError(MOI.ConstraintConflictStatus(1), 0)
+    @test sprint(showerror, err) ==
+          """
+          Conflict index of attribute MathOptInterface.ConstraintConflictStatus(1) is out of bounds.
+
+          There are currently 0 conflict(s) in the model.
+          """
+    return
 end
 
 function test_errors_InvalidCalbackUsage()
@@ -393,7 +397,12 @@ end
 function test_showerror_InvalidIndex()
     x = MOI.VariableIndex(1)
     @test sprint(showerror, MOI.InvalidIndex(x)) ==
-          "The index $x is invalid. Note that an index becomes invalid after it has been deleted."
+          """
+          The index $x is invalid.
+
+          An index becomes invalid after it has been deleted. Alternatively, this \
+          error might mean that you have re-used the index from a different model.
+          """
     return
 end
 
