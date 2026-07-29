@@ -1273,7 +1273,7 @@ function Base.showerror(io::IO, err::OptimizeInProgress)
         This error occurs when you try to query an unsupported attribute from \
         inside a callback. Consult the solver's documentation to learn which \
         attributes may be queried inside a callback.
-        """
+        """,
     )
 end
 

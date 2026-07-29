@@ -66,7 +66,7 @@ function test_errors_UnsupportedConstraint()
         MOI.UnsupportedConstraint,
         MOI.add_constraint(model, vi, MOI.EqualTo(0)),
     )
-    msg = """
+    ret = """
     UnsupportedConstraint{
         $(MOI.VariableIndex),
         $(MOI.EqualTo{Int}),
@@ -79,7 +79,7 @@ function test_errors_UnsupportedConstraint()
     try
         MOI.add_constraint(model, vi, MOI.EqualTo(0))
     catch err
-        @test sprint(showerror, err) == msg
+        @test sprint(showerror, err) == ret
     end
     return
 end
@@ -299,23 +299,23 @@ end
 
 function test_errors_ResultIndexBoundsError()
     err = MOI.ResultIndexBoundsError(MOI.VariablePrimal(1), 0)
-    @test sprint(showerror, err) ==
-          """
-          Result index of attribute MathOptInterface.VariablePrimal(1) is out of bounds.
+    ret = """
+    Result index of attribute MathOptInterface.VariablePrimal(1) is out of bounds.
 
-          There are currently 0 solution(s) in the model.
-          """
+    There are currently 0 solution(s) in the model.
+    """
+    @test sprint(showerror, err) == ret
     return
 end
 
 function test_errors_ConflictIndexBoundsError()
     err = MOI.ConflictIndexBoundsError(MOI.ConstraintConflictStatus(1), 0)
-    @test sprint(showerror, err) ==
-          """
-          Conflict index of attribute MathOptInterface.ConstraintConflictStatus(1) is out of bounds.
+    ret = """
+    Conflict index of attribute MathOptInterface.ConstraintConflictStatus(1) is out of bounds.
 
-          There are currently 0 conflict(s) in the model.
-          """
+    There are currently 0 conflict(s) in the model.
+    """
+    @test sprint(showerror, err) == ret
     return
 end
 
@@ -396,13 +396,13 @@ end
 
 function test_showerror_InvalidIndex()
     x = MOI.VariableIndex(1)
-    @test sprint(showerror, MOI.InvalidIndex(x)) ==
-          """
-          The index $x is invalid.
+    err = """
+    The index $x is invalid.
 
-          An index becomes invalid after it has been deleted. Alternatively, this \
-          error might mean that you have re-used the index from a different model.
-          """
+    An index becomes invalid after it has been deleted. Alternatively, this \
+    error might mean that you have re-used the index from a different model.
+    """
+    @test sprint(showerror, MOI.InvalidIndex(x)) == err
     return
 end
 

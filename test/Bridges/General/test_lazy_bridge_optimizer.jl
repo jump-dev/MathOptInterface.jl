@@ -1772,17 +1772,18 @@ function test_UnsupportedConstraint_when_it_cannot_be_bridged()
     mock = MOI.Utilities.MockOptimizer(NoRSOCModel{Float64}())
     bridged_mock = MOI.Bridges.LazyBridgeOptimizer(mock)
     x = MOI.add_variables(bridged_mock, 4)
-    err = MOI.UnsupportedConstraint{
-        MOI.VectorOfVariables,
-        MOI.RotatedSecondOrderCone,
-    }()
-    @test_throws err begin
+    @test_throws(
+        MOI.UnsupportedConstraint{
+            MOI.VectorOfVariables,
+            MOI.RotatedSecondOrderCone,
+        },
         MOI.add_constraint(
             bridged_mock,
             MOI.VectorOfVariables(x),
             MOI.RotatedSecondOrderCone(4),
-        )
-    end
+        ),
+    )
+    return
 end
 
 function test_MOI_runtests_No_RSOCModel()
@@ -1839,17 +1840,17 @@ function test_bridge_selection()
         MOI.LogDetConeTriangle,
     ))
     x = MOI.add_variables(bridged_mock, 3)
-    err = MOI.UnsupportedConstraint{
-        MOI.VectorAffineFunction{Float64},
-        MOI.LogDetConeTriangle,
-    }()
-    @test_throws err begin
+    @test_throws(
+        MOI.UnsupportedConstraint{
+            MOI.VectorAffineFunction{Float64},
+            MOI.LogDetConeTriangle,
+        },
         MOI.Bridges.bridge_type(
             bridged_mock,
             MOI.VectorAffineFunction{Float64},
             MOI.LogDetConeTriangle,
-        )
-    end
+        ),
+    )
     c = MOI.add_constraint(
         bridged_mock,
         MOI.VectorOfVariables(x),
