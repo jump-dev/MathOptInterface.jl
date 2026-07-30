@@ -392,8 +392,15 @@ end
 
 function test_showerror_OptimizeInProgress()
     err = MOI.OptimizeInProgress(MOI.VariablePrimal())
-    @test sprint(showerror, err) ==
-          "$(typeof(err)): Cannot get result as the `MOI.optimize!` has not finished."
+    ret = """
+    Unable to get the attribute MathOptInterface.VariablePrimal(1) \
+    because `MOI.optimize!` in progress.
+
+    This error occurs when you try to query an unsupported attribute from \
+    inside a callback. Consult the solver's documentation to learn which \
+    attributes may be queried inside a callback.
+    """
+    @test sprint(showerror, err) == ret
     return
 end
 

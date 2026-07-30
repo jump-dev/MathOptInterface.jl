@@ -94,7 +94,12 @@ end
 function Base.showerror(io::IO, err::InvalidIndex)
     return print(
         io,
-        "The index $(err.index) is invalid. Note that an index becomes invalid after it has been deleted.",
+        """
+        The index $(err.index) is invalid.
+
+        An index becomes invalid after it has been deleted. Alternatively, this \
+        error might mean that you have re-used the index from a different model.
+        """,
     )
 end
 
