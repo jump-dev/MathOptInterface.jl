@@ -76,7 +76,7 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 | [`ExponentialCone()`](@ref)         | ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``                                                                             |
 | [`DualExponentialCone()`](@ref)     | ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le \exp(1) w, u < 0 \}``                                                                    |
 | [`GeometricMeanCone(d)`](@ref)      | ``\{ (t,x) \in \mathbb{R}^{1+n} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}`` where ``n`` is ``d - 1``                                |
-| [`DualGeometricMeanCone(d)`](@ref)  | ``\{ (u,v) \in \mathbb{R}^{1+n} : v \\ge 0, 0 \\ge u \\ge -n \\sqrt[n]{\\prod_i v_i} \\}``, where ``n`` is ``d - 1``                       |
+| [`DualGeometricMeanCone(d)`](@ref)  | ``\{ (u,v) \in \mathbb{R}^{1+n} : v \ge 0, 0 \ge u \ge -n \sqrt[n]{\prod_i v_i} \}``, where ``n`` is ``d - 1``                             |
 | [`PowerCone(α)`](@ref)              | ``\{ (x,y,z) \in \mathbb{R}^3 : x^{\alpha} y^{1-\alpha} \ge \|z\|, x \ge 0,y \ge 0 \}``                                                    |
 | [`DualPowerCone(α)`](@ref)          | ``\{ (u,v,w) \in \mathbb{R}^3 : \left(\frac{u}{\alpha}\right)^{\alpha}\left(\frac{v}{1-\alpha}\right)^{1-\alpha} \ge \|w\|, u,v \ge 0 \}`` |
 | [`NormOneCone(d)`](@ref)            | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \sum_i \lvert x_i \rvert \}``                                                                        |
