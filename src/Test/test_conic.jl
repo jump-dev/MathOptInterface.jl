@@ -3370,7 +3370,8 @@ function setup_test(
             mock,
             T[-3, 1, 1, 1]::Vector{T},
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-T(1)],
-            (MOI.VectorAffineFunction{T}, MOI.DualGeometricMeanCone) => [ones(T, 4)],
+            (MOI.VectorAffineFunction{T}, MOI.DualGeometricMeanCone) =>
+                [ones(T, 4)],
         ),
     )
     return

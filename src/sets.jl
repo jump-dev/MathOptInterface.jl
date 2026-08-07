@@ -825,7 +825,7 @@ julia> MOI.add_constraint(
            MOI.VectorOfVariables([t; x]),
            MOI.DualGeometricMeanCone(4),
        )
-MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.DualGeometricMean/Cone}(1)
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.DualGeometricMeanCone}(1)
 ```
 """
 struct DualGeometricMeanCone <: AbstractVectorSet

@@ -153,8 +153,8 @@ function MOI.get(
     bridge::DualGeoMeanBridge,
 )
     return MOI.DualGeometricMeanCone(
-            MOI.dimension(
-                MOI.get(model, MOI.ConstraintSet(), bridge.geomean_index)
-        )
+        MOI.dimension(
+            MOI.get(model, MOI.ConstraintSet(), bridge.geomean_index),
+        ),
     )
 end
