@@ -2850,7 +2850,6 @@ function _test_conic_GeometricMeanCone_helper(
         )
         @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), n, config)
         if _supports(config, MOI.ConstraintDual)
-            display(MOI.get(model, MOI.ConstraintDual(), gmc))
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), gmc),
                 vcat(T(-1), fill(inv(T(n)), n)),
@@ -3315,7 +3314,6 @@ function _test_conic_DualGeometricMeanCone_helper(
         )
         @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), n, config)
         if _supports(config, MOI.ConstraintDual)
-            display(MOI.get(model, MOI.ConstraintDual(), gmc))
             @test ≈(
                 MOI.get(model, MOI.ConstraintDual(), gmc),
                 ones(T, n + 1),
