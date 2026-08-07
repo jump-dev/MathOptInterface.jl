@@ -88,6 +88,7 @@ NormCone
 SecondOrderCone
 RotatedSecondOrderCone
 GeometricMeanCone
+DualGeometricMeanCone
 ExponentialCone
 DualExponentialCone
 PowerCone

@@ -39,6 +39,7 @@ function add_all_bridges(model, ::Type{T}) where {T}
     MOI.Bridges.add_bridge(model, CountBelongsToMILPBridge{T})
     MOI.Bridges.add_bridge(model, CountDistinctToMILPBridge{T})
     MOI.Bridges.add_bridge(model, CountGreaterThanToMILPBridge{T})
+    MOI.Bridges.add_bridge(model, DualGeoMeanBridge{T})
     # * ExponentialConeToScalarNonlinearFunctionBridge{T}
     #      This bridge is not added by default because it starts with a convex
     #      conic constraint and adds a nonlinear constraint that local NLP

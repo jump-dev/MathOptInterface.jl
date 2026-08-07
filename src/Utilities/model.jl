@@ -813,6 +813,7 @@ const EqualToIndicatorZero{T} =
         MOI.SecondOrderCone,
         MOI.RotatedSecondOrderCone,
         MOI.GeometricMeanCone,
+        MOI.DualGeometricMeanCone,
         MOI.ExponentialCone,
         MOI.DualExponentialCone,
         MOI.RelativeEntropyCone,

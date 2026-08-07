@@ -115,6 +115,7 @@ _set(::Type{MOI.NormCone}) = MOI.NormCone(4.0, 3)
 _set(::Type{MOI.SecondOrderCone}) = MOI.SecondOrderCone(3)
 _set(::Type{MOI.RotatedSecondOrderCone}) = MOI.RotatedSecondOrderCone(3)
 _set(::Type{MOI.GeometricMeanCone}) = MOI.GeometricMeanCone(3)
+_set(::Type{MOI.DualGeometricMeanCone}) = MOI.DualGeometricMeanCone(3)
 _set(::Type{MOI.ExponentialCone}) = MOI.ExponentialCone()
 _set(::Type{MOI.DualExponentialCone}) = MOI.DualExponentialCone()
 _set(::Type{T}, ::Type{MOI.PowerCone}) where {T} = MOI.PowerCone(T(1//2))
@@ -403,6 +404,7 @@ for s in [
     :SecondOrderCone,
     :RotatedSecondOrderCone,
     :GeometricMeanCone,
+    :DualGeometricMeanCone,
     :ExponentialCone,
     :DualExponentialCone,
     :PowerCone,
