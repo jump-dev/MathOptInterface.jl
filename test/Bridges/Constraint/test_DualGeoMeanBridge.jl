@@ -78,7 +78,10 @@ function test_conic_DualGeometricMeanCone_VectorAffineFunction()
     )
     nonneg = MOI.get(
         mock,
-        MOI.ListOfConstraintIndices{MOI.VectorAffineFunction{Float64},MOI.Nonnegatives}(),
+        MOI.ListOfConstraintIndices{
+            MOI.VectorAffineFunction{Float64},
+            MOI.Nonnegatives,
+        }(),
     )
     geomean = MOI.get(
         mock,
