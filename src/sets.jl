@@ -760,6 +760,9 @@ NormCone(set::NormOneCone) = NormCone(1, set.dimension)
 NormCone(set::SecondOrderCone) = NormCone(2, set.dimension)
 NormCone(set::NormInfinityCone) = NormCone(Inf, set.dimension)
 
+dual_set(s::NormCone) = NormCone(inv(1 - inv(s.p)), s.dimension)
+dual_set_type(::Type{NormCone}) = NormCone
+
 """
     GeometricMeanCone(dimension::Int)
 

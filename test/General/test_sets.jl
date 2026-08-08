@@ -229,6 +229,19 @@ function test_sets_dual_norm()
     return
 end
 
+function test_sets_dual_pnorm()
+    norminf = MOI.NormCone(Inf, 3)
+    normone = MOI.NormCone(1.0, 3)
+    normtwo = MOI.NormCone(2.0, 3)
+    normfive = MOI.NormCone(5.0, 3)
+    normfivedual = MOI.NormCone(1.25, 3)
+    _dual_set_test(normone, norminf)
+    _self_dual_set_test(normtwo)
+    @test MOI.dual_set(normfive).p ≈ normfivedual.p
+    @test MOI.dual_set(normfivedual).p ≈ normfive.p
+    return
+end
+
 function test_sets_dual_soc()
     soc2 = MOI.SecondOrderCone(2)
     soc3 = MOI.SecondOrderCone(3)
