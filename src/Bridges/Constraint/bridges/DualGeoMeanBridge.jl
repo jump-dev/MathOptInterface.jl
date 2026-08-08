@@ -95,8 +95,6 @@ function concrete_bridge_type(
     return DualGeoMeanBridge{T,G,H}
 end
 
-MOI.get(::DualGeoMeanBridge, ::MOI.NumberOfVariables)::Int64 = 0
-
 function MOI.get(
     ::DualGeoMeanBridge{T,G},
     ::MOI.NumberOfConstraints{G,MOI.Nonnegatives},
@@ -157,4 +155,24 @@ function MOI.get(
             MOI.get(model, MOI.ConstraintSet(), bridge.geomean_index),
         ),
     )
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimal,
+    bridge::DualGeoMeanBridge,
+)
+    geomean_primal = MOI.get(model, attr, bridge.geomean_index)
+    d = length(geomean_primal) - 1
+    return [-geomean_primal[1] * d; geomean_primal[2:end]]
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    bridge::DualGeoMeanBridge,
+)
+    geomean_dual = MOI.get(model, attr, bridge.geomean_index)
+    d = length(geomean_dual) - 1
+    return [-geomean_dual[1] / d; geomean_dual[2:end]]
 end
