@@ -359,8 +359,8 @@ end
 """
     distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.GeometricMeanCone)
 
-Let `(t, y...) = x`. If all `y` are non-negative, return the epigraph distance
-`d` such that `(t + d, y...)` belongs to the set.
+Let `(t, y...) = x`. If all `y` are non-negative, return the hypograph distance
+`d` such that `(t - d, y...)` belongs to the set.
 
 If any `y` are strictly negative, return the 2-norm of the vector `d` that
 projects negative `y` elements to `0` and `t` to `ℝ₋`.
@@ -377,6 +377,36 @@ function distance_to_set(
         return LinearAlgebra.norm((min.(xs, zero(T)), max(t, zero(T))), 2)
     end
     return max(t - prod(xs)^inv(MOI.dimension(set) - 1), zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.DualGeometricMeanCone)
+
+Let `(t, y...) = x`. If all `y` are non-negative, return the absolute value of
+`d` such that `(t + d, y...)` belongs to the set.
+
+If any `y` are strictly negative, return the 2-norm of the vector `d` that
+projects negative `y` elements to `0` and `t` to `0`.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.DualGeometricMeanCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    t, xs = x[1], @view(x[2:end])
+    if any(<(zero(T)), xs)  # Project to x = 0
+        return LinearAlgebra.norm((min.(xs, zero(T)), abs(t)), 2)
+    else
+        n = T(MOI.dimension(set)) - 1
+        G = n * prod(xs)^inv(n)
+        if t < -G
+            return -G - t
+        else
+            return max(t, zero(T))
+        end
+    end
 end
 
 """

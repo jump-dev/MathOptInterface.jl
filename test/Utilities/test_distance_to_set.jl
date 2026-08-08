@@ -199,6 +199,19 @@ function test_geometricmeancone()
     return
 end
 
+function test_dualgeometricmeancone()
+    _test_set(
+        MOI.DualGeometricMeanCone(3),
+        [-2.0, 1.0, 1.0] => 0.0,
+        [3.0, 1.0, 2.0] => 3.0,
+        [-3.0, 1.0, 2.0] => 3.0 - 2sqrt(2),
+        [1.5, -1.0, 2.0] => sqrt(1 + 1.5^2),
+        [-1.5, -1.0, 2.0] => sqrt(1 + 1.5^2);
+        mismatch = [1.0],
+    )
+    return
+end
+
 function test_powercone()
     _test_set(
         MOI.PowerCone(0.5),
