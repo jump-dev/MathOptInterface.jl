@@ -96,7 +96,6 @@ function MOI.get(
     return [bridge.nn_index]
 end
 
-
 function MOI.get(
     ::DualGeoMeanBridge{T,G},
     ::MOI.NumberOfConstraints{G,MOI.GeometricMeanCone},
@@ -155,6 +154,6 @@ function MOI.get(
     bridge::DualGeoMeanBridge,
 )
     dual = MOI.get(model, attr, bridge.geomean_index)
-    dual[1] ./= -(length(dual) - 1)
+    dual[1] /= -(length(dual) - 1)
     return dual
 end
