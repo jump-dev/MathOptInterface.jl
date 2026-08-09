@@ -40,23 +40,15 @@ function bridge_constraint(
     s::MOI.DualGeometricMeanCone,
 ) where {T,G,H}
     f_scalars = MOI.Utilities.eachscalar(f)
-    nn_index = MOI.add_constraint(
+    u_neg = MOI.Utilities.vectorize([MOI.Utilities.operate(-, T, f_scalars[1])])
+    nn_index = MOI.add_constraint(model, u_neg, MOI.Nonnegatives(1))
+    u_n = MOI.Utilities.operate(/, T, f_scalars[1], -T(MOI.dimension(s) - 1))
+    ci = MOI.add_constraint(
         model,
-        MOI.Utilities.vectorize([MOI.Utilities.operate(-, T, f_scalars[1])]),
-        MOI.Nonnegatives(1),
-    )
-    geomean_func = MOI.Utilities.operate(
-        vcat,
-        T,
-        MOI.Utilities.operate(/, T, f_scalars[1], -T(MOI.dimension(s) - 1)),
-        f_scalars[2:end],
-    )
-    geomean_index = MOI.add_constraint(
-        model,
-        geomean_func,
+        MOI.Utilities.operate(vcat, T, u_n, f_scalars[2:end]),
         MOI.GeometricMeanCone(MOI.dimension(s)),
     )
-    return DualGeoMeanBridge{T,G,H}(nn_index, geomean_index)
+    return DualGeoMeanBridge{T,G,H}(nn_index, ci)
 end
 
 function MOI.supports_constraint(
@@ -76,22 +68,17 @@ end
 function MOI.Bridges.added_constraint_types(
     ::Type{<:DualGeoMeanBridge{T,G}},
 ) where {T,G}
-    return Tuple{Type,Type,Type}[(G, MOI.Nonnegatives, MOI.GeometricMeanCone)]
+    return Tuple{Type,Type}[(G, MOI.Nonnegatives), (G, MOI.GeometricMeanCone)]
 end
 
 function concrete_bridge_type(
     ::Type{<:DualGeoMeanBridge{T}},
-    H::Type{<:MOI.AbstractVectorFunction},
+    ::Type{H},
     ::Type{MOI.DualGeometricMeanCone},
-) where {T}
+) where {T,H<:MOI.AbstractVectorFunction}
     S = MOI.Utilities.scalar_type(H)
-    G = MOI.Utilities.promote_operation(
-        vcat,
-        T,
-        T,
-        S,
-        MOI.Utilities.promote_operation(+, T, S, MOI.VariableIndex),
-    )
+    TS = MOI.Utilities.promote_operation(+, T, S, MOI.VariableIndex)
+    G = MOI.Utilities.promote_operation(vcat, T, T, S, TS)
     return DualGeoMeanBridge{T,G,H}
 end
 
@@ -103,17 +90,18 @@ function MOI.get(
 end
 
 function MOI.get(
-    ::DualGeoMeanBridge{T,G},
-    ::MOI.NumberOfConstraints{G,MOI.GeometricMeanCone},
-)::Int64 where {T,G}
-    return 1
-end
-
-function MOI.get(
     bridge::DualGeoMeanBridge{T,G},
     ::MOI.ListOfConstraintIndices{G,MOI.Nonnegatives},
 ) where {T,G}
     return [bridge.nn_index]
+end
+
+
+function MOI.get(
+    ::DualGeoMeanBridge{T,G},
+    ::MOI.NumberOfConstraints{G,MOI.GeometricMeanCone},
+)::Int64 where {T,G}
+    return 1
 end
 
 function MOI.get(
@@ -134,15 +122,12 @@ function MOI.get(
     ::MOI.ConstraintFunction,
     bridge::DualGeoMeanBridge{T,G,H},
 ) where {T,G,H}
-    geomean_func = MOI.Utilities.eachscalar(
-        MOI.get(model, MOI.ConstraintFunction(), bridge.geomean_index),
-    )
-    d = length(geomean_func) - 1
-    u = MOI.Utilities.operate(*, T, geomean_func[1], T(-d))
-    return MOI.Utilities.convert_approx(
-        H,
-        MOI.Utilities.operate(vcat, T, u, geomean_func[2:end]),
-    )
+    g = MOI.get(model, MOI.ConstraintFunction(), bridge.geomean_index)
+    scalars = MOI.Utilities.eachscalar(g)
+    d = length(geomean_scalarsfunc) - 1
+    u = MOI.Utilities.operate(*, T, scalars[1], T(-d))
+    f = MOI.Utilities.operate(vcat, T, u, scalars[2:end])
+    return MOI.Utilities.convert_approx(H, f)
 end
 
 function MOI.get(
@@ -150,11 +135,8 @@ function MOI.get(
     ::MOI.ConstraintSet,
     bridge::DualGeoMeanBridge,
 )
-    return MOI.DualGeometricMeanCone(
-        MOI.dimension(
-            MOI.get(model, MOI.ConstraintSet(), bridge.geomean_index),
-        ),
-    )
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.geomean_index)
+    return MOI.DualGeometricMeanCone(MOI.dimension(set))
 end
 
 function MOI.get(
@@ -162,9 +144,9 @@ function MOI.get(
     attr::MOI.ConstraintPrimal,
     bridge::DualGeoMeanBridge,
 )
-    geomean_primal = MOI.get(model, attr, bridge.geomean_index)
-    d = length(geomean_primal) - 1
-    return [-geomean_primal[1] * d; geomean_primal[2:end]]
+    primal = MOI.get(model, attr, bridge.geomean_index)
+    primal[1] *= -(length(primal) - 1)
+    return primal
 end
 
 function MOI.get(
@@ -172,7 +154,7 @@ function MOI.get(
     attr::MOI.ConstraintDual,
     bridge::DualGeoMeanBridge,
 )
-    geomean_dual = MOI.get(model, attr, bridge.geomean_index)
-    d = length(geomean_dual) - 1
-    return [-geomean_dual[1] / d; geomean_dual[2:end]]
+    dual = MOI.get(model, attr, bridge.geomean_index)
+    dual[1] ./= -(length(dual) - 1)
+    return dual
 end
