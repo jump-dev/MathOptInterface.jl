@@ -124,8 +124,8 @@ function MOI.get(
 ) where {T,G,H}
     g = MOI.get(model, MOI.ConstraintFunction(), bridge.geomean_index)
     scalars = MOI.Utilities.eachscalar(g)
-    d = length(geomean_scalarsfunc) - 1
-    u = MOI.Utilities.operate(*, T, scalars[1], T(-d))
+    n = -T(length(scalars) - 1)
+    u = MOI.Utilities.operate(*, T, scalars[1], n)
     f = MOI.Utilities.operate(vcat, T, u, scalars[2:end])
     return MOI.Utilities.convert_approx(H, f)
 end
