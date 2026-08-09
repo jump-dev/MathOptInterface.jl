@@ -3333,6 +3333,12 @@ function test_conic_DualGeometricMeanCone_VectorOfVariables(
     return
 end
 
+function version_added(
+    ::typeof(test_conic_DualGeometricMeanCone_VectorOfVariables),
+)
+    return v"1.53.0"
+end
+
 function setup_test(
     ::typeof(test_conic_DualGeometricMeanCone_VectorOfVariables),
     model::MOIU.MockOptimizer,
@@ -3355,6 +3361,12 @@ function test_conic_DualGeometricMeanCone_VectorAffineFunction(
 ) where {T<:Real}
     _test_conic_DualGeometricMeanCone_helper(model, config, false)
     return
+end
+
+function version_added(
+    ::typeof(test_conic_DualGeometricMeanCone_VectorAffineFunction),
+)
+    return v"1.53.0"
 end
 
 function setup_test(
