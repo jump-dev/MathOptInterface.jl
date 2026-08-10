@@ -2,6 +2,7 @@
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+MarkdownAST = "d0879d2d-cac2-40c8-9cee-1863dc0c7391"
 MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
 
 [compat]

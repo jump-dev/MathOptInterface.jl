@@ -17,6 +17,45 @@ const _IS_GITHUB_ACTIONS = get(ENV, "GITHUB_ACTIONS", "false") == "true"
 const _PDF = findfirst(isequal("--pdf"), ARGS) !== nothing || _IS_GITHUB_ACTIONS
 
 # ==============================================================================
+#  API
+# ==============================================================================
+
+include(joinpath(@__DIR__, "DocumenterReference.jl"))
+empty!(DocumenterReference.CONFIG)
+
+api_reference = DocumenterReference.automatic_reference_documentation(;
+    subdirectory = "api",
+    modules = [MathOptInterface],
+    filter = (name::Symbol) -> begin
+        if name in [
+            :AnyAttribute,
+            :FunctionTypeMismatch,
+            :Index,
+            :SetTypeMismatch,
+            :correct_throw_add_constraint_error_fallback,
+            :dict_compare,
+            :eval,
+            :fix_message,
+            :func_type,
+            :get_fallback,
+            :include,
+            :precompile_constraint,
+            :precompile_model,
+            :precompile_variables,
+            :set_type,
+            :sum_dict,
+            :supports_fallback,
+            :throw_add_constraint_error_fallback,
+            :throw_modify_not_allowed,
+            :throw_set_error_fallback,
+        ]
+            return false
+        end
+        return !any(k -> startswith("$name", k), ["#", "_", "@_"])
+    end,
+)
+
+# ==============================================================================
 #  Documentation structure
 # ==============================================================================
 
@@ -43,16 +82,7 @@ const _PAGES = [
         "background/infeasibility_certificates.md",
         "background/naming_conventions.md",
     ],
-    "API Reference" => [
-        "reference/standard_form.md",
-        "reference/models.md",
-        "reference/variables.md",
-        "reference/constraints.md",
-        "reference/modification.md",
-        "reference/nonlinear.md",
-        "reference/callbacks.md",
-        "reference/errors.md",
-    ],
+    api_reference,
     "Submodules" => [
         "Benchmarks" => [
             "Overview" => "submodules/Benchmarks/overview.md",
@@ -147,8 +177,7 @@ Documenter.DocMeta.setdocmeta!(
         size_threshold_ignore = [
             "changelog.md",
             "release_notes.md",
-            "reference/models.md",
-            "reference/standard_form.md",
+            "api/MathOptInterface.md",
             "submodules/Bridges/list_of_bridges.md",
             "submodules/Bridges/reference.md",
             "submodules/Utilities/reference.md",
@@ -164,6 +193,7 @@ Documenter.DocMeta.setdocmeta!(
         "https://arxiv.org/abs/2002.03447",
         # https://github.com/JuliaDocs/Documenter.jl/issues/2834
         "https://lpsolve.sourceforge.net/5.5/CPLEX-format.htm",
+        "https://www.fico.com/fico-xpress-optimization/docs/dms2021-01/solver/optimizer/HTML/chapter10_sec_section102.html",
     ],
     modules = [MathOptInterface],
     checkdocs = :exports,

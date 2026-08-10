@@ -228,6 +228,7 @@ Utilities.AbstractDistance
 Utilities.ProjectionUpperBoundDistance
 Utilities.distance_to_set
 Utilities.set_dot
+Utilities.SetDotScalingVector
 ```
 
 ## DoubleDicts

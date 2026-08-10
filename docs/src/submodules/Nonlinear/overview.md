@@ -266,7 +266,7 @@ julia> Nonlinear.register_operator(model, :my_g2, 2, g, ∇g)
 
 MathOptInterface communicates the nonlinear portion of an optimization problem
 to solvers using concrete subtypes of [`AbstractNLPEvaluator`](@ref), which
-implement the [Nonlinear programming](@ref) API.
+implement the Nonlinear programming API.
 
 Create an [`AbstractNLPEvaluator`](@ref) from [`Nonlinear.Model`](@ref) using
 [`Nonlinear.Evaluator`](@ref).
@@ -286,7 +286,7 @@ julia> evaluator = Nonlinear.Evaluator(model, Nonlinear.ExprGraphOnly(), [x])
 Nonlinear.Evaluator with available features:
   * :ExprGraph
 ```
-The functions of the [Nonlinear programming](@ref) API implemented by
+The functions of the Nonlinear programming API implemented by
 [`Nonlinear.Evaluator`](@ref) depends upon the chosen
 [`Nonlinear.AbstractAutomaticDifferentiation`](@ref) backend.
 

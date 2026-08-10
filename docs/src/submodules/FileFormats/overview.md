@@ -207,7 +207,7 @@ julia> src_2 = MOI.FileFormats.Model(format = MOI.FileFormats.FORMAT_MPS);
 julia> read!(io, src_2);
 ```
 
-## ScalarNonlinearFunction
+## [ScalarNonlinearFunction](@id FileFormats_ScalarNonlinearFunction)
 
 By default, reading a `.nl` or `.mof.json` that contains nonlinear expressions
 will create an [`NLPBlock`](@ref).
