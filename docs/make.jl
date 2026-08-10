@@ -5,6 +5,7 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 import Documenter
+import DocumenterCodeBlocks
 import MathOptInterface
 
 # Pass --fix` to rebuild the doctests.
@@ -169,6 +170,7 @@ Documenter.DocMeta.setdocmeta!(
     checkdocs = :exports,
     doctest = _FIX ? :fix : true,
     pages = _PAGES,
+    plugins = [DocumenterCodeBlocks.CodeBlocks()],
 )
 
 # ==============================================================================
