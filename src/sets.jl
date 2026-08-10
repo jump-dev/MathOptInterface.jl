@@ -770,12 +770,6 @@ The geometric mean cone
 ``\\{ (t,x) \\in \\mathbb{R}^{n+1} : x \\ge 0, t \\le \\sqrt[n]{x_1 x_2 \\cdots x_n} \\}``,
 where `dimension = n + 1 >= 2`.
 
-## Duality note
-
-The dual of the geometric mean cone is
-``\\{ (u, v) \\in \\mathbb{R}^{n+1} : u \\le 0, v \\ge 0, -u \\le n \\sqrt[n]{\\prod_i v_i} \\}``,
-where `dimension = n + 1 >= 2`.
-
 ## Example
 
 ```jldoctest
@@ -808,6 +802,52 @@ struct GeometricMeanCone <: AbstractVectorSet
         return new(dimension)
     end
 end
+
+dual_set(s::GeometricMeanCone) = DualGeometricMeanCone(s.dimension)
+dual_set_type(::Type{GeometricMeanCone}) = DualGeometricMeanCone
+
+"""
+    DualGeometricMeanCone(dimension::Int)
+
+The dual geometric mean cone
+``\\{ (u, v) \\in \\mathbb{R}^{n+1} : v \\ge 0, 0 \\ge u \\ge -n \\sqrt[n]{\\prod_i v_i} \\}``,
+where `dimension = n + 1 >= 2`.
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> t = MOI.add_variable(model)
+MOI.VariableIndex(1)
+
+julia> x = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([t; x]),
+           MOI.DualGeometricMeanCone(4),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.DualGeometricMeanCone}(1)
+```
+"""
+struct DualGeometricMeanCone <: AbstractVectorSet
+    dimension::Int
+    function DualGeometricMeanCone(dimension::Base.Integer)
+        if !(dimension >= 2)
+            throw(
+                DimensionMismatch(
+                    "Dimension of DualGeometricMeanCone must be >= 2, not " *
+                    "$(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
+end
+
+dual_set(s::DualGeometricMeanCone) = GeometricMeanCone(s.dimension)
+dual_set_type(::Type{DualGeometricMeanCone}) = GeometricMeanCone
 
 """
     ExponentialCone()

@@ -137,6 +137,7 @@ function test_sets_DimensionMismatch()
         (MOI.SecondOrderCone, 1),
         (MOI.RotatedSecondOrderCone, 2),
         (MOI.GeometricMeanCone, 2),
+        (MOI.DualGeometricMeanCone, 2),
         (MOI.Complements, 0),
         (MOI.RelativeEntropyCone, 1),
         (MOI.ScaledPositiveSemidefiniteConeTriangle, 0),
@@ -296,6 +297,16 @@ function test_sets_dual_psdtriangle()
         MOI.Scaled(MOI.HermitianPositiveSemidefiniteConeTriangle(2)),
         MOI.Scaled(MOI.HermitianPositiveSemidefiniteConeTriangle(3)),
     )
+    return
+end
+
+function test_sets_dual_geometric()
+    geo = MOI.GeometricMeanCone(4)
+    dual_geo = MOI.DualGeometricMeanCone(4)
+    _dual_set_test(geo, dual_geo)
+    @test MOI.dual_set(geo) != geo
+    _dual_set_test(dual_geo, geo)
+    @test MOI.dual_set(dual_geo) != dual_geo
     return
 end
 

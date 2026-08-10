@@ -3216,6 +3216,177 @@ function setup_test(
     return
 end
 
+function _test_conic_DualGeometricMeanCone_helper(
+    model::MOI.ModelLike,
+    config::Config{T},
+    use_VectorOfVariables,
+    n = 3,
+) where {T<:Real}
+    # Problem DualGeoMean1
+    # min -3(xyz)^(1/3)
+    # s.t.
+    #      x + y + z ≤ 3
+    # in conic form:
+    # max t
+    # s.t.
+    #   (t,x,y,z) ∈ DualGeometricMeanCone(4)
+    #     x+y+z-3 ∈ LessThan(0.)
+    # By the arithmetic-geometric mean inequality,
+    # (xyz)^(1/3) ≤ (x+y+z)/3 = 1
+    # Therefore xyz ≤ 1
+    # This can be attained using x = y = z = 1 so it is optimal.
+    @requires MOI.supports_incremental_interface(model)
+    @requires MOI.supports(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+    )
+    @requires MOI.supports(model, MOI.ObjectiveSense())
+    if use_VectorOfVariables
+        @requires MOI.supports_constraint(
+            model,
+            MOI.VectorOfVariables,
+            MOI.DualGeometricMeanCone,
+        )
+    else
+        @requires MOI.supports_constraint(
+            model,
+            MOI.VectorAffineFunction{T},
+            MOI.DualGeometricMeanCone,
+        )
+    end
+    @requires MOI.supports_constraint(
+        model,
+        MOI.ScalarAffineFunction{T},
+        MOI.LessThan{T},
+    )
+    t = MOI.add_variable(model)
+    x = MOI.add_variables(model, n)
+    vov = MOI.VectorOfVariables([t; x])
+    if use_VectorOfVariables
+        gmc = MOI.add_constraint(model, vov, MOI.DualGeometricMeanCone(n + 1))
+    else
+        gmc = MOI.add_constraint(
+            model,
+            MOI.VectorAffineFunction{T}(vov),
+            MOI.DualGeometricMeanCone(n + 1),
+        )
+    end
+    c = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(T(1), x), T(0)),
+        MOI.LessThan(T(n)),
+    )
+    if _supports(config, MOI.NumberOfConstraints)
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                use_VectorOfVariables ? MOI.VectorOfVariables :
+                MOI.VectorAffineFunction{T},
+                MOI.DualGeometricMeanCone,
+            }(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{
+                MOI.ScalarAffineFunction{T},
+                MOI.LessThan{T},
+            }(),
+        ) == 1
+    end
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), t)], T(0)),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    if _supports(config, MOI.optimize!)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), -3, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), t), -3, config)
+        @test ≈(MOI.get(model, MOI.VariablePrimal(), x), ones(T, n), config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), gmc),
+            T[-3, 1, 1, 1],
+            config,
+        )
+        @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), n, config)
+        if _supports(config, MOI.ConstraintDual)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), gmc),
+                ones(T, n + 1),
+                config,
+            )
+            @test ≈(MOI.get(model, MOI.ConstraintDual(), c), -T(1), config)
+        end
+    end
+    return
+end
+
+function test_conic_DualGeometricMeanCone_VectorOfVariables(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    _test_conic_DualGeometricMeanCone_helper(model, config, true)
+    return
+end
+
+function version_added(
+    ::typeof(test_conic_DualGeometricMeanCone_VectorOfVariables),
+)
+    return v"1.53.0"
+end
+
+function setup_test(
+    ::typeof(test_conic_DualGeometricMeanCone_VectorOfVariables),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T<:Real}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            T[-3, 1, 1, 1]::Vector{T},
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-T(1)],
+        ),
+    )
+    return
+end
+
+function test_conic_DualGeometricMeanCone_VectorAffineFunction(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    _test_conic_DualGeometricMeanCone_helper(model, config, false)
+    return
+end
+
+function version_added(
+    ::typeof(test_conic_DualGeometricMeanCone_VectorAffineFunction),
+)
+    return v"1.53.0"
+end
+
+function setup_test(
+    ::typeof(test_conic_DualGeometricMeanCone_VectorAffineFunction),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T<:Real}
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            T[-3, 1, 1, 1]::Vector{T},
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => [-T(1)],
+            (MOI.VectorAffineFunction{T}, MOI.DualGeometricMeanCone) =>
+                [ones(T, 4)],
+        ),
+    )
+    return
+end
+
 function _test_conic_Exponential_helper(
     model::MOI.ModelLike,
     config::Config{T},
