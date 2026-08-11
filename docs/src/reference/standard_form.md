@@ -94,6 +94,7 @@ DualExponentialCone
 PowerCone
 DualPowerCone
 RelativeEntropyCone
+DualRelativeEntropyCone
 NormSpectralCone
 NormNuclearCone
 SOS1

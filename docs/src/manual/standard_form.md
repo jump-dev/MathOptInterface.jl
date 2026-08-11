@@ -75,13 +75,14 @@ The vector-valued set types implemented in MathOptInterface.jl are:
 | [`RotatedSecondOrderCone(d)`](@ref) | ``\{ (t,u,x) \in \mathbb{R}^{d} : 2tu \ge \lVert x \rVert_2^2, t \ge 0,u \ge 0 \}``                                                        |
 | [`ExponentialCone()`](@ref)         | ``\{ (x,y,z) \in \mathbb{R}^3 : y \exp (x/y) \le z, y > 0 \}``                                                                             |
 | [`DualExponentialCone()`](@ref)     | ``\{ (u,v,w) \in \mathbb{R}^3 : -u \exp (v/u) \le \exp(1) w, u < 0 \}``                                                                    |
-| [`GeometricMeanCone(d)`](@ref)      | ``\{ (t,x) \in \mathbb{R}^{1+n} : x \ge 0, t \le \sqrt[n]{x_1 x_2 \cdots x_n} \}`` where ``n`` is ``d - 1``                                |
-| [`DualGeometricMeanCone(d)`](@ref)  | ``\{ (u,v) \in \mathbb{R}^{1+n} : v \ge 0, 0 \ge u \ge -n \sqrt[n]{\prod_i v_i} \}``, where ``n`` is ``d - 1``                             |
+| [`GeometricMeanCone(d)`](@ref)      | ``\{ (t,x) \in \mathbb{R}^{1+n} : x \ge 0, t \le \sqrt[n]{\prod_i x_i} \}`` where ``n`` is ``d - 1``                                |
+| [`DualGeometricMeanCone(d)`](@ref)  | ``\{ (t,x) \in \mathbb{R}^{1+n} : x \ge 0, 0 \ge t \ge -n \sqrt[n]{\prod_i x_i} \}`` where ``n`` is ``d - 1``                             |
 | [`PowerCone(α)`](@ref)              | ``\{ (x,y,z) \in \mathbb{R}^3 : x^{\alpha} y^{1-\alpha} \ge \|z\|, x \ge 0,y \ge 0 \}``                                                    |
 | [`DualPowerCone(α)`](@ref)          | ``\{ (u,v,w) \in \mathbb{R}^3 : \left(\frac{u}{\alpha}\right)^{\alpha}\left(\frac{v}{1-\alpha}\right)^{1-\alpha} \ge \|w\|, u,v \ge 0 \}`` |
 | [`NormOneCone(d)`](@ref)            | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \sum_i \lvert x_i \rvert \}``                                                                        |
 | [`NormInfinityCone(d)`](@ref)       | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \max_i \lvert x_i \rvert \}``                                                                        |
-| [`RelativeEntropyCone(d)`](@ref)    | ``\{ (u, v, w) \in \mathbb{R}^{d} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i \ge 0, w_i \ge 0 \}``                                     |
+| [`RelativeEntropyCone(d)`](@ref)    | ``\{ (u, v, w) \in \mathbb{R}^{d} : u \ge \sum_i w_i \log (\frac{w_i}{v_i}), v_i > 0, w_i > 0 \}``                                     |
+| [`DualRelativeEntropyCone(d)`](@ref)| ``\{ (u, v, w) \in \mathbb{R}^{d} : \forall i, w_i \ge u(\log(\frac{u}{v_i}) - 1), v_i > 0, u > 0 \}``                                   |
 | [`HyperRectangle(l, u)`](@ref)      | ``\{ x \in \bar{\mathbb{R}}^d: x_i \in [l_i, u_i] \forall i=1,\ldots,d \}``                                                                |
 | [`NormCone(p, d)`](@ref)            | ``\{ (t,x) \in \mathbb{R}^{d} : t \ge \left(\sum\limits_i \lvert x_i \rvert^p\right)^{\frac{1}{p}} \}``                                    |
 | [`VectorNonlinearOracle`](@ref)     | ``\{x \in \mathbb{R}^{dimension}: l \le f(x) \le u \}``                                                                                    |

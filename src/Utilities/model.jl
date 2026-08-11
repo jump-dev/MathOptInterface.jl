@@ -817,6 +817,7 @@ const EqualToIndicatorZero{T} =
         MOI.ExponentialCone,
         MOI.DualExponentialCone,
         MOI.RelativeEntropyCone,
+        MOI.DualRelativeEntropyCone,
         MOI.NormSpectralCone,
         MOI.NormNuclearCone,
         MOI.PositiveSemidefiniteConeTriangle,
