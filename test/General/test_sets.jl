@@ -332,6 +332,16 @@ function test_sets_dual_power()
     return
 end
 
+function test_sets_dual_relativeentropy()
+    relent = MOI.RelativeEntropyCone(5)
+    dual_relent = MOI.DualRelativeEntropyCone(5)
+    _dual_set_test(relent, dual_relent)
+    @test MOI.dual_set(relent) != relent
+    _dual_set_test(dual_relent, relent)
+    @test MOI.dual_set(dual_relent) != dual_relent
+    return
+end
+
 function test_sets_dual_psdsquare()
     s = MOI.PositiveSemidefiniteConeSquare(4)
     err = ErrorException(
