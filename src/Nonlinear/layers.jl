@@ -272,8 +272,13 @@ end
 function MOI.jacobian_structure(d::EvaluatorWithQuad)
     J = MOI.jacobian_structure(d.qp)
     offset = length(d.qp)
-    for (row, col) in MOI.jacobian_structure(d.inner)
-        push!(J, (row + offset, col))
+    # An evaluator is only required to implement `jacobian_structure` if it
+    # supports `:Jac`. If the inner evaluator does not (it then must not have
+    # any rows for the stack to be usable), append nothing.
+    if :Jac in MOI.features_available(d.inner)
+        for (row, col) in MOI.jacobian_structure(d.inner)
+            push!(J, (row + offset, col))
+        end
     end
     return J
 end
@@ -286,7 +291,9 @@ end
 
 function MOI.hessian_lagrangian_structure(d::EvaluatorWithQuad)
     H = MOI.hessian_lagrangian_structure(d.qp)
-    append!(H, MOI.hessian_lagrangian_structure(d.inner))
+    if :Hess in MOI.features_available(d.inner)
+        append!(H, MOI.hessian_lagrangian_structure(d.inner))
+    end
     return H
 end
 
@@ -490,8 +497,10 @@ function MOI.jacobian_structure(d::EvaluatorWithOracles)
         end
         row_offset += s.output_dimension
     end
-    for (row, col) in MOI.jacobian_structure(d.inner)
-        push!(J, (row + row_offset, col))
+    if :Jac in MOI.features_available(d.inner)
+        for (row, col) in MOI.jacobian_structure(d.inner)
+            push!(J, (row + row_offset, col))
+        end
     end
     return J
 end
@@ -516,7 +525,9 @@ function MOI.hessian_lagrangian_structure(d::EvaluatorWithOracles)
             push!(H, (columns[i], columns[j]))
         end
     end
-    append!(H, MOI.hessian_lagrangian_structure(d.inner))
+    if :Hess in MOI.features_available(d.inner)
+        append!(H, MOI.hessian_lagrangian_structure(d.inner))
+    end
     return H
 end
 
