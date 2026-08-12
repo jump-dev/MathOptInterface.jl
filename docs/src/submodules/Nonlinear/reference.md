@@ -74,6 +74,15 @@ Nonlinear.SparseReverseMode
 Nonlinear.SymbolicMode
 ```
 
+## Linearity
+
+```@docs
+Nonlinear.Linearity
+Nonlinear.num_constraints
+Nonlinear.constraint_linearity
+Nonlinear.objective_linearity
+```
+
 ## Data-structure
 
 ```@docs

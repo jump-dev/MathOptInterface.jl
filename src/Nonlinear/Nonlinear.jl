@@ -42,4 +42,8 @@ include("evaluator.jl")
 include("ReverseAD/ReverseAD.jl")
 include("SymbolicAD/SymbolicAD.jl")
 
+# Depends on the `Linearity` enum defined in `ReverseAD`, so must be included
+# after it.
+include("linearity.jl")
+
 end  # module
