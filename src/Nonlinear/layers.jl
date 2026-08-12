@@ -594,6 +594,25 @@ function num_constraints(d::EvaluatorWithOracles)
     return _num_rows(d) + num_constraints(d.inner)
 end
 
+# Like `num_constraints`, but returns `nothing` instead of erroring when an
+# evaluator at the bottom of the stack does not implement the query.
+function _try_num_constraints(ev::MOI.AbstractNLPEvaluator)
+    if !applicable(num_constraints, ev)
+        return nothing
+    end
+    return num_constraints(ev)
+end
+
+function _try_num_constraints(d::EvaluatorWithQuad)
+    n = _try_num_constraints(d.inner)
+    return n === nothing ? nothing : length(d.model.qp) + n
+end
+
+function _try_num_constraints(d::EvaluatorWithOracles)
+    n = _try_num_constraints(d.inner)
+    return n === nothing ? nothing : _num_rows(d) + n
+end
+
 # Returns `nothing` if the inner evaluator implements neither
 # `constraint_linearity` nor `num_constraints`, in which case the layer
 # cannot describe its rows either.
@@ -601,10 +620,12 @@ function _inner_constraint_linearity(inner::MOI.AbstractNLPEvaluator)
     linearity = constraint_linearity(inner)
     if linearity !== nothing
         return linearity
-    elseif !applicable(num_constraints, inner)
+    end
+    n = _try_num_constraints(inner)
+    if n === nothing
         return nothing
     end
-    return fill(NONLINEAR, num_constraints(inner))
+    return fill(NONLINEAR, n)
 end
 
 function constraint_linearity(d::EvaluatorWithQuad)
