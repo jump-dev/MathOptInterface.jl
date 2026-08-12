@@ -25,12 +25,21 @@ mutable struct ModelWithOracles{T,M}
     }
     inner::M
 
-    function ModelWithOracles{T}(inner::M) where {T,M}
-        return new{T,M}(
-            Tuple{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}}[],
-            inner,
-        )
+    # This constructor wraps an existing vector of constraints so that
+    # solvers with their own storage can assemble a layer without copying.
+    function ModelWithOracles{T}(
+        constraints::Vector{
+            Tuple{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}},
+        },
+        inner::M,
+    ) where {T,M}
+        return new{T,M}(constraints, inner)
     end
+end
+
+function ModelWithOracles{T}(inner) where {T}
+    constraints = Tuple{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}}[]
+    return ModelWithOracles{T}(constraints, inner)
 end
 
 ModelWithOracles(inner) = ModelWithOracles{Float64}(inner)
@@ -46,18 +55,28 @@ A model layer that stores affine and quadratic objectives and constraints in a
 When wrapped in an [`Evaluator`](@ref), the layer's rows come first, followed
 by the rows of the inner evaluator.
 
-Functions containing parameters must not be added to this layer: convert them
-to [`MOI.ScalarNonlinearFunction`](@ref) so that they are forwarded to the
-inner model, where parameters are first-class.
+Functions added to this layer may contain parameters, following the
+convention documented in [`QPBlockData`](@ref): a variable is a parameter if
+and only if its index is a key of `qp.parameters`.
 """
 mutable struct ModelWithQuad{T,M}
     qp::QPBlockData{T}
     inner::M
     objective_sink::Symbol # :none, :quad or :inner
 
-    function ModelWithQuad{T}(inner::M) where {T,M}
-        return new{T,M}(QPBlockData{T}(), inner, :none)
+    # This constructor wraps an existing QPBlockData so that solvers with
+    # their own storage can assemble a layer without copying.
+    function ModelWithQuad{T}(
+        qp::QPBlockData{T},
+        inner::M;
+        objective_sink::Symbol = :none,
+    ) where {T,M}
+        return new{T,M}(qp, inner, objective_sink)
     end
+end
+
+function ModelWithQuad{T}(inner) where {T}
+    return ModelWithQuad{T}(QPBlockData{T}(), inner)
 end
 
 ModelWithQuad(inner) = ModelWithQuad{Float64}(inner)
@@ -197,7 +216,9 @@ function MOI.initialize(
     index_map = Dict{MOI.VariableIndex,MOI.VariableIndex}(
         x => MOI.VariableIndex(i) for (i, x) in enumerate(d.ordered_variables)
     )
-    fmap = Base.Fix1(getindex, index_map)
+    # Variables absent from `ordered_variables` are parameters: they keep
+    # their index, which the `parameters` dictionary uses as key.
+    fmap = v::MOI.VariableIndex -> get(index_map, v, v)
     src = d.model.qp
     qp = QPBlockData{T}()
     qp.objective = MOI.Utilities.map_indices(fmap, src.objective)
@@ -210,6 +231,9 @@ function MOI.initialize(
     append!(qp.mult_g, src.mult_g)
     append!(qp.function_type, src.function_type)
     append!(qp.bound_type, src.bound_type)
+    # Alias, do not copy: parameter values updated in the model between
+    # solves must be visible to the evaluator without re-initializing.
+    qp.parameters = src.parameters
     d.qp = qp
     MOI.initialize(d.inner, features)
     return

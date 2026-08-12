@@ -261,6 +261,47 @@ function test_forwarding_through_layers()
     return
 end
 
+function test_quad_layer_parameters()
+    x, p = MOI.VariableIndex(1), MOI.VariableIndex(42)
+    model = Nonlinear.model(Nonlinear.SparseReverseMode())
+    # Register the parameter before any structure query. Its value may be
+    # updated between evaluations.
+    model.qp.parameters[p.value] = 5.0
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+            [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(3.0, p)],
+            0.0,
+        ),
+        MOI.LessThan(10.0),
+    )
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarQuadraticFunction(
+            [MOI.ScalarQuadraticTerm(1.0, p, x)],
+            MOI.ScalarAffineTerm{Float64}[],
+            0.0,
+        ),
+        MOI.LessThan(10.0),
+    )
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(d, [:Grad, :Jac, :Hess])
+    g = fill(NaN, 2)
+    MOI.eval_constraint(d, g, [1.0])
+    @test g == [2.0 * 1.0 + 3.0 * 5.0, 5.0 * 1.0]
+    # Parameters never appear in the Jacobian or Hessian structure.
+    @test MOI.jacobian_structure(d) == [(1, 1), (2, 1)]
+    J = fill(NaN, 2)
+    MOI.eval_constraint_jacobian(d, J, [1.0])
+    @test J == [2.0, 5.0]
+    @test isempty(MOI.hessian_lagrangian_structure(d))
+    # Updating the parameter value must be visible without re-initializing.
+    model.qp.parameters[p.value] = 7.0
+    MOI.eval_constraint(d, g, [1.0])
+    @test g == [2.0 * 1.0 + 3.0 * 7.0, 7.0 * 1.0]
+    return
+end
+
 function test_quad_layer_row_order_with_empty_inner()
     x = MOI.VariableIndex(1)
     model = Nonlinear.model(Nonlinear.SparseReverseMode())

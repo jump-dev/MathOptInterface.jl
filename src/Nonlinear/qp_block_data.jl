@@ -5,10 +5,11 @@
 
 # This file is adapted from `Ipopt.jl/ext/IpoptMathOptInterfaceExt/utils.jl`.
 #
-# Unlike the Ipopt version, `QPBlockData` does not support parameters:
-# functions containing parameters must be converted to
-# `MOI.ScalarNonlinearFunction` and routed to the inner nonlinear model, where
-# parameters are first-class.
+# Unlike the Ipopt version, a variable is treated as a parameter if and only
+# if its index is a key of the `parameters` dictionary, instead of an
+# index-offset convention. Parameters must therefore be registered in
+# `parameters` before any structure query, but their values may be updated
+# freely between function evaluations.
 
 @enum(
     _FunctionType,
@@ -68,9 +69,13 @@ following the [`MOI.AbstractNLPEvaluator`](@ref) callback conventions.
 This is the storage behind [`ModelWithQuad`](@ref); it is not typically used
 directly.
 
-The functions must not contain parameters: convert functions with parameters
-to [`MOI.ScalarNonlinearFunction`](@ref) and add them to the inner nonlinear
-model instead.
+## Parameters
+
+A variable is treated as a parameter if and only if its index is a key of the
+`parameters` dictionary, which maps the raw `MOI.VariableIndex` value of the
+parameter to its current value. Register every parameter in `parameters`
+before querying any structure; the values may be updated freely between
+function evaluations.
 """
 mutable struct QPBlockData{T}
     objective::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
@@ -83,6 +88,7 @@ mutable struct QPBlockData{T}
     mult_g::Vector{Union{Nothing,T}}
     function_type::Vector{_FunctionType}
     bound_type::Vector{_BoundType}
+    parameters::Dict{Int64,T}
 
     function QPBlockData{T}() where {T}
         return new(
@@ -94,21 +100,29 @@ mutable struct QPBlockData{T}
             Union{Nothing,T}[],
             _FunctionType[],
             _BoundType[],
+            Dict{Int64,T}(),
         )
     end
+end
+
+_is_parameter(v::MOI.VariableIndex, p::Dict) = haskey(p, v.value)
+
+function _value(v::MOI.VariableIndex, x, p::Dict)
+    return _is_parameter(v, p) ? p[v.value] : x[v.value]
 end
 
 function _eval_function(
     f::MOI.ScalarQuadraticFunction{T},
     x::AbstractVector{T},
+    p::Dict{Int64,T},
 )::T where {T}
     y = f.constant
     for term in f.affine_terms
-        y += term.coefficient * x[term.variable.value]
+        y += term.coefficient * _value(term.variable, x, p)
     end
     for term in f.quadratic_terms
-        v1 = x[term.variable_1.value]
-        v2 = x[term.variable_2.value]
+        v1 = _value(term.variable_1, x, p)
+        v2 = _value(term.variable_2, x, p)
         if term.variable_1 == term.variable_2
             y += term.coefficient * v1 * v2 / 2
         else
@@ -121,10 +135,11 @@ end
 function _eval_function(
     f::MOI.ScalarAffineFunction{T},
     x::AbstractVector{T},
+    p::Dict{Int64,T},
 )::T where {T}
     y = f.constant
     for term in f.terms
-        y += term.coefficient * x[term.variable.value]
+        y += term.coefficient * _value(term.variable, x, p)
     end
     return y
 end
@@ -133,15 +148,22 @@ function _eval_dense_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
     x::AbstractVector{T},
+    p::Dict{Int64,T},
 )::Nothing where {T}
     for term in f.affine_terms
-        ∇f[term.variable.value] += term.coefficient
+        if !_is_parameter(term.variable, p)
+            ∇f[term.variable.value] += term.coefficient
+        end
     end
     for term in f.quadratic_terms
-        ∇f[term.variable_1.value] += term.coefficient * x[term.variable_2.value]
-        if term.variable_1 != term.variable_2
-            ∇f[term.variable_2.value] +=
-                term.coefficient * x[term.variable_1.value]
+        if !_is_parameter(term.variable_1, p)
+            v = _value(term.variable_2, x, p)
+            ∇f[term.variable_1.value] += term.coefficient * v
+        end
+        if term.variable_1 != term.variable_2 &&
+           !_is_parameter(term.variable_2, p)
+            v = _value(term.variable_1, x, p)
+            ∇f[term.variable_2.value] += term.coefficient * v
         end
     end
     return
@@ -151,9 +173,12 @@ function _eval_dense_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
     x::AbstractVector{T},
+    p::Dict{Int64,T},
 )::Nothing where {T}
     for term in f.terms
-        ∇f[term.variable.value] += term.coefficient
+        if !_is_parameter(term.variable, p)
+            ∇f[term.variable.value] += term.coefficient
+        end
     end
     return
 end
@@ -162,22 +187,35 @@ function _append_sparse_gradient_structure!(
     f::MOI.ScalarQuadraticFunction,
     J,
     row,
+    p::Dict,
 )
     for term in f.affine_terms
-        push!(J, (row, term.variable.value))
+        if !_is_parameter(term.variable, p)
+            push!(J, (row, term.variable.value))
+        end
     end
     for term in f.quadratic_terms
-        push!(J, (row, term.variable_1.value))
-        if term.variable_1 != term.variable_2
+        if !_is_parameter(term.variable_1, p)
+            push!(J, (row, term.variable_1.value))
+        end
+        if term.variable_1 != term.variable_2 &&
+           !_is_parameter(term.variable_2, p)
             push!(J, (row, term.variable_2.value))
         end
     end
     return
 end
 
-function _append_sparse_gradient_structure!(f::MOI.ScalarAffineFunction, J, row)
+function _append_sparse_gradient_structure!(
+    f::MOI.ScalarAffineFunction,
+    J,
+    row,
+    p::Dict,
+)
     for term in f.terms
-        push!(J, (row, term.variable.value))
+        if !_is_parameter(term.variable, p)
+            push!(J, (row, term.variable.value))
+        end
     end
     return
 end
@@ -186,18 +224,26 @@ function _eval_sparse_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
     x::AbstractVector{T},
+    p::Dict{Int64,T},
 )::Int where {T}
     i = 0
     for term in f.affine_terms
-        i += 1
-        ∇f[i] = term.coefficient
+        if !_is_parameter(term.variable, p)
+            i += 1
+            ∇f[i] = term.coefficient
+        end
     end
     for term in f.quadratic_terms
-        i += 1
-        ∇f[i] = term.coefficient * x[term.variable_2.value]
-        if term.variable_1 != term.variable_2
+        if !_is_parameter(term.variable_1, p)
+            v = _value(term.variable_2, x, p)
             i += 1
-            ∇f[i] = term.coefficient * x[term.variable_1.value]
+            ∇f[i] = term.coefficient * v
+        end
+        if term.variable_1 != term.variable_2 &&
+           !_is_parameter(term.variable_2, p)
+            v = _value(term.variable_1, x, p)
+            i += 1
+            ∇f[i] = term.coefficient * v
         end
     end
     return i
@@ -207,31 +253,53 @@ function _eval_sparse_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
     x::AbstractVector{T},
+    p::Dict{Int64,T},
 )::Int where {T}
     i = 0
     for term in f.terms
-        i += 1
-        ∇f[i] = term.coefficient
+        if !_is_parameter(term.variable, p)
+            i += 1
+            ∇f[i] = term.coefficient
+        end
     end
     return i
 end
 
-function _append_sparse_hessian_structure!(f::MOI.ScalarQuadraticFunction, H)
+function _append_sparse_hessian_structure!(
+    f::MOI.ScalarQuadraticFunction,
+    H,
+    p::Dict,
+)
     for term in f.quadratic_terms
+        if _is_parameter(term.variable_1, p) ||
+           _is_parameter(term.variable_2, p)
+            continue
+        end
         push!(H, (term.variable_1.value, term.variable_2.value))
     end
     return
 end
 
-_append_sparse_hessian_structure!(::MOI.ScalarAffineFunction, H) = nothing
+function _append_sparse_hessian_structure!(
+    ::MOI.ScalarAffineFunction,
+    H,
+    ::Dict,
+)
+    return nothing
+end
 
 function _eval_sparse_hessian(
     ∇²f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
     σ::T,
+    p::Dict{Int64,T},
 )::Int where {T}
     i = 0
     for term in f.quadratic_terms
+        if _is_parameter(term.variable_1, p) ||
+           _is_parameter(term.variable_2, p)
+            continue
+        end
         i += 1
         ∇²f[i] = term.coefficient * σ
     end
@@ -242,6 +310,7 @@ function _eval_sparse_hessian(
     ∇²f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
     σ::T,
+    p::Dict{Int64,T},
 )::Int where {T}
     return 0
 end
@@ -436,7 +505,7 @@ function MOI.eval_objective(
     block::QPBlockData{T},
     x::AbstractVector{T},
 ) where {T}
-    return _eval_function(block.objective, x)
+    return _eval_function(block.objective, x, block.parameters)
 end
 
 function MOI.eval_objective_gradient(
@@ -445,7 +514,7 @@ function MOI.eval_objective_gradient(
     x::AbstractVector{T},
 ) where {T}
     ∇f .= zero(T)
-    _eval_dense_gradient(∇f, block.objective, x)
+    _eval_dense_gradient(∇f, block.objective, x, block.parameters)
     return
 end
 
@@ -455,7 +524,7 @@ function MOI.eval_constraint(
     x::AbstractVector{T},
 ) where {T}
     for (i, constraint) in enumerate(block.constraints)
-        g[i] = _eval_function(constraint, x)
+        g[i] = _eval_function(constraint, x, block.parameters)
     end
     return
 end
@@ -463,7 +532,7 @@ end
 function MOI.jacobian_structure(block::QPBlockData)
     J = Tuple{Int,Int}[]
     for (row, constraint) in enumerate(block.constraints)
-        _append_sparse_gradient_structure!(constraint, J, row)
+        _append_sparse_gradient_structure!(constraint, J, row, block.parameters)
     end
     return J
 end
@@ -477,16 +546,16 @@ function MOI.eval_constraint_jacobian(
     i = 0
     for constraint in block.constraints
         ∇f = view(J, (i+1):length(J))
-        i += _eval_sparse_gradient(∇f, constraint, x)
+        i += _eval_sparse_gradient(∇f, constraint, x, block.parameters)
     end
     return i
 end
 
 function MOI.hessian_lagrangian_structure(block::QPBlockData)
     H = Tuple{Int,Int}[]
-    _append_sparse_hessian_structure!(block.objective, H)
+    _append_sparse_hessian_structure!(block.objective, H, block.parameters)
     for constraint in block.constraints
-        _append_sparse_hessian_structure!(constraint, H)
+        _append_sparse_hessian_structure!(constraint, H, block.parameters)
     end
     return H
 end
@@ -499,10 +568,10 @@ function MOI.eval_hessian_lagrangian(
     σ::T,
     μ::AbstractVector{T},
 ) where {T}
-    i = _eval_sparse_hessian(H, block.objective, σ)
+    i = _eval_sparse_hessian(H, block.objective, σ, block.parameters)
     for (row, constraint) in enumerate(block.constraints)
         ∇²f = view(H, (i+1):length(H))
-        i += _eval_sparse_hessian(∇²f, constraint, μ[row])
+        i += _eval_sparse_hessian(∇²f, constraint, μ[row], block.parameters)
     end
     return i
 end
