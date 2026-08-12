@@ -575,3 +575,165 @@ function MOI.eval_hessian_lagrangian(
     end
     return i
 end
+
+# The product evaluators below ACCUMULATE into their output vector, so that
+# they compose with the products of the other layers. Zero the output before
+# the first call.
+
+function _eval_Jv_product(
+    f::MOI.ScalarAffineFunction{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    for term in f.terms
+        if !_is_parameter(term.variable, p)
+            y[i] += term.coefficient * w[term.variable.value]
+        end
+    end
+    return
+end
+
+function _eval_Jv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    for term in f.affine_terms
+        if !_is_parameter(term.variable, p)
+            y[i] += term.coefficient * w[term.variable.value]
+        end
+    end
+    for term in f.quadratic_terms
+        if !_is_parameter(term.variable_1, p)
+            v = _value(term.variable_2, x, p)
+            y[i] += term.coefficient * v * w[term.variable_1.value]
+        end
+        if term.variable_1 != term.variable_2 &&
+           !_is_parameter(term.variable_2, p)
+            v = _value(term.variable_1, x, p)
+            y[i] += term.coefficient * v * w[term.variable_2.value]
+        end
+    end
+    return
+end
+
+function _eval_Jtv_product(
+    f::MOI.ScalarAffineFunction{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    for term in f.terms
+        if !_is_parameter(term.variable, p)
+            y[term.variable.value] += term.coefficient * w[i]
+        end
+    end
+    return
+end
+
+function _eval_Jtv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+    p::Dict{Int64,T},
+    i::Int,
+)::Nothing where {T}
+    for term in f.affine_terms
+        if !_is_parameter(term.variable, p)
+            y[term.variable.value] += term.coefficient * w[i]
+        end
+    end
+    for term in f.quadratic_terms
+        if !_is_parameter(term.variable_1, p)
+            v = _value(term.variable_2, x, p)
+            y[term.variable_1.value] += term.coefficient * v * w[i]
+        end
+        if term.variable_1 != term.variable_2 &&
+           !_is_parameter(term.variable_2, p)
+            v = _value(term.variable_1, x, p)
+            y[term.variable_2.value] += term.coefficient * v * w[i]
+        end
+    end
+    return
+end
+
+function _eval_Hv_product(
+    f::MOI.ScalarQuadraticFunction{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
+    λ::T,
+    p::Dict{Int64,T},
+)::Nothing where {T}
+    for term in f.quadratic_terms
+        if _is_parameter(term.variable_1, p) ||
+           _is_parameter(term.variable_2, p)
+            continue
+        end
+        i, j = term.variable_1.value, term.variable_2.value
+        H[i] += λ * term.coefficient * v[j]
+        if i != j
+            H[j] += λ * term.coefficient * v[i]
+        end
+    end
+    return
+end
+
+function _eval_Hv_product(
+    ::MOI.ScalarAffineFunction{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
+    λ::T,
+    p::Dict{Int64,T},
+) where {T}
+    return nothing
+end
+
+function MOI.eval_constraint_jacobian_product(
+    block::QPBlockData{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+) where {T}
+    for (i, constraint) in enumerate(block.constraints)
+        _eval_Jv_product(constraint, y, x, w, block.parameters, i)
+    end
+    return
+end
+
+function MOI.eval_constraint_jacobian_transpose_product(
+    block::QPBlockData{T},
+    y::AbstractVector{T},
+    x::AbstractVector{T},
+    w::AbstractVector{T},
+) where {T}
+    for (i, constraint) in enumerate(block.constraints)
+        _eval_Jtv_product(constraint, y, x, w, block.parameters, i)
+    end
+    return
+end
+
+function MOI.eval_hessian_lagrangian_product(
+    block::QPBlockData{T},
+    H::AbstractVector{T},
+    x::AbstractVector{T},
+    v::AbstractVector{T},
+    σ::T,
+    μ::AbstractVector{T},
+) where {T}
+    _eval_Hv_product(block.objective, H, x, v, σ, block.parameters)
+    for (i, constraint) in enumerate(block.constraints)
+        _eval_Hv_product(constraint, H, x, v, μ[i], block.parameters)
+    end
+    return
+end

@@ -261,6 +261,78 @@ function test_forwarding_through_layers()
     return
 end
 
+function test_stack_products()
+    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    model = Nonlinear.model(Nonlinear.SparseReverseMode())
+    Nonlinear.set_objective(
+        model,
+        MOI.ScalarQuadraticFunction(
+            [MOI.ScalarQuadraticTerm(2.0, x, x)],
+            MOI.ScalarAffineTerm{Float64}[],
+            0.0,
+        ),
+    )
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarAffineFunction(
+            [MOI.ScalarAffineTerm(2.0, x), MOI.ScalarAffineTerm(3.0, y)],
+            0.0,
+        ),
+        MOI.LessThan(4.0),
+    )
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarQuadraticFunction(
+            [
+                MOI.ScalarQuadraticTerm(2.0, x, x),
+                MOI.ScalarQuadraticTerm(1.0, x, y),
+            ],
+            [MOI.ScalarAffineTerm(1.0, y)],
+            0.0,
+        ),
+        MOI.Interval(0.0, 1.0),
+    )
+    Nonlinear.add_constraint(model, :(sin($x)), MOI.LessThan(0.5))
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+    # No oracle constraints, so the product features pass through.
+    @test MOI.features_available(d) == [:Grad, :Jac, :JacVec, :Hess, :HessVec]
+    MOI.initialize(d, [:Grad, :Jac, :JacVec, :Hess, :HessVec])
+    xv = [1.0, 2.0]
+    # Dense Jacobian from the sparse callback, as the reference.
+    J_structure = MOI.jacobian_structure(d)
+    J_values = fill(NaN, length(J_structure))
+    MOI.eval_constraint_jacobian(d, J_values, xv)
+    J = zeros(3, 2)
+    for ((row, col), value) in zip(J_structure, J_values)
+        J[row, col] += value
+    end
+    w = [1.0, -2.0]
+    Jv = fill(NaN, 3)
+    MOI.eval_constraint_jacobian_product(d, Jv, xv, w)
+    @test Jv ≈ J * w
+    u = [1.0, -1.0, 2.0]
+    Jtv = fill(NaN, 2)
+    MOI.eval_constraint_jacobian_transpose_product(d, Jtv, xv, u)
+    @test Jtv ≈ J' * u
+    # Dense Hessian of the Lagrangian, as the reference.
+    H_structure = MOI.hessian_lagrangian_structure(d)
+    σ, μ = 2.0, [10.0, 100.0, 1_000.0]
+    H_values = fill(NaN, length(H_structure))
+    MOI.eval_hessian_lagrangian(d, H_values, xv, σ, μ)
+    H = zeros(2, 2)
+    for ((row, col), value) in zip(H_structure, H_values)
+        H[row, col] += value
+        if row != col
+            H[col, row] += value
+        end
+    end
+    v = [1.0, -3.0]
+    Hv = fill(NaN, 2)
+    MOI.eval_hessian_lagrangian_product(d, Hv, xv, v, σ, μ)
+    @test Hv ≈ H * v
+    return
+end
+
 function test_quad_layer_parameters()
     x, p = MOI.VariableIndex(1), MOI.VariableIndex(42)
     model = Nonlinear.model(Nonlinear.SparseReverseMode())

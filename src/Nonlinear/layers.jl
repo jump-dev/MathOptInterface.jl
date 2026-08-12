@@ -206,7 +206,7 @@ end
 
 function MOI.features_available(d::EvaluatorWithQuad)
     features = MOI.features_available(d.inner)
-    return filter(f -> f in (:Grad, :Jac, :Hess), features)
+    return filter(f -> f in (:Grad, :Jac, :JacVec, :Hess, :HessVec), features)
 end
 
 function MOI.initialize(
@@ -305,6 +305,64 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithQuad, H, x, σ, μ)
     return
 end
 
+# The rows of the two blocks are disjoint, so zero everything and let each
+# block write its own rows.
+function MOI.eval_constraint_jacobian_product(d::EvaluatorWithQuad, y, x, w)
+    fill!(y, zero(eltype(y)))
+    m = length(d.qp)
+    MOI.eval_constraint_jacobian_product(
+        d.inner,
+        view(y, (m+1):length(y)),
+        x,
+        w,
+    )
+    MOI.eval_constraint_jacobian_product(d.qp, y, x, w)
+    return
+end
+
+# Both blocks accumulate into the same variable-dimensional output. Call the
+# inner evaluator FIRST because implementations are allowed to overwrite the
+# output, and accumulate the QP block afterwards.
+function MOI.eval_constraint_jacobian_transpose_product(
+    d::EvaluatorWithQuad,
+    y,
+    x,
+    w,
+)
+    fill!(y, zero(eltype(y)))
+    m = length(d.qp)
+    MOI.eval_constraint_jacobian_transpose_product(
+        d.inner,
+        y,
+        x,
+        view(w, (m+1):length(w)),
+    )
+    MOI.eval_constraint_jacobian_transpose_product(d.qp, y, x, view(w, 1:m))
+    return
+end
+
+function MOI.eval_hessian_lagrangian_product(
+    d::EvaluatorWithQuad,
+    H,
+    x,
+    v,
+    σ,
+    μ,
+)
+    fill!(H, zero(eltype(H)))
+    m = length(d.qp)
+    MOI.eval_hessian_lagrangian_product(
+        d.inner,
+        H,
+        x,
+        v,
+        σ,
+        view(μ, (m+1):length(μ)),
+    )
+    MOI.eval_hessian_lagrangian_product(d.qp, H, x, v, σ, view(μ, 1:m))
+    return
+end
+
 """
     EvaluatorWithOracles(
         model::ModelWithOracles,
@@ -364,7 +422,12 @@ end
 
 function MOI.features_available(d::EvaluatorWithOracles)
     features = MOI.features_available(d.inner)
-    features = filter(f -> f in (:Grad, :Jac, :Hess), features)
+    features =
+        filter(f -> f in (:Grad, :Jac, :JacVec, :Hess, :HessVec), features)
+    if !isempty(d.model.constraints)
+        # The oracles have no product callbacks.
+        filter!(f -> !(f in (:JacVec, :HessVec)), features)
+    end
     no_hessian = any(d.model.constraints) do (_, s)
         return s.eval_hessian_lagrangian === nothing
     end
@@ -474,6 +537,50 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithOracles, H, x, σ, μ)
         σ,
         view(μ, (μ_offset+1):length(μ)),
     )
+    return
+end
+
+# The product callbacks are only supported when the layer has no oracle
+# constraints (see `MOI.features_available`), in which case the layer is a
+# pass-through.
+
+function _check_no_oracles(d::EvaluatorWithOracles)
+    if !isempty(d.model.constraints)
+        error(
+            "The product callbacks are not supported in the presence of " *
+            "VectorNonlinearOracle constraints.",
+        )
+    end
+    return
+end
+
+function MOI.eval_constraint_jacobian_product(d::EvaluatorWithOracles, y, x, w)
+    _check_no_oracles(d)
+    MOI.eval_constraint_jacobian_product(d.inner, y, x, w)
+    return
+end
+
+function MOI.eval_constraint_jacobian_transpose_product(
+    d::EvaluatorWithOracles,
+    y,
+    x,
+    w,
+)
+    _check_no_oracles(d)
+    MOI.eval_constraint_jacobian_transpose_product(d.inner, y, x, w)
+    return
+end
+
+function MOI.eval_hessian_lagrangian_product(
+    d::EvaluatorWithOracles,
+    H,
+    x,
+    v,
+    σ,
+    μ,
+)
+    _check_no_oracles(d)
+    MOI.eval_hessian_lagrangian_product(d.inner, H, x, v, σ, μ)
     return
 end
 
