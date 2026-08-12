@@ -102,6 +102,12 @@ function register_operator(
     return register_operator(model.inner, op, nargs, f...)
 end
 
+MOI.is_valid(model::_LayerModel, index::ConstraintIndex) =
+    MOI.is_valid(model.inner, index)
+
+MOI.get(model::_LayerModel, attr::MOI.ListOfSupportedNonlinearOperators) =
+    MOI.get(model.inner, attr)
+
 # ModelWithQuad
 
 function set_objective(
@@ -551,23 +557,31 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithOracles, H, x, σ, μ)
     return
 end
 
-# The product callbacks are only supported when the layer has no oracle
-# constraints (see `MOI.features_available`), in which case the layer is a
-# pass-through.
-
-function _check_no_oracles(d::EvaluatorWithOracles)
-    if !isempty(d.model.constraints)
-        error(
-            "The product callbacks are not supported in the presence of " *
-            "VectorNonlinearOracle constraints.",
-        )
-    end
-    return
-end
+# The oracles have no product callbacks, so the layer removes :JacVec and
+# :HessVec from `MOI.features_available` when it has oracle constraints.
+# The products are still answered if called (some solvers use the transpose
+# product for dual computations regardless), by materializing each oracle's
+# Jacobian or Hessian. This can be slow on large oracles.
 
 function MOI.eval_constraint_jacobian_product(d::EvaluatorWithOracles, y, x, w)
-    _check_no_oracles(d)
-    MOI.eval_constraint_jacobian_product(d.inner, y, x, w)
+    fill!(y, zero(eltype(y)))
+    offset = 0
+    for (k, (_, s)) in enumerate(d.model.constraints)
+        xk = _gather!(d, k, x)
+        J_val = zeros(eltype(y), length(s.jacobian_structure))
+        s.eval_jacobian(J_val, xk)
+        columns = d.columns[k]
+        for ((r, c), v) in zip(s.jacobian_structure, J_val)
+            y[offset+r] += v * w[columns[c]]
+        end
+        offset += s.output_dimension
+    end
+    MOI.eval_constraint_jacobian_product(
+        d.inner,
+        view(y, (offset+1):length(y)),
+        x,
+        w,
+    )
     return
 end
 
@@ -577,8 +591,25 @@ function MOI.eval_constraint_jacobian_transpose_product(
     x,
     w,
 )
-    _check_no_oracles(d)
-    MOI.eval_constraint_jacobian_transpose_product(d.inner, y, x, w)
+    # Inner first: implementations are allowed to overwrite `y`.
+    offset = _num_rows(d)
+    MOI.eval_constraint_jacobian_transpose_product(
+        d.inner,
+        y,
+        x,
+        view(w, (offset+1):length(w)),
+    )
+    row_offset = 0
+    for (k, (_, s)) in enumerate(d.model.constraints)
+        xk = _gather!(d, k, x)
+        J_val = zeros(eltype(y), length(s.jacobian_structure))
+        s.eval_jacobian(J_val, xk)
+        columns = d.columns[k]
+        for ((r, c), v) in zip(s.jacobian_structure, J_val)
+            y[columns[c]] += v * w[row_offset+r]
+        end
+        row_offset += s.output_dimension
+    end
     return
 end
 
@@ -590,8 +621,37 @@ function MOI.eval_hessian_lagrangian_product(
     σ,
     μ,
 )
-    _check_no_oracles(d)
-    MOI.eval_hessian_lagrangian_product(d.inner, H, x, v, σ, μ)
+    μ_offset = _num_rows(d)
+    MOI.eval_hessian_lagrangian_product(
+        d.inner,
+        H,
+        x,
+        v,
+        σ,
+        view(μ, (μ_offset+1):length(μ)),
+    )
+    row_offset = 0
+    for (k, (_, s)) in enumerate(d.model.constraints)
+        if s.eval_hessian_lagrangian === nothing
+            error(
+                "The Hessian-vector product is not available because a " *
+                "VectorNonlinearOracle does not implement " *
+                "`eval_hessian_lagrangian`.",
+            )
+        end
+        xk = _gather!(d, k, x)
+        H_val = zeros(eltype(H), length(s.hessian_lagrangian_structure))
+        μk = view(μ, row_offset .+ (1:s.output_dimension))
+        s.eval_hessian_lagrangian(H_val, xk, μk)
+        columns = d.columns[k]
+        for ((i, j), h) in zip(s.hessian_lagrangian_structure, H_val)
+            H[columns[i]] += h * v[columns[j]]
+            if i != j
+                H[columns[j]] += h * v[columns[i]]
+            end
+        end
+        row_offset += s.output_dimension
+    end
     return
 end
 
