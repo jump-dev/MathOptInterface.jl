@@ -102,11 +102,16 @@ function register_operator(
     return register_operator(model.inner, op, nargs, f...)
 end
 
-MOI.is_valid(model::_LayerModel, index::ConstraintIndex) =
-    MOI.is_valid(model.inner, index)
+function MOI.is_valid(model::_LayerModel, index::ConstraintIndex)
+    return MOI.is_valid(model.inner, index)
+end
 
-MOI.get(model::_LayerModel, attr::MOI.ListOfSupportedNonlinearOperators) =
-    MOI.get(model.inner, attr)
+function MOI.get(
+    model::_LayerModel,
+    attr::MOI.ListOfSupportedNonlinearOperators,
+)
+    return MOI.get(model.inner, attr)
+end
 
 # ModelWithQuad
 
