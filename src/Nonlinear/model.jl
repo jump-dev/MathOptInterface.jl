@@ -82,10 +82,20 @@ end
 
 Return a new nonlinear model appropriate for the given AD `backend`.
 
-The default returns `Model()`. Custom AD backends can override this
-to return their own model type.
+The default returns `ModelWithQuad(ModelWithOracles(Model()))`, that is, a
+[`Model`](@ref) wrapped in the [`ModelWithOracles`](@ref) and
+[`ModelWithQuad`](@ref) layers, so that the backend receives only the
+constraints it can differentiate, and affine, quadratic, and
+[`MOI.VectorNonlinearOracle`](@ref) constraints are handled by the layers.
+
+Custom AD backends can override this method to return their own model type,
+wrapped in the layers they do not handle themselves. For example, a backend
+that exploits the structure of affine and quadratic constraints but cannot
+evaluate oracles would return `ModelWithOracles(CustomModel())`.
 """
-model(::AbstractAutomaticDifferentiation) = Model()
+function model(::AbstractAutomaticDifferentiation)
+    return ModelWithQuad(ModelWithOracles(Model()))
+end
 
 """
     add_expression(model::Model, expr)::ExpressionIndex

@@ -81,6 +81,18 @@ Nonlinear.Linearity
 Nonlinear.num_constraints
 Nonlinear.constraint_linearity
 Nonlinear.objective_linearity
+Nonlinear.constraint_bounds
+```
+
+## Model layers
+
+```@docs
+Nonlinear.model
+Nonlinear.ModelWithQuad
+Nonlinear.ModelWithOracles
+Nonlinear.EvaluatorWithQuad
+Nonlinear.EvaluatorWithOracles
+Nonlinear.QPBlockData
 ```
 
 ## Data-structure
