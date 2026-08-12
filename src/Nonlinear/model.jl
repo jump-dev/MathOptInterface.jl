@@ -98,6 +98,23 @@ function model(::AbstractAutomaticDifferentiation)
 end
 
 """
+    exploits_structure(backend::AbstractAutomaticDifferentiation)::Bool
+
+Return `true` if the model returned by [`model`](@ref)`(backend)` natively
+accepts [`MOI.ScalarAffineFunction`](@ref) and
+[`MOI.ScalarQuadraticFunction`](@ref) objectives and constraints, that is, if
+the backend exploits the structure of affine and quadratic functions itself
+instead of relying on the [`ModelWithQuad`](@ref) layer.
+
+Consumers that parse affine and quadratic constraints into their own data
+structures (for example, NLPModelsJuMP) should pass them unparsed to the
+model of a backend for which this function returns `true`.
+
+The default is `false`.
+"""
+exploits_structure(::AbstractAutomaticDifferentiation) = false
+
+"""
     add_expression(model::Model, expr)::ExpressionIndex
 
 Parse `expr` into a [`Expression`](@ref) and add to `model`. Returns an

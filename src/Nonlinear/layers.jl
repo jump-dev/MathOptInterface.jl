@@ -707,6 +707,10 @@ function constraint_bounds(d::EvaluatorWithOracles)
     return vcat(bounds, constraint_bounds(d.inner))
 end
 
+# `true` is the conservative default: the solver will then call
+# `eval_objective`, and evaluators without an objective return zero.
+_has_objective(::MOI.AbstractNLPEvaluator) = true
+
 _has_objective(d::Evaluator) = d.model.objective !== nothing
 
 function _has_objective(d::EvaluatorWithQuad)
