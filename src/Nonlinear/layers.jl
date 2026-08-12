@@ -487,25 +487,37 @@ function num_constraints(d::EvaluatorWithOracles)
     return _num_rows(d) + num_constraints(d.inner)
 end
 
+# Returns `nothing` if the inner evaluator implements neither
+# `constraint_linearity` nor `num_constraints`, in which case the layer
+# cannot describe its rows either.
 function _inner_constraint_linearity(inner::MOI.AbstractNLPEvaluator)
     linearity = constraint_linearity(inner)
-    if linearity === nothing
-        return fill(NONLINEAR, num_constraints(inner))
+    if linearity !== nothing
+        return linearity
+    elseif !applicable(num_constraints, inner)
+        return nothing
     end
-    return linearity
+    return fill(NONLINEAR, num_constraints(inner))
 end
 
 function constraint_linearity(d::EvaluatorWithQuad)
+    inner = _inner_constraint_linearity(d.inner)
+    if inner === nothing
+        return nothing
+    end
     linearity = Linearity[
         ft == _kFunctionTypeScalarQuadratic ? QUADRATIC : LINEAR for
         ft in d.model.qp.function_type
     ]
-    return vcat(linearity, _inner_constraint_linearity(d.inner))
+    return vcat(linearity, inner)
 end
 
 function constraint_linearity(d::EvaluatorWithOracles)
-    linearity = fill(NONLINEAR, _num_rows(d))
-    return vcat(linearity, _inner_constraint_linearity(d.inner))
+    inner = _inner_constraint_linearity(d.inner)
+    if inner === nothing
+        return nothing
+    end
+    return vcat(fill(NONLINEAR, _num_rows(d)), inner)
 end
 
 function objective_linearity(d::EvaluatorWithQuad)
