@@ -4565,20 +4565,20 @@ function test_conic_DualRelativeEntropyCone(
         MOI.VectorAffineFunction{T},
         MOI.DualRelativeEntropyCone,
     )
-    u = MOI.add_variable(model)
     v = MOI.add_variables(model, 2)
     w = MOI.add_variables(model, 2)
-    @test MOI.get(model, MOI.NumberOfVariables()) == 5
-    vov = MOI.VectorOfVariables([u; v; w])
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
     relentr = MOI.add_constraint(
         model,
-        MOI.VectorAffineFunction{T}(vov),
+        MOI.VectorAffineFunction(
+            [MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(1), v[1])),
+             MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(T(1), v[2])),
+             MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(T(1), w[1])),
+             MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(T(1), w[2]))
+            ],
+            T[1, 0, 0, 0, 0],
+        ),
         MOI.DualRelativeEntropyCone(5),
-    )
-    cu = MOI.add_constraint(
-        model,
-        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), u)], T(0)),
-        MOI.EqualTo(T(1)),
     )
     MOI.set(
         model,
@@ -4599,7 +4599,6 @@ function test_conic_DualRelativeEntropyCone(
         end
         u_opt = 2 * log(T(2)) + 3 * log(T(3 // 5))
         @test ≈(MOI.get(model, MOI.ObjectiveValue()), u_opt, config)
-        @test ≈(MOI.get(model, MOI.VariablePrimal(), u), T(1), config)
         @test ≈(
             MOI.get(model, MOI.ConstraintPrimal(), relentr),
             T[1, 2, 3//5, log(T(1//2))-1, log(T(5//3))-1],
@@ -4626,7 +4625,7 @@ function setup_test(
         model,
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
             mock,
-            T[1, 2, 3//5, log(T(1//2))-1, log(T(5//3))-1],
+            T[2, 3//5, log(T(1//2))-1, log(T(5//3))-1],
             (MOI.VectorAffineFunction{T}, MOI.DualRelativeEntropyCone) =>
                 [T[u_opt, 1, 5, 2, 3]],
         ),
