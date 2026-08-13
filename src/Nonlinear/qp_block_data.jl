@@ -66,8 +66,9 @@ A data structure holding an affine or quadratic objective and a block of
 affine and quadratic constraints, together with methods to evaluate them
 following the [`MOI.AbstractNLPEvaluator`](@ref) callback conventions.
 
-This is the storage behind [`ModelWithQuad`](@ref); it is not typically used
-directly.
+This is a helper for solvers that pass affine and quadratic constraints to
+the solver through the same callbacks as an [`MOI.AbstractNLPEvaluator`](@ref)
+(for example, Ipopt and MadNLP).
 
 ## Parameters
 
