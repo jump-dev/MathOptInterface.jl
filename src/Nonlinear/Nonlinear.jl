@@ -42,4 +42,6 @@ include("evaluator.jl")
 include("ReverseAD/ReverseAD.jl")
 include("SymbolicAD/SymbolicAD.jl")
 
+include("qp_block_data.jl")
+
 end  # module

@@ -72,6 +72,8 @@ Nonlinear.AbstractAutomaticDifferentiation
 Nonlinear.ExprGraphOnly
 Nonlinear.SparseReverseMode
 Nonlinear.SymbolicMode
+Nonlinear.QPBlockData
+
 ```
 
 ## Data-structure
