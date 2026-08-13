@@ -116,7 +116,7 @@ function MOI.get(
     bridge::DualRelativeEntropyBridge{T,F,G},
 ) where {T,F,G}
     d = length(bridge.exp_indices)
-    func = MOI.Utilities.zero_with_output_dimension(G, 1 + 2 * d)
+    func = MOI.Utilities.zero_with_output_dimension(F, 1 + 2 * d)
     exp_1 = MOI.Utilities.eachscalar(
         MOI.get(model, MOI.ConstraintFunction(), bridge.exp_indices[begin]),
     )
@@ -126,7 +126,7 @@ function MOI.get(
             MOI.get(model, MOI.ConstraintFunction(), bridge.exp_indices[i]),
         )
         MOI.Utilities.operate_output_index!(+, T, 1 + i, func, exp_i[3])
-        MOI.Utilities.operate_output_index!(+, T, 1 + d + i, func, exp__i[2])
+        MOI.Utilities.operate_output_index!(+, T, 1 + d + i, func, exp_i[2])
     end
     return MOI.Utilities.convert_approx(G, func)
 end
