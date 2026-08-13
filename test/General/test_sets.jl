@@ -140,6 +140,7 @@ function test_sets_DimensionMismatch()
         (MOI.DualGeometricMeanCone, 2),
         (MOI.Complements, 0),
         (MOI.RelativeEntropyCone, 1),
+        (MOI.DualRelativeEntropyCone, 1),
         (MOI.ScaledPositiveSemidefiniteConeTriangle, 0),
         (MOI.PositiveSemidefiniteConeTriangle, 0),
         (MOI.PositiveSemidefiniteConeSquare, 0),
@@ -164,6 +165,7 @@ function test_sets_DimensionMismatch()
     @test MOI.NormNuclearCone(0, 0) isa MOI.NormNuclearCone
     # Other dimension checks
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
+    @test_throws DimensionMismatch MOI.DualRelativeEntropyCone(2)
     @test_throws DimensionMismatch MOI.Complements(-3)
     @test_throws DimensionMismatch MOI.Complements(3)
     @test_throws DimensionMismatch MOI.CountBelongs(0, Set([1, 2]))
