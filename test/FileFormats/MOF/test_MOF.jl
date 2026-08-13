@@ -440,9 +440,9 @@ end
 function test_min_objective()
     return _test_model_equality(
         """
-variables: x
-minobjective: x
-""",
+        variables: x
+        minobjective: x
+        """,
         ["x"],
         String[],
     )
@@ -451,9 +451,9 @@ end
 function test_max_objective()
     return _test_model_equality(
         """
-variables: x
-maxobjective: x
-""",
+        variables: x
+        maxobjective: x
+        """,
         ["x"],
         String[],
         suffix = ".gz",
@@ -463,9 +463,9 @@ end
 function test_min_scalaraffine()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        """,
         ["x"],
         String[],
     )
@@ -474,9 +474,9 @@ end
 function test_max_scalaraffine()
     return _test_model_equality(
         """
-variables: x
-maxobjective: 1.2x + 0.5
-""",
+        variables: x
+        maxobjective: 1.2x + 0.5
+        """,
         ["x"],
         String[],
         suffix = ".gz",
@@ -486,9 +486,9 @@ end
 function test_min_vector_of_variables()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: [x, y]
-""",
+        variables: x, y
+        minobjective: [x, y]
+        """,
         ["x", "y"],
         String[],
     )
@@ -497,9 +497,9 @@ end
 function test_max_vector_affine()
     return _test_model_equality(
         """
-variables: x, y
-maxobjective: [1.0 * x, 2.0 * y, 3.0 * x + 4.0 * y + 5.0]
-""",
+        variables: x, y
+        maxobjective: [1.0 * x, 2.0 * y, 3.0 * x + 4.0 * y + 5.0]
+        """,
         ["x", "y"],
         String[],
     )
@@ -508,9 +508,9 @@ end
 function test_max_vector_quadratic()
     return _test_model_equality(
         """
-variables: x, y
-maxobjective: [1.0 * x * x + 2.0 * x * y]
-""",
+        variables: x, y
+        maxobjective: [1.0 * x * x + 2.0 * x * y]
+        """,
         ["x", "y"],
         String[],
     )
@@ -519,10 +519,10 @@ end
 function test_singlevariable_in_lower()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x >= 1.0
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x >= 1.0
+        """,
         ["x"],
         String[],
     )
@@ -531,10 +531,10 @@ end
 function test_singlevariable_in_upper()
     return _test_model_equality(
         """
-variables: x
-maxobjective: 1.2x + 0.5
-x <= 1.0
-""",
+        variables: x
+        maxobjective: 1.2x + 0.5
+        x <= 1.0
+        """,
         ["x"],
         String[],
         suffix = ".gz",
@@ -544,10 +544,10 @@ end
 function test_singlevariable_in_interval()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x in Interval(1.0, 2.0)
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x in Interval(1.0, 2.0)
+        """,
         ["x"],
         String[],
     )
@@ -556,10 +556,10 @@ end
 function test_singlevariable_in_equalto()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x == 1.0
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x == 1.0
+        """,
         ["x"],
         String[],
     )
@@ -568,10 +568,10 @@ end
 function test_singlevariable_in_zeroone()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x in ZeroOne()
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x in ZeroOne()
+        """,
         ["x"],
         String[],
     )
@@ -580,10 +580,10 @@ end
 function test_singlevariable_in_integer()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x in Integer()
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x in Integer()
+        """,
         ["x"],
         String[],
     )
@@ -592,10 +592,10 @@ end
 function test_singlevariable_in_Semicontinuous()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x in Semicontinuous(1.0, 2.0)
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x in Semicontinuous(1.0, 2.0)
+        """,
         ["x"],
         String[],
     )
@@ -604,10 +604,10 @@ end
 function test_singlevariable_in_Semiinteger()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.2x + 0.5
-x in Semiinteger(1.0, 2.0)
-""",
+        variables: x
+        minobjective: 1.2x + 0.5
+        x in Semiinteger(1.0, 2.0)
+        """,
         ["x"],
         String[],
     )
@@ -616,9 +616,9 @@ end
 function test_scalarquadratic_objective()
     return _test_model_equality(
         """
-variables: x
-minobjective: 1.0*x*x + -2.0x + 1.0
-""",
+        variables: x
+        minobjective: 1.0*x*x + -2.0x + 1.0
+        """,
         ["x"],
         String[],
     )
@@ -627,10 +627,10 @@ end
 function test_SOS1()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in SOS1([1.0, 2.0, 3.0])
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in SOS1([1.0, 2.0, 3.0])
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -639,10 +639,10 @@ end
 function test_SOS2()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in SOS2([1.0, 2.0, 3.0])
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in SOS2([1.0, 2.0, 3.0])
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -651,10 +651,10 @@ end
 function test_Reals()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in Reals(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in Reals(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -663,10 +663,10 @@ end
 function test_Zeros()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in Zeros(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in Zeros(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -675,10 +675,10 @@ end
 function test_Nonnegatives()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in Nonnegatives(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in Nonnegatives(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -687,10 +687,10 @@ end
 function test_Nonpositives()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in Nonpositives(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in Nonpositives(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -699,10 +699,10 @@ end
 function test_PowerCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in PowerCone(2.0)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in PowerCone(2.0)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -711,10 +711,10 @@ end
 function test_DualPowerCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in DualPowerCone(0.5)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in DualPowerCone(0.5)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -723,10 +723,22 @@ end
 function test_GeometricMeanCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in GeometricMeanCone(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in GeometricMeanCone(3)
+        """,
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
+function test_DualGeometricMeanCone()
+    return _test_model_equality(
+        """
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in DualGeometricMeanCone(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -743,10 +755,10 @@ end
 function test_vectoraffine_in_zeros()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [1.0x + -3.0, 2.0y + -4.0] in Zeros(2)
-""",
+        variables: x, y
+        minobjective: x
+        c1: [1.0x + -3.0, 2.0y + -4.0] in Zeros(2)
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -755,10 +767,10 @@ end
 function test_vectorquadratic_in_nonnegatives()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in Nonnegatives(2)
-""",
+        variables: x, y
+        minobjective: x
+        c1: [1.0*x*x + -2.0x + 1.0, 2.0y + -4.0] in Nonnegatives(2)
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -767,9 +779,9 @@ end
 function test_scalarnonlinearfunction_objective()
     return _test_model_equality(
         """
-variables: x
-minobjective: ScalarNonlinearFunction(exp(x))
-""",
+        variables: x
+        minobjective: ScalarNonlinearFunction(exp(x))
+        """,
         ["x"],
         String[],
     )
@@ -778,9 +790,9 @@ end
 function test_scalarnonlinearfunction_constraint()
     return _test_model_equality(
         """
-variables: x
-c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
-""",
+        variables: x
+        c1: ScalarNonlinearFunction(exp(x)^2) <= 1.0
+        """,
         ["x"],
         ["c1"],
     )
@@ -789,9 +801,9 @@ end
 function test_vectornonlinearfunction_objective()
     return _test_model_equality(
         """
-variables: x
-minobjective: VectorNonlinearFunction([exp(x), sin(x)^2])
-""",
+        variables: x
+        minobjective: VectorNonlinearFunction([exp(x), sin(x)^2])
+        """,
         ["x"],
         String[],
     )
@@ -800,9 +812,9 @@ end
 function test_vectornonlinearfunction_constraint()
     return _test_model_equality(
         """
-variables: x
-c1: VectorNonlinearFunction([exp(x), x]) in Complements(2)
-""",
+        variables: x
+        c1: VectorNonlinearFunction([exp(x), x]) in Complements(2)
+        """,
         ["x"],
         ["c1"],
     )
@@ -811,10 +823,10 @@ end
 function test_ExponentialCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in ExponentialCone()
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in ExponentialCone()
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -823,10 +835,10 @@ end
 function test_DualExponentialCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in DualExponentialCone()
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in DualExponentialCone()
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -835,10 +847,10 @@ end
 function test_SecondOrderCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in SecondOrderCone(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in SecondOrderCone(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -847,10 +859,10 @@ end
 function test_RotatedSecondOrderCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in RotatedSecondOrderCone(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in RotatedSecondOrderCone(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -859,10 +871,10 @@ end
 function test_PositiveSemidefiniteConeTriangle()
     return _test_model_equality(
         """
-variables: x1, x2, x3
-minobjective: x1
-c1: [x1, x2, x3] in PositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x1, x2, x3
+        minobjective: x1
+        c1: [x1, x2, x3] in PositiveSemidefiniteConeTriangle(2)
+        """,
         ["x1", "x2", "x3"],
         ["c1"],
     )
@@ -871,10 +883,10 @@ end
 function test_ScaledPositiveSemidefiniteConeTriangle()
     return _test_model_equality(
         """
-variables: x1, x2, x3
-minobjective: x1
-c1: [x1, x2, x3] in ScaledPositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x1, x2, x3
+        minobjective: x1
+        c1: [x1, x2, x3] in ScaledPositiveSemidefiniteConeTriangle(2)
+        """,
         ["x1", "x2", "x3"],
         ["c1"],
     )
@@ -883,10 +895,10 @@ end
 function test_Scaled_PositiveSemidefiniteConeTriangle()
     return _test_model_equality(
         """
-variables: x1, x2, x3
-minobjective: x1
-c1: [x1, x2, x3] in Scaled(PositiveSemidefiniteConeTriangle(2))
-""",
+        variables: x1, x2, x3
+        minobjective: x1
+        c1: [x1, x2, x3] in Scaled(PositiveSemidefiniteConeTriangle(2))
+        """,
         ["x1", "x2", "x3"],
         ["c1"],
     )
@@ -895,10 +907,10 @@ end
 function test_PositiveSemidefiniteConeSquare()
     return _test_model_equality(
         """
-variables: x1, x2, x3, x4
-minobjective: x1
-c1: [x1, x2, x3, x4] in PositiveSemidefiniteConeSquare(2)
-""",
+        variables: x1, x2, x3, x4
+        minobjective: x1
+        c1: [x1, x2, x3, x4] in PositiveSemidefiniteConeSquare(2)
+        """,
         ["x1", "x2", "x3", "x4"],
         ["c1"],
     )
@@ -907,9 +919,9 @@ end
 function test_HermitianPositiveSemidefiniteConeTriangle()
     return _test_model_equality(
         """
-variables: x1, x2, x3, x4
-c1: [x1, x2, x3, x4] in HermitianPositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x1, x2, x3, x4
+        c1: [x1, x2, x3, x4] in HermitianPositiveSemidefiniteConeTriangle(2)
+        """,
         ["x1", "x2", "x3", "x4"],
         ["c1"],
     )
@@ -918,10 +930,10 @@ end
 function test_LogDetConeTriangle()
     return _test_model_equality(
         """
-variables: t, u, x1, x2, x3
-minobjective: x1
-c1: [t, u, x1, x2, x3] in LogDetConeTriangle(2)
-""",
+        variables: t, u, x1, x2, x3
+        minobjective: x1
+        c1: [t, u, x1, x2, x3] in LogDetConeTriangle(2)
+        """,
         ["t", "u", "x1", "x2", "x3"],
         ["c1"],
     )
@@ -930,10 +942,10 @@ end
 function test_LogDetConeSquare()
     return _test_model_equality(
         """
-variables: t, u, x1, x2, x3, x4
-minobjective: x1
-c1: [t, u, x1, x2, x3, x4] in LogDetConeSquare(2)
-""",
+        variables: t, u, x1, x2, x3, x4
+        minobjective: x1
+        c1: [t, u, x1, x2, x3, x4] in LogDetConeSquare(2)
+        """,
         ["t", "u", "x1", "x2", "x3", "x4"],
         ["c1"],
     )
@@ -942,10 +954,10 @@ end
 function test_RootDetConeTriangle()
     return _test_model_equality(
         """
-variables: t, x1, x2, x3
-minobjective: x1
-c1: [t, x1, x2, x3] in RootDetConeTriangle(2)
-""",
+        variables: t, x1, x2, x3
+        minobjective: x1
+        c1: [t, x1, x2, x3] in RootDetConeTriangle(2)
+        """,
         ["t", "x1", "x2", "x3"],
         ["c1"],
     )
@@ -954,10 +966,10 @@ end
 function test_RootDetConeSquare()
     return _test_model_equality(
         """
-variables: t, x1, x2, x3, x4
-minobjective: x1
-c1: [t, x1, x2, x3, x4] in RootDetConeSquare(2)
-""",
+        variables: t, x1, x2, x3, x4
+        minobjective: x1
+        c1: [t, x1, x2, x3, x4] in RootDetConeSquare(2)
+        """,
         ["t", "x1", "x2", "x3", "x4"],
         ["c1"],
     )
@@ -966,20 +978,20 @@ end
 function test_Indicator()
     _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [x, y] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
-""",
+        variables: x, y
+        minobjective: x
+        c1: [x, y] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
+        """,
         ["x", "y"],
         ["c1"],
     )
 
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [x, y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
-""",
+        variables: x, y
+        minobjective: x
+        c1: [x, y] in Indicator{ACTIVATE_ON_ZERO}(GreaterThan(1.0))
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -988,10 +1000,10 @@ end
 function test_NormOneCone()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [x, y] in NormOneCone(2)
-""",
+        variables: x, y
+        minobjective: x
+        c1: [x, y] in NormOneCone(2)
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -1000,10 +1012,10 @@ end
 function test_NormInfinityCone()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [x, y] in NormInfinityCone(2)
-""",
+        variables: x, y
+        minobjective: x
+        c1: [x, y] in NormInfinityCone(2)
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -1012,10 +1024,10 @@ end
 function test_NormCone()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [x, y] in NormCone(1.5, 2)
-""",
+        variables: x, y
+        minobjective: x
+        c1: [x, y] in NormCone(1.5, 2)
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -1024,10 +1036,10 @@ end
 function test_RelativeEntropyCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in RelativeEntropyCone(3)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in RelativeEntropyCone(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1036,10 +1048,10 @@ end
 function test_NormSpectralCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in NormSpectralCone(1, 2)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in NormSpectralCone(1, 2)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1048,10 +1060,10 @@ end
 function test_NormNuclearCone()
     return _test_model_equality(
         """
-variables: x, y, z
-minobjective: x
-c1: [x, y, z] in NormNuclearCone(1, 2)
-""",
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in NormNuclearCone(1, 2)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1064,12 +1076,12 @@ function test_v04()
     MOI.Utilities.loadfromstring!(
         model_2,
         """
-variables: x, y
-minobjective: x
-c: x + y >= 1.0
-x in Interval(0.0, 1.0)
-y in ZeroOne()
-""",
+        variables: x, y
+        minobjective: x
+        c: x + y >= 1.0
+        x in Interval(0.0, 1.0)
+        y in ZeroOne()
+        """,
     )
     MOI.Test.util_test_models_equal(model, model_2, ["x", "y"], ["c"])
     return
@@ -1078,9 +1090,9 @@ end
 function test_AllDifferent()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in AllDifferent(3)
-""",
+        variables: x, y, z
+        c1: [x, y, z] in AllDifferent(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1089,9 +1101,9 @@ end
 function test_BinPacking()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in BinPacking(3.0, [1.0, 2.0, 3.0])
-""",
+        variables: x, y, z
+        c1: [x, y, z] in BinPacking(3.0, [1.0, 2.0, 3.0])
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1100,9 +1112,9 @@ end
 function test_Circuit()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in Circuit(3)
-""",
+        variables: x, y, z
+        c1: [x, y, z] in Circuit(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1111,9 +1123,9 @@ end
 function test_CountAtLeast()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, y, z] in CountAtLeast(1, [2, 2], Set([3]))
-""",
+        variables: x, y, z
+        c1: [x, y, y, z] in CountAtLeast(1, [2, 2], Set([3]))
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1122,9 +1134,9 @@ end
 function test_CountBelongs()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in CountBelongs(3, Set([3, 4, 5]))
-""",
+        variables: x, y, z
+        c1: [x, y, z] in CountBelongs(3, Set([3, 4, 5]))
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1133,9 +1145,9 @@ end
 function test_CountDistinct()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in CountDistinct(3)
-""",
+        variables: x, y, z
+        c1: [x, y, z] in CountDistinct(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1144,9 +1156,9 @@ end
 function test_CountGreaterThan()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in CountGreaterThan(3)
-""",
+        variables: x, y, z
+        c1: [x, y, z] in CountGreaterThan(3)
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1155,9 +1167,9 @@ end
 function test_Cumulative()
     return _test_model_equality(
         """
-variables: a, b, c, d, e, f, g, h, i, j
-c1: [a, b, c, d, e, f, g, h, i, j] in Cumulative(10)
-""",
+        variables: a, b, c, d, e, f, g, h, i, j
+        c1: [a, b, c, d, e, f, g, h, i, j] in Cumulative(10)
+        """,
         ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"],
         ["c1"],
     )
@@ -1166,9 +1178,9 @@ end
 function test_Path()
     return _test_model_equality(
         """
-variables: s, t, n1, n2, n3, n4, e1, e2, e3, e4, e5
-c1: [s, t, n1, n2, n3, n4, e1, e2, e3, e4, e5] in Path([1, 1, 2, 2, 3], [2, 3, 3, 4, 4])
-""",
+        variables: s, t, n1, n2, n3, n4, e1, e2, e3, e4, e5
+        c1: [s, t, n1, n2, n3, n4, e1, e2, e3, e4, e5] in Path([1, 1, 2, 2, 3], [2, 3, 3, 4, 4])
+        """,
         ["s", "t", "n1", "n2", "n3", "n4", "e1", "e2", "e3", "e4", "e5"],
         ["c1"],
     )
@@ -1177,9 +1189,9 @@ end
 function test_Table()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in Table([1.0 1.0 0.0; 0.0 0.0 0.0])
-""",
+        variables: x, y, z
+        c1: [x, y, z] in Table([1.0 1.0 0.0; 0.0 0.0 0.0])
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1188,8 +1200,8 @@ end
 function test_Parameter()
     return _test_model_equality(
         """
-constrainedvariable: x in Parameter(2.0)
-""",
+        constrainedvariable: x in Parameter(2.0)
+        """,
         ["x"],
         String[],
     )
@@ -1198,9 +1210,9 @@ end
 function test_HyperRectangle()
     return _test_model_equality(
         """
-variables: x, y, z
-c1: [x, y, z] in HyperRectangle([1.0, 2.0, 3.0], [1.1, 2.2, 3.3])
-""",
+        variables: x, y, z
+        c1: [x, y, z] in HyperRectangle([1.0, 2.0, 3.0], [1.1, 2.2, 3.3])
+        """,
         ["x", "y", "z"],
         ["c1"],
     )
@@ -1209,10 +1221,10 @@ end
 function test_Reified()
     return _test_model_equality(
         """
-variables: x, y
-minobjective: x
-c1: [x, y] in Reified(GreaterThan(1.0))
-""",
+        variables: x, y
+        minobjective: x
+        c1: [x, y] in Reified(GreaterThan(1.0))
+        """,
         ["x", "y"],
         ["c1"],
     )
@@ -1348,25 +1360,25 @@ function test_parse_constraintname_variable()
     print(
         io,
         """{
-    "version": {"major": 1, "minor": 2},
-    "variables": [{"name": "x", "primal_start": 0.0}],
-    "objective": {"sense": "min", "function": {"type": "Variable", "name": "x"}},
-    "constraints": [{
-        "name": "x >= 1",
-        "function": {
-            "type": "ScalarAffineFunction",
-            "terms": [{"coefficient": 1, "variable": "x"}],
-            "constant": 0
-        },
-        "set": {"type": "GreaterThan", "lower": 1},
-        "primal_start": 1,
-        "dual_start": 0
-    }, {
-        "name": "x ∈ [0, 1]",
-        "function": {"type": "Variable", "name": "x"},
-        "set": {"type": "Interval", "lower": 0, "upper": 1}
-    }]
-}""",
+            "version": {"major": 1, "minor": 2},
+            "variables": [{"name": "x", "primal_start": 0.0}],
+            "objective": {"sense": "min", "function": {"type": "Variable", "name": "x"}},
+            "constraints": [{
+                "name": "x >= 1",
+                "function": {
+                    "type": "ScalarAffineFunction",
+                    "terms": [{"coefficient": 1, "variable": "x"}],
+                    "constant": 0
+                },
+                "set": {"type": "GreaterThan", "lower": 1},
+                "primal_start": 1,
+                "dual_start": 0
+            }, {
+                "name": "x ∈ [0, 1]",
+                "function": {"type": "Variable", "name": "x"},
+                "set": {"type": "Interval", "lower": 0, "upper": 1}
+            }]
+        }""",
     )
     seekstart(io)
     model = MOF.Model()
@@ -1392,18 +1404,18 @@ function test_parse_nonlinear_objective_only()
     print(
         io,
         """{
-    "version": {"major": 1, "minor": 2},
-    "variables": [{"name": "x"}],
-    "objective": {
-        "sense": "min",
-        "function": {
-            "type": "ScalarNonlinearFunction",
-            "root": {"type": "node", "index": 1},
-            "node_list": [{"type": "sin", "args": [{"type": "variable", "name": "x"}]}]
-        }
-    },
-    "constraints": []
-}""",
+            "version": {"major": 1, "minor": 2},
+            "variables": [{"name": "x"}],
+            "objective": {
+                "sense": "min",
+                "function": {
+                    "type": "ScalarNonlinearFunction",
+                    "root": {"type": "node", "index": 1},
+                    "node_list": [{"type": "sin", "args": [{"type": "variable", "name": "x"}]}]
+                }
+            },
+            "constraints": []
+        }""",
     )
     seekstart(io)
     model = MOF.Model()

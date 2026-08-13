@@ -492,6 +492,7 @@ end
     SecondOrderCone,
     RotatedSecondOrderCone,
     GeometricMeanCone,
+    DualGeometricMeanCone,
     NormOneCone,
     NormInfinityCone,
     NormCone,
@@ -609,6 +610,10 @@ end
 
 function set_to_moi(::Val{:GeometricMeanCone}, object::Dict)
     return MOI.GeometricMeanCone(object["dimension"])
+end
+
+function set_to_moi(::Val{:DualGeometricMeanCone}, object::Dict)
+    return MOI.DualGeometricMeanCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:NormOneCone}, object::Dict)
