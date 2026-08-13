@@ -575,11 +575,15 @@ function MOI.eval_hessian_lagrangian(
     return
 end
 
-# The product evaluators below ACCUMULATE into their output vector, so that
-# they compose with the products of the other layers. Zero the output before
-# the first call.
+# The product functions below ACCUMULATE into their output vector, so that
+# the contributions of several blocks (for example, the QP block, the
+# vector-nonlinear-oracle constraints, and an `MOI.AbstractNLPEvaluator`) can
+# be composed into the same output. This is why they are not methods of the
+# corresponding `MOI.eval_...` functions, whose contract is to store the
+# result: `QPBlockData` is not an `MOI.AbstractNLPEvaluator`, so it does not
+# have to define the same interface as evaluators.
 
-function _eval_Jv_product(
+function _add_Jv_product(
     f::MOI.ScalarAffineFunction{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -595,7 +599,7 @@ function _eval_Jv_product(
     return
 end
 
-function _eval_Jv_product(
+function _add_Jv_product(
     f::MOI.ScalarQuadraticFunction{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -622,7 +626,7 @@ function _eval_Jv_product(
     return
 end
 
-function _eval_Jtv_product(
+function _add_Jtv_product(
     f::MOI.ScalarAffineFunction{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -638,7 +642,7 @@ function _eval_Jtv_product(
     return
 end
 
-function _eval_Jtv_product(
+function _add_Jtv_product(
     f::MOI.ScalarQuadraticFunction{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -665,7 +669,7 @@ function _eval_Jtv_product(
     return
 end
 
-function _eval_Hv_product(
+function _add_Hv_product(
     f::MOI.ScalarQuadraticFunction{T},
     H::AbstractVector{T},
     x::AbstractVector{T},
@@ -687,7 +691,7 @@ function _eval_Hv_product(
     return
 end
 
-function _eval_Hv_product(
+function _add_Hv_product(
     ::MOI.ScalarAffineFunction{T},
     H::AbstractVector{T},
     x::AbstractVector{T},
@@ -698,31 +702,83 @@ function _eval_Hv_product(
     return nothing
 end
 
-function MOI.eval_constraint_jacobian_product(
+# These are used to add the QP contribution on top of the NL contribution.
+
+"""
+    add_constraint_jacobian_product(
+        block::QPBlockData{T},
+        y::AbstractVector{T},
+        x::AbstractVector{T},
+        w::AbstractVector{T},
+    )::Nothing where {T}
+
+Add to `y` the product of the Jacobian of the constraints of `block` at `x`
+with `w`.
+
+Unlike [`MOI.eval_constraint_jacobian_product`](@ref), this function
+accumulates into `y` instead of storing the result, so that the contributions
+of several blocks can be composed: the caller is responsible for zeroing `y`
+before the first contribution.
+"""
+function add_constraint_jacobian_product(
     block::QPBlockData{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
     w::AbstractVector{T},
 ) where {T}
     for (i, constraint) in enumerate(block.constraints)
-        _eval_Jv_product(constraint, y, x, w, block.parameters, i)
+        _add_Jv_product(constraint, y, x, w, block.parameters, i)
     end
     return
 end
 
-function MOI.eval_constraint_jacobian_transpose_product(
+"""
+    add_constraint_jacobian_transpose_product(
+        block::QPBlockData{T},
+        y::AbstractVector{T},
+        x::AbstractVector{T},
+        w::AbstractVector{T},
+    )::Nothing where {T}
+
+Add to `y` the product of the transpose of the Jacobian of the constraints of
+`block` at `x` with `w`.
+
+Unlike [`MOI.eval_constraint_jacobian_transpose_product`](@ref), this
+function accumulates into `y` instead of storing the result, so that the
+contributions of several blocks can be composed: the caller is responsible
+for zeroing `y` before the first contribution.
+"""
+function add_constraint_jacobian_transpose_product(
     block::QPBlockData{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
     w::AbstractVector{T},
 ) where {T}
     for (i, constraint) in enumerate(block.constraints)
-        _eval_Jtv_product(constraint, y, x, w, block.parameters, i)
+        _add_Jtv_product(constraint, y, x, w, block.parameters, i)
     end
     return
 end
 
-function MOI.eval_hessian_lagrangian_product(
+"""
+    add_hessian_lagrangian_product(
+        block::QPBlockData{T},
+        H::AbstractVector{T},
+        x::AbstractVector{T},
+        v::AbstractVector{T},
+        σ::T,
+        μ::AbstractVector{T},
+    )::Nothing where {T}
+
+Add to `H` the product of the Hessian of the Lagrangian of `block` at `x`,
+with objective weight `σ` and constraint weights `μ`, with `v`.
+
+Unlike [`MOI.eval_hessian_lagrangian_product`](@ref), this function
+accumulates into `H` instead of storing the result, so that the contributions
+of several blocks can be composed: the caller is responsible for zeroing `H`
+before the first contribution.
+"""
+function add_hessian_lagrangian_product(
     block::QPBlockData{T},
     H::AbstractVector{T},
     x::AbstractVector{T},
@@ -730,9 +786,9 @@ function MOI.eval_hessian_lagrangian_product(
     σ::T,
     μ::AbstractVector{T},
 ) where {T}
-    _eval_Hv_product(block.objective, H, x, v, σ, block.parameters)
+    _add_Hv_product(block.objective, H, x, v, σ, block.parameters)
     for (i, constraint) in enumerate(block.constraints)
-        _eval_Hv_product(constraint, H, x, v, μ[i], block.parameters)
+        _add_Hv_product(constraint, H, x, v, μ[i], block.parameters)
     end
     return
 end
