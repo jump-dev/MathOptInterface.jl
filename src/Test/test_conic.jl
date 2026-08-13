@@ -4571,10 +4571,11 @@ function test_conic_DualRelativeEntropyCone(
     relentr = MOI.add_constraint(
         model,
         MOI.VectorAffineFunction(
-            [MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(1), v[1])),
-             MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(T(1), v[2])),
-             MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(T(1), w[1])),
-             MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(T(1), w[2]))
+            [
+                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(1), v[1])),
+                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(T(1), v[2])),
+                MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(T(1), w[1])),
+                MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(T(1), w[2])),
             ],
             T[1, 0, 0, 0, 0],
         ),
