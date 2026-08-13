@@ -538,7 +538,6 @@ function MOI.jacobian_structure(block::QPBlockData)
     return J
 end
 
-# Returns the number of entries written to `J`.
 function MOI.eval_constraint_jacobian(
     block::QPBlockData{T},
     J::AbstractVector{T},
@@ -549,7 +548,7 @@ function MOI.eval_constraint_jacobian(
         ∇f = view(J, (i+1):length(J))
         i += _eval_sparse_gradient(∇f, constraint, x, block.parameters)
     end
-    return i
+    return
 end
 
 function MOI.hessian_lagrangian_structure(block::QPBlockData)
@@ -561,7 +560,6 @@ function MOI.hessian_lagrangian_structure(block::QPBlockData)
     return H
 end
 
-# Returns the number of entries written to `H`.
 function MOI.eval_hessian_lagrangian(
     block::QPBlockData{T},
     H::AbstractVector{T},
@@ -574,7 +572,7 @@ function MOI.eval_hessian_lagrangian(
         ∇²f = view(H, (i+1):length(H))
         i += _eval_sparse_hessian(∇²f, constraint, μ[row], block.parameters)
     end
-    return i
+    return
 end
 
 # The product evaluators below ACCUMULATE into their output vector, so that
