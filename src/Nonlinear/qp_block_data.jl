@@ -431,14 +431,14 @@ function MOI.get(
 ) where {T,F,S}
     row = c.value
     if block.bound_type[row] == _kBoundTypeEqualTo
-        return MOI.EqualTo(block.g_L[row])
+        return MOI.EqualTo(block.g_L[row])::S
     elseif block.bound_type[row] == _kBoundTypeLessThan
-        return MOI.LessThan(block.g_U[row])
+        return MOI.LessThan(block.g_U[row])::S
     elseif block.bound_type[row] == _kBoundTypeGreaterThan
-        return MOI.GreaterThan(block.g_L[row])
+        return MOI.GreaterThan(block.g_L[row])::S
     else
         @assert block.bound_type[row] == _kBoundTypeInterval
-        return MOI.Interval(block.g_L[row], block.g_U[row])
+        return MOI.Interval(block.g_L[row], block.g_U[row])::S
     end
 end
 
