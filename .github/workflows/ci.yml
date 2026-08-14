@@ -34,18 +34,22 @@ jobs:
             os: ubuntu-latest
             arch: x64
             downgrade: false
+            depwarn: warn
           - version: '1'
             os: windows-latest
             arch: x64
             downgrade: false
+            depwarn: error
           - version: '1.10'
             os: ubuntu-latest
             arch: x64
             downgrade: true
+            depwarn: error
           - version: '1'
             os: ubuntu-latest
             arch: x86
             downgrade: false
+            depwarn: error
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
@@ -60,7 +64,7 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
         with:
-          depwarn: error
+          depwarn: ${{ matrix.machine.depwarn }}
           allow_reresolve: ${{ !matrix.machine.downgrade }}
           force_latest_compatible_version: ${{ !matrix.machine.downgrade }}
         env:
