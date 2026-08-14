@@ -339,7 +339,7 @@ end
 Let `(u, v, w) = x`. If `u < 0`, return the epigraph distance `d` such that
 `(u, v, w + d)` belongs to the set.
 
-If `u >= 0` return the 2-norm of the vector `d` such that `x + d = (u, -1, z)`
+If `u >= 0` return the 2-norm of the vector `d` such that `x + d = (-1, v, z)`
 where `z` satisfies the constraints.
 """
 function distance_to_set(
@@ -494,7 +494,7 @@ end
 """
     distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.RelativeEntropyCone)
 
-Let `(u, v..., w...) = x`. If `v` and `w` are strictly positive, return the
+Let `(u, v, w) = x`. If `v` and `w` are strictly positive, return the
 epigraph distance required to increase `u` such that the constraint is satisfied.
 
 If any elements in `v` or `w` are non-positive, return the 2-norm of the vector
@@ -525,6 +525,34 @@ function distance_to_set(
         return LinearAlgebra.norm(element_distance, 2)
     end
     return max(sum(w[i] * log(w[i] / v[i]) for i in eachindex(w)) - u, zero(T))
+end
+
+"""
+    distance_to_set(::ProjectionUpperBoundDistance, x, ::MOI.DualRelativeEntropyCone)
+
+Let `(u, v, w) = x`. If `u` is strictly positive, return the 2-norm of the vector
+`d` such `(u, v + d, w)` satisfies the constraints.
+
+If `u` is non-positive return the 2-norm of the vector `d` such that
+`x + d = (1, z, w)` and `z` is such that the constraints are satisfied.
+"""
+function distance_to_set(
+    ::ProjectionUpperBoundDistance,
+    x::AbstractVector{T},
+    set::MOI.DualRelativeEntropyCone,
+) where {T<:Real}
+    Base.require_one_based_indexing(x)
+    _check_dimension(x, set)
+    n = div(MOI.dimension(set) - 1, 2)
+    u, v, w = x[1], @view(x[2:(n+1)]), @view(x[(n+2):end])
+    if u > 0
+        d = max.(Ref(zero(T)), u * exp.(-w ./ u .- 1) .- v)
+        return LinearAlgebra.norm(d)
+    else
+        d1 = 1 - u
+        drest = max.(Ref(zero(T)), exp.(-w .- 1) - v)
+        return LinearAlgebra.norm((d1, drest))
+    end
 end
 
 # This is the minimal L2-norm.

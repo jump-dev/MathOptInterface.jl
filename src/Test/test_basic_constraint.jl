@@ -123,6 +123,7 @@ function _set(::Type{T}, ::Type{MOI.DualPowerCone}) where {T}
     return MOI.DualPowerCone(T(1//2))
 end
 _set(::Type{MOI.RelativeEntropyCone}) = MOI.RelativeEntropyCone(3)
+_set(::Type{MOI.DualRelativeEntropyCone}) = MOI.DualRelativeEntropyCone(3)
 _set(::Type{MOI.NormSpectralCone}) = MOI.NormSpectralCone(2, 3)
 _set(::Type{MOI.NormNuclearCone}) = MOI.NormNuclearCone(2, 3)
 function _set(::Type{MOI.PositiveSemidefiniteConeTriangle})
@@ -410,6 +411,7 @@ for s in [
     :PowerCone,
     :DualPowerCone,
     :RelativeEntropyCone,
+    :DualRelativeEntropyCone,
     :NormSpectralCone,
     :NormNuclearCone,
     :PositiveSemidefiniteConeSquare,

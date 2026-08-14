@@ -959,14 +959,8 @@ end
     RelativeEntropyCone(dimension::Int)
 
 The relative entropy cone
-``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log(\\frac{w_i}{v_i}), v_i \\ge 0, w_i \\ge 0 \\}``,
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : u \\ge \\sum_{i=1}^n w_i \\log(\\frac{w_i}{v_i}), v_i > 0, w_i > 0 \\}``,
 where `dimension = 2n + 1 >= 1`.
-
-## Duality note
-
-The dual of the relative entropy cone is
-``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, w_i \\ge u (\\log (\\frac{u}{v_i}) - 1), v_i \\ge 0, u > 0 \\}``
-of dimension `dimension```{}=2n+1``.
 
 ## Example
 
@@ -1001,6 +995,53 @@ struct RelativeEntropyCone <: AbstractVectorSet
         return new(dimension)
     end
 end
+
+dual_set(s::RelativeEntropyCone) = DualRelativeEntropyCone(s.dimension)
+dual_set_type(::Type{RelativeEntropyCone}) = DualRelativeEntropyCone
+
+"""
+    DualRelativeEntropyCone(dimension::Int)
+
+The dual relative entropy cone
+``\\{ (u, v, w) \\in \\mathbb{R}^{1+2n} : \\forall i, w_i \\ge u (\\log (\\frac{u}{v_i}) - 1), v_i > 0, u > 0 \\}``
+where `dimension = 2n + 1 >= 1`.
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> u = MOI.add_variable(model);
+
+julia> v = MOI.add_variables(model, 3);
+
+julia> w = MOI.add_variables(model, 3);
+
+julia> MOI.add_constraint(
+           model,
+           MOI.VectorOfVariables([u; v; w]),
+           MOI.DualRelativeEntropyCone(7),
+       )
+MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.DualRelativeEntropyCone}(1)
+```
+"""
+struct DualRelativeEntropyCone <: AbstractVectorSet
+    dimension::Int
+    function DualRelativeEntropyCone(dimension::Base.Integer)
+        if !(dimension >= 1 && isodd(dimension))
+            throw(
+                DimensionMismatch(
+                    "Dimension of RelativeEntropyCone must be an odd integer " *
+                    ">= 1, not $(dimension).",
+                ),
+            )
+        end
+        return new(dimension)
+    end
+end
+
+dual_set(s::DualRelativeEntropyCone) = RelativeEntropyCone(s.dimension)
+dual_set_type(::Type{DualRelativeEntropyCone}) = RelativeEntropyCone
 
 """
     NormSpectralCone(row_dim::Int, column_dim::Int)

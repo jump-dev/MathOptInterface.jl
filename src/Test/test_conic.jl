@@ -4469,11 +4469,6 @@ function test_conic_RelativeEntropyCone(
     model::MOI.ModelLike,
     config::Config{T},
 ) where {T<:Real}
-    @requires MOI.supports_constraint(
-        model,
-        MOI.VectorAffineFunction{T},
-        MOI.RelativeEntropyCone,
-    )
     @requires MOI.supports_incremental_interface(model)
     @requires MOI.supports(model, MOI.ObjectiveFunction{MOI.VariableIndex}())
     @requires MOI.supports(model, MOI.ObjectiveSense())
@@ -4540,6 +4535,106 @@ function setup_test(
     )
     return
 end
+
+"""
+    test_conic_DualRelativeEntropyCone(
+        model::MOI.ModelLike,
+        config::Config{T},
+    ) where {T<:Real}
+
+Test the problem:
+```
+max -dot(v, [1, 5]) - dot(w, [2, 3])
+ st  w[i] >= log(1/v[i]) - 1  (that is, (1, v, w) in DualRelativeEntropyCone(5))
+Optimal solution is:
+u = 2*log(2/1) + 3*log(3/5) ≈ -0.1461825
+```
+"""
+function test_conic_DualRelativeEntropyCone(
+    model::MOI.ModelLike,
+    config::Config{T},
+) where {T<:Real}
+    @requires MOI.supports_incremental_interface(model)
+    @requires MOI.supports(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+    )
+    @requires MOI.supports(model, MOI.ObjectiveSense())
+    @requires MOI.supports_constraint(
+        model,
+        MOI.VectorAffineFunction{T},
+        MOI.DualRelativeEntropyCone,
+    )
+    v = MOI.add_variables(model, 2)
+    w = MOI.add_variables(model, 2)
+    @test MOI.get(model, MOI.NumberOfVariables()) == 4
+    relentr = MOI.add_constraint(
+        model,
+        MOI.VectorAffineFunction(
+            [
+                MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(1), v[1])),
+                MOI.VectorAffineTerm(3, MOI.ScalarAffineTerm(T(1), v[2])),
+                MOI.VectorAffineTerm(4, MOI.ScalarAffineTerm(T(1), w[1])),
+                MOI.VectorAffineTerm(5, MOI.ScalarAffineTerm(T(1), w[2])),
+            ],
+            T[1, 0, 0, 0, 0],
+        ),
+        MOI.DualRelativeEntropyCone(5),
+    )
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{T}}(),
+        MOI.ScalarAffineFunction(
+            MOI.ScalarAffineTerm.(T[-1, -5, -2, -3], [v[1], v[2], w[1], w[2]]),
+            T(0),
+        ),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    if _supports(config, MOI.optimize!)
+        @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMIZE_NOT_CALLED
+        MOI.optimize!(model)
+        @test MOI.get(model, MOI.TerminationStatus()) == config.optimal_status
+        @test MOI.get(model, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
+        if _supports(config, MOI.ConstraintDual)
+            @test MOI.get(model, MOI.DualStatus()) == MOI.FEASIBLE_POINT
+        end
+        u_opt = 2 * log(T(2)) + 3 * log(T(3 // 5))
+        @test ≈(MOI.get(model, MOI.ObjectiveValue()), u_opt, config)
+        @test ≈(
+            MOI.get(model, MOI.ConstraintPrimal(), relentr),
+            T[1, 2, 3//5, log(T(1//2))-1, log(T(5//3))-1],
+            config,
+        )
+        if _supports(config, MOI.ConstraintDual)
+            @test ≈(
+                MOI.get(model, MOI.ConstraintDual(), relentr),
+                T[u_opt, 1, 5, 2, 3],
+                config,
+            )
+        end
+    end
+    return
+end
+
+function setup_test(
+    ::typeof(test_conic_DualRelativeEntropyCone),
+    model::MOIU.MockOptimizer,
+    ::Config{T},
+) where {T<:Real}
+    u_opt = 2 * log(T(2 // 1)) + 3 * log(T(3 // 5))
+    MOIU.set_mock_optimize!(
+        model,
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            T[2, 3//5, log(T(1//2))-1, log(T(5//3))-1],
+            (MOI.VectorAffineFunction{T}, MOI.DualRelativeEntropyCone) =>
+                [T[u_opt, 1, 5, 2, 3]],
+        ),
+    )
+    return
+end
+
+version_added(::typeof(test_conic_DualRelativeEntropyCone)) = v"1.53.0"
 
 """
     test_conic_NormSpectralCone(model::MOI.ModelLike, config::Config{T}) where {T<:Real}

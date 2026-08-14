@@ -277,6 +277,20 @@ function test_relativeentropycone()
     return
 end
 
+function test_dualrelativeentropycone()
+    _test_set(
+        MOI.DualRelativeEntropyCone(5),
+        [1.0, 1.0, 1.0, 1.0, 1.0] => 0.0,
+        [-2.0, 1.0, 1.0, 1.0, 1.0] => 3.0,
+        [1.0, 1.0, 2.0, 3.0, 1.0] => 0.0,
+        [1.0, -1.0, 2.0, 3.0, 1.0] => 1 + exp(-4),
+        [-1.0, -1.0, 2.0, 3.0, 1.0] => sqrt(2^2 + (1 + exp(-4))^2),
+        [2.0, 0.1, 2.0, 3.0, -1.0] => 2exp(-5/2) - 0.1,
+        mismatch = [1.0],
+    )
+    return
+end
+
 function test_hyperrectangle()
     _test_set(
         MOI.HyperRectangle([0.0, 1.0], [1.0, 2.0]),

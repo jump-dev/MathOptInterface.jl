@@ -140,6 +140,7 @@ function test_sets_DimensionMismatch()
         (MOI.DualGeometricMeanCone, 2),
         (MOI.Complements, 0),
         (MOI.RelativeEntropyCone, 1),
+        (MOI.DualRelativeEntropyCone, 1),
         (MOI.ScaledPositiveSemidefiniteConeTriangle, 0),
         (MOI.PositiveSemidefiniteConeTriangle, 0),
         (MOI.PositiveSemidefiniteConeSquare, 0),
@@ -164,6 +165,7 @@ function test_sets_DimensionMismatch()
     @test MOI.NormNuclearCone(0, 0) isa MOI.NormNuclearCone
     # Other dimension checks
     @test_throws DimensionMismatch MOI.RelativeEntropyCone(2)
+    @test_throws DimensionMismatch MOI.DualRelativeEntropyCone(2)
     @test_throws DimensionMismatch MOI.Complements(-3)
     @test_throws DimensionMismatch MOI.Complements(3)
     @test_throws DimensionMismatch MOI.CountBelongs(0, Set([1, 2]))
@@ -329,6 +331,16 @@ function test_sets_dual_power()
     _dual_set_test(dual_pow03, pow03)
     @test MOI.dual_set(dual_pow03) != pow04
     @test MOI.dual_set(dual_pow03) != dual_pow03
+    return
+end
+
+function test_sets_dual_relativeentropy()
+    relent = MOI.RelativeEntropyCone(5)
+    dual_relent = MOI.DualRelativeEntropyCone(5)
+    _dual_set_test(relent, dual_relent)
+    @test MOI.dual_set(relent) != relent
+    _dual_set_test(dual_relent, relent)
+    @test MOI.dual_set(dual_relent) != dual_relent
     return
 end
 
