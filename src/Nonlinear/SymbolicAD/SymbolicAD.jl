@@ -456,7 +456,7 @@ Return an expression representing the partial derivative of `f` with respect to
 ## Expression swelling
 
 With few exceptions, the algorithm used to compute the derivative does not
-perform simplications. As a result, the returned expression may contain terms
+perform simplifications. As a result, the returned expression may contain terms
 like `*(false, g)` that can be trivially simplified to `false`.
 
 In most cases, you should call `simplify!(derivative(f, x))` to return a

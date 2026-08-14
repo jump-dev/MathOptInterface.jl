@@ -2059,7 +2059,7 @@ st   w +  z == 1
      w, z >= 0
 sol: z = 1, w = 0
 ```
-Then it tranforms problem into:
+Then it transforms problem into:
 ```
 min x + y
 st   x + y >= 1
