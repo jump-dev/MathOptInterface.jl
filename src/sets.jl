@@ -1402,7 +1402,7 @@ end
 The (vectorized) cone of Hermitian positive semidefinite matrices, with
 non-negative `side_dimension` rows and columns.
 
-Becaue the matrix is Hermitian, the diagonal elements are real, and the
+Because the matrix is Hermitian, the diagonal elements are real, and the
 complex-valued lower triangular entries are obtained as the conjugate of
 corresponding upper triangular entries.
 
@@ -2424,7 +2424,7 @@ end
     CountGreaterThan(dimension::Int)
 
 The set ``\\{(c, y, x) \\in \\mathbb{Z}^{1+1+d}\\}``, such that `c` is strictly
-greater than the number of occurences of `y` in `x` and `dimension = 1 + 1 + d`.
+greater than the number of occurrences of `y` in `x` and `dimension = 1 + 1 + d`.
 
 ## Also known as
 

@@ -200,7 +200,7 @@ term_pair(t::ScalarQuadraticTerm) = term_indices(t) => coefficient(t)
         quadratic_terms::Vector{ScalarQuadraticTerm{T}},
         affine_terms::Vector{ScalarAffineTerm{T}},
         constant::T,
-    ) wher {T}
+    ) where {T}
 
 The scalar-valued quadratic function ``\\frac{1}{2}x^\\top Q x + a^\\top x + b``,
 where:

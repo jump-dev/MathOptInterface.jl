@@ -13,7 +13,7 @@ include("opcode.jl")
 """
     _JULIA_TO_AMPL
 
-This dictionary is manualy curated, based on the list of opcodes in `opcode.jl`.
+This dictionary is manually curated, based on the list of opcodes in `opcode.jl`.
 
 The goal is to map Julia functions to their AMPL opcode equivalent.
 
@@ -105,7 +105,7 @@ const _JULIA_TO_AMPL = Dict{Symbol,Int}(
 """
     _AMPL_TO_JULIA
 
-This dictionary is manualy curated, based on the list of supported opcodes
+This dictionary is manually curated, based on the list of supported opcodes
 `_JULIA_TO_AMPL`.
 
 The goal is to map AMPL opcodes to their Julia equivalents. In addition, we need

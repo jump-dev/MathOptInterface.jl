@@ -141,7 +141,7 @@ Use this checklist when updating the version of MathOptFormat.
  - [ ] New sets are added to the `@enum` in `src/FileFormats/MOF/read.jl`
  - [ ] `set_to_moi` is defined for each set in `src/FileFormats/MOF/read.jl`
  - [ ] `head_name` is defined for each set in `src/FileFormats/MOF/write.jl`
- - [ ] A new unit test calling `_test_model_equality` is aded to
+ - [ ] A new unit test calling `_test_model_equality` is added to
        `test/FileFormats/MOF/MOF.jl`
 
 ## Tests

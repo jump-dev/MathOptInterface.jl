@@ -10,7 +10,7 @@
         moi_index_to_consecutive_index::Dict{MOI.VariableIndex,Int},
     )
 
-Return a new `Vector{Nonlinear.Node}` where all occurences of
+Return a new `Vector{Nonlinear.Node}` where all occurrences of
 `NODE_MOI_VARIABLE` are replaced by `NODE_VARIABLE` that is 1-indexed and
 ordered.
 """

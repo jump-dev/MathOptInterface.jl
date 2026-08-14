@@ -1667,7 +1667,7 @@ solution `result_index`.
 
 ## PrimalStatus
 
-Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+Before querying this attribute you should first check [`PrimalStatus`](@ref) to
 confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
@@ -1707,7 +1707,7 @@ the dual solution `result_index`.
 
 ## DualStatus
 
-Before quering this attribute you should first check [`DualStatus`](@ref) to
+Before querying this attribute you should first check [`DualStatus`](@ref) to
 confirm that a dual solution is available.
 
 If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
@@ -2092,7 +2092,7 @@ An [`AbstractVariableAttribute`](@ref) for the variable's primal value in result
 
 ## PrimalStatus
 
-Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+Before querying this attribute you should first check [`PrimalStatus`](@ref) to
 confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
@@ -2183,7 +2183,7 @@ variable in result `result_index`, with respect to a basic solution.
 
 ## PrimalStatus
 
-Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+Before querying this attribute you should first check [`PrimalStatus`](@ref) to
 confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
@@ -2386,7 +2386,7 @@ due to numerical tolerances they may not be identical.)
 
 ## PrimalStatus
 
-Before quering this attribute you should first check [`PrimalStatus`](@ref) to
+Before querying this attribute you should first check [`PrimalStatus`](@ref) to
 confirm that a primal solution is available.
 
 If the [`PrimalStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
@@ -2432,7 +2432,7 @@ result `result_index`.
 
 ## DualStatus
 
-Before quering this attribute you should first check [`DualStatus`](@ref) to
+Before querying this attribute you should first check [`DualStatus`](@ref) to
 confirm that a dual solution is available.
 
 If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying
@@ -3386,7 +3386,7 @@ Both values are useful in different circumstances.
 
 ## DualStatus
 
-Before quering this attribute you should first check [`DualStatus`](@ref) to
+Before querying this attribute you should first check [`DualStatus`](@ref) to
 confirm that a dual solution is available.
 
 If the [`DualStatus`](@ref) is [`NO_SOLUTION`](@ref) the result of querying

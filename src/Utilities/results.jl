@@ -19,7 +19,7 @@
 """
     is_ray(status::MOI.ResultStatusCode)
 
-Returnn `true` if `status` is `INFEASIBILITY_CERTIFICATE` or
+Return `true` if `status` is `INFEASIBILITY_CERTIFICATE` or
     `NEARLY_INFEASIBILITY_CERTIFICATE`.
 """
 function is_ray(status::MOI.ResultStatusCode)
