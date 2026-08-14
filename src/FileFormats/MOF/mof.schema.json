@@ -1,6 +1,6 @@
 {
     "$schema": "https://json-schema.org/schema#",
-    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.8.schema.json",
+    "$id": "https://jump.dev/MathOptFormat/schemas/mof.1.9.schema.json",
     "title": "The schema for MathOptFormat",
     "type": "object",
     "required": ["version", "variables", "objective", "constraints"],
@@ -11,7 +11,7 @@
             "required": ["major", "minor"],
             "properties": {
                 "major": {"const": 1},
-                "minor": {"enum": [0, 1, 2, 3, 4, 5, 6, 7, 8]}
+                "minor": {"enum": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]}
             }
         },
         "name": {
@@ -638,11 +638,19 @@
                     "dimension": {"type": "integer", "minimum": 1}
                 }
             }, {
-                "description": "(u, v, w) ∈ {R^{dimension}: u ≥ Σᵢ wᵢlog(wᵢ/vᵢ), vᵢ ≥ 0, wᵢ ≥ 0}",
+                "description": "(u, v, w) ∈ {R^{dimension}: u ≥ Σᵢ wᵢlog(wᵢ/vᵢ), vᵢ > 0, wᵢ > 0}",
                 "examples": ["{\"type\": \"RelativeEntropyCone\", \"dimension\": 3}"],
                 "required": ["dimension"],
                 "properties": {
                     "type": {"const": "RelativeEntropyCone"},
+                    "dimension": {"type": "integer", "minimum": 3}
+                }
+            }, {
+                "description": "(u, v, w) ∈ {R^{dimension}: ∀i, wᵢ ≥ u(log(u/vᵢ) - 1), vᵢ > 0, u > 0}",
+                "examples": ["{\"type\": \"DualRelativeEntropyCone\", \"dimension\": 3}"],
+                "required": ["dimension"],
+                "properties": {
+                    "type": {"const": "DualRelativeEntropyCone"},
                     "dimension": {"type": "integer", "minimum": 3}
                 }
             }, {

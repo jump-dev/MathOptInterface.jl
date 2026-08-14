@@ -1045,6 +1045,18 @@ function test_RelativeEntropyCone()
     )
 end
 
+function test_DualRelativeEntropyCone()
+    return _test_model_equality(
+        """
+        variables: x, y, z
+        minobjective: x
+        c1: [x, y, z] in DualRelativeEntropyCone(3)
+        """,
+        ["x", "y", "z"],
+        ["c1"],
+    )
+end
+
 function test_NormSpectralCone()
     return _test_model_equality(
         """

@@ -497,6 +497,7 @@ end
     NormInfinityCone,
     NormCone,
     RelativeEntropyCone,
+    DualRelativeEntropyCone,
     NormSpectralCone,
     NormNuclearCone,
     RootDetConeTriangle,
@@ -630,6 +631,10 @@ end
 
 function set_to_moi(::Val{:RelativeEntropyCone}, object::Dict)
     return MOI.RelativeEntropyCone(object["dimension"])
+end
+
+function set_to_moi(::Val{:DualRelativeEntropyCone}, object::Dict)
+    return MOI.DualRelativeEntropyCone(object["dimension"])
 end
 
 function set_to_moi(::Val{:NormSpectralCone}, object::Dict)
