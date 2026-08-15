@@ -27,8 +27,12 @@ end
 #   row 2 (quad layer, quadratic): x^2 + xy + y in [0, 1]
 #   row 3 (inner nlp):             sin(x) <= 0.5
 # and the objective x^2 in the quad layer.
-function _test_model(x, y)
+function _test_model()
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    @test (x, y) == (MOI.VariableIndex(1), MOI.VariableIndex(2))
+    @test MOI.is_valid(model, x) && !MOI.is_valid(model, MOI.VariableIndex(3))
     Nonlinear.set_objective(
         model,
         MOI.ScalarQuadraticFunction(
@@ -64,15 +68,12 @@ function _test_model(x, y)
     c3 = Nonlinear.add_constraint(model, :(sin($x)), MOI.LessThan(0.5))
     @test c3 isa Nonlinear.ConstraintIndex
     @test length(model) == 2
-    return model
+    return model, x, y
 end
 
 function test_evaluator_with_quad()
-    # Use non-consecutive variable indices to test that the evaluator remaps
-    # the variables to their consecutive index in `ordered_variables`.
-    x, y = MOI.VariableIndex(5), MOI.VariableIndex(9)
-    model = _test_model(x, y)
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+    model, x, y = _test_model()
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     @test d isa Nonlinear.EvaluatorWithQuad
     @test d.inner isa Nonlinear.Evaluator
     @test MOI.features_available(d) == [:Grad, :Jac, :JacVec, :Hess, :HessVec]
@@ -122,9 +123,8 @@ function test_evaluator_with_quad()
 end
 
 function test_evaluator_products()
-    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
-    model = _test_model(x, y)
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+    model, x, y = _test_model()
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :JacVec, :Hess, :HessVec])
     xv = [1.0, 2.0]
     # Dense Jacobian from the sparse callback, as the reference.
@@ -163,8 +163,8 @@ function test_evaluator_products()
 end
 
 function test_objective_sink_switching()
-    x = MOI.VariableIndex(1)
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
     @test model.objective_sink == :none
     f = MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
@@ -176,7 +176,7 @@ function test_objective_sink_switching()
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarQuadraticFunction{Float64}
     @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) ≈ f
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :Hess])
     @test MOI.eval_objective(d, [3.0]) == 9.0
     @test MOI.NLPBlockData(d).has_objective
@@ -184,7 +184,7 @@ function test_objective_sink_switching()
     # cleared, including its Hessian entries.
     Nonlinear.set_objective(model, :(sin($x)))
     @test model.objective_sink == :inner
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :Hess])
     @test MOI.eval_objective(d, [3.0]) == sin(3.0)
     @test MOI.NLPBlockData(d).has_objective
@@ -196,12 +196,12 @@ function test_objective_sink_switching()
     g = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 1.0)
     Nonlinear.set_objective(model, g)
     @test model.objective_sink == :quad
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
     @test MOI.eval_objective(d, [3.0]) == 7.0
     Nonlinear.set_objective(model, nothing)
     @test model.objective_sink == :none
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
     @test MOI.eval_objective(d, [3.0]) == 0.0
     grad = fill(NaN, 1)
@@ -212,11 +212,18 @@ function test_objective_sink_switching()
 end
 
 function test_quad_parameters()
-    x, p = MOI.VariableIndex(1), MOI.VariableIndex(42)
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
-    # Register the parameter before any structure query. Its value may be
-    # updated between evaluations.
-    model.qp.parameters[p.value] = 5.0
+    x = MOI.add_variable(model)
+    p, cp = MOI.add_constrained_variable(model, MOI.Parameter(5.0))
+    @test p.value == Nonlinear._PARAMETER_OFFSET + 1
+    @test MOI.is_valid(model, p) && MOI.is_valid(model, cp)
+    @test MOI.get(model, MOI.ConstraintFunction(), cp) == p
+    @test MOI.get(model, MOI.ConstraintSet(), cp) == MOI.Parameter(5.0)
+    F, S = MOI.VariableIndex, MOI.Parameter{Float64}
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [cp]
+    # The value is stored in the inner model, aliased by the QP block.
+    @test model.qp.parameters === model.inner.parameters
     Nonlinear.add_constraint(
         model,
         MOI.ScalarAffineFunction(
@@ -234,7 +241,7 @@ function test_quad_parameters()
         ),
         MOI.LessThan(10.0),
     )
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :Hess])
     g = fill(NaN, 2)
     MOI.eval_constraint(d, g, [1.0])
@@ -246,15 +253,15 @@ function test_quad_parameters()
     @test J == [2.0, 5.0]
     @test isempty(MOI.hessian_lagrangian_structure(d))
     # Updating the parameter value must be visible without re-initializing.
-    model.qp.parameters[p.value] = 7.0
+    MOI.set(model, MOI.ConstraintSet(), cp, MOI.Parameter(7.0))
     MOI.eval_constraint(d, g, [1.0])
     @test g == [2.0 * 1.0 + 3.0 * 7.0, 7.0 * 1.0]
     return
 end
 
 function test_attribute_forwarding()
-    x = MOI.VariableIndex(1)
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
     F, S = MOI.ScalarAffineFunction{Float64}, MOI.GreaterThan{Float64}
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     ci = MOI.add_constraint(model, f, MOI.GreaterThan(1.0))
@@ -278,7 +285,7 @@ function test_attribute_forwarding()
     Nonlinear.register_operator(model, :my_square, 1, z -> z^2)
     c = Nonlinear.add_constraint(model, :(my_square($ex)), MOI.LessThan(1.0))
     @test MOI.is_valid(model, c)
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
     g = fill(NaN, 2)
     MOI.eval_constraint(d, g, [3.0])
@@ -287,14 +294,14 @@ function test_attribute_forwarding()
 end
 
 function test_quad_only_with_empty_inner()
-    x = MOI.VariableIndex(1)
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
     Nonlinear.add_constraint(
         model,
         MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
         MOI.GreaterThan(1.0),
     )
-    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :Hess])
     g = fill(NaN, 1)
     MOI.eval_constraint(d, g, [1.5])

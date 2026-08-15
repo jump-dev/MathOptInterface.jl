@@ -11,12 +11,19 @@
         objective_sink::Symbol = :none,
     ) where {T,M}
 
-A model layer that stores affine and quadratic objectives and constraints in
-a [`QPBlockData`](@ref) and forwards everything else to the `inner` model,
-typically a [`Model`](@ref).
+A model layer that owns the variables of the model, stores affine and
+quadratic objectives and constraints in a [`QPBlockData`](@ref), and forwards
+everything else to the `inner` model, typically a [`Model`](@ref).
 
 `ModelWithQuad(inner)` and `ModelWithQuad{T}(inner)` create an empty
 [`QPBlockData`](@ref), with `T` defaulting to `Float64`.
+
+Add variables with `MOI.add_variable`: the layer guarantees that the variable
+indices are `1:n`, like `MOI.Utilities.MatrixOfConstraints`. Add parameters
+with `MOI.add_constrained_variable(model, ::MOI.Parameter)`: parameters get
+indices offset by [`_PARAMETER_OFFSET`](@ref), their values are stored in the
+inner model through [`add_parameter`](@ref), and `qp.parameters` aliases that
+storage, so a parameter update is visible to both blocks.
 
 Add constraints with [`add_constraint`](@ref) or `MOI.add_constraint`, and
 set the objective with [`set_objective`](@ref): affine and quadratic
@@ -25,15 +32,12 @@ functions are routed to the QP block, everything else to the inner model.
 `:quad` or `:inner`).
 
 Create the corresponding evaluator, [`EvaluatorWithQuad`](@ref), with
-`Evaluator(model, backend, ordered_variables)`, or construct it directly from
-an inner `MOI.AbstractNLPEvaluator`. The rows of the QP block come first,
-followed by the rows of the inner evaluator.
-
-Functions added to the QP block may contain parameters, following the
-convention documented in [`QPBlockData`](@ref): a variable is a parameter if
-and only if its index is a key of `qp.parameters`.
+`Evaluator(model, backend)`, or construct it directly from an inner
+`MOI.AbstractNLPEvaluator`. The rows of the QP block come first, followed by
+the rows of the inner evaluator.
 """
 mutable struct ModelWithQuad{T,M}
+    variables::MOI.Utilities.VariablesContainer{T}
     qp::QPBlockData{T}
     inner::M
     objective_sink::Symbol # :none, :quad or :inner
@@ -43,7 +47,14 @@ mutable struct ModelWithQuad{T,M}
         inner::M;
         objective_sink::Symbol = :none,
     ) where {T,M}
-        return new{T,M}(qp, inner, objective_sink)
+        model = new{T,M}(
+            MOI.Utilities.VariablesContainer{T}(),
+            qp,
+            inner,
+            objective_sink,
+        )
+        _share_parameters(model.qp, model.inner)
+        return model
     end
 end
 
@@ -52,6 +63,83 @@ function ModelWithQuad{T}(inner) where {T}
 end
 
 ModelWithQuad(inner) = ModelWithQuad{Float64}(inner)
+
+# The QP block reads the parameter values from the inner model's storage.
+_share_parameters(::QPBlockData, ::Any) = nothing
+
+function _share_parameters(qp::QPBlockData{Float64}, inner::Model)
+    qp.parameters = inner.parameters
+    return
+end
+
+# The variables and the parameters.
+
+MOI.add_variable(model::ModelWithQuad) = MOI.add_variable(model.variables)
+
+function MOI.add_constrained_variable(
+    model::ModelWithQuad{T},
+    set::MOI.Parameter{T},
+) where {T}
+    p = add_parameter(model.inner, set.value)
+    x = MOI.VariableIndex(_PARAMETER_OFFSET + p.value)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}}(x.value)
+    return x, ci
+end
+
+function MOI.is_valid(model::ModelWithQuad, x::MOI.VariableIndex)
+    if _is_parameter(x)
+        return 1 <= x.value - _PARAMETER_OFFSET <= length(model.qp.parameters)
+    end
+    return MOI.is_valid(model.variables, x)
+end
+
+function MOI.is_valid(
+    model::ModelWithQuad{T},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}},
+) where {T}
+    return MOI.is_valid(model, MOI.VariableIndex(ci.value))
+end
+
+function MOI.get(
+    model::ModelWithQuad{T},
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Parameter{T}},
+) where {T}
+    return length(model.qp.parameters)
+end
+
+function MOI.get(
+    model::ModelWithQuad{T},
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {T,F<:MOI.VariableIndex,S<:MOI.Parameter{T}}
+    n = length(model.qp.parameters)
+    return MOI.ConstraintIndex{F,S}.(_PARAMETER_OFFSET .+ (1:n))
+end
+
+function MOI.get(
+    model::ModelWithQuad{T},
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}},
+) where {T}
+    return MOI.VariableIndex(ci.value)
+end
+
+function MOI.get(
+    model::ModelWithQuad{T},
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}},
+) where {T}
+    return MOI.Parameter(model.qp.parameters[ci.value-_PARAMETER_OFFSET])
+end
+
+function MOI.set(
+    model::ModelWithQuad{T},
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}},
+    set::MOI.Parameter{T},
+) where {T}
+    model.qp.parameters[ci.value-_PARAMETER_OFFSET] = set.value
+    return
+end
 
 """
     Base.length(model::ModelWithQuad)
@@ -204,7 +292,6 @@ end
     EvaluatorWithQuad(
         model::ModelWithQuad,
         inner::MOI.AbstractNLPEvaluator,
-        ordered_variables::Vector{MOI.VariableIndex},
     ) <: MOI.AbstractNLPEvaluator
 
 The evaluator of a [`ModelWithQuad`](@ref) layer. It implements the
@@ -212,50 +299,38 @@ The evaluator of a [`ModelWithQuad`](@ref) layer. It implements the
 first, followed by the rows of `inner`, and the Jacobian and Hessian product
 callbacks compose the contributions of the two blocks.
 
-Create it with `Evaluator(model::ModelWithQuad, backend, ordered_variables)`,
-which recursively creates the evaluator of the inner model, or construct it
-directly from an existing inner evaluator.
+Create it with `Evaluator(model::ModelWithQuad, backend)`, which recursively
+creates the evaluator of the inner model, or construct it directly from an
+existing inner evaluator.
 
-During [`MOI.initialize`](@ref), the variables of the QP block are mapped to
-their consecutive 1-based index in `ordered_variables`; variables absent from
-`ordered_variables` are parameters and keep their index.
+The QP block is evaluated as stored: [`ModelWithQuad`](@ref) owns the
+variables of the model, so their indices are the columns `1:n` and no
+remapping is needed.
 """
 mutable struct EvaluatorWithQuad{T,M,E<:MOI.AbstractNLPEvaluator} <:
                MOI.AbstractNLPEvaluator
     model::ModelWithQuad{T,M}
     inner::E
-    ordered_variables::Vector{MOI.VariableIndex}
-    # A copy of `model.qp` with the variables mapped to their consecutive
-    # 1-based index in `ordered_variables`, and the number of entries of its
-    # Jacobian and of its Hessian of the Lagrangian. Rebuilt during
-    # `MOI.initialize`.
-    qp::QPBlockData{T}
+    # The number of entries of the Jacobian and of the Hessian of the
+    # Lagrangian of the QP block, computed during `MOI.initialize`.
     qp_nnzj::Int
     qp_nnzh::Int
 
     function EvaluatorWithQuad(
         model::ModelWithQuad{T,M},
         inner::E,
-        ordered_variables::Vector{MOI.VariableIndex},
     ) where {T,M,E<:MOI.AbstractNLPEvaluator}
-        return new{T,M,E}(
-            model,
-            inner,
-            ordered_variables,
-            QPBlockData{T}(),
-            0,
-            0,
-        )
+        return new{T,M,E}(model, inner, 0, 0)
     end
 end
 
 function Evaluator(
     model::ModelWithQuad,
     backend::AbstractAutomaticDifferentiation,
-    ordered_variables::Vector{MOI.VariableIndex},
 )
-    inner = Evaluator(model.inner, backend, ordered_variables)
-    return EvaluatorWithQuad(model, inner, ordered_variables)
+    vars = MOI.get(model.variables, MOI.ListOfVariableIndices())
+    inner = Evaluator(model.inner, backend, vars)
+    return EvaluatorWithQuad(model, inner)
 end
 
 function MOI.features_available(d::EvaluatorWithQuad)
@@ -263,34 +338,9 @@ function MOI.features_available(d::EvaluatorWithQuad)
     return filter(f -> f in (:Grad, :Jac, :JacVec, :Hess, :HessVec), features)
 end
 
-function MOI.initialize(
-    d::EvaluatorWithQuad{T},
-    features::Vector{Symbol},
-) where {T}
-    index_map = Dict{MOI.VariableIndex,MOI.VariableIndex}(
-        x => MOI.VariableIndex(i) for (i, x) in enumerate(d.ordered_variables)
-    )
-    # Variables absent from `ordered_variables` are parameters: they keep
-    # their index, which the `parameters` dictionary uses as key.
-    fmap = v::MOI.VariableIndex -> get(index_map, v, v)
-    src = d.model.qp
-    qp = QPBlockData{T}()
-    qp.objective = MOI.Utilities.map_indices(fmap, src.objective)
-    qp.objective_function_type = src.objective_function_type
-    for f in src.constraints
-        push!(qp.constraints, MOI.Utilities.map_indices(fmap, f))
-    end
-    append!(qp.g_L, src.g_L)
-    append!(qp.g_U, src.g_U)
-    append!(qp.mult_g, src.mult_g)
-    append!(qp.function_type, src.function_type)
-    append!(qp.bound_type, src.bound_type)
-    # Alias, do not copy: parameter values updated in the model between
-    # solves must be visible to the evaluator without re-initializing.
-    qp.parameters = src.parameters
-    d.qp = qp
-    d.qp_nnzj = length(MOI.jacobian_structure(qp))
-    d.qp_nnzh = length(MOI.hessian_lagrangian_structure(qp))
+function MOI.initialize(d::EvaluatorWithQuad, features::Vector{Symbol})
+    d.qp_nnzj = length(MOI.jacobian_structure(d.model.qp))
+    d.qp_nnzh = length(MOI.hessian_lagrangian_structure(d.model.qp))
     MOI.initialize(d.inner, features)
     return
 end
@@ -298,7 +348,7 @@ end
 function MOI.eval_objective(d::EvaluatorWithQuad{T}, x) where {T}
     sink = d.model.objective_sink
     if sink == :quad
-        return MOI.eval_objective(d.qp, x)
+        return MOI.eval_objective(d.model.qp, x)
     elseif sink == :inner
         return MOI.eval_objective(d.inner, x)
     else
@@ -309,7 +359,7 @@ end
 function MOI.eval_objective_gradient(d::EvaluatorWithQuad{T}, grad, x) where {T}
     sink = d.model.objective_sink
     if sink == :quad
-        MOI.eval_objective_gradient(d.qp, grad, x)
+        MOI.eval_objective_gradient(d.model.qp, grad, x)
     elseif sink == :inner
         MOI.eval_objective_gradient(d.inner, grad, x)
     else
@@ -319,15 +369,15 @@ function MOI.eval_objective_gradient(d::EvaluatorWithQuad{T}, grad, x) where {T}
 end
 
 function MOI.eval_constraint(d::EvaluatorWithQuad, g, x)
-    m = length(d.qp)
-    MOI.eval_constraint(d.qp, view(g, 1:m), x)
+    m = length(d.model.qp)
+    MOI.eval_constraint(d.model.qp, view(g, 1:m), x)
     MOI.eval_constraint(d.inner, view(g, (m+1):length(g)), x)
     return
 end
 
 function MOI.jacobian_structure(d::EvaluatorWithQuad)
-    J = MOI.jacobian_structure(d.qp)
-    offset = length(d.qp)
+    J = MOI.jacobian_structure(d.model.qp)
+    offset = length(d.model.qp)
     # An evaluator is only required to implement `jacobian_structure` if it
     # supports `:Jac`. If the inner evaluator does not (it then must not have
     # any rows for the stack to be usable), append nothing.
@@ -340,13 +390,13 @@ function MOI.jacobian_structure(d::EvaluatorWithQuad)
 end
 
 function MOI.eval_constraint_jacobian(d::EvaluatorWithQuad, J, x)
-    MOI.eval_constraint_jacobian(d.qp, J, x)
+    MOI.eval_constraint_jacobian(d.model.qp, J, x)
     MOI.eval_constraint_jacobian(d.inner, view(J, (d.qp_nnzj+1):length(J)), x)
     return
 end
 
 function MOI.hessian_lagrangian_structure(d::EvaluatorWithQuad)
-    H = MOI.hessian_lagrangian_structure(d.qp)
+    H = MOI.hessian_lagrangian_structure(d.model.qp)
     if :Hess in MOI.features_available(d.inner)
         append!(H, MOI.hessian_lagrangian_structure(d.inner))
     end
@@ -354,10 +404,10 @@ function MOI.hessian_lagrangian_structure(d::EvaluatorWithQuad)
 end
 
 function MOI.eval_hessian_lagrangian(d::EvaluatorWithQuad, H, x, σ, μ)
-    m = length(d.qp)
-    # If the objective is not in the QP block, `d.qp.objective` is zero, so
+    m = length(d.model.qp)
+    # If the objective is not in the QP block, `d.model.qp.objective` is zero, so
     # passing `σ` is harmless; and vice versa for the inner evaluator.
-    MOI.eval_hessian_lagrangian(d.qp, H, x, σ, view(μ, 1:m))
+    MOI.eval_hessian_lagrangian(d.model.qp, H, x, σ, view(μ, 1:m))
     MOI.eval_hessian_lagrangian(
         d.inner,
         view(H, (d.qp_nnzh+1):length(H)),
@@ -372,14 +422,14 @@ end
 # block write its own rows.
 function MOI.eval_constraint_jacobian_product(d::EvaluatorWithQuad, y, x, w)
     fill!(y, zero(eltype(y)))
-    m = length(d.qp)
+    m = length(d.model.qp)
     MOI.eval_constraint_jacobian_product(
         d.inner,
         view(y, (m+1):length(y)),
         x,
         w,
     )
-    _add_constraint_jacobian_product(d.qp, y, x, w)
+    _add_constraint_jacobian_product(d.model.qp, y, x, w)
     return
 end
 
@@ -393,14 +443,14 @@ function MOI.eval_constraint_jacobian_transpose_product(
     w,
 )
     fill!(y, zero(eltype(y)))
-    m = length(d.qp)
+    m = length(d.model.qp)
     MOI.eval_constraint_jacobian_transpose_product(
         d.inner,
         y,
         x,
         view(w, (m+1):length(w)),
     )
-    _add_constraint_jacobian_transpose_product(d.qp, y, x, view(w, 1:m))
+    _add_constraint_jacobian_transpose_product(d.model.qp, y, x, view(w, 1:m))
     return
 end
 
@@ -413,7 +463,7 @@ function MOI.eval_hessian_lagrangian_product(
     μ,
 )
     fill!(H, zero(eltype(H)))
-    m = length(d.qp)
+    m = length(d.model.qp)
     MOI.eval_hessian_lagrangian_product(
         d.inner,
         H,
@@ -422,7 +472,7 @@ function MOI.eval_hessian_lagrangian_product(
         σ,
         view(μ, (m+1):length(μ)),
     )
-    _add_hessian_lagrangian_product(d.qp, H, x, v, σ, view(μ, 1:m))
+    _add_hessian_lagrangian_product(d.model.qp, H, x, v, σ, view(μ, 1:m))
     return
 end
 

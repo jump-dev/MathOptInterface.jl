@@ -4,12 +4,6 @@
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
 # This file is adapted from `Ipopt.jl/ext/IpoptMathOptInterfaceExt/utils.jl`.
-#
-# Unlike the Ipopt version, a variable is treated as a parameter if and only
-# if its index is a key of the `parameters` dictionary, instead of an
-# index-offset convention. Parameters must therefore be registered in
-# `parameters` before any structure query, but their values may be updated
-# freely between function evaluations.
 
 @enum(
     _FunctionType,
@@ -72,11 +66,12 @@ the solver through the same callbacks as an [`MOI.AbstractNLPEvaluator`](@ref)
 
 ## Parameters
 
-A variable is treated as a parameter if and only if its index is a key of the
-`parameters` dictionary, which maps the raw `MOI.VariableIndex` value of the
-parameter to its current value. Register every parameter in `parameters`
-before querying any structure; the values may be updated freely between
-function evaluations.
+A variable is treated as a parameter if and only if its index is offset by
+[`_PARAMETER_OFFSET`](@ref); see [`_is_parameter`](@ref). The value of the
+parameter `x` is `parameters[x.value - _PARAMETER_OFFSET]`, following the
+indexing of [`ParameterIndex`](@ref), so that `parameters` can alias the
+parameter storage of a [`Model`](@ref). The values may be updated freely
+between function evaluations.
 """
 mutable struct QPBlockData{T}
     objective::Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
@@ -89,7 +84,7 @@ mutable struct QPBlockData{T}
     mult_g::Vector{Union{Nothing,T}}
     function_type::Vector{_FunctionType}
     bound_type::Vector{_BoundType}
-    parameters::Dict{Int64,T}
+    parameters::Vector{T}
 
     function QPBlockData{T}() where {T}
         return new(
@@ -101,21 +96,40 @@ mutable struct QPBlockData{T}
             Union{Nothing,T}[],
             _FunctionType[],
             _BoundType[],
-            Dict{Int64,T}(),
+            T[],
         )
     end
 end
 
-_is_parameter(v::MOI.VariableIndex, p::Dict) = haskey(p, v.value)
+"""
+    _PARAMETER_OFFSET
 
-function _value(v::MOI.VariableIndex, x, p::Dict)
-    return _is_parameter(v, p) ? p[v.value] : x[v.value]
+The offset of the `MOI.VariableIndex` value of a parameter: the variable
+`x` is a parameter if and only if `x.value >= _PARAMETER_OFFSET`, and
+`x.value - _PARAMETER_OFFSET` is the value of the corresponding
+[`ParameterIndex`](@ref).
+"""
+const _PARAMETER_OFFSET = 0x00f0000000000000
+
+"""
+    _is_parameter(x::MOI.VariableIndex)
+
+Return whether `x` is a parameter, following the [`_PARAMETER_OFFSET`](@ref)
+convention.
+"""
+_is_parameter(x::MOI.VariableIndex) = x.value >= _PARAMETER_OFFSET
+
+function _value(v::MOI.VariableIndex, x, p::Vector)
+    if _is_parameter(v)
+        return p[v.value-_PARAMETER_OFFSET]
+    end
+    return x[v.value]
 end
 
 function _eval_function(
     f::MOI.ScalarQuadraticFunction{T},
     x::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::T where {T}
     y = f.constant
     for term in f.affine_terms
@@ -136,7 +150,7 @@ end
 function _eval_function(
     f::MOI.ScalarAffineFunction{T},
     x::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::T where {T}
     y = f.constant
     for term in f.terms
@@ -149,20 +163,19 @@ function _eval_dense_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
     x::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Nothing where {T}
     for term in f.affine_terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             ∇f[term.variable.value] += term.coefficient
         end
     end
     for term in f.quadratic_terms
-        if !_is_parameter(term.variable_1, p)
+        if !_is_parameter(term.variable_1)
             v = _value(term.variable_2, x, p)
             ∇f[term.variable_1.value] += term.coefficient * v
         end
-        if term.variable_1 != term.variable_2 &&
-           !_is_parameter(term.variable_2, p)
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
             v = _value(term.variable_1, x, p)
             ∇f[term.variable_2.value] += term.coefficient * v
         end
@@ -174,10 +187,10 @@ function _eval_dense_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
     x::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Nothing where {T}
     for term in f.terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             ∇f[term.variable.value] += term.coefficient
         end
     end
@@ -188,19 +201,18 @@ function _append_sparse_gradient_structure!(
     f::MOI.ScalarQuadraticFunction,
     J,
     row,
-    p::Dict,
+    p::Vector,
 )
     for term in f.affine_terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             push!(J, (row, term.variable.value))
         end
     end
     for term in f.quadratic_terms
-        if !_is_parameter(term.variable_1, p)
+        if !_is_parameter(term.variable_1)
             push!(J, (row, term.variable_1.value))
         end
-        if term.variable_1 != term.variable_2 &&
-           !_is_parameter(term.variable_2, p)
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
             push!(J, (row, term.variable_2.value))
         end
     end
@@ -211,10 +223,10 @@ function _append_sparse_gradient_structure!(
     f::MOI.ScalarAffineFunction,
     J,
     row,
-    p::Dict,
+    p::Vector,
 )
     for term in f.terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             push!(J, (row, term.variable.value))
         end
     end
@@ -225,23 +237,22 @@ function _eval_sparse_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
     x::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Int where {T}
     i = 0
     for term in f.affine_terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             i += 1
             ∇f[i] = term.coefficient
         end
     end
     for term in f.quadratic_terms
-        if !_is_parameter(term.variable_1, p)
+        if !_is_parameter(term.variable_1)
             v = _value(term.variable_2, x, p)
             i += 1
             ∇f[i] = term.coefficient * v
         end
-        if term.variable_1 != term.variable_2 &&
-           !_is_parameter(term.variable_2, p)
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
             v = _value(term.variable_1, x, p)
             i += 1
             ∇f[i] = term.coefficient * v
@@ -254,11 +265,11 @@ function _eval_sparse_gradient(
     ∇f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
     x::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Int where {T}
     i = 0
     for term in f.terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             i += 1
             ∇f[i] = term.coefficient
         end
@@ -269,11 +280,10 @@ end
 function _append_sparse_hessian_structure!(
     f::MOI.ScalarQuadraticFunction,
     H,
-    p::Dict,
+    p::Vector,
 )
     for term in f.quadratic_terms
-        if _is_parameter(term.variable_1, p) ||
-           _is_parameter(term.variable_2, p)
+        if _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
             continue
         end
         push!(H, (term.variable_1.value, term.variable_2.value))
@@ -284,7 +294,7 @@ end
 function _append_sparse_hessian_structure!(
     ::MOI.ScalarAffineFunction,
     H,
-    ::Dict,
+    ::Vector,
 )
     return nothing
 end
@@ -293,12 +303,11 @@ function _eval_sparse_hessian(
     ∇²f::AbstractVector{T},
     f::MOI.ScalarQuadraticFunction{T},
     σ::T,
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Int where {T}
     i = 0
     for term in f.quadratic_terms
-        if _is_parameter(term.variable_1, p) ||
-           _is_parameter(term.variable_2, p)
+        if _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
             continue
         end
         i += 1
@@ -311,7 +320,7 @@ function _eval_sparse_hessian(
     ∇²f::AbstractVector{T},
     f::MOI.ScalarAffineFunction{T},
     σ::T,
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Int where {T}
     return 0
 end
@@ -588,11 +597,11 @@ function _add_Jv_product(
     y::AbstractVector{T},
     x::AbstractVector{T},
     w::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
     i::Int,
 )::Nothing where {T}
     for term in f.terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             y[i] += term.coefficient * w[term.variable.value]
         end
     end
@@ -604,21 +613,20 @@ function _add_Jv_product(
     y::AbstractVector{T},
     x::AbstractVector{T},
     w::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
     i::Int,
 )::Nothing where {T}
     for term in f.affine_terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             y[i] += term.coefficient * w[term.variable.value]
         end
     end
     for term in f.quadratic_terms
-        if !_is_parameter(term.variable_1, p)
+        if !_is_parameter(term.variable_1)
             v = _value(term.variable_2, x, p)
             y[i] += term.coefficient * v * w[term.variable_1.value]
         end
-        if term.variable_1 != term.variable_2 &&
-           !_is_parameter(term.variable_2, p)
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
             v = _value(term.variable_1, x, p)
             y[i] += term.coefficient * v * w[term.variable_2.value]
         end
@@ -631,11 +639,11 @@ function _add_Jtv_product(
     y::AbstractVector{T},
     x::AbstractVector{T},
     w::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
     i::Int,
 )::Nothing where {T}
     for term in f.terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             y[term.variable.value] += term.coefficient * w[i]
         end
     end
@@ -647,21 +655,20 @@ function _add_Jtv_product(
     y::AbstractVector{T},
     x::AbstractVector{T},
     w::AbstractVector{T},
-    p::Dict{Int64,T},
+    p::Vector{T},
     i::Int,
 )::Nothing where {T}
     for term in f.affine_terms
-        if !_is_parameter(term.variable, p)
+        if !_is_parameter(term.variable)
             y[term.variable.value] += term.coefficient * w[i]
         end
     end
     for term in f.quadratic_terms
-        if !_is_parameter(term.variable_1, p)
+        if !_is_parameter(term.variable_1)
             v = _value(term.variable_2, x, p)
             y[term.variable_1.value] += term.coefficient * v * w[i]
         end
-        if term.variable_1 != term.variable_2 &&
-           !_is_parameter(term.variable_2, p)
+        if term.variable_1 != term.variable_2 && !_is_parameter(term.variable_2)
             v = _value(term.variable_1, x, p)
             y[term.variable_2.value] += term.coefficient * v * w[i]
         end
@@ -675,11 +682,10 @@ function _add_Hv_product(
     x::AbstractVector{T},
     v::AbstractVector{T},
     λ::T,
-    p::Dict{Int64,T},
+    p::Vector{T},
 )::Nothing where {T}
     for term in f.quadratic_terms
-        if _is_parameter(term.variable_1, p) ||
-           _is_parameter(term.variable_2, p)
+        if _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
             continue
         end
         i, j = term.variable_1.value, term.variable_2.value
@@ -697,7 +703,7 @@ function _add_Hv_product(
     x::AbstractVector{T},
     v::AbstractVector{T},
     λ::T,
-    p::Dict{Int64,T},
+    p::Vector{T},
 ) where {T}
     return nothing
 end
