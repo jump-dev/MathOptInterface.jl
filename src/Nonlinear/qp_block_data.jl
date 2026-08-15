@@ -119,6 +119,12 @@ convention.
 """
 _is_parameter(x::MOI.VariableIndex) = x.value >= _PARAMETER_OFFSET
 
+_is_parameter(term::MOI.ScalarAffineTerm) = _is_parameter(term.variable)
+
+function _is_parameter(term::MOI.ScalarQuadraticTerm)
+    return _is_parameter(term.variable_1) || _is_parameter(term.variable_2)
+end
+
 function _value(v::MOI.VariableIndex, x, p::Vector)
     if _is_parameter(v)
         return p[v.value-_PARAMETER_OFFSET]
