@@ -171,7 +171,7 @@ function test_objective_sink_switching()
         MOI.ScalarAffineTerm{Float64}[],
         0.0,
     )
-    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    Nonlinear.set_objective(model, f)
     @test model.objective_sink == :quad
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarQuadraticFunction{Float64}

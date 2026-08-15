@@ -19,9 +19,9 @@ typically a [`Model`](@ref).
 [`QPBlockData`](@ref), with `T` defaulting to `Float64`.
 
 Add constraints with [`add_constraint`](@ref) or `MOI.add_constraint`, and
-set the objective with [`set_objective`](@ref) or `MOI.set`: affine and
-quadratic functions are routed to the QP block, everything else to the inner
-model. `objective_sink` records where the objective currently lives (`:none`,
+set the objective with [`set_objective`](@ref): affine and quadratic
+functions are routed to the QP block, everything else to the inner model.
+`objective_sink` records where the objective currently lives (`:none`,
 `:quad` or `:inner`).
 
 Create the corresponding evaluator, [`EvaluatorWithQuad`](@ref), with
@@ -112,22 +112,6 @@ function set_objective(model::ModelWithQuad{T}, obj) where {T}
     MOI.set(model.qp, MOI.ObjectiveFunction{F}(), zero(F))
     set_objective(model.inner, obj)
     model.objective_sink = obj === nothing ? :none : :inner
-    return
-end
-
-function MOI.set(
-    model::ModelWithQuad{T},
-    ::MOI.ObjectiveFunction{F},
-    func::F,
-) where {
-    T,
-    F<:Union{
-        MOI.VariableIndex,
-        MOI.ScalarAffineFunction{T},
-        MOI.ScalarQuadraticFunction{T},
-    },
-}
-    set_objective(model, func)
     return
 end
 
