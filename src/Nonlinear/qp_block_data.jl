@@ -705,7 +705,7 @@ end
 # These are used to add the QP contribution on top of the NL contribution.
 
 """
-    add_constraint_jacobian_product(
+    _add_constraint_jacobian_product(
         block::QPBlockData{T},
         y::AbstractVector{T},
         x::AbstractVector{T},
@@ -720,7 +720,7 @@ accumulates into `y` instead of storing the result, so that the contributions
 of several blocks can be composed: the caller is responsible for zeroing `y`
 before the first contribution.
 """
-function add_constraint_jacobian_product(
+function _add_constraint_jacobian_product(
     block::QPBlockData{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -733,7 +733,7 @@ function add_constraint_jacobian_product(
 end
 
 """
-    add_constraint_jacobian_transpose_product(
+    _add_constraint_jacobian_transpose_product(
         block::QPBlockData{T},
         y::AbstractVector{T},
         x::AbstractVector{T},
@@ -748,7 +748,7 @@ function accumulates into `y` instead of storing the result, so that the
 contributions of several blocks can be composed: the caller is responsible
 for zeroing `y` before the first contribution.
 """
-function add_constraint_jacobian_transpose_product(
+function _add_constraint_jacobian_transpose_product(
     block::QPBlockData{T},
     y::AbstractVector{T},
     x::AbstractVector{T},
@@ -761,7 +761,7 @@ function add_constraint_jacobian_transpose_product(
 end
 
 """
-    add_hessian_lagrangian_product(
+    _add_hessian_lagrangian_product(
         block::QPBlockData{T},
         H::AbstractVector{T},
         x::AbstractVector{T},
@@ -778,7 +778,7 @@ accumulates into `H` instead of storing the result, so that the contributions
 of several blocks can be composed: the caller is responsible for zeroing `H`
 before the first contribution.
 """
-function add_hessian_lagrangian_product(
+function _add_hessian_lagrangian_product(
     block::QPBlockData{T},
     H::AbstractVector{T},
     x::AbstractVector{T},
