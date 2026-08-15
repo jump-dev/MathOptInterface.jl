@@ -21,9 +21,10 @@ everything else to the `inner` model, typically a [`Model`](@ref).
 Add variables with `MOI.add_variable`: the layer guarantees that the variable
 indices are `1:n`, like `MOI.Utilities.MatrixOfConstraints`. Add parameters
 with `MOI.add_constrained_variable(model, ::MOI.Parameter)`: parameters get
-indices offset by [`_PARAMETER_OFFSET`](@ref), their values are stored in the
-inner model through [`add_parameter`](@ref), and `qp.parameters` aliases that
-storage, so a parameter update is visible to both blocks.
+indices offset by [`_PARAMETER_OFFSET`](@ref), and their values are stored in
+the inner model through [`add_parameter`](@ref). The inner model must expose
+that storage as `parameters::Vector{T}`, like [`Model`](@ref) does:
+`qp.parameters` aliases it, so a parameter update is visible to both blocks.
 
 Add constraints with [`add_constraint`](@ref) or `MOI.add_constraint`, and
 set the objective with [`set_objective`](@ref): affine and quadratic
@@ -53,7 +54,10 @@ mutable struct ModelWithQuad{T,M}
             inner,
             objective_sink,
         )
-        _share_parameters(model.qp, model.inner)
+        # The QP block reads the parameter values from the storage of the
+        # inner model, which must expose them as `parameters::Vector{T}`,
+        # like [`Model`](@ref) does.
+        model.qp.parameters = inner.parameters
         return model
     end
 end
@@ -63,14 +67,6 @@ function ModelWithQuad{T}(inner) where {T}
 end
 
 ModelWithQuad(inner) = ModelWithQuad{Float64}(inner)
-
-# The QP block reads the parameter values from the inner model's storage.
-_share_parameters(::QPBlockData, ::Any) = nothing
-
-function _share_parameters(qp::QPBlockData{Float64}, inner::Model)
-    qp.parameters = inner.parameters
-    return
-end
 
 # The variables and the parameters.
 
