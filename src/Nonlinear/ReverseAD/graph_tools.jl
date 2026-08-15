@@ -106,7 +106,7 @@ function _classify_linearity(
             op =
                 get(Nonlinear.DEFAULT_UNIVARIATE_OPERATORS, node.index, nothing)
             if op == :+ || op == :-
-                # Unary plus and minus preserve the linearity of the child.
+                # A unary plus or minus preserves the linearity of the child.
                 linearity[k] = worst
             elseif op == :abs && worst <= PIECEWISE_LINEAR
                 linearity[k] = PIECEWISE_LINEAR
