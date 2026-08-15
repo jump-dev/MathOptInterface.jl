@@ -13,9 +13,7 @@
 
 A model layer that stores affine and quadratic objectives and constraints in
 a [`QPBlockData`](@ref) and forwards everything else to the `inner` model,
-typically a [`Model`](@ref). Solvers with their own storage can pass an
-existing `qp` and set `inner` to `nothing` when they manage the nonlinear
-model themselves.
+typically a [`Model`](@ref).
 
 `ModelWithQuad(inner)` and `ModelWithQuad{T}(inner)` create an empty
 [`QPBlockData`](@ref), with `T` defaulting to `Float64`.
@@ -94,9 +92,6 @@ function MOI.get(
 end
 
 # The objective.
-
-# Support for models whose inner model is managed by the solver.
-set_objective(::Nothing, ::Nothing) = nothing
 
 function set_objective(
     model::ModelWithQuad{T},
