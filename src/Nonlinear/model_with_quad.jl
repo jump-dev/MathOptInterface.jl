@@ -145,6 +145,42 @@ before the rows of the inner model in the corresponding evaluator.
 """
 Base.length(model::ModelWithQuad) = length(model.qp)
 
+# Replace the parameters of `f`, encoded as `MOI.VariableIndex`es offset by
+# [`_PARAMETER_OFFSET`](@ref), by the corresponding [`ParameterIndex`](@ref),
+# which the inner model understands. An affine or quadratic function that
+# contains a parameter is converted to `MOI.ScalarNonlinearFunction`, because
+# the inner model parses such functions with their variable indices verbatim.
+_replace_parameters(f) = f
+
+function _replace_parameters(f::MOI.VariableIndex)
+    if _is_parameter(f)
+        return ParameterIndex(f.value - _PARAMETER_OFFSET)
+    end
+    return f
+end
+
+function _replace_parameters(f::MOI.ScalarAffineFunction)
+    if any(_is_parameter, f.terms)
+        return _replace_parameters(convert(MOI.ScalarNonlinearFunction, f))
+    end
+    return f
+end
+
+function _replace_parameters(f::MOI.ScalarQuadraticFunction)
+    if any(_is_parameter, f.affine_terms) ||
+       any(_is_parameter, f.quadratic_terms)
+        return _replace_parameters(convert(MOI.ScalarNonlinearFunction, f))
+    end
+    return f
+end
+
+function _replace_parameters(f::MOI.ScalarNonlinearFunction)
+    for (i, arg) in enumerate(f.args)
+        f.args[i] = _replace_parameters(arg)
+    end
+    return f
+end
+
 # Methods forwarded to the inner model.
 
 function add_parameter(model::ModelWithQuad, value::Real)
@@ -194,6 +230,9 @@ end
 function set_objective(model::ModelWithQuad{T}, obj) where {T}
     F = MOI.ScalarAffineFunction{T}
     MOI.set(model.qp, MOI.ObjectiveFunction{F}(), zero(F))
+    if !isempty(model.qp.parameters)
+        obj = _replace_parameters(obj)
+    end
     set_objective(model.inner, obj)
     model.objective_sink = obj === nothing ? :none : :inner
     return
@@ -225,6 +264,9 @@ function add_constraint(
 end
 
 function add_constraint(model::ModelWithQuad, func, set)
+    if !isempty(model.qp.parameters)
+        func = _replace_parameters(func)
+    end
     return add_constraint(model.inner, func, set)
 end
 

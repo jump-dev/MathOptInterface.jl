@@ -256,6 +256,20 @@ function test_quad_parameters()
     MOI.set(model, MOI.ConstraintSet(), cp, MOI.Parameter(7.0))
     MOI.eval_constraint(d, g, [1.0])
     @test g == [2.0 * 1.0 + 3.0 * 7.0, 7.0 * 1.0]
+    # A nonlinear constraint with the parameter in an embedded affine
+    # subfunction: the layer substitutes the parameter before the inner model
+    # parses the function.
+    aff = MOI.ScalarAffineFunction(
+        [MOI.ScalarAffineTerm(3.0, p), MOI.ScalarAffineTerm(1.0, x)],
+        0.0,
+    )
+    snf = MOI.ScalarNonlinearFunction(:sqrt, Any[aff])
+    Nonlinear.add_constraint(model, snf, MOI.LessThan(10.0))
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
+    MOI.initialize(d, [:Grad, :Jac])
+    g = fill(NaN, 3)
+    MOI.eval_constraint(d, g, [1.0])
+    @test g ≈ [2.0 + 3.0 * 7.0, 7.0, sqrt(3.0 * 7.0 + 1.0)]
     return
 end
 
