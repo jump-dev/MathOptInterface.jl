@@ -165,14 +165,14 @@ end
 function test_objective_sink_switching()
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
     x = MOI.add_variable(model)
-    @test model.objective_sink == :none
+    @test model.objective_sink == Nonlinear._NONE
     f = MOI.ScalarQuadraticFunction(
         [MOI.ScalarQuadraticTerm(2.0, x, x)],
         MOI.ScalarAffineTerm{Float64}[],
         0.0,
     )
     Nonlinear.set_objective(model, f)
-    @test model.objective_sink == :quad
+    @test model.objective_sink == Nonlinear._QUAD
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarQuadraticFunction{Float64}
     @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) ≈ f
@@ -183,7 +183,7 @@ function test_objective_sink_switching()
     # Switch to a nonlinear objective: the quadratic objective must be
     # cleared, including its Hessian entries.
     Nonlinear.set_objective(model, :(sin($x)))
-    @test model.objective_sink == :inner
+    @test model.objective_sink == Nonlinear._INNER
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :Hess])
     @test MOI.eval_objective(d, [3.0]) == sin(3.0)
@@ -195,12 +195,12 @@ function test_objective_sink_switching()
     # Switch to a linear objective, and then remove it.
     g = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 1.0)
     Nonlinear.set_objective(model, g)
-    @test model.objective_sink == :quad
+    @test model.objective_sink == Nonlinear._QUAD
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
     @test MOI.eval_objective(d, [3.0]) == 7.0
     Nonlinear.set_objective(model, nothing)
-    @test model.objective_sink == :none
+    @test model.objective_sink == Nonlinear._NONE
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
     @test MOI.eval_objective(d, [3.0]) == 0.0

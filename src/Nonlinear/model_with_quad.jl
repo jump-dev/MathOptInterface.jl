@@ -4,11 +4,14 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+# Where the objective of a `ModelWithQuad` currently lives.
+@enum(_ObjectiveSink, _NONE, _QUAD, _INNER)
+
 """
     ModelWithQuad{T,M}(
         qp::QPBlockData{T},
         inner::M;
-        objective_sink::Symbol = :none,
+        objective_sink::_ObjectiveSink = _NONE,
     ) where {T,M}
 
 A model layer that owns the variables of the model, stores affine and
@@ -29,8 +32,8 @@ that storage as `parameters::Vector{T}`, like [`Model`](@ref) does:
 Add constraints with [`add_constraint`](@ref) or `MOI.add_constraint`, and
 set the objective with [`set_objective`](@ref): affine and quadratic
 functions are routed to the QP block, everything else to the inner model.
-`objective_sink` records where the objective currently lives (`:none`,
-`:quad` or `:inner`).
+`objective_sink` records where the objective currently lives (`_NONE`,
+`_QUAD` or `_INNER`).
 
 Create the corresponding evaluator, [`EvaluatorWithQuad`](@ref), with
 `Evaluator(model, backend)`, or construct it directly from an inner
@@ -41,12 +44,12 @@ mutable struct ModelWithQuad{T,M}
     variables::MOI.Utilities.VariablesContainer{T}
     qp::QPBlockData{T}
     inner::M
-    objective_sink::Symbol # :none, :quad or :inner
+    objective_sink::_ObjectiveSink
 
     function ModelWithQuad{T}(
         qp::QPBlockData{T},
         inner::M;
-        objective_sink::Symbol = :none,
+        objective_sink::_ObjectiveSink = _NONE,
     ) where {T,M}
         model = new{T,M}(
             MOI.Utilities.VariablesContainer{T}(),
@@ -223,7 +226,7 @@ function set_objective(
 ) where {T}
     MOI.set(model.qp, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     set_objective(model.inner, nothing)
-    model.objective_sink = :quad
+    model.objective_sink = _QUAD
     return
 end
 
@@ -234,7 +237,7 @@ function set_objective(model::ModelWithQuad{T}, obj) where {T}
         obj = _replace_parameters(obj)
     end
     set_objective(model.inner, obj)
-    model.objective_sink = obj === nothing ? :none : :inner
+    model.objective_sink = obj === nothing ? _NONE : _INNER
     return
 end
 
@@ -385,9 +388,9 @@ end
 
 function MOI.eval_objective(d::EvaluatorWithQuad{T}, x) where {T}
     sink = d.model.objective_sink
-    if sink == :quad
+    if sink == _QUAD
         return MOI.eval_objective(d.model.qp, x)
-    elseif sink == :inner
+    elseif sink == _INNER
         return MOI.eval_objective(d.inner, x)
     else
         return zero(T)
@@ -396,9 +399,9 @@ end
 
 function MOI.eval_objective_gradient(d::EvaluatorWithQuad{T}, grad, x) where {T}
     sink = d.model.objective_sink
-    if sink == :quad
+    if sink == _QUAD
         MOI.eval_objective_gradient(d.model.qp, grad, x)
-    elseif sink == :inner
+    elseif sink == _INNER
         MOI.eval_objective_gradient(d.inner, grad, x)
     else
         grad .= zero(T)
@@ -534,7 +537,7 @@ end
 _has_objective(d::Evaluator) = d.model.objective !== nothing
 
 function _has_objective(d::EvaluatorWithQuad)
-    if d.model.objective_sink == :quad
+    if d.model.objective_sink == _QUAD
         return true
     end
     return _has_objective(d.inner)
