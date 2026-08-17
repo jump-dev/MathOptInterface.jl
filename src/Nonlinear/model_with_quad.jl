@@ -85,6 +85,18 @@ function MOI.add_constrained_variable(
     return x, ci
 end
 
+function MOI.get(model::ModelWithQuad, attr::MOI.NumberOfVariables)
+    return MOI.get(model.variables, attr) + length(model.qp.parameters)
+end
+
+# The parameters come after the variables, not interleaved in creation
+# order.
+function MOI.get(model::ModelWithQuad, attr::MOI.ListOfVariableIndices)
+    ret = MOI.get(model.variables, attr)
+    n = length(model.qp.parameters)
+    return append!(ret, MOI.VariableIndex.(_PARAMETER_OFFSET .+ (1:n)))
+end
+
 function MOI.is_valid(model::ModelWithQuad, x::MOI.VariableIndex)
     if _is_parameter(x)
         return 1 <= x.value - _PARAMETER_OFFSET <= length(model.qp.parameters)
