@@ -7,6 +7,29 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.53.0 (August 18, 2026)
+
+### Added
+
+- Added [`dual_set`](@ref) for [`NormCone`](@ref) (#3042)
+- Added [`DualGeometricMeanCone`](@ref) (#3041), (#3047)
+- Added [`DualRelativeEntropyCone`](@ref) (#3049), (#3051)
+
+### Fixed
+
+- Fixed `[compat]` bound on CliqueTrees.jl (#3039)
+- Fixed [`ConstraintPrimal`](@ref) and [`ConstraintPrimalStart`](@ref) in
+  [`Bridges.Constraint.GeoMeanBridge`](@ref) (#3056), (#3059)
+
+### Other
+
+- Updated `solver_tests.yml` (#3038)
+- Updated GitHub actions versions (#3043)
+- Added DocumenterCodeBlocks.jl (#3044), (#3058)
+- Disable `depwarn=error` on Julia nightly (#3050)
+- Fixed various typos in the documentation (#3052)
+- Fixed various link checking (#3058)
+
 ## v1.52.0 (July 31, 2026)
 
 ### Added
