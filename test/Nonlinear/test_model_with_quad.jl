@@ -224,6 +224,15 @@ function test_quad_parameters()
     @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [cp]
     # The value is stored in the inner model, aliased by the QP block.
     @test model.qp.parameters === model.inner.parameters
+    # `ListOfVariableIndices` is in the order of creation, parameters
+    # included.
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x, p]
+    let model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+        q, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+        z = MOI.add_variable(model)
+        @test MOI.get(model, MOI.ListOfVariableIndices()) == [q, z]
+    end
     Nonlinear.add_constraint(
         model,
         MOI.ScalarAffineFunction(

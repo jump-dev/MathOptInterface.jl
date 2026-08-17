@@ -42,6 +42,9 @@ the rows of the inner evaluator.
 """
 mutable struct ModelWithQuad{T,M}
     variables::MOI.Utilities.VariablesContainer{T}
+    # The variables and the parameters, in the order they were added, as
+    # `MOI.ListOfVariableIndices` requires.
+    list_of_variable_indices::Vector{MOI.VariableIndex}
     qp::QPBlockData{T}
     inner::M
     objective_sink::_ObjectiveSink
@@ -53,6 +56,7 @@ mutable struct ModelWithQuad{T,M}
     ) where {T,M}
         model = new{T,M}(
             MOI.Utilities.VariablesContainer{T}(),
+            MOI.VariableIndex[],
             qp,
             inner,
             objective_sink,
@@ -73,7 +77,11 @@ ModelWithQuad(inner) = ModelWithQuad{Float64}(inner)
 
 # The variables and the parameters.
 
-MOI.add_variable(model::ModelWithQuad) = MOI.add_variable(model.variables)
+function MOI.add_variable(model::ModelWithQuad)
+    x = MOI.add_variable(model.variables)
+    push!(model.list_of_variable_indices, x)
+    return x
+end
 
 function MOI.add_constrained_variable(
     model::ModelWithQuad{T},
@@ -81,20 +89,17 @@ function MOI.add_constrained_variable(
 ) where {T}
     p = add_parameter(model.inner, set.value)
     x = MOI.VariableIndex(_PARAMETER_OFFSET + p.value)
+    push!(model.list_of_variable_indices, x)
     ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}}(x.value)
     return x, ci
 end
 
-function MOI.get(model::ModelWithQuad, attr::MOI.NumberOfVariables)
-    return MOI.get(model.variables, attr) + length(model.qp.parameters)
+function MOI.get(model::ModelWithQuad, ::MOI.NumberOfVariables)
+    return length(model.list_of_variable_indices)
 end
 
-# The parameters come after the variables, not interleaved in creation
-# order.
-function MOI.get(model::ModelWithQuad, attr::MOI.ListOfVariableIndices)
-    ret = MOI.get(model.variables, attr)
-    n = length(model.qp.parameters)
-    return append!(ret, MOI.VariableIndex.(_PARAMETER_OFFSET .+ (1:n)))
+function MOI.get(model::ModelWithQuad, ::MOI.ListOfVariableIndices)
+    return model.list_of_variable_indices
 end
 
 function MOI.is_valid(model::ModelWithQuad, x::MOI.VariableIndex)
