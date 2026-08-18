@@ -185,7 +185,7 @@ Project.toml
  * The `/test` folder contains code for testing your package. See
    [Setup tests](@ref) for more information.
  * The `.JuliaFormatter.toml` and `.github/workflows/format_check.yml` enforce
-   code formatting using [JuliaFormatter.jl](https://github.com/domluna/JuliaFormatter.jl).
+   code formatting using [JuliaFormatter.jl](https://github.com/JuliaEditorSupport/JuliaFormatter.jl).
    Check existing solvers or JuMP.jl for details.
 
 ### Documentation

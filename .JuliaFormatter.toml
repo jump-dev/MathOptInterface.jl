@@ -1,5 +1,5 @@
 # Configuration file for JuliaFormatter.jl
-# For more information, see: https://domluna.github.io/JuliaFormatter.jl/stable/config/
+# For more information, see: https://JuliaEditorSupport.github.io/JuliaFormatter.jl/stable/config/
 
 always_for_in = true
 always_use_return = true
