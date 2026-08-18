@@ -469,11 +469,12 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithQuad, H, x, σ, μ)
     return
 end
 
-# The rows of the two blocks are disjoint, so zero everything and let each
-# block write its own rows.
+# The rows of the two blocks are disjoint: the inner evaluator stores its
+# rows, and the QP block accumulates into its rows, which must be zeroed
+# first.
 function MOI.eval_constraint_jacobian_product(d::EvaluatorWithQuad, y, x, w)
-    fill!(y, zero(eltype(y)))
     m = length(d.model.qp)
+    fill!(view(y, 1:m), zero(eltype(y)))
     MOI.eval_constraint_jacobian_product(
         d.inner,
         view(y, (m+1):length(y)),
@@ -484,16 +485,15 @@ function MOI.eval_constraint_jacobian_product(d::EvaluatorWithQuad, y, x, w)
     return
 end
 
-# Both blocks accumulate into the same variable-dimensional output. Call the
-# inner evaluator FIRST because implementations are allowed to overwrite the
-# output, and accumulate the QP block afterwards.
+# Both blocks contribute to the same variable-dimensional output.
+# `MOI.eval_constraint_jacobian_transpose_product` is called first as it
+# zeroes the output before accumulating, then the QP block accumulates.
 function MOI.eval_constraint_jacobian_transpose_product(
     d::EvaluatorWithQuad,
     y,
     x,
     w,
 )
-    fill!(y, zero(eltype(y)))
     m = length(d.model.qp)
     MOI.eval_constraint_jacobian_transpose_product(
         d.inner,
@@ -505,6 +505,8 @@ function MOI.eval_constraint_jacobian_transpose_product(
     return
 end
 
+# `MOI.eval_hessian_lagrangian_product` is called first as it zeroes the
+# output before accumulating, then the QP block accumulates.
 function MOI.eval_hessian_lagrangian_product(
     d::EvaluatorWithQuad,
     H,
@@ -513,7 +515,6 @@ function MOI.eval_hessian_lagrangian_product(
     σ,
     μ,
 )
-    fill!(H, zero(eltype(H)))
     m = length(d.model.qp)
     MOI.eval_hessian_lagrangian_product(
         d.inner,
