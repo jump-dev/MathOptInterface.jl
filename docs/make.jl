@@ -171,7 +171,7 @@ Documenter.DocMeta.setdocmeta!(
     checkdocs = :exports,
     doctest = _FIX ? :fix : true,
     pages = _PAGES,
-    plugins = [DocumenterCodeBlocks.CodeBlocks()],
+    plugins = [DocumenterCodeBlocks.CodeBlocks(; line_counter = :named)],
 )
 
 # ==============================================================================
