@@ -373,6 +373,8 @@ function MOI.get(
         output[1] +=
             MOI.get(model, _variable_attribute(attr), bridge.xij[1]) / sqrt(N)
     end
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.t_upper_bound_constraint)
+    output[1] += MOI.constant(set)
     return output
 end
 
@@ -382,8 +384,10 @@ function MOI.set(
     bridge::GeoMeanBridge{T},
     value,
 ) where {T}
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.t_upper_bound_constraint)
+    t_constant = MOI.constant(set)
     if bridge.d == 2
-        new_value = value[1] - value[2]
+        new_value = value[1] - value[2] - t_constant
         MOI.set(model, attr, bridge.t_upper_bound_constraint, new_value)
         MOI.set(model, attr, bridge.x_nonnegative_constraint, [value[2]])
         return
@@ -396,9 +400,12 @@ function MOI.set(
     xij = zeros(T, N - 1)
     xij[1] = xl1
     _get_x(i) = i > n ? sN * xl1 : value[1+i]
-    # With sqrt(2)^l*t - xl1, we should scale both the ConstraintPrimal and
-    # ConstraintDual
-    MOI.set(model, attr, bridge.t_upper_bound_constraint, value[1] - sN * xl1)
+    MOI.set(
+        model,
+        attr,
+        bridge.t_upper_bound_constraint,
+        value[1] - sN * xl1 - t_constant,
+    )
     offset = length(bridge.rsoc_constraints)
     for i in l:-1:1
         offset_next = offset

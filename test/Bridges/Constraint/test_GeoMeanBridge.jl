@@ -519,6 +519,118 @@ function test_runtests()
     return
 end
 
+function test_with_constant_d2()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1
+        [t + 1.0, x1] in GeometricMeanCone(2)
+        """,
+        """
+        variables: t, x1
+        1.0 * t + -1.0 * x1 <= -1.0
+        [1.0 * x1] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1
+        [t + -3.0, x1 + 1.0] in GeometricMeanCone(2)
+        """,
+        """
+        variables: t, x1
+        1.0 * t + -1.0 * x1 <= 4.0
+        [1.0 * x1 + 1.0] in Nonnegatives(1)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1
+        [t, x1 + 1.0] in GeometricMeanCone(2)
+        """,
+        """
+        variables: t, x1
+        1.0 * t + -1.0 * x1 <= 1.0
+        [1.0 + x1] in Nonnegatives(1)
+        """,
+    )
+    return
+end
+
+function test_with_constant_d3()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1, x2
+        [t + 1.0, x1, x2] in GeometricMeanCone(3)
+        """,
+        """
+        variables: t, x1, x2, y
+        1.0 * t + -0.7071067811865475 * y <= -1.0
+        [1.0 * x1, 1.0 * x2, 1.0 * y] in RotatedSecondOrderCone(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1, x2
+        [t, x1 + 1.0, x2] in GeometricMeanCone(3)
+        """,
+        """
+        variables: t, x1, x2, y
+        1.0 * t + -0.7071067811865475 * y <= 0.0
+        [1.0 + 1.0 * x1, 1.0 * x2, 1.0 * y] in RotatedSecondOrderCone(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1, x2
+        [t + -1.0, x1 + 2.0, x2] in GeometricMeanCone(3)
+        """,
+        """
+        variables: t, x1, x2, y
+        1.0 * t + -0.7071067811865475 * y <= 1.0
+        [1.0 * x1 + 2.0, 1.0 * x2, 1.0 * y] in RotatedSecondOrderCone(3)
+        """,
+    )
+    return
+end
+
+function test_with_constant_d4()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1, x2, x3
+        [t + -1.0, x1, x2, x3] in GeometricMeanCone(4)
+        """,
+        """
+        variables: t, x1, x2, x3, y1, y2, y3
+        1.0 * t + -0.5 * y1 <= 1.0
+        [1.0 * x1, 1.0 * x2, 1.0 * y2] in RotatedSecondOrderCone(3)
+        [1.0 * y2, 1.0 * y3, 1.0 * y1] in RotatedSecondOrderCone(3)
+        [1.0 * x3, 0.5 * y1, 1.0 * y3] in RotatedSecondOrderCone(3)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.GeoMeanBridge,
+        """
+        variables: t, x1, x2, x3
+        [t + -3.0, x1, x2, x3] in GeometricMeanCone(4)
+        """,
+        """
+        variables: t, x1, x2, x3, y1, y2, y3
+        1.0 * t + -0.5 * y1 <= 3.0
+        [1.0 * x1, 1.0 * x2, 1.0 * y2] in RotatedSecondOrderCone(3)
+        [1.0 * y2, 1.0 * y3, 1.0 * y1] in RotatedSecondOrderCone(3)
+        [1.0 * x3, 0.5 * y1, 1.0 * y3] in RotatedSecondOrderCone(3)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintGeomean.runtests()
