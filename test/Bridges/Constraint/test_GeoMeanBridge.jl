@@ -628,18 +628,6 @@ function test_with_constant_d4()
         [1.0 * x3, 0.5 * y1, 1.0 * y3] in RotatedSecondOrderCone(3)
         """,
     )
-    # MOI.Bridges.runtests(
-    #     MOI.Bridges.Constraint.GeoMeanBridge,
-    #     """
-    #     variables: t, x1, x2
-    #     [t, x1 + 1.0, x2] in GeometricMeanCone(3)
-    #     """,
-    #     """
-    #     variables: t, x1, x2, y
-    #     1.0 * t + -0.7071067811865475 * y <= 0.0
-    #     [1.0 + 1.0 * x1, 1.0 * x2, 1.0 * y] in RotatedSecondOrderCone(3)
-    #     """,
-    # )
     return
 end
 
