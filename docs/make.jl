@@ -163,8 +163,9 @@ Documenter.DocMeta.setdocmeta!(
         # Ignore the very many GitHub links
         r"https://github.com/jump-dev/.+",
         "https://arxiv.org/abs/2002.03447",
-        # https://github.com/JuliaDocs/Documenter.jl/issues/2834
         "https://lpsolve.sourceforge.net/5.5/CPLEX-format.htm",
+        "https://www.ibm.com/docs/en/icos/22.1.0?topic=cplex-lp-file-format-algebraic-representation",
+        "https://www.ibm.com/docs/en/icos/22.1.1?topic=api-cpxmip-optimal-infeas",
     ],
     modules = [MathOptInterface],
     checkdocs = :exports,
