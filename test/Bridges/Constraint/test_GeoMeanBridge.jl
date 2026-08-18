@@ -631,6 +631,26 @@ function test_with_constant_d4()
     return
 end
 
+function test_constraint_primal()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    mock = MOI.Utilities.MockOptimizer(inner)
+    model = MOI.Bridges.Constraint.GeoMean{Float64}(mock)
+    x = MOI.add_variables(model, 4)
+    a = [0.1, 0.2, 0.3, 0.5]
+    f = MOI.Utilities.vectorize(x .+ a)
+    c = MOI.add_constraint(model, f, MOI.GeometricMeanCone(4))
+    start = [1.81, 1, 2, 3]
+    MOI.set(model, MOI.ConstraintPrimalStart(), c, start)
+    @test isapprox(MOI.get(model, MOI.ConstraintPrimalStart(), c), start)
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    c_mock = only(MOI.get(mock, MOI.ListOfConstraintIndices{F,S}()))
+    @test isapprox(
+        1.81 - (1 * 2 * 3)^(1/3) - 0.1,
+        MOI.get(mock, MOI.ConstraintPrimalStart(), c_mock),
+    )
+    return
+end
+
 end  # module
 
 TestConstraintGeomean.runtests()
