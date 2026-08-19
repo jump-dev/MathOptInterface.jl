@@ -16,15 +16,15 @@ Consider the cone of dimension 4:
 ```math
 t \\le \\sqrt[3]{x_1 x_2 x_3}
 ```
-This can be rewritten as ``\\exists y \\ge 0`` such that:
+This can be rewritten as ``\\exists y_1 \\ge 0`` such that:
 ```math
 \\begin{align*}
-  t & \\le y,\\\\
-  y^4 & \\le x_1 x_2 x_3 y.
+  t & \\le y_1,\\\\
+  y_1^4 & \\le x_1 x_2 x_3 y_1.
 \\end{align*}
 ```
-Note that we need to create ``y`` and not use ``t^4`` directly because ``t`` is
-not allowed to be negative.
+Note that we need to create ``y_1`` and not use ``t^4`` directly because ``t`` is
+allowed to be negative.
 
 This is equivalent to:
 ```math
@@ -33,12 +33,12 @@ This is equivalent to:
     y_1^2 & \\le 2y_2 y_3,\\\\
     y_2^2 & \\le 2x_1 x_2, \\\\
     y_3^2 & \\le 2x_3(y_1/\\sqrt{4}) \\\\
-    y     & \\ge 0.
+    y_1   & \\ge 0.
 \\end{align*}
 ```
 
 More generally, you can show how the geometric mean code is recursively expanded
-into a set of new variables ``y`` in [`MOI.Nonnegatives`](@ref), a set of
+into a set of new variables ``y_i`` in [`MOI.Nonnegatives`](@ref), a set of
 [`MOI.RotatedSecondOrderCone`](@ref) constraints, and a [`MOI.LessThan`](@ref)
 constraint between ``t`` and ``y_1``.
 
