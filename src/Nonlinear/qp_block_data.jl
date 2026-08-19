@@ -67,7 +67,7 @@ the solver through the same callbacks as an [`MOI.AbstractNLPEvaluator`](@ref)
 ## Parameters
 
 A variable is treated as a parameter if and only if its index is offset by
-[`_PARAMETER_OFFSET`](@ref); see [`_is_parameter`](@ref). The value of the
+`_PARAMETER_OFFSET`; see `_is_parameter`. The value of the
 parameter `x` is `parameters[x.value - _PARAMETER_OFFSET]`, following the
 indexing of [`ParameterIndex`](@ref), so that `parameters` can alias the
 parameter storage of a [`Model`](@ref). The values may be updated freely

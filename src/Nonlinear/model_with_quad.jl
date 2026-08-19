@@ -24,7 +24,7 @@ everything else to the `inner` model, typically a [`Model`](@ref).
 Add variables with `MOI.add_variable`: the layer guarantees that the variable
 indices are `1:n`, like `MOI.Utilities.MatrixOfConstraints`. Add parameters
 with `MOI.add_constrained_variable(model, ::MOI.Parameter)`: parameters get
-indices offset by [`_PARAMETER_OFFSET`](@ref), and their values are stored in
+indices offset by `_PARAMETER_OFFSET`, and their values are stored in
 the inner model through [`add_parameter`](@ref). The inner model must expose
 that storage as `parameters::Vector{T}`, like [`Model`](@ref) does:
 `qp.parameters` aliases it, so a parameter update is visible to both blocks.
