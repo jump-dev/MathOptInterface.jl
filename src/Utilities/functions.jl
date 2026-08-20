@@ -545,6 +545,36 @@ end
 
 function substitute_variables(
     variable_map::F,
+    f::MOI.VectorOfVariables,
+) where {F<:Function}
+    variables = MOI.VariableIndex[]
+    for (i, x) in enumerate(f.variables)
+        y = variable_map(x)
+        try
+            push!(variables, convert(MOI.VariableIndex, y))
+        catch err
+            @assert err isa InexactError
+            error(
+                """
+                Cannot substitute variables in the `VectorOfVariables` \
+                function because the result is not representable as a \
+                `VectorOfVariables` function.
+
+                The variable `$x` in index `$i` is mapped to the expression \
+                `$y`, not directly to another `VariableIndex`.
+
+                Note that variables constrained on creation can be used in a \
+                `VectorOfVariables` function only when their bridge maps each \
+                one directly to another variable, without a transformation.
+                """,
+            )
+        end
+    end
+    return MOI.VectorOfVariables(variables)
+end
+
+function substitute_variables(
+    variable_map::F,
     f::MOI.VectorAffineFunction{T},
 ) where {T,F<:Function}
     g = MOI.VectorAffineFunction(
