@@ -187,6 +187,9 @@ function test_objective_sink_switching()
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac, :Hess])
     @test MOI.eval_objective(d, [3.0]) == sin(3.0)
+    grad = fill(NaN, 1)
+    MOI.eval_objective_gradient(d, grad, [3.0])
+    @test grad ≈ [cos(3.0)]
     @test MOI.NLPBlockData(d).has_objective
     H_structure = MOI.hessian_lagrangian_structure(d)
     H = fill(NaN, length(H_structure))
@@ -199,6 +202,9 @@ function test_objective_sink_switching()
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
     @test MOI.eval_objective(d, [3.0]) == 7.0
+    grad = fill(NaN, 1)
+    MOI.eval_objective_gradient(d, grad, [3.0])
+    @test grad == [2.0]
     Nonlinear.set_objective(model, nothing)
     @test model.objective_sink == Nonlinear._NONE
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
@@ -265,6 +271,20 @@ function test_quad_parameters()
     MOI.set(model, MOI.ConstraintSet(), cp, MOI.Parameter(7.0))
     MOI.eval_constraint(d, g, [1.0])
     @test g == [2.0 * 1.0 + 3.0 * 7.0, 7.0 * 1.0]
+    # The Hessian and the products skip the terms with a parameter: the
+    # second constraint, `p * x`, has no entry.
+    @test isempty(MOI.hessian_lagrangian_structure(d))
+    H = Float64[]
+    MOI.eval_hessian_lagrangian(d, H, [1.0], 1.0, [1.0, 1.0])
+    Jv = fill(NaN, 2)
+    MOI.eval_constraint_jacobian_product(d, Jv, [1.0], [1.5])
+    @test Jv == [2.0 * 1.5, 7.0 * 1.5]
+    Jtv = fill(NaN, 1)
+    MOI.eval_constraint_jacobian_transpose_product(d, Jtv, [1.0], [1.0, 1.0])
+    @test Jtv == [2.0 + 7.0]
+    Hv = fill(NaN, 1)
+    MOI.eval_hessian_lagrangian_product(d, Hv, [1.0], [1.5], 1.0, [1.0, 1.0])
+    @test Hv == [0.0]
     # A nonlinear constraint with the parameter in an embedded affine
     # subfunction: the layer substitutes the parameter before the inner model
     # parses the function.
@@ -274,11 +294,30 @@ function test_quad_parameters()
     )
     snf = MOI.ScalarNonlinearFunction(:sqrt, Any[aff])
     Nonlinear.add_constraint(model, snf, MOI.LessThan(10.0))
+    # A nonlinear constraint with a parameter-free affine subfunction, which
+    # the substitution leaves as is.
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(
+            :sqrt,
+            Any[MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)],
+        ),
+        MOI.LessThan(10.0),
+    )
+    # A nonlinear constraint and objective mentioning the parameter and the
+    # variable directly.
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:+, Any[x, p]),
+        MOI.LessThan(20.0),
+    )
+    Nonlinear.set_objective(model, MOI.ScalarNonlinearFunction(:*, Any[p, x]))
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
-    g = fill(NaN, 3)
+    g = fill(NaN, 5)
     MOI.eval_constraint(d, g, [1.0])
-    @test g ≈ [2.0 + 3.0 * 7.0, 7.0, sqrt(3.0 * 7.0 + 1.0)]
+    @test g ≈ [2.0 + 3.0 * 7.0, 7.0, sqrt(3.0 * 7.0 + 1.0), 1.0, 1.0 + 7.0]
+    @test MOI.eval_objective(d, [1.5]) == 7.0 * 1.5
     return
 end
 
@@ -313,6 +352,62 @@ function test_attribute_forwarding()
     g = fill(NaN, 2)
     MOI.eval_constraint(d, g, [3.0])
     @test g == [3.0, 36.0]
+    return
+end
+
+function test_qp_attribute_types()
+    model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
+    y = MOI.add_variable(model)
+    Nonlinear.set_objective(model, x)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == MOI.VariableIndex
+    @test MOI.get(model, MOI.ObjectiveFunction{MOI.VariableIndex}()) == x
+    F = MOI.ScalarAffineFunction{Float64}
+    f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    q = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarQuadraticTerm(2.0, x, y)],
+        MOI.ScalarAffineTerm{Float64}[],
+        0.0,
+    )
+    c1 = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    c2 = MOI.add_constraint(model, f, MOI.EqualTo(2.0))
+    c3 = MOI.add_constraint(model, f, MOI.Interval(3.0, 4.0))
+    c4 = MOI.add_constraint(model, q, MOI.GreaterThan(5.0))
+    @test MOI.get(model, MOI.ConstraintSet(), c1) == MOI.LessThan(1.0)
+    @test MOI.get(model, MOI.ConstraintSet(), c2) == MOI.EqualTo(2.0)
+    @test MOI.get(model, MOI.ConstraintSet(), c3) == MOI.Interval(3.0, 4.0)
+    @test MOI.get(model, MOI.ConstraintSet(), c4) == MOI.GreaterThan(5.0)
+    for (S, ci) in [
+        (MOI.LessThan{Float64}, c1),
+        (MOI.EqualTo{Float64}, c2),
+        (MOI.Interval{Float64}, c3),
+    ]
+        @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [ci]
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    end
+    Q = MOI.ScalarQuadraticFunction{Float64}
+    S = MOI.GreaterThan{Float64}
+    c5 = MOI.add_constraint(model, f, MOI.GreaterThan(6.0))
+    @test MOI.get(model, MOI.ListOfConstraintIndices{Q,S}()) == [c4]
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c5]
+    # The gradient of a quadratic objective with affine and off-diagonal
+    # terms.
+    g = MOI.ScalarQuadraticFunction(
+        [
+            MOI.ScalarQuadraticTerm(2.0, x, x),
+            MOI.ScalarQuadraticTerm(1.0, x, y),
+        ],
+        [MOI.ScalarAffineTerm(3.0, x)],
+        0.0,
+    )
+    Nonlinear.set_objective(model, g)
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
+    MOI.initialize(d, [:Grad, :Jac])
+    xv = [1.0, 2.0]
+    @test MOI.eval_objective(d, xv) == 1.0 + 2.0 + 3.0
+    grad = fill(NaN, 2)
+    MOI.eval_objective_gradient(d, grad, xv)
+    @test grad == [2.0 * 1.0 + 2.0 + 3.0, 1.0]
     return
 end
 
