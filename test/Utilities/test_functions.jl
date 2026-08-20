@@ -329,19 +329,32 @@ function test_substitute_variables()
     int_quad = 3 * y * x
     @test MOI.Utilities.substitute_variables(vi -> true * y, int_quad) ≈
           3 * y * y
+    return
+end
 
-    vector_of_variables = MOI.VectorOfVariables([w, x])
-    @test MOI.Utilities.substitute_variables(
-        vi -> Dict(w => y, x => z)[vi],
-        vector_of_variables,
-    ) == MOI.VectorOfVariables([y, z])
-    err = try
-        MOI.Utilities.substitute_variables(vi -> 2.0 * vi, vector_of_variables)
-    catch err
-        err
-    end
-    @test err isa ErrorException
-    @test occursin("Variables constrained on creation", sprint(showerror, err))
+function test_substitute_variables_vector_of_variables()
+    w, x, y, z = MOI.VariableIndex.(1:4)
+    f1 = MOI.VectorOfVariables([w, x])
+    f2 = MOI.VectorOfVariables([y, z])
+    v_map = Dict(w => y, x => z)
+    @test MOI.Utilities.substitute_variables(v -> v_map[v], f1) == f2
+    @test_throws(
+        ErrorException(
+            """
+            Cannot substitute variables in the `VectorOfVariables` function \
+            because the result is not representable as a `VectorOfVariables` \
+            function.
+
+            The variable `$w` in index `1` is mapped to the expression \
+            `$(2.0 * w)`, not directly to another `VariableIndex`.
+
+            Note that variables constrained on creation can be used in a \
+            `VectorOfVariables` function only when their bridge maps each \
+            one directly to another variable, without a transformation.
+            """,
+        ),
+        MOI.Utilities.substitute_variables(vi -> 2.0 * vi, f1),
+    )
     return
 end
 
