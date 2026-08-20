@@ -468,6 +468,29 @@ end
 
 function substitute_variables(
     variable_map::F,
+    f::MOI.VectorOfVariables,
+) where {F<:Function}
+    variables = MOI.VariableIndex[]
+    for variable in f.variables
+        mapped_variable = variable_map(variable)
+        try
+            push!(variables, convert(MOI.VariableIndex, mapped_variable))
+        catch err
+            @assert err isa InexactError
+            error(
+                "Cannot substitute `VectorOfVariables`: variable `$variable` is mapped " *
+                "to `$mapped_variable`, not directly to another variable. Variables " *
+                "constrained on creation can be used in a `VectorOfVariables` function " *
+                "only when their bridge maps each one directly to another variable, " *
+                "without a transformation.",
+            )
+        end
+    end
+    return MOI.VectorOfVariables(variables)
+end
+
+function substitute_variables(
+    variable_map::F,
     term::MOI.ScalarAffineTerm{T},
 ) where {T,F<:Function}
     # We could have `T = Complex{Float64}` and `variable_map(term.variable)`

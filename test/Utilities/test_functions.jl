@@ -329,6 +329,19 @@ function test_substitute_variables()
     int_quad = 3 * y * x
     @test MOI.Utilities.substitute_variables(vi -> true * y, int_quad) ≈
           3 * y * y
+
+    vector_of_variables = MOI.VectorOfVariables([w, x])
+    @test MOI.Utilities.substitute_variables(
+        vi -> Dict(w => y, x => z)[vi],
+        vector_of_variables,
+    ) == MOI.VectorOfVariables([y, z])
+    err = try
+        MOI.Utilities.substitute_variables(vi -> 2.0 * vi, vector_of_variables)
+    catch err
+        err
+    end
+    @test err isa ErrorException
+    @test occursin("Variables constrained on creation", sprint(showerror, err))
     return
 end
 
