@@ -304,6 +304,28 @@ function test_quad_parameters()
         ),
         MOI.LessThan(10.0),
     )
+    # Nonlinear constraints with quadratic subfunctions: with a parameter
+    # (converted to `ScalarNonlinearFunction`) and without (left as is).
+    q_p = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarQuadraticTerm(2.0, p, x)],
+        MOI.ScalarAffineTerm{Float64}[],
+        0.0,
+    )
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:sqrt, Any[q_p]),
+        MOI.LessThan(30.0),
+    )
+    q_x = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        MOI.ScalarAffineTerm{Float64}[],
+        0.0,
+    )
+    Nonlinear.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:sqrt, Any[q_x]),
+        MOI.LessThan(30.0),
+    )
     # A nonlinear constraint and objective mentioning the parameter and the
     # variable directly.
     Nonlinear.add_constraint(
@@ -314,9 +336,17 @@ function test_quad_parameters()
     Nonlinear.set_objective(model, MOI.ScalarNonlinearFunction(:*, Any[p, x]))
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
     MOI.initialize(d, [:Grad, :Jac])
-    g = fill(NaN, 5)
+    g = fill(NaN, 7)
     MOI.eval_constraint(d, g, [1.0])
-    @test g ≈ [2.0 + 3.0 * 7.0, 7.0, sqrt(3.0 * 7.0 + 1.0), 1.0, 1.0 + 7.0]
+    @test g ≈ [
+        2.0 + 3.0 * 7.0,
+        7.0,
+        sqrt(3.0 * 7.0 + 1.0),
+        1.0,
+        sqrt(2.0 * 7.0),
+        1.0,
+        1.0 + 7.0,
+    ]
     @test MOI.eval_objective(d, [1.5]) == 7.0 * 1.5
     return
 end
@@ -345,6 +375,8 @@ function test_attribute_forwarding()
     ex = Nonlinear.add_expression(model, :($p * $x))
     @test model[ex] isa Nonlinear.Expression
     Nonlinear.register_operator(model, :my_square, 1, z -> z^2)
+    ops = MOI.get(model, MOI.ListOfSupportedNonlinearOperators())
+    @test :my_square in ops
     c = Nonlinear.add_constraint(model, :(my_square($ex)), MOI.LessThan(1.0))
     @test MOI.is_valid(model, c)
     d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
