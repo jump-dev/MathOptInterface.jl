@@ -73,9 +73,8 @@ Nonlinear.ExprGraphOnly
 Nonlinear.SparseReverseMode
 Nonlinear.SymbolicMode
 Nonlinear.QPBlockData
-Nonlinear.add_constraint_jacobian_product
-Nonlinear.add_constraint_jacobian_transpose_product
-Nonlinear.add_hessian_lagrangian_product
+Nonlinear.ModelWithQuad
+Nonlinear.EvaluatorWithQuad
 
 ```
 
