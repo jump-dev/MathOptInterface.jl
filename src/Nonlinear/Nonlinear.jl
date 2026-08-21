@@ -43,5 +43,6 @@ include("ReverseAD/ReverseAD.jl")
 include("SymbolicAD/SymbolicAD.jl")
 
 include("qp_block_data.jl")
+include("model_with_quad.jl")
 
 end  # module
