@@ -554,7 +554,12 @@ function test_linearity()
         expr = model[ex]
         adj = Nonlinear.adjacency_matrix(expr.nodes)
         nodes = ReverseAD._replace_moi_variables(expr.nodes, variables)
-        ret = ReverseAD._classify_linearity(nodes, adj, ReverseAD.Linearity[])
+        ret = ReverseAD._classify_linearity(
+            nodes,
+            adj,
+            ReverseAD.Linearity[],
+            expr.values,
+        )
         @test ret[1] == test_value
         indexed_set = Coloring.IndexedSet(100)
         edge_list = ReverseAD._compute_hessian_sparsity(
@@ -564,7 +569,13 @@ function test_linearity()
             Set{Tuple{Int,Int}}[],
             Vector{Int}[],
         )
-        if ret[1] != ReverseAD.NONLINEAR
+        if ret[1] <= ReverseAD.LINEAR
+            # Constant or linear: the Hessian is zero, so there must not be
+            # any Hessian edges. Note that this does not hold for
+            # PIECEWISE_LINEAR: the Hessian is zero almost everywhere, but
+            # the operator-driven structural sparsity may still contain
+            # entries (for example, `abs` registers a self-interaction), and
+            # their values evaluate to zero.
             @test length(edge_list) == 0
         elseif length(IJ) > 0
             @test IJ == edge_list
@@ -584,7 +595,7 @@ function test_linearity()
         [1, 2],
     )
     _test_linearity(:(3 * 4 * ($x + $y)), ReverseAD.LINEAR)
-    _test_linearity(:($z * $y), ReverseAD.NONLINEAR, Set([(3, 2)]), [2, 3])
+    _test_linearity(:($z * $y), ReverseAD.QUADRATIC, Set([(3, 2)]), [2, 3])
     _test_linearity(:(3 + 4), ReverseAD.CONSTANT)
     _test_linearity(:(sin(3) + $x), ReverseAD.LINEAR)
     _test_linearity(
@@ -635,6 +646,33 @@ function test_linearity()
         Set([(3, 3), (3, 2), (3, 1)]),
         [1, 2, 3],
     )
+    # QUADRATIC
+    _test_linearity(:($x^2), ReverseAD.QUADRATIC, Set([(1, 1)]), [1])
+    _test_linearity(:($x^2.0), ReverseAD.QUADRATIC)
+    _test_linearity(:(($x + 3 * $y)^2), ReverseAD.QUADRATIC)
+    _test_linearity(:(2 * $x^2), ReverseAD.QUADRATIC)
+    _test_linearity(:($x^2 + 3 * $x + 1), ReverseAD.QUADRATIC)
+    _test_linearity(:(-($x^2)), ReverseAD.QUADRATIC)
+    _test_linearity(:($x^2 / 4), ReverseAD.QUADRATIC)
+    _test_linearity(:($x * $y / 2), ReverseAD.QUADRATIC)
+    _test_linearity(:($x^3), ReverseAD.NONLINEAR)
+    _test_linearity(:($x^$x), ReverseAD.NONLINEAR)
+    _test_linearity(:(2^$x), ReverseAD.NONLINEAR)
+    _test_linearity(:($x^2 * $y), ReverseAD.NONLINEAR)
+    _test_linearity(:($x * $y * $z), ReverseAD.NONLINEAR)
+    _test_linearity(:(sin($x)^2), ReverseAD.NONLINEAR)
+    # PIECEWISE_LINEAR
+    _test_linearity(:(abs($x)), ReverseAD.PIECEWISE_LINEAR)
+    _test_linearity(:(abs(2 * $x + $y) / 2), ReverseAD.PIECEWISE_LINEAR)
+    _test_linearity(:(abs($x^2)), ReverseAD.NONLINEAR)
+    _test_linearity(:(min($x, $y)), ReverseAD.PIECEWISE_LINEAR)
+    _test_linearity(:(max($x, 2 * $y, 1)), ReverseAD.PIECEWISE_LINEAR)
+    _test_linearity(:(min($x^2, $y)), ReverseAD.NONLINEAR)
+    _test_linearity(:($x + abs($y)), ReverseAD.PIECEWISE_LINEAR)
+    _test_linearity(:(ifelse($x <= 1, 2.0, $y)), ReverseAD.PIECEWISE_LINEAR)
+    # The sum of a quadratic and a piecewise linear term is piecewise
+    # quadratic: neither class applies.
+    _test_linearity(:($x^2 + abs($y)), ReverseAD.NONLINEAR)
     return
 end
 
@@ -645,10 +683,99 @@ function test_linearity_no_hess()
     Nonlinear.set_objective(model, ex)
     evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
     MOI.initialize(evaluator, [:Grad, :Jac])
-    # We initialized without the need for the hessian so
-    # the linearity shouldn't be computed.
-    @test only(evaluator.backend.subexpressions).linearity ==
-          ReverseAD.NONLINEAR
+    # The linearity is computed even when we initialize without :Hess, so
+    # that `Nonlinear.constraint_linearity` can be queried.
+    @test only(evaluator.backend.subexpressions).linearity == ReverseAD.LINEAR
+    return
+end
+
+function test_linearity_queries()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :($x^2 + $y))
+    Nonlinear.add_constraint(model, :($x + $y), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(model, :($x * $y), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(model, :(sin($x)), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(model, :(abs($x)), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(
+        model,
+        :(ifelse($x <= 1, $x, $y)),
+        MOI.LessThan(1.0),
+    )
+    Nonlinear.add_constraint(model, :($x / 2), MOI.LessThan(1.0))
+    for features in ([:Grad, :Jac], [:Grad, :Jac, :Hess])
+        evaluator =
+            Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+        MOI.initialize(evaluator, features)
+        @test Nonlinear.num_constraints(evaluator) == 6
+        @test Nonlinear.objective_linearity(evaluator) == Nonlinear.QUADRATIC
+        @test Nonlinear.constraint_linearity(evaluator) == [
+            Nonlinear.LINEAR,
+            Nonlinear.QUADRATIC,
+            Nonlinear.NONLINEAR,
+            Nonlinear.PIECEWISE_LINEAR,
+            Nonlinear.PIECEWISE_LINEAR,
+            Nonlinear.LINEAR,
+        ]
+    end
+    # An evaluator without a backend does not implement the linearity queries,
+    # so it returns the documented conservative fallbacks.
+    evaluator = Nonlinear.Evaluator(model)
+    MOI.initialize(evaluator, Symbol[])
+    @test Nonlinear.num_constraints(evaluator) == 6
+    @test Nonlinear.constraint_linearity(evaluator) === nothing
+    @test Nonlinear.objective_linearity(evaluator) == Nonlinear.NONLINEAR
+    return
+end
+
+function test_linearity_queries_before_initialize()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :($x^2))
+    Nonlinear.add_constraint(model, :($x + 1.0), MOI.LessThan(1.0))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    @test Nonlinear.num_constraints(evaluator) == 1
+    @test_throws(
+        ErrorException(
+            "Unable to query constraint_linearity because MOI.initialize " *
+            "has not been called.",
+        ),
+        Nonlinear.constraint_linearity(evaluator.backend),
+    )
+    @test_throws(
+        ErrorException(
+            "Unable to query objective_linearity because MOI.initialize " *
+            "has not been called.",
+        ),
+        Nonlinear.objective_linearity(evaluator.backend),
+    )
+    return
+end
+
+function test_linearity_queries_no_objective()
+    x = MOI.VariableIndex(1)
+    model = Nonlinear.Model()
+    Nonlinear.add_constraint(model, :($x^2), MOI.LessThan(1.0))
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Jac])
+    @test Nonlinear.objective_linearity(evaluator) == Nonlinear.CONSTANT
+    @test Nonlinear.constraint_linearity(evaluator) == [Nonlinear.QUADRATIC]
+    return
+end
+
+function test_linearity_queries_subexpression()
+    x = MOI.VariableIndex(1)
+    y = MOI.VariableIndex(2)
+    model = Nonlinear.Model()
+    ex = Nonlinear.add_expression(model, :($x^2 + $y))
+    Nonlinear.add_constraint(model, :($ex + 1.0), MOI.LessThan(1.0))
+    Nonlinear.add_constraint(model, :(sin($ex)), MOI.LessThan(1.0))
+    evaluator =
+        Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x, y])
+    MOI.initialize(evaluator, [:Grad, :Jac])
+    @test Nonlinear.constraint_linearity(evaluator) ==
+          [Nonlinear.QUADRATIC, Nonlinear.NONLINEAR]
     return
 end
 
