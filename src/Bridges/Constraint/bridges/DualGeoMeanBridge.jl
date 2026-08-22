@@ -33,6 +33,9 @@ end
 const DualGeoMean{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{DualGeoMeanBridge{T},OT}
 
+#prevent bridge from being used instead of FunctionConversionBridge
+MOI.Bridges.bridging_cost(::Type{<:DualGeoMeanBridge}) = 2.0
+
 function bridge_constraint(
     ::Type{DualGeoMeanBridge{T,G,H}},
     model::MOI.ModelLike,
