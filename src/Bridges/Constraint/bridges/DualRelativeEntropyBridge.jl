@@ -32,6 +32,9 @@ end
 const DualRelativeEntropy{T,OT<:MOI.ModelLike} =
     SingleBridgeOptimizer{DualRelativeEntropyBridge{T},OT}
 
+#prevent bridge from being used instead of FunctionConversionBridge
+MOI.Bridges.bridging_cost(::Type{<:DualRelativeEntropyBridge}) = 2.0
+
 function bridge_constraint(
     ::Type{DualRelativeEntropyBridge{T,F,G}},
     model::MOI.ModelLike,
