@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.53.0 (August 20, 2026)
+## v1.53.0 (August 24, 2026)
 
 ### Added
 
@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed `[compat]` bound on CliqueTrees.jl (#3039)
 - Fixed [`ConstraintPrimal`](@ref) and [`ConstraintPrimalStart`](@ref) in
-  [`Bridges.Constraint.GeoMeanBridge`](@ref) (#3056), (#3059)
+  [`Bridges.Constraint.GeoMeanBridge`](@ref) (#3056), (#3059), (#3060)
 
 ### Other
 
@@ -29,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Disable `depwarn=error` on Julia nightly (#3050)
 - Fixed various typos in the documentation (#3052)
 - Fixed various link checking (#3058)
+- Improve error message for constrained variables in VectorOfVariables
+  (#3061)
 
 ## v1.52.0 (July 31, 2026)
 
