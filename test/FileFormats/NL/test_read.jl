@@ -186,15 +186,15 @@ function test_parse_O()
     write(
         io,
         """
-O0 0# can stick a comment anywhere
-o2
-v0  # can stick a comment anywhere
-o2
-v2
-o2
-v3
-v1
-""",
+        O0 0# can stick a comment anywhere
+        o2
+        v0  # can stick a comment anywhere
+        o2
+        v2
+        o2
+        v3
+        v1
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -226,11 +226,11 @@ function test_parse_x()
     write(
         io,
         """
-x3
-0 1.1# can stick a comment anywhere
-3 2.2
-2 3.3  # can stick a comment anywhere
-""",
+        x3
+        0 1.1# can stick a comment anywhere
+        3 2.2
+        2 3.3  # can stick a comment anywhere
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -245,11 +245,11 @@ function test_parse_d()
     write(
         io,
         """
-d3
-0 1.1# can stick a comment anywhere
-3 2.2
-2 3.3  # can stick a comment anywhere
-""",
+        d3
+        0 1.1# can stick a comment anywhere
+        3 2.2
+        2 3.3  # can stick a comment anywhere
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -328,10 +328,10 @@ function test_parse_J()
     write(
         io,
         """
-J1 2  # can stick a comment anywhere
-2 1.1
-3 2.2  # can stick a comment anywhere
-""",
+        J1 2  # can stick a comment anywhere
+        2 1.1
+        3 2.2  # can stick a comment anywhere
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -350,10 +350,10 @@ function test_parse_J_zeros()
     write(
         io,
         """
-J0 2
-0 0
-1 0
-""",
+        J0 2
+        0 0
+        1 0
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -421,10 +421,10 @@ function test_parse_G()
     write(
         io,
         """
-G0 2 # can stick a comment anywhere
-2 1.1  # can stick a comment anywhere
-3 2.2
-""",
+        G0 2 # can stick a comment anywhere
+        2 1.1  # can stick a comment anywhere
+        3 2.2
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -441,11 +441,11 @@ function test_parse_G_zeros()
     write(
         io,
         """
-G0 3
-0 0
-1 0
-2 0
-""",
+        G0 3
+        0 0
+        1 0
+        2 0
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -461,14 +461,14 @@ function test_parse_O_G()
     write(
         io,
         """
-O0 0
-o2
-v0
-v1
-G0 2
-0 1.1
-1 2.2
-""",
+        O0 0
+        o2
+        v0
+        v1
+        G0 2
+        0 1.1
+        1 2.2
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)
@@ -486,14 +486,14 @@ function test_parse_G_O()
     write(
         io,
         """
-G0 2
-0 -1.1
-1 2.2e+01
-O0 0
-o2
-v0
-v1
-""",
+        G0 2
+        0 -1.1
+        1 2.2e+01
+        O0 0
+        o2
+        v0
+        v1
+        """,
     )
     seekstart(io)
     NL._parse_section(io, model)

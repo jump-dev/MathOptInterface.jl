@@ -222,9 +222,9 @@ function test_nonzero_in_objective()
     MOIU.loadfromstring!(
         model,
         """
-variables: x
-minobjective: x + 1
-""",
+        variables: x
+        minobjective: x + 1
+        """,
     )
     err = ErrorException(
         "Nonzero constant in objective function not supported. Note that " *
@@ -244,32 +244,32 @@ const _WRITE_READ_MODELS = [
     (
         "min ScalarAffine",
         """
-    variables: x, y
-    minobjective: 1.2x + -1y
-""",
+        variables: x, y
+        minobjective: 1.2x + -1y
+        """,
     ),
     (
         "max ScalarAffine",
         """
-    variables: x, y
-    maxobjective: 1.2x + -1y
-""",
+        variables: x, y
+        maxobjective: 1.2x + -1y
+        """,
     ),
     (
         "VectorAffineFunction in Nonnegatives",
         """
-    variables: x, y
-    minobjective: 1.2x
-    c1: [1.1 * x, y + 1] in Nonnegatives(2)
-""",
+        variables: x, y
+        minobjective: 1.2x
+        c1: [1.1 * x, y + 1] in Nonnegatives(2)
+       """,
     ),
     (
         "VectorAffineFunction in PositiveSemidefiniteConeTriangle",
         """
-    variables: x, y, z
-    minobjective: 1.2x
-    c1: [1.1x, y + 1, 2x + z] in PositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x, y, z
+        minobjective: 1.2x
+        c1: [1.1x, y + 1, 2x + z] in PositiveSemidefiniteConeTriangle(2)
+        """,
     ),
 ]
 
@@ -283,41 +283,41 @@ const _EXAMPLE_MODELS = [
     (
         "example_A.dat-s",
         """
-    variables: x, y
-    minobjective: 10x + 20y
-    c1: [x + -1, 0, x + y + -2] in PositiveSemidefiniteConeTriangle(2)
-    c2: [5y + -3, 2y, 6y + -4] in PositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x, y
+        minobjective: 10x + 20y
+        c1: [x + -1, 0, x + y + -2] in PositiveSemidefiniteConeTriangle(2)
+        c2: [5y + -3, 2y, 6y + -4] in PositiveSemidefiniteConeTriangle(2)
+        """,
     ),
     (
         "example_B.sdpa",
         """
-    variables: x
-    minobjective: 1x
-    c1: [0, 1x + -1, 0] in PositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x
+        minobjective: 1x
+        c1: [0, 1x + -1, 0] in PositiveSemidefiniteConeTriangle(2)
+        """,
     ),
     (
         "example_integer.sdpa",
         """
-    variables: x, y, z
-    minobjective: 1x + -2y + -1z
-    c1: [1x, 1y, 1z] in PositiveSemidefiniteConeTriangle(2)
-    c2: [1z, 1x, 2.1] in PositiveSemidefiniteConeTriangle(2)
-    c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in Nonnegatives(2)
-    x in Integer()
-    y in Integer()
-    z in Integer()
-""",
+        variables: x, y, z
+        minobjective: 1x + -2y + -1z
+        c1: [1x, 1y, 1z] in PositiveSemidefiniteConeTriangle(2)
+        c2: [1z, 1x, 2.1] in PositiveSemidefiniteConeTriangle(2)
+        c3: [1x + 1y + 1z + -1, -1x + -1y + -1z + 8] in Nonnegatives(2)
+        x in Integer()
+        y in Integer()
+        z in Integer()
+        """,
     ),
     (
         "issue_1541.dat-s",
         """
-    variables: x, y, z
-    minobjective: -1y + -2z
-    c1: [-1x + -1y + -1z + 1, 1x, 1y, 1z] in Nonnegatives(4)
-    c2: [1x + 3y, 4y + 2z, -1z] in PositiveSemidefiniteConeTriangle(2)
-""",
+        variables: x, y, z
+        minobjective: -1y + -2z
+        c1: [-1x + -1y + -1z + 1, 1x, 1y, 1z] in Nonnegatives(4)
+        c2: [1x + 3y, 4y + 2z, -1z] in PositiveSemidefiniteConeTriangle(2)
+        """,
     ),
 ]
 

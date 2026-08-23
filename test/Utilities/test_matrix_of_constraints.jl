@@ -81,12 +81,12 @@ function test_ScalarSets_basic()
     MOI.Utilities.loadfromstring!(
         src,
         """
-variables: x, y
-minobjective: x + y
-x >= 1.0
-y == 2.1
-c: x + 2.0 * y <= 3.0
-""",
+        variables: x, y
+        minobjective: x + y
+        x >= 1.0
+        y == 2.1
+        c: x + 2.0 * y <= 3.0
+        """,
     )
     index_map = MOI.copy_to(model, src)
     @test MOI.is_empty(model) == false
@@ -171,10 +171,10 @@ function test_ScalarSets_get_ConstraintFunction()
     MOI.Utilities.loadfromstring!(
         src,
         """
-variables: x, y
-minobjective: x + y
-c: x + 2.0 * y <= 3.0
-""",
+        variables: x, y
+        minobjective: x + y
+        c: x + 2.0 * y <= 3.0
+        """,
     )
     index_map = MOI.copy_to(model, src)
     c = MOI.get(model, MOI.ConstraintIndex, "c")
@@ -211,10 +211,10 @@ function test_ScalarSets_get_ConstraintSet()
     MOI.Utilities.loadfromstring!(
         src,
         """
-variables: x, y
-minobjective: x + y
-c: 2.0 * x + y >= 4.0
-""",
+        variables: x, y
+        minobjective: x + y
+        c: 2.0 * x + y >= 4.0
+        """,
     )
     index_map = MOI.copy_to(model, src)
     c = MOI.get(model, MOI.ConstraintIndex, "c")
@@ -248,12 +248,12 @@ function test_add_after_final_touch()
     MOI.Utilities.loadfromstring!(
         src,
         """
-variables: x, y
-minobjective: x + y
-x >= 1.0
-y == 2.1
-c: x + 2.0 * y <= 3.0
-""",
+        variables: x, y
+        minobjective: x + y
+        x >= 1.0
+        y == 2.1
+        c: x + 2.0 * y <= 3.0
+        """,
     )
     index_map = MOI.copy_to(model, src)
     x = MOI.get(src, MOI.VariableIndex, "x")
@@ -277,9 +277,9 @@ function test_UnsupportedConstraint()
     MOI.Utilities.loadfromstring!(
         src,
         """
-variables: x, y
-c: [x, y] in Nonnegatives(2)
-""",
+        variables: x, y
+        c: [x, y] in Nonnegatives(2)
+        """,
     )
     @test_throws MOI.UnsupportedConstraint MOI.copy_to(model, src)
     return
@@ -690,10 +690,10 @@ function test_modify_scalar_coefficient_change_zero_based()
     MOI.Utilities.loadfromstring!(
         src,
         """
-variables: x, y
-minobjective: x + y
-c: x + 2.0 * y <= 3.0
-""",
+        variables: x, y
+        minobjective: x + y
+        c: x + 2.0 * y <= 3.0
+        """,
     )
     index_map = MOI.copy_to(model, src)
     c = MOI.get(model, MOI.ConstraintIndex, "c")
