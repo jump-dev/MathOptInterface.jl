@@ -36,21 +36,21 @@ function test_comprehensive_write()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: a, x, y, z
-minobjective: x
-x >= -1.0
-x <= 2.0
-y == 3.0
-z in Interval(4.0, 5.0)
-c5: 1.1x + 0.0 <= 5.1
-c6: 1.3x + -1.4 >= -0.1
-c7: 1.5a + 1.6 == 0.2
-c8: 1.7a + 1.8 in Interval(0.3, 0.4)
-x in ZeroOne()
-y in Integer()
-c11: [x, y, z] in SOS1{Float64}([1.0, 2.0, 3.0])
-c12: [x, y, z] in SOS2{Float64}([3.3, 1.1, 2.2])
-""",
+        variables: a, x, y, z
+        minobjective: x
+        x >= -1.0
+        x <= 2.0
+        y == 3.0
+        z in Interval(4.0, 5.0)
+        c5: 1.1x + 0.0 <= 5.1
+        c6: 1.3x + -1.4 >= -0.1
+        c7: 1.5a + 1.6 == 0.2
+        c8: 1.7a + 1.8 in Interval(0.3, 0.4)
+        x in ZeroOne()
+        y in Integer()
+        c11: [x, y, z] in SOS1{Float64}([1.0, 2.0, 3.0])
+        c12: [x, y, z] in SOS2{Float64}([3.3, 1.1, 2.2])
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -86,10 +86,10 @@ function test_name_sanitization_start()
         MOI.Utilities.loadfromstring!(
             model,
             """
-variables: x
-minobjective: x
-c1: 1.0 * x >= -1.0
-""",
+            variables: x
+            minobjective: x
+            c1: 1.0 * x >= -1.0
+            """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
         MOI.set(model, MOI.VariableName(), x, starting_letter * "x")
@@ -113,10 +113,10 @@ function test_name_sanitization_illegal()
         MOI.Utilities.loadfromstring!(
             model,
             """
-variables: x
-minobjective: x
-c1: 1.0 * x >= -1.0
-""",
+            variables: x
+            minobjective: x
+            c1: 1.0 * x >= -1.0
+            """,
         )
         x = MOI.get(model, MOI.VariableIndex, "x")
         MOI.set(model, MOI.VariableName(), x, "x$(illegal_letter)y")
@@ -139,10 +139,10 @@ function test_name_sanitization_duplicate()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: a, b, c, d
-minobjective: a + b + c + d
-c1: a + b + c + d >= -1.0
-""",
+        variables: a, b, c, d
+        minobjective: a + b + c + d
+        c1: a + b + c + d >= -1.0
+        """,
     )
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     MOI.set.(model, MOI.VariableName(), variables, ["a[", "a]", "a*", "a^"])
@@ -181,10 +181,10 @@ function test_name_sanitization_too_long()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: abcd, abce
-minobjective: abcd + abce
-c1: abcd + abce >= -1.0
-""",
+        variables: abcd, abce
+        minobjective: abcd + abce
+        c1: abcd + abce >= -1.0
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -203,9 +203,9 @@ function test_name_sanitization_other()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x
-maxobjective: 2.0 * x + -1.0
-""",
+        variables: x
+        maxobjective: 2.0 * x + -1.0
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -222,11 +222,11 @@ function test_free_variables()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x, y, z
-maxobjective: x
-x in ZeroOne()
-y in Integer()
-""",
+        variables: x, y, z
+        maxobjective: x
+        x in ZeroOne()
+        y in Integer()
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -276,9 +276,9 @@ function test_quadratic_objective_diag()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x
-minobjective: 1.0*x*x
-""",
+        variables: x
+        minobjective: 1.0*x*x
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -296,9 +296,9 @@ function test_quadratic_objective_off_diag()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x, y
-minobjective: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3
-""",
+        variables: x, y
+        minobjective: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -317,9 +317,9 @@ function test_quadratic_objective_complicated()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x, y
-minobjective: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3
-""",
+        variables: x, y
+        minobjective: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -338,9 +338,9 @@ function test_quadratic_constraint_diag()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x
-c: 1.0*x*x <= 1.4
-""",
+        variables: x
+        c: 1.0*x*x <= 1.4
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -359,9 +359,9 @@ function test_quadratic_constraint_off_diag()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x, y
-c: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3 == 1.5
-""",
+        variables: x, y
+        c: 1.1 * x + 1.2 * y + 1.5*x*y + 1.3 == 1.5
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
@@ -381,9 +381,9 @@ function test_quadratic_constraint_complicated()
     MOI.Utilities.loadfromstring!(
         model,
         """
-variables: x, y
-c: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3 in Interval(-1.1, 1.4)
-""",
+        variables: x, y
+        c: 1.1 * x + 1.2 * y + -1.1 * x * x + 1.5*x*y + 1.3 in Interval(-1.1, 1.4)
+        """,
     )
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==

@@ -268,11 +268,11 @@ function test_issue_453()
     MOI.Utilities.loadfromstring!(
         bridged_mock,
         """
-    variables: x
-    maxobjective: 3.0x
-    c: 2.0x in Interval(1.0, 4.0)
-    x in LessThan(1.5)
-""",
+        variables: x
+        maxobjective: 3.0x
+        c: 2.0x in Interval(1.0, 4.0)
+        x in LessThan(1.5)
+        """,
     )
     x = MOI.get(bridged_mock, MOI.VariableIndex, "x")
     @test isa(x, MOI.VariableIndex)
