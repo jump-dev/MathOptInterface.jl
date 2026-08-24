@@ -503,7 +503,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test MOI.get(
         bridged_dest,
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Nonpositives}(),
-    ) == 1.0
+    ) == 0.5
     @test MOI.supports_add_constrained_variables(bridged_dest, MOI.Zeros)
     @test MOI.get(bridged_dest, MOI.VariableBridgingCost{MOI.Zeros}()) == 1.0
     @test MOI.supports_constraint(
@@ -514,7 +514,7 @@ function test_create_variables_using_supports_add_constrained_variable()
     @test MOI.get(
         bridged_dest,
         MOI.ConstraintBridgingCost{MOI.VectorOfVariables,MOI.Zeros}(),
-    ) == 3.0
+    ) == 2.5
     index_map = MOI.copy_to(bridged_dest, src)
     @test length(dest.constraintIndices) == 6
 

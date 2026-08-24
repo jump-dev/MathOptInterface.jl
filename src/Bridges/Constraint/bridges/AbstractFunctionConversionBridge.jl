@@ -275,7 +275,22 @@ function conversion_cost(
     ::Type{<:MOI.ScalarAffineFunction},
     ::Type{MOI.VariableIndex},
 )
-    return 1.0
+    # We want to favor bridges which convert VariableIndex or VectorOfVariables
+    # into ScalarAffineFunction or VectorAffineFunction.
+    #
+    # This is most useful for conic solvers, which often support
+    # VectorAffineFunction-in-S, but not VectorOfVariables-in-S.
+    #
+    # The value in this function controls the cost of the transformation 
+    # VectorOfVariables-in-S -> VectorAffineFunction-in-S. When we had the
+    # previous cost of `1.0`, there might be an alternative bridge
+    # VectorOfVariables-in-S -> VectorAffineFunction-in-S2 which also has a cost
+    # of `1.0`, and so, depending on the order in which we choose bridges, we
+    # might end up using a more complicated bridge that adds a different set
+    # type to the model.
+    #
+    # This was a practical concern for Hypatia in MathOptInterface.jl#3062.
+    return 0.5
 end
 
 function conversion_cost(
