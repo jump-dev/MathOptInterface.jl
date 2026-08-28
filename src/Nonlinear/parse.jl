@@ -36,6 +36,77 @@ function parse_expression(::Model, ::Expression, x::Any, ::Int)
     )
 end
 
+function _extract_subexpression!(expr::Expression, root::Int)
+    n = length(expr.nodes)
+    # The whole subexpression is continuous in the tape
+    first_out = first_value = last_value = nothing
+    for i in root:n
+        node = expr.nodes[i]
+        if i != root && node.parent < root
+            first_out = i
+            break
+        end
+        index = node.index
+        if node.type == NODE_VALUE
+            if isnothing(first_value)
+                first_value = node.index
+                last_value = first_value
+            else
+                last_value = node.index
+            end
+            index -= first_value - 1
+        end
+        expr.nodes[i] =
+            Node(node.type, index, i == root ? -1 : node.parent - root + 1)
+    end
+    if isnothing(first_out)
+        I = root:n
+    else
+        I = root:(first_out-1)
+    end
+    if isnothing(first_value)
+        V = nothing
+    else
+        V = first_value:last_value
+    end
+    if !isnothing(first_out)
+        for i in (last(I)+1):n
+            node = expr.nodes[i]
+            index = node.index
+            if node.type == NODE_VALUE && !isnothing(V)
+                @assert index >= last(V)
+                index -= length(V)
+            end
+            parent = node.parent
+            if parent > root
+                @assert parent > last(I)
+                parent -= length(I) - 1
+            end
+            expr.nodes[i] = Node(node.type, index, parent)
+        end
+    end
+    return I, V
+end
+
+function _extract_subexpression!(data::Model, expr::Expression, root::Int)
+    parent = expr.nodes[root].parent
+    I, V = _extract_subexpression!(expr, root)
+    subexpr =
+        Expression(expr.nodes[I], isnothing(V) ? Float64[] : expr.values[V])
+    push!(data.expressions, subexpr)
+    index = ExpressionIndex(length(data.expressions))
+    expr.nodes[root] = Node(NODE_SUBEXPRESSION, index.value, parent)
+    if length(I) > 1
+        deleteat!(expr.nodes, I[2:end])
+        if !isnothing(V)
+            deleteat!(expr.values, V)
+        end
+    else
+        @assert isnothing(V)
+    end
+    return index, I
+end
+
 function parse_expression(
     data::Model,
     expr::Expression,
@@ -46,7 +117,59 @@ function parse_expression(
     while !isempty(stack)
         parent_node, arg = pop!(stack)
         if arg isa MOI.ScalarNonlinearFunction
-            _parse_without_recursion_inner(stack, data, expr, arg, parent_node)
+            if haskey(data.cache, arg)
+                subexpr = data.cache[arg]
+                if subexpr isa Tuple{Expression,Int}
+                    _expr, _node = subexpr
+                    subexpr, I = _extract_subexpression!(data, _expr, _node)
+                    if expr === _expr
+                        if parent_node > first(I)
+                            @assert parent_node > last(I)
+                            parent_node -= length(I) - 1
+                        end
+                        for i in eachindex(stack)
+                            _parent_node = stack[i][1]
+                            if _parent_node > first(I)
+                                @assert _parent_node > last(I)
+                                stack[i] =
+                                    (_parent_node - length(I) + 1, stack[i][2])
+                            end
+                        end
+                    end
+                    for (key, val) in data.cache
+                        if val isa Tuple{Expression,Int}
+                            __expr, __node = val
+                            if _expr === __expr && __node > first(I)
+                                if __node <= last(I)
+                                    data.cache[key] = (
+                                        data.expressions[subexpr.value],
+                                        __node - first(I) + 1,
+                                    )
+                                else
+                                    data.cache[key] =
+                                        (__expr, __node - length(I) + 1)
+                                end
+                            end
+                        end
+                    end
+                    data.cache[arg] = subexpr
+                end
+                parse_expression(
+                    data,
+                    expr,
+                    subexpr::ExpressionIndex,
+                    parent_node,
+                )
+            else
+                _parse_without_recursion_inner(
+                    stack,
+                    data,
+                    expr,
+                    arg,
+                    parent_node,
+                )
+                data.cache[arg] = (expr, length(expr.nodes))
+            end
         else
             # We can use recursion here, because ScalarNonlinearFunction only
             # occur in other ScalarNonlinearFunction.
@@ -82,7 +205,7 @@ function _parse_without_recursion_inner(stack, data, expr, x, parent)
     parent = length(expr.nodes)
     # Args need to be pushed onto the stack in reverse because the stack is a
     # first-in last-out datastructure.
-    for arg in reverse(x.args)
+    for arg in Iterators.Reverse(x.args)
         push!(stack, (parent, arg))
     end
     return
