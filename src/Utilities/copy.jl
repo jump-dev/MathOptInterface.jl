@@ -40,6 +40,32 @@ function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, index_map)
     return
 end
 
+struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} <:
+       MOI.AbstractModelAttribute end
+
+function MOI.get(model::MOI.ModelLike, ::UnsafeObjectiveFunction{F}) where {F}
+    return MOI.get(model, MOI.ObjectiveFunction{F}())
+end
+
+struct UnsafeConstraintFunction <: MOI.AbstractConstraintAttribute end
+
+function MOI.get_fallback(
+    model::MOI.ModelLike,
+    ::UnsafeConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
+    return MOI.get(model, MOI.ConstraintFunction(), ci)
+end
+
+function _pass_attribute(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map,
+    ::MOI.ConstraintFunction,
+)
+    return _pass_attribute(dest, src, index_map, UnsafeConstraintFunction())
+end
+
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
@@ -175,7 +201,10 @@ function _copy_constraints(
     cis_src::Vector{<:MOI.ConstraintIndex},
 )
     for ci in cis_src
-        f = MOI.get(src, MOI.ConstraintFunction(), ci)
+        # MOI does not allows the implementation of `MOI.constraint`
+        # to modify it or hold a copy of it.
+        # `map_indices` is also often going to copy it anyway
+        f = MOI.get(src, UnsafeConstraintFunction(), ci)
         s = MOI.get(src, MOI.ConstraintSet(), ci)
         index_map_FS[ci] =
             MOI.add_constraint(dest, map_indices(index_map, f), s)
