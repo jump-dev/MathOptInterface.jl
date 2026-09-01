@@ -18,17 +18,17 @@ struct _SubexpressionStorage
         expr::Nonlinear.Expression,
         subexpression_linearity,
         moi_index_to_consecutive_index,
-        want_hess::Bool,
     )
         nodes =
             _replace_moi_variables(expr.nodes, moi_index_to_consecutive_index)
         adj = Nonlinear.adjacency_matrix(nodes)
         N = length(nodes)
-        linearity = if want_hess
-            _classify_linearity(nodes, adj, subexpression_linearity)[1]
-        else
-            NONLINEAR
-        end
+        linearity = _classify_linearity(
+            nodes,
+            adj,
+            subexpression_linearity,
+            expr.values,
+        )[1]
         return new(
             nodes,
             adj,
@@ -85,8 +85,13 @@ struct _FunctionStorage
         end
         grad_sparsity = sort!(collect(coloring_storage))
         empty!(coloring_storage)
+        linearity = _classify_linearity(
+            nodes,
+            adj,
+            subexpression_linearity,
+            const_values,
+        )
         if want_hess
-            linearity = _classify_linearity(nodes, adj, subexpression_linearity)
             edgelist = _compute_hessian_sparsity(
                 nodes,
                 adj,
@@ -128,7 +133,7 @@ struct _FunctionStorage
                 Int[],
                 Coloring.RecoveryInfo(),
                 Array{Float64}(undef, 0, 0),
-                NONLINEAR,
+                linearity[1],
                 dependent_subexpressions,
             )
         end
