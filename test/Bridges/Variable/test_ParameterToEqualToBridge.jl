@@ -66,7 +66,10 @@ function test_constraint_function()
     x, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
     y, bridge = first(model.map)
     @test y == x
-    x_inner = MOI.get(model, MOI.ConstraintFunction(), bridge)
+    # The bridge's indices live in `inner`'s index space, so its attribute
+    # getters must be called with `inner`, like
+    # `MOI.Bridges.recursive_model(model)` does in production code.
+    x_inner = MOI.get(inner, MOI.ConstraintFunction(), bridge)
     @test MOI.get(inner, MOI.ListOfVariableIndices()) == [x_inner]
     return
 end
