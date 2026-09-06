@@ -267,7 +267,7 @@ function MOI.get(
         f_ji = MOI.Utilities.operate(-, T, f[offset+i+(j-1)*dim], diff)
         # But we need to account for the constant moved into the set
         rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), ci))
-        f_ji = MOI.Utilities.operate!(-, T, f_ji, rhs)
+        f_ji = MOI.Utilities.operate!(+, T, f_ji, rhs)
         f[offset+j+(i-1)*dim] = MOI.Utilities.convert_approx(eltype(f), f_ji)
     end
     return MOI.Utilities.vectorize(f)

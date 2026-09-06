@@ -314,6 +314,22 @@ function test_VectorNonlinearFunction_mixed_type()
     return
 end
 
+function test_square_bridge_with_constant()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: x11, x21, x12, x22
+        [x11 + 1.0, x21 + 2.0, x12 + 3.0, x22 + 4.0] in PositiveSemidefiniteConeSquare(2)
+        """,
+        """
+        variables: x11, x21, x12, x22
+        [x11 + 1.0, x12 + 3.0, x22 + 4.0] in PositiveSemidefiniteConeTriangle(2)
+        x12 + -1.0 * x21 == -1.0
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()
