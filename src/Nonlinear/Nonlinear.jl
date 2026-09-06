@@ -44,5 +44,6 @@ include("SymbolicAD/SymbolicAD.jl")
 
 include("qp_block_data.jl")
 include("model_with_quad.jl")
+include("model_with_oracles.jl")
 
 end  # module
