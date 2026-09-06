@@ -341,7 +341,7 @@ function test_constraint_primal_start()
     MOI.set(model, MOI.ConstraintPrimalStart(), ci, start)
     @test isapprox(
         MOI.get(inner, MOI.ConstraintPrimalStart(), bridge.triangle),
-        [11.0, 12.0, 22.0]
+        [11.0, 12.0, 22.0],
     )
     @test ≈(MOI.get(inner, MOI.ConstraintPrimalStart(), bridge.sym[1][2]), -9.0)
     @test ≈(MOI.get(model, MOI.ConstraintFunction(), ci), f)
