@@ -314,6 +314,40 @@ function test_VectorNonlinearFunction_mixed_type()
     return
 end
 
+function test_square_bridge_with_constant()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.SquareBridge,
+        """
+        variables: x11, x21, x12, x22
+        [x11 + 1.0, x21 + 2.0, x12 + 3.0, x22 + 4.0] in PositiveSemidefiniteConeSquare(2)
+        """,
+        """
+        variables: x11, x21, x12, x22
+        [x11 + 1.0, x12 + 3.0, x22 + 4.0] in PositiveSemidefiniteConeTriangle(2)
+        x12 + -1.0 * x21 == -1.0
+        """,
+    )
+    return
+end
+
+function test_constraint_primal_start()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.Square{Float64}(inner)
+    x = MOI.add_variables(model, 4)
+    f = MOI.Utilities.vectorize(1.0 .* x .+ (1.0:4.0))
+    ci = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeSquare(2))
+    bridge = MOI.Bridges.bridge(model, ci)
+    start = [11.0, 21.0, 12.0, 22.0]
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, start)
+    @test isapprox(
+        MOI.get(inner, MOI.ConstraintPrimalStart(), bridge.triangle),
+        [11.0, 12.0, 22.0],
+    )
+    @test ≈(MOI.get(inner, MOI.ConstraintPrimalStart(), bridge.sym[1][2]), -9.0)
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), ci), f)
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()
