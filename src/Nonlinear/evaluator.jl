@@ -148,16 +148,19 @@ function MOI.constraint_expr(evaluator::Evaluator, i::Int)
     end
 end
 
+_objective_sign(sense) = sense == MOI.MAX_SENSE ? -1 : sense == MOI.MIN_SENSE ? 1 : 0
+
 function MOI.eval_objective(evaluator::Evaluator, x)
     start = time()
     obj = MOI.eval_objective(evaluator.backend, x)
     evaluator.eval_objective_timer += time() - start
-    return obj
+    return _objective_sign(evaluator.model.objective_sense) * obj
 end
 
 function MOI.eval_objective_gradient(evaluator::Evaluator, g, x)
     start = time()
     MOI.eval_objective_gradient(evaluator.backend, g, x)
+    g .*= _objective_sign(evaluator.model.objective_sense)
     evaluator.eval_objective_gradient_timer += time() - start
     return
 end
@@ -219,7 +222,8 @@ end
 
 function MOI.eval_hessian_lagrangian(evaluator::Evaluator, H, x, σ, μ)
     start = time()
-    MOI.eval_hessian_lagrangian(evaluator.backend, H, x, σ, μ)
+    objective_sign = _objective_sign(evaluator.model.objective_sense)
+    MOI.eval_hessian_lagrangian(evaluator.backend, H, x, objective_sign * σ, μ)
     evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end
@@ -252,7 +256,15 @@ function MOI.eval_hessian_lagrangian_product(
     μ,
 )
     start = time()
-    MOI.eval_hessian_lagrangian_product(evaluator.backend, H, x, v, σ, μ)
+    objective_sign = _objective_sign(evaluator.model.objective_sense)
+    MOI.eval_hessian_lagrangian_product(
+        evaluator.backend,
+        H,
+        x,
+        v,
+        objective_sign * σ,
+        μ,
+    )
     evaluator.eval_hessian_lagrangian_timer += time() - start
     return
 end

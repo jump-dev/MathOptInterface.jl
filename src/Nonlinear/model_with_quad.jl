@@ -7,6 +7,12 @@
 # Where the objective of a `ModelWithQuad` currently lives.
 @enum(_ObjectiveSink, _NONE, _QUAD, _INNER)
 
+const _QPFunction{T} =
+    Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
+
+const _QPSet{T} =
+    Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T},MOI.Interval{T}}
+
 """
     ModelWithQuad{T,M}(
         qp::QPBlockData{T},
@@ -25,9 +31,9 @@ Add variables with `MOI.add_variable`: the layer guarantees that the variable
 indices are `1:n`, like `MOI.Utilities.MatrixOfConstraints`. Add parameters
 with `MOI.add_constrained_variable(model, ::MOI.Parameter)`: parameters get
 indices offset by `_PARAMETER_OFFSET`, and their values are stored in
-the inner model through [`add_parameter`](@ref). The inner model must expose
-that storage as `parameters::Vector{T}`, like [`Model`](@ref) does:
-`qp.parameters` aliases it, so a parameter update is visible to both blocks.
+the inner model through [`add_parameter`](@ref). The QP block aliases the
+innermost nonlinear model's parameter storage, so a parameter update is
+visible to both blocks.
 
 Add constraints with [`add_constraint`](@ref) or `MOI.add_constraint`, and
 set the objective with [`set_objective`](@ref): affine and quadratic
@@ -40,7 +46,7 @@ Create the corresponding evaluator, [`EvaluatorWithQuad`](@ref), with
 `MOI.AbstractNLPEvaluator`. The rows of the QP block come first, followed by
 the rows of the inner evaluator.
 """
-mutable struct ModelWithQuad{T,M}
+mutable struct ModelWithQuad{T,M} <: MOI.ModelLike
     variables::MOI.Utilities.VariablesContainer{T}
     # The variables and the parameters, in the order they were added, as
     # `MOI.ListOfVariableIndices` requires.
@@ -64,10 +70,27 @@ mutable struct ModelWithQuad{T,M}
         # The QP block reads the parameter values from the storage of the
         # inner model, which must expose them as `parameters::Vector{T}`,
         # like [`Model`](@ref) does.
-        model.qp.parameters = inner.parameters
+        model.qp.parameters = _parameter_values(inner)
         return model
     end
 end
+
+MOI.supports_incremental_interface(model::ModelWithQuad) =
+    MOI.supports_incremental_interface(model.inner)
+
+# Model attributes not owned by this layer, including `ObjectiveSense`, are
+# deliberately forwarded through the MOI API.
+MOI.supports(model::ModelWithQuad, attr::MOI.AbstractModelAttribute) =
+    MOI.supports(model.inner, attr)
+MOI.get(model::ModelWithQuad, attr::MOI.AbstractModelAttribute) =
+    MOI.get(model.inner, attr)
+MOI.set(model::ModelWithQuad, attr::MOI.AbstractModelAttribute, value) =
+    MOI.set(model.inner, attr, value)
+MOI.supports(
+    model::ModelWithQuad,
+    attr::MOI.AbstractConstraintAttribute,
+    CI::Type{<:MOI.ConstraintIndex},
+) = MOI.supports(model.inner, attr, CI)
 
 function ModelWithQuad{T}(inner) where {T}
     return ModelWithQuad{T}(QPBlockData{T}(), inner)
@@ -83,6 +106,67 @@ function MOI.add_variable(model::ModelWithQuad)
     return x
 end
 
+function MOI.supports_constraint(
+    ::ModelWithQuad{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{<:_QPSet{T}},
+) where {T}
+    return true
+end
+
+function MOI.supports(
+    ::ModelWithQuad{T},
+    ::MOI.ConstraintDualStart,
+    ::Type{<:MOI.ConstraintIndex{F,S}},
+) where {T,F<:_QPFunction{T},S<:_QPSet{T}}
+    return true
+end
+
+function MOI.add_constraint(model::ModelWithQuad, x::MOI.VariableIndex, set::_QPSet)
+    return MOI.add_constraint(model.variables, x, set)
+end
+
+function MOI.is_valid(
+    model::ModelWithQuad,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:_QPSet},
+)
+    return MOI.is_valid(model.variables, ci)
+end
+
+function MOI.get(
+    model::ModelWithQuad,
+    attr::Union{
+        MOI.NumberOfConstraints{MOI.VariableIndex,<:_QPSet},
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,<:_QPSet},
+    },
+)
+    return MOI.get(model.variables, attr)
+end
+
+function MOI.get(
+    model::ModelWithQuad,
+    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:_QPSet},
+)
+    return MOI.get(model.variables, attr, ci)
+end
+
+function MOI.set(
+    model::ModelWithQuad,
+    attr::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
+    set::S,
+) where {S<:_QPSet}
+    return MOI.set(model.variables, attr, ci, set)
+end
+
+function MOI.delete(
+    model::ModelWithQuad,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:_QPSet},
+)
+    return MOI.delete(model.variables, ci)
+end
+
 function MOI.add_constrained_variable(
     model::ModelWithQuad{T},
     set::MOI.Parameter{T},
@@ -93,6 +177,11 @@ function MOI.add_constrained_variable(
     ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}}(x.value)
     return x, ci
 end
+
+MOI.supports_add_constrained_variable(
+    ::ModelWithQuad{T},
+    ::Type{MOI.Parameter{T}},
+) where {T} = true
 
 function MOI.get(model::ModelWithQuad, ::MOI.NumberOfVariables)
     return length(model.list_of_variable_indices)
@@ -122,6 +211,46 @@ function MOI.get(
 ) where {T}
     return length(model.qp.parameters)
 end
+
+function MOI.supports_constraint(
+    model::ModelWithQuad,
+    F::Type{<:MOI.AbstractFunction},
+    S::Type{<:MOI.AbstractSet},
+)
+    return MOI.supports_constraint(model.inner, F, S)
+end
+
+function MOI.add_constraint(
+    model::ModelWithQuad,
+    func::MOI.AbstractFunction,
+    set::MOI.AbstractSet,
+)
+    return MOI.add_constraint(model.inner, func, set)
+end
+
+function MOI.is_valid(model::ModelWithQuad, ci::MOI.ConstraintIndex)
+    return MOI.is_valid(model.inner, ci)
+end
+
+function MOI.get(model::ModelWithQuad, attr::MOI.AbstractConstraintAttribute, ci)
+    return MOI.get(model.inner, attr, ci)
+end
+
+function MOI.get(model::ModelWithQuad, attr::MOI.AbstractConstraintAttribute)
+    return MOI.get(model.inner, attr)
+end
+
+function MOI.set(
+    model::ModelWithQuad,
+    attr::MOI.AbstractConstraintAttribute,
+    ci,
+    value,
+)
+    return MOI.set(model.inner, attr, ci, value)
+end
+
+MOI.delete(model::ModelWithQuad, ci::MOI.ConstraintIndex) =
+    MOI.delete(model.inner, ci)
 
 function MOI.get(
     model::ModelWithQuad{T},
@@ -164,6 +293,36 @@ The number of affine and quadratic constraint rows of `model`, which come
 before the rows of the inner model in the corresponding evaluator.
 """
 Base.length(model::ModelWithQuad) = length(model.qp)
+
+_variable_bounds(model::ModelWithQuad) =
+    (model.variables.lower, model.variables.upper)
+_has_nonlinear_data(model::ModelWithQuad) = _has_nonlinear_data(model.inner)
+_is_nonlinear_input(
+    ::ModelWithQuad{T},
+    ::_QPFunction{T},
+    ::_QPSet{T},
+) where {T} = false
+_is_nonlinear_input(model::ModelWithQuad, f, s) =
+    _is_nonlinear_input(model.inner, f, s)
+_is_nonlinear_objective(::ModelWithQuad{T}, ::_QPFunction{T}) where {T} = false
+_is_nonlinear_objective(::ModelWithQuad, ::MOI.VariableIndex) = false
+_is_nonlinear_objective(model::ModelWithQuad, f) =
+    _is_nonlinear_objective(model.inner, f)
+
+function constraint_rows(
+    ::ModelWithQuad{T},
+    ci::MOI.ConstraintIndex{F,S},
+) where {T,F<:_QPFunction{T},S<:_QPSet{T}}
+    return [ci.value]
+end
+
+function constraint_rows(model::ModelWithQuad, ci::MOI.ConstraintIndex)
+    return length(model.qp) .+ constraint_rows(model.inner, ci)
+end
+
+function constraint_dual_starts(model::ModelWithQuad)
+    return vcat(model.qp.mult_g, constraint_dual_starts(model.inner))
+end
 
 # Replace the parameters of `f`, encoded as `MOI.VariableIndex`es offset by
 # [`_PARAMETER_OFFSET`](@ref), by the corresponding [`ParameterIndex`](@ref),
@@ -244,6 +403,9 @@ function set_objective(
     MOI.set(model.qp, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     set_objective(model.inner, nothing)
     model.objective_sink = _QUAD
+    if MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    end
     return
 end
 
@@ -253,27 +415,60 @@ function set_objective(model::ModelWithQuad{T}, obj) where {T}
     if !isempty(model.qp.parameters)
         obj = _replace_parameters(obj)
     end
-    set_objective(model.inner, obj)
+    if obj === nothing || !(obj isa MOI.AbstractFunction)
+        set_objective(model.inner, nothing)
+        obj === nothing || set_objective(model.inner, obj)
+    else
+        MOI.set(model.inner, MOI.ObjectiveFunction{typeof(obj)}(), obj)
+    end
     model.objective_sink = obj === nothing ? _NONE : _INNER
+    if obj !== nothing &&
+       MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    end
+    return
+end
+
+function MOI.supports(
+    ::ModelWithQuad{T},
+    ::MOI.ObjectiveFunction{F},
+) where {T,F<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+    return true
+end
+
+function MOI.set(model::ModelWithQuad, ::MOI.ObjectiveFunction{F}, f::F) where {F}
+    sense = MOI.get(model, MOI.ObjectiveSense())
+    set_objective(model, f)
+    MOI.set(model, MOI.ObjectiveSense(), sense)
     return
 end
 
 function MOI.get(model::ModelWithQuad, attr::MOI.ObjectiveFunctionType)
+    if model.objective_sink == _QUAD
+        return MOI.get(model.qp, attr)
+    elseif model.objective_sink == _INNER
+        return MOI.get(model.inner, attr)
+    end
     return MOI.get(model.qp, attr)
 end
 
 function MOI.get(model::ModelWithQuad, attr::MOI.ObjectiveFunction{F}) where {F}
-    return MOI.get(model.qp, attr)
+    if model.objective_sink == _QUAD
+        return MOI.get(model.qp, attr)
+    end
+    return MOI.get(model.inner, attr)
 end
 
 # The affine and quadratic constraints. The MOI attribute methods are
 # forwarded to the QP block, which implements them.
 
-const _QPFunction{T} =
-    Union{MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}
-
-const _QPSet{T} =
-    Union{MOI.LessThan{T},MOI.GreaterThan{T},MOI.EqualTo{T},MOI.Interval{T}}
+function MOI.supports_constraint(
+    ::ModelWithQuad{T},
+    ::Type{<:_QPFunction{T}},
+    ::Type{<:_QPSet{T}},
+) where {T}
+    return true
+end
 
 function add_constraint(
     model::ModelWithQuad{T},
@@ -299,7 +494,13 @@ function MOI.add_constraint(
 end
 
 function MOI.get(model::ModelWithQuad, attr::MOI.ListOfConstraintTypesPresent)
-    return MOI.get(model.qp, attr)
+    types = MOI.get(model.variables, attr)
+    append!(types, MOI.get(model.qp, attr))
+    append!(types, MOI.get(model.inner, attr))
+    if !isempty(model.qp.parameters)
+        push!(types, (MOI.VariableIndex, MOI.Parameter{eltype(model.qp.parameters)}))
+    end
+    return unique!(types)
 end
 
 function MOI.is_valid(
@@ -391,6 +592,14 @@ function Evaluator(
     return EvaluatorWithQuad(model, inner)
 end
 
+function Evaluator(
+    model::ModelWithQuad,
+    backend::AbstractAutomaticDifferentiation,
+    vars::Vector{MOI.VariableIndex},
+)
+    return EvaluatorWithQuad(model, Evaluator(model.inner, backend, vars))
+end
+
 function MOI.features_available(d::EvaluatorWithQuad)
     features = MOI.features_available(d.inner)
     return filter(f -> f in (:Grad, :Jac, :JacVec, :Hess, :HessVec), features)
@@ -406,7 +615,8 @@ end
 function MOI.eval_objective(d::EvaluatorWithQuad{T}, x) where {T}
     sink = d.model.objective_sink
     if sink == _QUAD
-        return MOI.eval_objective(d.model.qp, x)
+        value = MOI.eval_objective(d.model.qp, x)
+        return _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * value
     elseif sink == _INNER
         return MOI.eval_objective(d.inner, x)
     else
@@ -418,6 +628,7 @@ function MOI.eval_objective_gradient(d::EvaluatorWithQuad{T}, grad, x) where {T}
     sink = d.model.objective_sink
     if sink == _QUAD
         MOI.eval_objective_gradient(d.model.qp, grad, x)
+        grad .*= _objective_sign(MOI.get(d.model, MOI.ObjectiveSense()))
     elseif sink == _INNER
         MOI.eval_objective_gradient(d.inner, grad, x)
     else
@@ -458,7 +669,9 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithQuad, H, x, σ, μ)
     m = length(d.model.qp)
     # If the objective is not in the QP block, `d.model.qp.objective` is zero, so
     # passing `σ` is harmless; and vice versa for the inner evaluator.
-    MOI.eval_hessian_lagrangian(d.model.qp, H, x, σ, view(μ, 1:m))
+    qp_σ = d.model.objective_sink == _QUAD ?
+           _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * σ : σ
+    MOI.eval_hessian_lagrangian(d.model.qp, H, x, qp_σ, view(μ, 1:m))
     MOI.eval_hessian_lagrangian(
         d.inner,
         view(H, (d.qp_nnzh+1):length(H)),
@@ -524,7 +737,16 @@ function MOI.eval_hessian_lagrangian_product(
         σ,
         view(μ, (m+1):length(μ)),
     )
-    _add_hessian_lagrangian_product(d.model.qp, H, x, v, σ, view(μ, 1:m))
+    qp_σ = d.model.objective_sink == _QUAD ?
+           _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * σ : σ
+    _add_hessian_lagrangian_product(
+        d.model.qp,
+        H,
+        x,
+        v,
+        qp_σ,
+        view(μ, 1:m),
+    )
     return
 end
 
