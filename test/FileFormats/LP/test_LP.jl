@@ -345,7 +345,7 @@ function test_quadratic_constraint_diag()
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *
-          "obj: \n" *
+          "obj: 0\n" *
           "subject to\n" *
           "c: [ 1 x ^ 2 ] <= 1.4\n" *
           "Bounds\n" *
@@ -366,7 +366,7 @@ function test_quadratic_constraint_off_diag()
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *
-          "obj: \n" *
+          "obj: 0\n" *
           "subject to\n" *
           "c: 1.3 + 1.1 x + 1.2 y + [ 1.5 x * y ] = 1.5\n" *
           "Bounds\n" *
@@ -388,7 +388,7 @@ function test_quadratic_constraint_complicated()
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *
-          "obj: \n" *
+          "obj: 0\n" *
           "subject to\n" *
           "c: -1.1 <= 1.3 + 1.1 x + 1.2 y + [ -1.1 x ^ 2 + 1.5 x * y ] <= 1.4\n" *
           "Bounds\n" *
@@ -417,7 +417,7 @@ function test_write_indicator()
     MOI.write_to_file(model, LP_TEST_FILE)
     @test read(LP_TEST_FILE, String) ==
           "minimize\n" *
-          "obj: \n" *
+          "obj: 0\n" *
           "subject to\n" *
           "c4:  z = 1 -> 2 x <= 0\n" *
           "c1: z = 1 -> x <= 0\n" *
@@ -722,7 +722,7 @@ function test_infinite_interval()
     MOI.add_constraint(model, 1.0 * x, MOI.Interval(3.0, 4.0))
     @test sprint(write, model) ==
           "minimize\n" *
-          "obj: \n" *
+          "obj: 0\n" *
           "subject to\n" *
           "c1: -inf <= 1 x1 <= inf\n" *
           "c2: -inf <= 1 x1 <= 1\n" *
@@ -1846,6 +1846,30 @@ function test_unsupported_kwarg()
         ),
         LP.Model(; foo = 1),
     )
+    return
+end
+
+function test_empty_function()
+    model = LP.Model()
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        zero(MOI.ScalarAffineFunction{Float64}),
+        MOI.LessThan(1.0),
+    )
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    d = MOI.add_constraint(
+        model,
+        zero(MOI.ScalarQuadraticFunction{Float64}),
+        MOI.LessThan(1.0),
+    )
+    MOI.set(model, MOI.ConstraintName(), d, "d")
+    io = IOBuffer()
+    write(io, model)
+    seekstart(io)
+    contents = read(io, String)
+    @test occursin("c: 0 <= 1", contents)
+    @test occursin("d: 0 <= 1", contents)
     return
 end
 

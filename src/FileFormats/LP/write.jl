@@ -47,7 +47,7 @@ function _write_function(
     kwargs...,
 )
     is_first_item = true
-    if !iszero(func.constant)
+    if !iszero(func.constant) || isempty(func.terms)
         _print_shortest(io, func.constant)
         is_first_item = false
     end
@@ -77,7 +77,8 @@ function _write_function(
     kwargs...,
 )
     is_first_item = true
-    if !iszero(func.constant)
+    needs_constant = isempty(func.affine_terms) && isempty(func.quadratic_terms)
+    if !iszero(func.constant) || needs_constant
         _print_shortest(io, func.constant)
         is_first_item = false
     end
