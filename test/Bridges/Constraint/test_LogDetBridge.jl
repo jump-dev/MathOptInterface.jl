@@ -367,6 +367,36 @@ function test_runtests()
     return
 end
 
+function test_runtests_constants()
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.LogDetBridge,
+        """
+        variables: t, u, x11, x21, x22
+        [t + 1.0, u + 2.0, x11 + 3.0, x21 + 4.0, x22 + 5.0] in LogDetConeTriangle(2)
+        """,
+        """
+        variables: t, u, x11, x21, x22, v1, v2, v3, v4, v5
+        [v4, u + 2.0, v1] in ExponentialCone()
+        [v5, u + 2.0, v3] in ExponentialCone()
+        t + -1.0 * v4 + -1.0 * v5 <= -1.0
+        [x11 + 3.0, x21 + 4.0, x22 + 5.0, v1, v2, v1, 0, v3, 0, v3] in PositiveSemidefiniteConeTriangle(4)
+        """,
+    )
+    MOI.Bridges.runtests(
+        MOI.Bridges.Constraint.RootDetBridge,
+        """
+        variables: t, x11, x21, x22
+        [t, x11, x21, x22] in RootDetConeTriangle(2)
+        """,
+        """
+        variables: t, x11, x21, x22, v1, v2, v3
+        [t, v1, v3] in GeometricMeanCone(3)
+        [x11, x21, x22, v1, v2, v1, 0, v3, 0, v3] in PositiveSemidefiniteConeTriangle(4)
+        """,
+    )
+    return
+end
+
 end  # module
 
 TestConstraintDet.runtests()
