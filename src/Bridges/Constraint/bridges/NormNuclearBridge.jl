@@ -419,6 +419,10 @@ function MOI.get(
             T(2),
         ),
     )
+    # `normalize_and_add_constraint` may have moved a constant from the
+    # first scalar function into `bridge.ge_index`'s set; add it back.
+    rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.ge_index))
+    MOI.Utilities.operate!(-, T, t, rhs)
     t = MOI.Utilities.remove_variable(
         MOI.Utilities.remove_variable(t, bridge.U),
         bridge.V,
