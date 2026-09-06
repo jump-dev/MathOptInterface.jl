@@ -330,6 +330,24 @@ function test_square_bridge_with_constant()
     return
 end
 
+function test_constraint_primal_start()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.Square{Float64}(inner)
+    x = MOI.add_variables(model, 4)
+    f = MOI.Utilities.vectorize(1.0 .* x .+ (1.0:4.0))
+    ci = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeSquare(2))
+    bridge = MOI.Bridges.bridge(model, ci)
+    start = [11.0, 21.0, 12.0, 22.0]
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, start)
+    @test isapprox(
+        MOI.get(inner, MOI.ConstraintPrimalStart(), bridge.triangle),
+        [11.0, 12.0, 22.0]
+    )
+    @test ≈(MOI.get(inner, MOI.ConstraintPrimalStart(), bridge.sym[1][2]), -9.0)
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), ci), f)
+    return
+end
+
 end  # module
 
 TestConstraintSquare.runtests()

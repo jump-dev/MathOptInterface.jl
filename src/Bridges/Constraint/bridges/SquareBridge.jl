@@ -320,7 +320,7 @@ function MOI.get(
         primal[offset+i+(j-1)*dim] = primal[offset+j+(i-1)*dim] = value[k]
     end
     for ((i, j), ci) in bridge.sym
-        primal[offset+i+(j-1)*dim] += MOI.get(model, attr, ci)
+        primal[offset+j+(i-1)*dim] -= MOI.get(model, attr, ci)
     end
     return primal
 end
@@ -341,7 +341,7 @@ function MOI.set(
     k = offset
     for j in 1:dim, i in 1:j
         k += 1
-        primal[k] = value[offset+j+(i-1)*dim]
+        primal[k] = value[offset+i+(j-1)*dim]
     end
     MOI.set(model, attr, bridge.triangle, primal)
     for ((i, j), ci) in bridge.sym
