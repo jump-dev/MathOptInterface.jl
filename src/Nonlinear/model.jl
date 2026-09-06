@@ -100,6 +100,17 @@ function set_objective(model::Model, ::Nothing)
 end
 
 """
+    model(backend::AbstractAutomaticDifferentiation)
+
+Return a new MOI model appropriate for the automatic-differentiation
+`backend`. Custom backends may overload this method to provide a model that
+stores functions in a backend-specific representation.
+"""
+function model(::AbstractAutomaticDifferentiation)
+    return ModelWithQuad(ModelWithOracles(Model()))
+end
+
+"""
     add_expression(model::Model, expr)::ExpressionIndex
 
 Parse `expr` into a [`Expression`](@ref) and add to `model`. Returns an
