@@ -10,6 +10,10 @@ function MOI.empty!(model::Model)
     empty!(model.constraints)
     empty!(model.parameters)
     model.operators = OperatorRegistry()
+    model.objective_sense = MOI.FEASIBILITY_SENSE
+    model.moi_objective = nothing
+    empty!(model.moi_functions)
+    empty!(model.constraint_dual_start)
     model.last_constraint_index = 0
     return
 end
@@ -21,8 +25,20 @@ function MOI.is_empty(model::Model)
            isempty(model.parameters) &&
            isempty(model.operators.registered_univariate_operators) &&
            isempty(model.operators.registered_multivariate_operators) &&
+           model.objective_sense == MOI.FEASIBILITY_SENSE &&
+           model.moi_objective === nothing &&
+           isempty(model.moi_functions) &&
+           isempty(model.constraint_dual_start) &&
            model.last_constraint_index === Int64(0)
 end
+
+_parameter_values(model::Model) = model.parameters
+_has_nonlinear_data(model::Model) =
+    model.objective !== nothing ||
+    !isempty(model.constraints) ||
+    !isempty(model.parameters)
+_is_nonlinear_input(::Model, ::MOI.AbstractFunction, ::MOI.AbstractSet) = true
+_is_nonlinear_objective(::Model, ::MOI.AbstractFunction) = true
 
 function Base.copy(::Model)
     return error("Copying nonlinear problems not yet implemented")
@@ -69,11 +85,17 @@ julia> MOI.Nonlinear.set_objective(model, nothing)
 """
 function set_objective(model::Model, obj)
     model.objective = parse_expression(model, obj)
+    model.moi_objective =
+        obj isa MOI.ScalarNonlinearFunction ? obj : nothing
+    if model.objective_sense == MOI.FEASIBILITY_SENSE
+        model.objective_sense = MOI.MIN_SENSE
+    end
     return
 end
 
 function set_objective(model::Model, ::Nothing)
     model.objective = nothing
+    model.moi_objective = nothing
     return
 end
 
@@ -148,6 +170,9 @@ function add_constraint(
     model.last_constraint_index += 1
     index = ConstraintIndex(model.last_constraint_index)
     model.constraints[index] = Constraint(f, set)
+    if func isa MOI.ScalarNonlinearFunction
+        model.moi_functions[index] = func
+    end
     return index
 end
 
@@ -191,6 +216,8 @@ A Nonlinear.Model with:
 """
 function delete(model::Model, c::ConstraintIndex)
     delete!(model.constraints, c)
+    delete!(model.moi_functions, c)
+    delete!(model.constraint_dual_start, c)
     return
 end
 
@@ -200,6 +227,169 @@ end
 
 function MOI.is_valid(model::Model, index::ConstraintIndex)
     return haskey(model.constraints, index)
+end
+
+# MathOptInterface model API. The legacy `Nonlinear` API above remains
+# available, but model layers and solvers communicate with this model only via
+# these methods.
+
+const _ScalarSet{T} = Union{
+    MOI.GreaterThan{T},
+    MOI.LessThan{T},
+    MOI.EqualTo{T},
+    MOI.Interval{T},
+}
+
+MOI.supports_constraint(
+    ::Model,
+    ::Type{MOI.ScalarNonlinearFunction},
+    ::Type{<:_ScalarSet{Float64}},
+) = true
+
+function MOI.add_constraint(
+    model::Model,
+    f::MOI.ScalarNonlinearFunction,
+    s::_ScalarSet{Float64},
+)
+    index = add_constraint(model, f, s)
+    return MOI.ConstraintIndex{typeof(f),typeof(s)}(index.value)
+end
+
+_nonlinear_index(ci::MOI.ConstraintIndex) = ConstraintIndex(ci.value)
+
+function MOI.is_valid(
+    model::Model,
+    ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
+) where {S<:_ScalarSet{Float64}}
+    index = _nonlinear_index(ci)
+    return haskey(model.constraints, index) && model.constraints[index].set isa S
+end
+
+function MOI.get(
+    model::Model,
+    ::MOI.ListOfConstraintIndices{F,S},
+) where {F<:MOI.ScalarNonlinearFunction,S<:_ScalarSet{Float64}}
+    return MOI.ConstraintIndex{F,S}[
+        MOI.ConstraintIndex{F,S}(index.value) for
+        (index, constraint) in model.constraints if constraint.set isa S
+    ]
+end
+
+function MOI.get(
+    model::Model,
+    ::MOI.NumberOfConstraints{F,S},
+) where {F<:MOI.ScalarNonlinearFunction,S<:_ScalarSet{Float64}}
+    return count(constraint -> constraint.set isa S, values(model.constraints))
+end
+
+function MOI.get(model::Model, ::MOI.ListOfConstraintTypesPresent)
+    types = Tuple{Type,Type}[]
+    for constraint in values(model.constraints)
+        pair = (MOI.ScalarNonlinearFunction, typeof(constraint.set))
+        pair in types || push!(types, pair)
+    end
+    return types
+end
+
+function MOI.get(model::Model, ::MOI.ConstraintFunction, ci::MOI.ConstraintIndex)
+    MOI.throw_if_not_valid(model, ci)
+    return model.moi_functions[_nonlinear_index(ci)]
+end
+
+function MOI.get(model::Model, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex)
+    MOI.throw_if_not_valid(model, ci)
+    return model.constraints[_nonlinear_index(ci)].set
+end
+
+function MOI.set(model::Model, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex, set)
+    MOI.throw_if_not_valid(model, ci)
+    index = _nonlinear_index(ci)
+    constraint = model.constraints[index]
+    model.constraints[index] = Constraint(constraint.expression, set)
+    return
+end
+
+function MOI.delete(model::Model, ci::MOI.ConstraintIndex)
+    MOI.throw_if_not_valid(model, ci)
+    return delete(model, _nonlinear_index(ci))
+end
+
+function constraint_rows(model::Model, ci::MOI.ConstraintIndex)
+    MOI.throw_if_not_valid(model, ci)
+    index = _nonlinear_index(ci)
+    return [findfirst(isequal(index), collect(keys(model.constraints)))]
+end
+
+function constraint_dual_starts(model::Model)
+    return Union{Nothing,Float64}[
+        get(model.constraint_dual_start, index, nothing) for
+        index in keys(model.constraints)
+    ]
+end
+
+MOI.supports(::Model, ::MOI.ObjectiveSense) = true
+MOI.get(model::Model, ::MOI.ObjectiveSense) = model.objective_sense
+
+function MOI.set(model::Model, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+    model.objective_sense = sense
+    return
+end
+
+MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}) = true
+
+function MOI.set(
+    model::Model,
+    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction},
+    f::MOI.ScalarNonlinearFunction,
+)
+    sense = model.objective_sense
+    set_objective(model, f)
+    model.objective_sense = sense
+    return
+end
+
+function MOI.get(model::Model, ::MOI.ObjectiveFunctionType)
+    return model.objective === nothing ? nothing : MOI.ScalarNonlinearFunction
+end
+
+function MOI.get(
+    model::Model,
+    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction},
+)
+    return something(model.moi_objective)
+end
+
+MOI.supports(::Model, ::MOI.UserDefinedFunction) = true
+
+function MOI.set(model::Model, attr::MOI.UserDefinedFunction, functions)
+    return register_operator(model, attr.name, attr.arity, functions...)
+end
+
+function MOI.supports(
+    ::Model,
+    ::MOI.ConstraintDualStart,
+    ::Type{<:MOI.ConstraintIndex{MOI.ScalarNonlinearFunction}},
+)
+    return true
+end
+
+function MOI.get(model::Model, ::MOI.ConstraintDualStart, ci::MOI.ConstraintIndex)
+    return get(model.constraint_dual_start, _nonlinear_index(ci), nothing)
+end
+
+function MOI.set(
+    model::Model,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex,
+    value::Union{Nothing,Real},
+)
+    index = _nonlinear_index(ci)
+    if value === nothing
+        delete!(model.constraint_dual_start, index)
+    else
+        model.constraint_dual_start[index] = Float64(value)
+    end
+    return
 end
 
 """
