@@ -55,6 +55,15 @@ function test_moi_model_stack()
     @test g == [4.0]
 end
 
+function test_default_backend_model()
+    model = MOI.Nonlinear.model(MOI.Nonlinear.SparseReverseMode())
+    @test model isa MOI.Nonlinear.ModelWithQuad
+    @test model.inner isa MOI.Nonlinear.ModelWithOracles
+    @test model.inner.inner isa MOI.Nonlinear.Model
+    return
+end
+
 test_moi_model_stack()
+test_default_backend_model()
 
 end  # module
