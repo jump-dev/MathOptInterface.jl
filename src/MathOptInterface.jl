@@ -176,7 +176,7 @@ julia> MOI.write_to_file(model, filename; coefficient_type = Int);
 
 julia> print(read(filename, String))
 minimize
-obj:
+obj: 0
 subject to
 Bounds
 2 <= x <= 3
