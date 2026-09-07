@@ -354,6 +354,9 @@ function MOI.modify(
     if bridge.upper !== nothing
         MOI.modify(model, bridge.upper, change)
     end
+    if bridge.lower === bridge.upper === nothing
+        bridge.func = MOI.Utilities.modify_function(bridge.func, change)
+    end
     return
 end
 
@@ -368,6 +371,9 @@ function MOI.set(
     end
     if bridge.upper !== nothing
         MOI.set(model, MOI.ConstraintFunction(), bridge.upper, func)
+    end
+    if bridge.lower === bridge.upper === nothing
+        bridge.func = func
     end
     return
 end

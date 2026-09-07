@@ -523,6 +523,18 @@ function test_modify_set()
     return
 end
 
+function test_split_interval_free_modify()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.SplitInterval{Float64}(inner)
+    x, y = MOI.add_variable(model), MOI.add_variable(model)
+    ci = MOI.add_constraint(model, 1.0 * x, MOI.Interval(-Inf, Inf))
+    MOI.modify(model, ci, MOI.ScalarCoefficientChange(y, 2.0))
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), ci), 1.0 * x + 2.0 * y)
+    MOI.set(model, MOI.ConstraintFunction(), ci, 3.0 * x + 4.0 * y)
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), ci), 3.0 * x + 4.0 * y)
+    return
+end
+
 end  # module
 
 TestConstraintSplitInterval.runtests()
