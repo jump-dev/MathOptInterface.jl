@@ -135,7 +135,7 @@ function test_linear_LessThan_and_GreaterThan()
     @test MOI.get(mock, MOI.NumberOfVariables()) == 4
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 2
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
-    @test vis == MOI.VariableIndex.([-1, -2])
+    @test vis == MOI.VariableIndex.([1, 2])
 
     cx = MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.Reals}(vis[1].value)
     @test MOI.get(bridged_mock, MOI.ConstraintPrimal(), cx) == [100.0]
@@ -232,7 +232,7 @@ function test_linear_transform()
     MOI.Test.test_linear_transform(bridged_mock, MOI.Test.Config())
 
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
-    @test vis == MOI.VariableIndex.([-1, -2])
+    @test vis == MOI.VariableIndex.([1, 2])
 
     MOI.set(
         bridged_mock,

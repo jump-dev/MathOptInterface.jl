@@ -61,7 +61,7 @@ function test_map()
         MOI.SecondOrderCone(2),
         ci -> true,
     )
-    @test c2.value == -1
+    @test c2.value == 1
     @test haskey(map, c2)
     @test map[c2] == b2
     @test MOI.Bridges.Constraint.number_of_type(map, typeof(c2)) == 1

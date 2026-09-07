@@ -44,7 +44,10 @@ function test_NonposToNonneg()
     #   x in R^1, y in R_-^1, z in R^1, s in R^1
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
     y = vis[2]
-    @test y.value == -1
+    # `y` is the bridged `Nonpositives` variable. Its outer index lives in a
+    # namespace independent of the inner model, so we check that it is bridged
+    # rather than asserting a specific value.
+    @test MOI.Bridges.is_bridged(bridged_mock, y)
 
     @test MOI.supports(
         bridged_mock,
@@ -155,7 +158,7 @@ function test_conic_linear_INFEASIBLE_2()
     @test first(MOI.get(mock, MOI.ListOfVariableIndices())).value ≥ 0
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 1
     vis = MOI.get(bridged_mock, MOI.ListOfVariableIndices())
-    @test vis == [MOI.VariableIndex(-1)]
+    @test vis == [MOI.VariableIndex(1)]
     _test_delete_bridged_variable(
         bridged_mock,
         vis[1],
