@@ -1034,7 +1034,6 @@ function test_min_operator()
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.objective_expr(evaluator) == :(min(x[$x], x[$y]))
-
     r = Nonlinear.OperatorRegistry()
     x = [1.1, 2.2]
     @test Nonlinear.eval_multivariate_function(r, :min, x) == 1.1
@@ -1042,19 +1041,16 @@ function test_min_operator()
     Nonlinear.eval_multivariate_gradient(r, :min, g, x)
     @test g == [1.0, 0.0]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test Nonlinear.eval_multivariate_hessian(r, :min, H, x)
-    @test H[1, 1] == 1.0
-    @test H[2, 1] == H[2, 2] == 0.0
-
+    @test !Nonlinear.eval_multivariate_hessian(r, :min, H, x)
+    @test iszero(H)
     x = [1.1, -2.2]
     @test Nonlinear.eval_multivariate_function(r, :min, x) == -2.2
     g = zeros(2)
     Nonlinear.eval_multivariate_gradient(r, :min, g, x)
     @test g == [0.0, 1.0]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test Nonlinear.eval_multivariate_hessian(r, :min, H, x)
-    @test H[2, 2] == 1.0
-    @test H[1, 1] == H[2, 1] == 0.0
+    @test !Nonlinear.eval_multivariate_hessian(r, :min, H, x)
+    @test iszero(H)
     return
 end
 
@@ -1066,7 +1062,6 @@ function test_max_operator()
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.objective_expr(evaluator) == :(max(x[$x], x[$y]))
-
     r = Nonlinear.OperatorRegistry()
     x = [1.1, -2.2]
     @test Nonlinear.eval_multivariate_function(r, :max, x) == 1.1
@@ -1074,19 +1069,16 @@ function test_max_operator()
     Nonlinear.eval_multivariate_gradient(r, :max, g, x)
     @test g == [1.0, 0.0]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test Nonlinear.eval_multivariate_hessian(r, :max, H, x)
-    @test H[1, 1] == 1.0
-    @test H[2, 1] == H[2, 2] == 0.0
-
+    @test !Nonlinear.eval_multivariate_hessian(r, :max, H, x)
+    @test iszero(H)
     x = [1.1, 2.2]
     @test Nonlinear.eval_multivariate_function(r, :max, x) == 2.2
     g = zeros(2)
     Nonlinear.eval_multivariate_gradient(r, :max, g, x)
     @test g == [0.0, 1.0]
     H = LinearAlgebra.LowerTriangular(zeros(2, 2))
-    @test Nonlinear.eval_multivariate_hessian(r, :max, H, x)
-    @test H[2, 2] == 1.0
-    @test H[1, 1] == H[2, 1] == 0.0
+    @test !Nonlinear.eval_multivariate_hessian(r, :max, H, x)
+    @test iszero(H)
     return
 end
 

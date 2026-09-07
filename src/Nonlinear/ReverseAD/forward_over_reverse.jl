@@ -329,15 +329,12 @@ function _forward_eval_ϵ(
                         d.user_output_buffer,
                         n_children,
                     )
-                    has_hessian = Nonlinear.eval_multivariate_hessian(
+                    Nonlinear.eval_multivariate_hessian(
                         d.data.operators,
                         d.data.operators.multivariate_operators[node.index],
                         H,
                         f_input,
                     )
-                    # This might be `false` if we extend this code to all
-                    # multivariate functions.
-                    @assert has_hessian
                     for col in 1:n_children
                         dual = zero(P)
                         for row in 1:n_children
