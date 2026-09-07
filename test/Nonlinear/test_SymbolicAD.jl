@@ -7,10 +7,10 @@ module TestMathOptSymbolicAD
 
 using Test
 
+import ForwardDiff
 import MathOptInterface as MOI
 import MathOptInterface: Nonlinear
-
-const SymbolicAD = Nonlinear.SymbolicAD
+import MathOptInterface.Nonlinear: SymbolicAD
 
 function runtests()
     for name in names(@__MODULE__; all = true)
@@ -100,7 +100,7 @@ function test_derivative()
         # :atan
         op(:atan, x, sin_x)=>op(
             :/,
-            op(:+, op(:*, x, cos_x), sin_x),
+            op(:-, sin_x, op(:*, x, cos_x)),
             op(:+, op(:^, x, 2), op(:^, sin_x, 2)),
         ),
         # :min
@@ -781,6 +781,29 @@ function test_simplify_drops_ones()
         @test isapprox(MOI.Nonlinear.SymbolicAD.simplify(g), f)
         g = MOI.ScalarNonlinearFunction(:*, Any[f, one(F)])
         @test isapprox(MOI.Nonlinear.SymbolicAD.simplify(g), f)
+    end
+    return
+end
+
+function test_atan_derivatives()
+    model = MOI.Utilities.Model{Float64}()
+    u, v = MOI.VariableIndex.(1:2)
+    f = MOI.ScalarNonlinearFunction(:atan, Any[u, v])
+    f_u = MOI.Nonlinear.SymbolicAD.derivative(f, u)
+    f_v = MOI.Nonlinear.SymbolicAD.derivative(f, v)
+    for x in -1.0:0.5:1.0, y in -1.0:0.5:1.0
+        if iszero(x) && iszero(y)
+            continue
+        end
+        point = Dict(u => x, v => y)
+        @test isapprox(
+            MOI.Utilities.eval_variables(xi -> point[xi], model, f_u),
+            ForwardDiff.derivative(a -> atan(a, y), x),
+        )
+        @test isapprox(
+            MOI.Utilities.eval_variables(xi -> point[xi], model, f_v),
+            ForwardDiff.derivative(b -> atan(x, b), y),
+        )
     end
     return
 end

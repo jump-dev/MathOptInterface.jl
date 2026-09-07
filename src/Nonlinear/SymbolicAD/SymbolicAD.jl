@@ -704,7 +704,7 @@ function derivative(f::MOI.ScalarNonlinearFunction, x::MOI.VariableIndex)
         return MOI.ScalarNonlinearFunction(
             :/,
             Any[
-                MOI.ScalarNonlinearFunction(:+, Any[u_dv_dx, v_du_dx]),
+                MOI.ScalarNonlinearFunction(:-, Any[v_du_dx, u_dv_dx]),
                 MOI.ScalarNonlinearFunction(:+, Any[u_2, v_2]),
             ],
         )
