@@ -94,7 +94,7 @@ function test_runtests_free_row()
         variables: x, z
         [1.0 * z + -3.0, 3.3 + -1.0 * z] in Nonnegatives(2)
         """;
-        constraint_start = 0.0,
+        constraint_start = 3.0,
     )
     return
 end
@@ -110,16 +110,26 @@ function test_runtests_all_free_rows()
         variables: x
         """,
     )
-    inner = MOI.Utilities.Model{Float64}()
+    return
+end
+
+function test_constraint_primal_free_rows()
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Constraint.SplitHyperRectangle{Float64}(inner)
-    x = MOI.add_variable(model)
-    f = MOI.Utilities.operate(vcat, Float64, 1.0 * x)
-    c = MOI.add_constraint(model, f, MOI.HyperRectangle([-Inf], [Inf]))
-    @test MOI.get(model, MOI.ConstraintDual(), c) == [0.0]
-    @test_throws(
-        MOI.GetAttributeNotAllowed{MOI.ConstraintPrimal},
-        MOI.get(model, MOI.ConstraintPrimal(), c)
+    x = MOI.add_variables(model, 2)
+    y = [1.0 * x[1] + 2.0, 3.0 * x[2] + 4.0]
+    f = MOI.Utilities.operate(vcat, Float64, y...)
+    set = MOI.HyperRectangle([-Inf, Inf], [Inf, Inf])
+    c = MOI.add_constraint(model, f, set)
+
+    MOI.Utilities.set_mock_optimize!(
+        inner,
+        mock -> MOI.Utilities.mock_optimize!(mock, [1.0, 2.0]),
     )
+    MOI.optimize!(model)
+    @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
+    @test ≈(MOI.get(model, MOI.ConstraintDual(), c), [0.0, 0.0])
+    @test ≈(MOI.get(model, MOI.ConstraintPrimal(), c), [3.0, 10.0])
     return
 end
 
