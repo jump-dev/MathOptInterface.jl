@@ -28,8 +28,8 @@ mutable struct SplitHyperRectangleBridge{T,G,F} <: AbstractBridge
     ci::Union{Nothing,MOI.ConstraintIndex{G,MOI.Nonnegatives}}
     set::MOI.HyperRectangle{T}
     free_rows::F
-    free_primal_start::Union{Nothing,Vector{T}}
-    free_dual_start::Union{Nothing,Vector{T}}
+    primal_start::Union{Nothing,Vector{T}}
+    dual_start::Union{Nothing,Vector{T}}
 
     function SplitHyperRectangleBridge{T,G,F}(
         ci::Union{Nothing,MOI.ConstraintIndex{G,MOI.Nonnegatives}},
@@ -202,38 +202,17 @@ function MOI.supports(
     return MOI.supports(model, attr, MOI.ConstraintIndex{G,MOI.Nonnegatives})
 end
 
-_get_free_start(bridge, ::MOI.ConstraintDualStart) = bridge.free_dual_start
-
-function _set_free_start(bridge, ::MOI.ConstraintDualStart, value)
-    bridge.free_dual_start = value
-    return
-end
-
-_get_free_start(bridge, ::MOI.ConstraintPrimalStart) = bridge.free_primal_start
-
-function _set_free_start(bridge, ::MOI.ConstraintPrimalStart, value)
-    bridge.free_primal_start = value
-    return
-end
-
-# This is a punned overload. We use Union{MOI.ConstraintDual,MOI.ConstraintDualStart}
-# in MOI.get, so this hits the ConstraintDual branch. Since no constraints are
-# ever added, we just assuem that the dual is `0.0` (this is feasible because)
-# the set is really `f(x) in Reals()`, so the dual set is `Zeros()`
-function _get_free_start(
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintPrimalStart,
     bridge::SplitHyperRectangleBridge{T},
-    ::MOI.ConstraintDual,
+    ::Nothing,
 ) where {T}
-    return zeros(T, MOI.dimension(bridge.set))
-end
-
-# The same cannot be said for ConstraintPrimal because we have no mechanism for
-# evaluating the primal of the free rows. Throw an error instead.
-function _get_free_start(
-    ::SplitHyperRectangleBridge,
-    attr::MOI.ConstraintPrimal,
-)
-    return throw(MOI.GetAttributeNotAllowed(attr))
+    if bridge.ci !== nothing
+        MOI.set(model, attr, bridge.ci, nothing)
+    end
+    bridge.primal_start = nothing
+    return
 end
 
 function MOI.set(
@@ -242,30 +221,47 @@ function MOI.set(
     bridge::SplitHyperRectangleBridge{T},
     value::AbstractVector{T},
 ) where {T}
-    if bridge.ci === nothing
-        return _set_free_start(bridge, attr, value)
+    bridge.primal_start = value
+    if bridge.ci !== nothing
+        new_values = vcat(
+            T[v - l for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
+            T[u - v for (v, u) in zip(value, bridge.set.upper) if isfinite(u)],
+        )
+        MOI.set(model, attr, bridge.ci, new_values)
     end
-    new_values = vcat(
-        T[v - l for (v, l) in zip(value, bridge.set.lower) if isfinite(l)],
-        T[u - v for (v, u) in zip(value, bridge.set.upper) if isfinite(u)],
-    )
-    MOI.set(model, attr, bridge.ci, new_values)
     return
 end
 
 function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintPrimalStart,
+    bridge::SplitHyperRectangleBridge,
+)
+    return bridge.primal_start
+end
+
+function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
+    attr::MOI.ConstraintPrimal,
     bridge::SplitHyperRectangleBridge{T},
 ) where {T}
+    ret = zeros(T, MOI.dimension(bridge.set))
+    if MOI.output_dimension(bridge.free_rows) > 0
+        y = MOI.Utilities.eval_variables(bridge.free_rows) do vi
+            return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
+        end
+        k = 0
+        for (i, (l, u)) in enumerate(zip(bridge.set.lower, bridge.set.upper))
+            if !isfinite(l) && !isfinite(u)
+                k += 1
+                ret[i] = y[k]
+            end
+        end
+    end
     if bridge.ci === nothing
-        return _get_free_start(bridge, attr)
+        return ret
     end
     values = MOI.get(model, attr, bridge.ci)
-    if values === nothing
-        return nothing
-    end
-    ret = zeros(T, MOI.dimension(bridge.set))
     row = 0
     for (i, l) in enumerate(bridge.set.lower)
         if isfinite(l)
@@ -286,33 +282,51 @@ function MOI.set(
     model::MOI.ModelLike,
     attr::MOI.ConstraintDualStart,
     bridge::SplitHyperRectangleBridge{T},
-    values::AbstractVector{T},
+    ::Nothing,
 ) where {T}
-    if bridge.ci === nothing
-        return _set_free_start(bridge, attr, values)
+    if bridge.ci !== nothing
+        MOI.set(model, attr, bridge.ci, nothing)
     end
-    set = bridge.set
-    new_values = vcat(
-        T[max(T(0), v) for (v, l) in zip(values, set.lower) if isfinite(l)],
-        T[max(T(0), -v) for (v, u) in zip(values, set.upper) if isfinite(u)],
-    )
-    MOI.set(model, attr, bridge.ci, new_values)
+    bridge.dual_start = nothing
+    return
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDualStart,
+    bridge::SplitHyperRectangleBridge{T},
+    value::AbstractVector{T},
+) where {T}
+    bridge.dual_start = value
+    if bridge.ci !== nothing
+        set = bridge.set
+        new_values = vcat(
+            T[max(T(0), v) for (v, l) in zip(value, set.lower) if isfinite(l)],
+            T[max(T(0), -v) for (v, u) in zip(value, set.upper) if isfinite(u)],
+        )
+        MOI.set(model, attr, bridge.ci, new_values)
+    end
     return
 end
 
 function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.ConstraintDualStart,
+    bridge::SplitHyperRectangleBridge,
+)
+    return bridge.dual_start
+end
+
+function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintDual,MOI.ConstraintDualStart},
+    attr::MOI.ConstraintDual,
     bridge::SplitHyperRectangleBridge{T},
 ) where {T}
+    ret = zeros(T, MOI.dimension(bridge.set))
     if bridge.ci === nothing
-        return _get_free_start(bridge, attr)
+        return ret  # We don't have any rows. {0} is a feasible dual.
     end
     values = MOI.get(model, attr, bridge.ci)
-    if values === nothing
-        return nothing
-    end
-    ret = zeros(T, MOI.dimension(bridge.set))
     row = 0
     for (i, l) in enumerate(bridge.set.lower)
         if isfinite(l)
@@ -327,17 +341,4 @@ function MOI.get(
         end
     end
     return ret
-end
-
-function MOI.set(
-    model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
-    bridge::SplitHyperRectangleBridge{T},
-    ::Nothing,
-) where {T}
-    if bridge.ci === nothing
-        return _set_free_start(bridge, attr, nothing)
-    end
-    MOI.set(model, attr, bridge.ci, nothing)
-    return
 end
