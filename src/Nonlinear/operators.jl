@@ -916,7 +916,7 @@ function eval_multivariate_hessian(
     H,
     x::AbstractVector{T},
 ) where {T}
-    if op in (:+, :-, :ifelse)
+    if op in (:+, :-, :ifelse, :min, :max)
         return false
     end
     if op == :*
@@ -980,12 +980,6 @@ function eval_multivariate_hessian(
         H[1, 1] = -2 * x[2] * x[1] / base
         H[2, 1] = (x[1]^2 - x[2]^2) / base
         H[2, 2] = 2 * x[2] * x[1] / base
-    elseif op == :min
-        _, i = findmin(x)
-        H[i, i] = one(T)
-    elseif op == :max
-        _, i = findmax(x)
-        H[i, i] = one(T)
     else
         id = registry.multivariate_operator_to_id[op]
         offset = id - registry.multivariate_user_operator_start

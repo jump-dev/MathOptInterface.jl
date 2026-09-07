@@ -1458,6 +1458,63 @@ function test_issue_2897()
     return
 end
 
+function test_hessian_min()
+    model = MOI.Nonlinear.Model()
+    x, y = MOI.VariableIndex.(1:2)
+    MOI.Nonlinear.set_objective(model, :(min($x^2, $y^2)))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (2, 2)]
+    H = zeros(2)
+    MOI.eval_hessian_lagrangian(evaluator, H, [1.1, 2.3], 1.5, Float64[])
+    @test isapprox(H, [3.0, 0.0])
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.3, 1.5], 1.2, Float64[])
+    @test isapprox(H, [0.0, 2.4])
+    return
+end
+
+function test_hessian_max()
+    model = MOI.Nonlinear.Model()
+    x, y = MOI.VariableIndex.(1:2)
+    MOI.Nonlinear.set_objective(model, :(max($x^2, $y^2)))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (2, 2)]
+    H = zeros(2)
+    MOI.eval_hessian_lagrangian(evaluator, H, [1.1, 2.3], 1.5, Float64[])
+    @test isapprox(H, [0.0, 3.0])
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.3, 1.5], 1.2, Float64[])
+    @test isapprox(H, [2.4, 0.0])
+    return
+end
+
+function test_hessian_ifelse()
+    model = MOI.Nonlinear.Model()
+    x, y = MOI.VariableIndex.(1:2)
+    MOI.Nonlinear.set_objective(model, :(ifelse($x < $y, $x^2, $y^2)))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) == [(1, 1), (2, 2)]
+    H = zeros(2)
+    MOI.eval_hessian_lagrangian(evaluator, H, [1.1, 2.3], 1.5, Float64[])
+    @test isapprox(H, [3.0, 0.0])
+    MOI.eval_hessian_lagrangian(evaluator, H, [2.3, 1.5], 1.2, Float64[])
+    @test isapprox(H, [0.0, 2.4])
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
