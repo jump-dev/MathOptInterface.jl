@@ -311,6 +311,26 @@ function test_variable_primal_ray()
     return
 end
 
+function test_constraint_primal_start_offset()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.Vectorize{Float64}(inner)
+    x, cx = MOI.add_constrained_variable(model, MOI.GreaterThan(3.0))
+    ci = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(10.0))
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, 7.0)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), ci) == 7.0
+    # Outer model is:
+    #   x >= 3
+    #   1.0 * x <= 10   [primal_start = 7]
+    # Inner model is:
+    #   y >= 0              x := y + 3
+    #   1.0 * y <= 7.0      [primal_start = 4]
+    # x = y + 3, y >= 0
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    ci_inner = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    @test MOI.get(inner, MOI.ConstraintPrimalStart(), ci_inner) == 4.0
+    return
+end
+
 end  # module
 
 TestVariableVectorize.runtests()
