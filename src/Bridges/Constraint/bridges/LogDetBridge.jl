@@ -287,6 +287,8 @@ function MOI.get(
     slog = MOI.get(model, attr, first(bridge.lcindex))::G
     u = MOI.Utilities.eachscalar(slog)[2]
     ssu = MOI.get(model, attr, bridge.tlindex)::H
+    tl_rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.tlindex))
+    ssu = MOI.Utilities.operate!(-, T, ssu, tl_rhs)
     taff = MOI.Utilities.remove_variable(ssu, bridge.l)
     SI = MOI.Utilities.scalar_type(I)
     t = MOI.Utilities.convert_approx(SI, taff)

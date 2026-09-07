@@ -167,6 +167,10 @@ function MOI.get(
             exp_func_i[2],
         )
     end
+    # `normalize_and_add_constraint` may have moved a constant from the
+    # first scalar function into `bridge.ge_index`'s set; add it back.
+    rhs = MOI.constant(MOI.get(model, MOI.ConstraintSet(), bridge.ge_index))
+    MOI.Utilities.operate_output_index!(-, T, 1, func, rhs)
     f = MOI.Utilities.remove_variable(func, bridge.y)
     return MOI.Utilities.convert_approx(H, f)
 end
