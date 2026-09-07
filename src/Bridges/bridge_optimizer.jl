@@ -1681,7 +1681,7 @@ function MOI.set(
 ) where {F<:MOI.AbstractScalarFunction,S<:MOI.AbstractScalarSet}
     if is_bridged(b, ci)
         MOI.throw_if_not_valid(b, ci)
-        return call_in_context(MOI.get, b, ci, attr)
+        return call_in_context(MOI.set, b, ci, attr, value)
     elseif !Variable.has_bridges(Variable.bridges(b)) || value === nothing
         MOI.set(b.model, attr, ci, value)
         return

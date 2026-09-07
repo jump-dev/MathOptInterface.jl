@@ -301,6 +301,19 @@ function test_constraint_primal_ray()
     return
 end
 
+function test_constraint_primal_start()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Constraint.Vectorize{Float64}(mock)
+    x, c = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    ci = MOI.add_constraint(model, 1.0 * x[1] + x[2], MOI.EqualTo(1.0))
+    @test MOI.supports(model, MOI.ConstraintPrimalStart(), typeof(ci))
+    MOI.set(model, MOI.ConstraintPrimalStart(), ci, 1.0)
+    @test MOI.get(model, MOI.ConstraintPrimalStart(), ci) == 1.0
+    return
+end
+
 end  # module
 
 TestConstraintVectorize.runtests()
