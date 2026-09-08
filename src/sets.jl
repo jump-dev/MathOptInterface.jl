@@ -1853,7 +1853,7 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInte
 struct SOS1{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
 
-   function SOS1{T}(weights::Vector{T}) where {T<:Real}
+    function SOS1{T}(weights::Vector{T}) where {T<:Real}
         if isempty(weights)
             throw(DimensionMismatch("Dimension of SOS1 must be > 0."))
         end
