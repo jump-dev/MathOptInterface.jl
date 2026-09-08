@@ -1852,7 +1852,18 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInte
 """
 struct SOS1{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
+
+   function SOS1{T}(weights::Vector{T}) where {T<:Real}
+        if isempty(weights)
+            throw(DimensionMismatch("Dimension of SOS1 must be > 0."))
+        end
+        return new{T}(weights)
+    end
 end
+
+SOS1(w::AbstractVector{T}) where {T<:Real} = SOS1{T}(w)
+
+SOS1{T}(w::AbstractVector) where {T<:Real} = SOS1{T}(convert(Vector{T}, w))
 
 dimension(set::SOS1) = length(set.weights)
 
@@ -1889,7 +1900,18 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInte
 """
 struct SOS2{T<:Real} <: AbstractVectorSet
     weights::Vector{T}
+
+    function SOS2{T}(weights::Vector{T}) where {T<:Real}
+        if isempty(weights)
+            throw(DimensionMismatch("Dimension of SOS2 must be > 0."))
+        end
+        return new{T}(weights)
+    end
 end
+
+SOS2(w::AbstractVector{T}) where {T<:Real} = SOS2{T}(w)
+
+SOS2{T}(w::AbstractVector) where {T<:Real} = SOS2{T}(convert(Vector{T}, w))
 
 dimension(set::SOS2) = length(set.weights)
 
