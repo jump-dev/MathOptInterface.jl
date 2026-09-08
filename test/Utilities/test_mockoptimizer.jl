@@ -307,6 +307,44 @@ function test_empty_constructor()
     return
 end
 
+function test_delete_mock_variable()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, 3)
+    MOI.set.(model, MOI.VariablePrimal(), x, [1.0, 2.0, 3.0])
+    MOI.delete(model, x[2])
+    @test length(model.variable_primal) == 2
+    @test haskey(model.variable_primal, MOI.Utilities.xor_index(x[1]))
+    @test !haskey(model.variable_primal, MOI.Utilities.xor_index(x[2]))
+    @test haskey(model.variable_primal, MOI.Utilities.xor_index(x[3]))
+    return
+end
+
+function test_delete_mock_variable_vector()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, 3)
+    MOI.set.(model, MOI.VariablePrimal(), x, [1.0, 2.0, 3.0])
+    MOI.delete(model, x[1:2])
+    @test length(model.variable_primal) == 1
+    @test !haskey(model.variable_primal, MOI.Utilities.xor_index(x[1]))
+    @test !haskey(model.variable_primal, MOI.Utilities.xor_index(x[2]))
+    @test haskey(model.variable_primal, MOI.Utilities.xor_index(x[3]))
+    return
+end
+
+function test_delete_mock_constraint()
+    model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    x = MOI.add_variables(model, 3)
+    c = MOI.add_constraint.(model, x, MOI.EqualTo(1.0))
+    @test isempty(model.constraint_dual)
+    MOI.set.(model, MOI.ConstraintDual(), c, [1.0, 2.0, 3.0])
+    MOI.delete(model, c[2])
+    @test length(model.constraint_dual) == 2
+    @test haskey(model.constraint_dual, MOI.Utilities.xor_index(c[1]))
+    @test !haskey(model.constraint_dual, MOI.Utilities.xor_index(c[2]))
+    @test haskey(model.constraint_dual, MOI.Utilities.xor_index(c[3]))
+    return
+end
+
 end  # module
 
 TestMockOptimizer.runtests()

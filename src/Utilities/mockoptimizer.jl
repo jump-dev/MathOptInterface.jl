@@ -865,15 +865,15 @@ end
 function MOI.delete(mock::MockOptimizer, index::MOI.VariableIndex)
     if !mock.delete_allowed
         throw(MOI.DeleteNotAllowed(index))
-    end
-    if !MOI.is_valid(mock, index)
+    elseif !MOI.is_valid(mock, index)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
     end
-    MOI.delete(mock.inner_model, xor_index(index))
-    delete!(mock.variable_primal, index)
-    delete!(mock.callback_variable_primal, index)
-    delete!(mock.variable_basis_status, index)
+    xored = xor_index(index)
+    MOI.delete(mock.inner_model, xored)
+    delete!(mock.variable_primal, xored)
+    delete!(mock.callback_variable_primal, xored)
+    delete!(mock.variable_basis_status, xored)
     return
 end
 
@@ -885,8 +885,9 @@ function MOI.delete(mock::MockOptimizer, indices::Vector{MOI.VariableIndex})
         # The index thrown by `mock.inner_model` would be xored
         MOI.throw_if_not_valid(mock, index)
     end
-    MOI.delete(mock.inner_model, xor_index.(indices))
-    for index in indices
+    xored = xor_index.(indices)
+    MOI.delete(mock.inner_model, xored)
+    for index in xored
         delete!(mock.variable_primal, index)
         delete!(mock.callback_variable_primal, index)
         delete!(mock.variable_basis_status, index)
@@ -902,9 +903,10 @@ function MOI.delete(mock::MockOptimizer, index::MOI.ConstraintIndex)
         # The index thrown by `mock.inner_model` would be xored
         throw(MOI.InvalidIndex(index))
     end
-    MOI.delete(mock.inner_model, xor_index(index))
-    delete!(mock.constraint_dual, index)
-    delete!(mock.constraint_basis_status, index)
+    xored = xor_index(index)
+    MOI.delete(mock.inner_model, xored)
+    delete!(mock.constraint_dual, xored)
+    delete!(mock.constraint_basis_status, xored)
     return
 end
 
