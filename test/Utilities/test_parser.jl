@@ -63,7 +63,7 @@ function test__parse_function()
         "Unsupported operator in `loadfromstring!`: `-`. " *
         "The parser is deliberately limited in the syntax it " *
         "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as " *
-        "`x * x`.",
+        "`1 * x * x`.",
     )
     @test_throws err MOIU._parse_function(:(x - y))
 

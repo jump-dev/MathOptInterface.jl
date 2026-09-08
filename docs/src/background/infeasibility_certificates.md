@@ -151,8 +151,8 @@ the primal certificate of the variable bounds can be computed using the primal
 certificate associated with the affine constraints, ``d``. (Note that ``d`` will
 have one element for each row of the ``A`` matrix, and that some or all of the
 elements in the vectors ``l_A`` and ``u_A`` may be ``\pm \infty``. If both
-``l_A`` and ``u_A`` are finite for some row, the corresponding element in ``d`
- must be `0`.)
+``l_A`` and ``u_A`` are finite for some row, the corresponding element in ``d``
+must be `0`.)
 
 Given ``d``, compute ``\bar{d} = d^\top A``. If the bound is finite, a
 certificate for the lower variable bound of ``x_i`` is ``\max\{\bar{d}_i, 0\}``,

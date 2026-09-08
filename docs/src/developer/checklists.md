@@ -51,7 +51,7 @@ Use this checklist when adding a new set to the MathOptInterface repository.
        `LinearAlgebra.dot`
  - [ ] If an `AbstractVectorSet`, implement `Utilities.set_with_dimension` in
        `src/Utilities/matrix_of_constraints.jl`
- - [ ] Add the set to the `@model` macro at the bottom of `src/Utilities.model.jl`
+ - [ ] Add the set to the `@model` macro at the bottom of `src/Utilities/model.jl`
 
 ## Documentation
 
@@ -142,7 +142,7 @@ Use this checklist when updating the version of MathOptFormat.
  - [ ] `set_to_moi` is defined for each set in `src/FileFormats/MOF/read.jl`
  - [ ] `head_name` is defined for each set in `src/FileFormats/MOF/write.jl`
  - [ ] A new unit test calling `_test_model_equality` is added to
-       `test/FileFormats/MOF/MOF.jl`
+       `test/FileFormats/MOF/test_MOF.jl`
 
 ## Tests
 
