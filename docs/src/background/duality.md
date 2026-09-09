@@ -257,7 +257,7 @@ Second, let us see why ``\mathcal{D}_+^{*} = \mathcal{P}_+``.
 
 Since ``A \in \mathcal{D}_+`` implies that ``A^\top \in \mathcal{D}_+``,
 ``B \in \mathcal{D}_+^{*}`` means that ``\langle A+A^\top,B\rangle \ge 0``
-for all ``A \in \mathcal{D}_+``, and hence ``B \in \\mathcal{P}_+``.
+for all ``A \in \mathcal{D}_+``, and hence ``B \in \mathcal{P}_+``.
 
 To see why it should be symmetric, simply notice that if ``B_{i,j} < B_{j,i}``,
 then ``\langle A,B\rangle`` can be made arbitrarily small by setting

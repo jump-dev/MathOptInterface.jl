@@ -135,7 +135,7 @@ non-global tree search solvers like
 
 Some solvers will not implement every solution attribute. Therefore, a call like
 `MOI.get(model, MOI.SolveTimeSec())` may throw an [`UnsupportedAttribute`](@ref)
-error.
+or [`GetAttributeNotAllowed`](@ref) error.
 
 If you need to write code that is agnostic to the solver (for example, you are
 writing a library that an end-user passes their choice of solver to), you can
@@ -145,7 +145,7 @@ function get_solve_time(model)
     try
         return MOI.get(model, MOI.SolveTimeSec())
     catch err
-        if err isa MOI.UnsupportedAttribute
+        if err isa Union{MOI.UnsupportedAttribute,MOI.GetAttributeNotAllowed}
             return NaN  # Solver doesn't support. Return a placeholder value.
         end
         rethrow(err)  # Something else went wrong. Rethrow the error
@@ -170,7 +170,7 @@ function get_solve_time(model::CachedSolveTime)
     try
         return MOI.get(model, MOI.SolveTimeSec())
     catch err
-        if err isa MOI.UnsupportedAttribute
+        if Union{MOI.UnsupportedAttribute,MOI.GetAttributeNotAllowed}
             model.supports_solve_time = false
             return NaN
         end

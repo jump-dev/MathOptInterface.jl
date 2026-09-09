@@ -131,7 +131,7 @@ function _parse_function(ex, ::Type{T} = Float64) where {T}
                 "Unsupported operator in `loadfromstring!`: `$(ex.args[1])`. " *
                 "The parser is deliberately limited in the syntax it " *
                 "accepts. Write `x - y` as `x + -1 * y`,  and `x^2` as " *
-                "`x * x`.",
+                "`1 * x * x`.",
             )
         end
         affine_terms = _ParsedScalarAffineTerm{T}[]
@@ -367,7 +367,7 @@ Do not name `VariableIndex` constraints.
 ## Exceptions
 
  * `x - y` does NOT currently parse. Instead, write `x + -1.0 * y`.
- * `x^2` does NOT currently parse. Instead, write `x * x`.
+ * `x^2` does NOT currently parse. Instead, write `1 * x * x`.
 """
 function loadfromstring!(model, s)
     for string_line in split(s, "\n")

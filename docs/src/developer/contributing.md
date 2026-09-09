@@ -94,17 +94,17 @@ example:
 ```julia
 julia> using Revise
 
-julia> include("test/Nonlinear/runtests.jl")
+julia> include("test/Nonlinear/test_Nonlinear.jl")
 
 julia> # make changes to `src/Nonlinear`
 
-julia> include("test/Nonlinear/runtests.jl")
+julia> include("test/Nonlinear/test_Nonlinear.jl")
 ```
-You can also run other tests such as `test/Bridges/Constraint/runtests.jl`, or
-any individual file, such as `test/Utilities/distance_to_set.jl`.
+You can also run other tests such as `test/Bridges/Constraint/test_bridge.jl`,
+or `test/Utilities/test_distance_to_set.jl`.
 
 There is one complication: `JSONSchema` is a test-time dependency that is not
-present in the default project. If you want to run `test/FileFormats/MOF/MOF.jl`,
+present in the default project. If you want to run `test/FileFormats/MOF/test_MOF.jl`,
 you will first need to install the package (`Pkg.test("MathOptInterface")` does
 this automatically):
 ```julia

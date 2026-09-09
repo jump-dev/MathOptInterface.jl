@@ -1988,7 +1988,7 @@ Optimizers should implement the following methods:
 MOI.get(
     ::Optimizer,
     ::MOI.ListOfVariablesWithAttributeSet{<:MOI.AbstractVariableAttribute},
-)::Vector{MOI.VarialbeIndex}
+)::Vector{MOI.VariableIndex}
 ```
 They should not implement [`set`](@ref) or [`supports`](@ref).
 """
@@ -2274,7 +2274,7 @@ Two constraints may have the same name; however, constraints with duplicate
 names cannot be looked up using [`get`](@ref), regardless of whether they have
 the same `F`-in-`S` type.
 
-## VariableIndex connstraints
+## VariableIndex constraints
 
 You should _not_ implement [`ConstraintName`](@ref) for [`VariableIndex`](@ref)
 constraints.
