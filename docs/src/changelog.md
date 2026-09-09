@@ -7,6 +7,35 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.53.1 (September 9, 2026)
+
+### Fixed
+
+- Lowered the conversion cost for [`VariableIndex`](@ref) to [`ScalarAffineFunction`](@ref)
+  in `Bridges.Constraint.FunctionConversionBridge` to `0.5`. This should reduce
+  the complexity of some conic reformulations (#3063)
+- Fixed tests of infeasible problems to also return `INFEASIBLE_OR_UNBOUNDED`
+  (#3066)
+- Fixed bugs in various bridges to do with non-zero function constants. These
+  typically affected [`ConstraintPrimal`](@ref) and
+  [`ConstraintPrimalStart`](@ref) (#3069)
+- Fixed a bug in the LP writer when there are functions with no terms (#3070)
+- Fixed the derivative of `atan(y, x)` in `Nonlinear.SymbolicAD` (#3071)
+- Fixed the Hessian computation for `min` and `max` operators (#3072)
+- Fixed modifying [`Bridges.Constraint.SplitIntervalBridge`](@ref) when the
+  set was `Interval(-Inf, Inf)` (#3073)
+- Fixed [`Bridges.Constraint.SplitHyperRectangleBridge`](@ref) when some rows
+  have bounds `(-Inf, Inf)` (#3075)
+- Fixed getting and setting [`ConstraintPrimalStart`](@ref) in scalar
+  constraints when there are bridged variables (#3076)
+- Fixed a bug deleting variables and constraints in
+  [`Utilities.MockOptimizer`](@ref) (#3080)
+
+### Other
+
+- Fixed formatting indent of multi-line strings in `test/` (#3064)
+- Fixed minor typos in the documentation (#3079)
+
 ## v1.53.0 (August 24, 2026)
 
 ### Added
