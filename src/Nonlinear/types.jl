@@ -157,12 +157,16 @@ It has the following fields:
  * `parameters::Vector{Float64}` : holds the current values of the parameters.
  * `operators::OperatorRegistry` : stores the operators used in the model.
 """
-mutable struct Model
+mutable struct Model <: MOI.ModelLike
     objective::Union{Nothing,Expression}
     expressions::Vector{Expression}
     constraints::OrderedDict{ConstraintIndex,Constraint}
     parameters::Vector{Float64}
     operators::OperatorRegistry
+    objective_sense::MOI.OptimizationSense
+    moi_objective::Union{Nothing,MOI.ScalarNonlinearFunction}
+    moi_functions::Dict{ConstraintIndex,MOI.ScalarNonlinearFunction}
+    constraint_dual_start::Dict{ConstraintIndex,Float64}
     # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
     function Model()
@@ -172,6 +176,10 @@ mutable struct Model
             OrderedDict{ConstraintIndex,Constraint}(),
             Float64[],
             OperatorRegistry(),
+            MOI.FEASIBILITY_SENSE,
+            nothing,
+            Dict{ConstraintIndex,MOI.ScalarNonlinearFunction}(),
+            Dict{ConstraintIndex,Float64}(),
             0,
         )
     end
