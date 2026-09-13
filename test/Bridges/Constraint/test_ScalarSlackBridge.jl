@@ -419,12 +419,20 @@ function test_basis_status()
     x = MOI.add_variable(model)
     c = MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(1.0))
     y = MOI.get(inner, MOI.ListOfVariableIndices())
-    MOI.set.(inner, MOI.VariableBasisStatus(), y, MOI.BASIC)
-    @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
     d = MOI.add_constraint(model, 1.0 * x, MOI.Interval(1.0, 2.0))
     z = last(MOI.get(inner, MOI.ListOfVariableIndices()))
+    MOI.set(inner, MOI.TerminationStatus(), MOI.OPTIMAL)
+    MOI.set(inner, MOI.ResultCount(), 2)
+    MOI.set(inner, MOI.PrimalStatus(1), MOI.FEASIBLE_POINT)
+    MOI.set(inner, MOI.PrimalStatus(2), MOI.FEASIBLE_POINT)
+    MOI.set.(inner, MOI.VariableBasisStatus(), y, MOI.BASIC)
     MOI.set(inner, MOI.VariableBasisStatus(), z, MOI.SUPER_BASIC)
+    MOI.set.(inner, MOI.VariableBasisStatus(2), y, MOI.SUPER_BASIC)
+    MOI.set(inner, MOI.VariableBasisStatus(2), z, MOI.BASIC)
+    @test MOI.get(model, MOI.ConstraintBasisStatus(), c) == MOI.BASIC
     @test MOI.get(model, MOI.ConstraintBasisStatus(), d) == MOI.SUPER_BASIC
+    @test MOI.get(model, MOI.ConstraintBasisStatus(2), c) == MOI.SUPER_BASIC
+    @test MOI.get(model, MOI.ConstraintBasisStatus(2), d) == MOI.BASIC
     return
 end
 
