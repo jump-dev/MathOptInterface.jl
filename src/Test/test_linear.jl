@@ -452,7 +452,11 @@ function setup_test(
             T[0, 0, 1],
             (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-2],
         ),
-        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[-1, 0, 2]),
+        (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(
+            mock,
+            T[-1, 0, 2],
+            (MOI.ScalarAffineFunction{T}, MOI.LessThan{T}) => T[-2],
+        ),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[1, 0, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[2, 0, 0]),
         (mock::MOIU.MockOptimizer) -> MOIU.mock_optimize!(mock, T[0, 2, 0]),

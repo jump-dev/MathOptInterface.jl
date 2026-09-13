@@ -70,6 +70,10 @@ function get_fallback(
     ::Type{T},
 )::T where {T}
     MOI.check_result_index_bounds(model, attr)
+    status = MOI.get(model, MOI.DualStatus(attr.result_index))
+    if status == MOI.NO_SOLUTION
+        throw(MOI.GetAttributeNotAllowed(attr, "No dual solution is available"))
+    end
     value = zero(T) # sum will not work if there are zero constraints
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         value += _dual_objective_value(model, F, S, T, attr.result_index)::T
@@ -77,7 +81,7 @@ function get_fallback(
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE
         value = -value
     end
-    if !is_ray(MOI.get(model, MOI.DualStatus()))
+    if !is_ray(status)
         # The objective constant should not be present in rays
         F = MOI.get(model, MOI.ObjectiveFunctionType())
         f = MOI.get(model, MOI.ObjectiveFunction{F}())
