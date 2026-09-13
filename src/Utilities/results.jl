@@ -42,7 +42,7 @@ function get_fallback(model::MOI.ModelLike, attr::MOI.ObjectiveValue)
     obj = eval_variables(model, f) do vi
         return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
     end
-    if is_ray(MOI.get(model, MOI.PrimalStatus()))
+    if is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
         # Dual infeasibility certificates do not include the primal
         # objective constant.
         obj -= MOI.constant(f, typeof(obj))
@@ -176,7 +176,7 @@ function get_fallback(
     c = eval_variables(model, f) do vi
         return MOI.get(model, MOI.VariablePrimal(attr.result_index), vi)
     end
-    if is_ray(MOI.get(model, MOI.PrimalStatus()))
+    if is_ray(MOI.get(model, MOI.PrimalStatus(attr.result_index)))
         c -= MOI.constant(f, typeof(c))
     end
     return c
@@ -371,7 +371,7 @@ function _variable_dual(
     ci::MOI.ConstraintIndex,
     vi::MOI.VariableIndex,
 ) where {T}
-    ray = is_ray(MOI.get(model, MOI.DualStatus()))
+    ray = is_ray(MOI.get(model, MOI.DualStatus(attr.result_index)))
     dual = zero(T)
     if !ray
         sense = MOI.get(model, MOI.ObjectiveSense())
