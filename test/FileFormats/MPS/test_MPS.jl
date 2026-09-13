@@ -1852,26 +1852,24 @@ function test_semi_reading_1()
             continue
         end
         l_row = iszero(lb) ? "" : "$LO bounds    x        $lb\n"
-        io = IOBuffer(
-            """
-            NAME
-            ROWS
-            N obj
-            COLUMNS
-                x         obj      1.0
-            RHS
-            BOUNDS
-            $(l_row)$(SC) bounds    x        $ub
-            ENDATA
-            """,
-        )
+        src = """
+        NAME
+        ROWS
+        N obj
+        COLUMNS
+            x         obj      1.0
+        RHS
+        BOUNDS
+        $(l_row)$(SC) bounds    x        $ub
+        ENDATA
+        """
         target = if SC == "SC" && (iszero(lb) || LO == "LO")
             MOI.Semicontinuous(lb, ub)
         else
             MOI.Semiinteger(lb, ub)
         end
         model = MPS.Model()
-        read!(io, model)
+        read!(IOBuffer(src), model)
         dest = MOI.Utilities.Model{Float64}()
         MOI.copy_to(dest, model)
         x = MOI.get(dest, MOI.VariableIndex, "x")
@@ -1888,26 +1886,24 @@ function test_semi_reading_2()
             continue
         end
         l_row = iszero(lb) ? "" : "$LO bounds    x        $lb\n"
-        io = IOBuffer(
-            """
-            NAME
-            ROWS
-            N obj
-            COLUMNS
-                x         obj      1.0
-            RHS
-            BOUNDS
-            $(SC) bounds    x        $ub
-            $(l_row)ENDATA
-            """,
-        )
+        src = """
+        NAME
+        ROWS
+        N obj
+        COLUMNS
+            x         obj      1.0
+        RHS
+        BOUNDS
+        $(SC) bounds    x        $ub
+        $(l_row)ENDATA
+        """
         target = if SC == "SC" && (iszero(lb) || LO == "LO")
             MOI.Semicontinuous(lb, ub)
         else
             MOI.Semiinteger(lb, ub)
         end
         model = MPS.Model()
-        read!(io, model)
+        read!(IOBuffer(src), model)
         dest = MOI.Utilities.Model{Float64}()
         MOI.copy_to(dest, model)
         x = MOI.get(dest, MOI.VariableIndex, "x")
