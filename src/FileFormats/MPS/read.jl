@@ -448,6 +448,15 @@ function _add_variable(model::Model{T}, data, variable_map, i, name) where {T}
     x = MOI.add_variable(model)
     variable_map[name] = x
     MOI.set(model, MOI.VariableName(), x, name)
+    if data.vtype[i] == VTYPE_SEMIINTEGER
+        set = MOI.Semiinteger(data.col_lower[i], data.col_upper[i])
+        MOI.add_constraint(model, x, set)
+        return
+    elseif data.vtype[i] == VTYPE_SEMICONTINUOUS
+        set = MOI.Semicontinuous(data.col_lower[i], data.col_upper[i])
+        MOI.add_constraint(model, x, set)
+        return
+    end
     set = bounds_to_set(data.col_lower[i], data.col_upper[i])
     if set isa MOI.Interval
         # Do not add MOI.Interval constraints because we want to follow JuMP's
@@ -926,7 +935,11 @@ function _parse_single_bound(
         data.col_lower[col] = value
     elseif bound_type == "LI"
         data.col_lower[col] = value
-        data.vtype[col] = VTYPE_INTEGER
+        if data.vtype[col] in (VTYPE_SEMICONTINUOUS, VTYPE_SEMIINTEGER)
+            data.vtype[col] = VTYPE_SEMIINTEGER
+        else
+            data.vtype[col] = VTYPE_INTEGER
+        end
     elseif bound_type == "UI"
         data.col_upper[col] = value
         data.vtype[col] = VTYPE_INTEGER
@@ -943,6 +956,16 @@ function _parse_single_bound(
         data.col_lower[col] = typemin(T)
         data.col_upper[col] = typemax(T)
         data.vtype[col] = VTYPE_BINARY
+    elseif bound_type == "SC"
+        data.col_upper[col] = value
+        if data.vtype[col] == VTYPE_INTEGER
+            data.vtype[col] = VTYPE_SEMIINTEGER
+        else
+            data.vtype[col] = VTYPE_SEMICONTINUOUS
+        end
+    elseif bound_type == "SI"
+        data.col_upper[col] = value
+        data.vtype[col] = VTYPE_SEMIINTEGER
     else
         _throw_parse_error(
             data,

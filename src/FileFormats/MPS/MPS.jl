@@ -60,7 +60,7 @@ end
 function MOI.supports_constraint(
     ::Model,
     ::Type{MOI.VariableIndex},
-    ::Type{<:Union{MOI.Parameter,MOI.Semicontinuous,MOI.Semiinteger}},
+    ::Type{<:MOI.Parameter},
 )
     return false
 end
@@ -170,7 +170,14 @@ end
 
 Base.summary(io::IO, ::Model) = print(io, "MOI.FileFormats.MPS.Model")
 
-@enum(VType, VTYPE_CONTINUOUS, VTYPE_INTEGER, VTYPE_BINARY)
+@enum(
+    VType,
+    VTYPE_CONTINUOUS,
+    VTYPE_INTEGER,
+    VTYPE_BINARY,
+    VTYPE_SEMICONTINUOUS,
+    VTYPE_SEMIINTEGER,
+)
 
 include("read.jl")
 include("write.jl")
