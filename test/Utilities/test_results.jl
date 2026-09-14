@@ -43,6 +43,7 @@ function _test_hyperrectangle(T)
     )
     MOI.set(model, MOI.ConstraintDual(), c1, T[4, -3])
     MOI.set(model, MOI.ConstraintDual(), c2, T[-2, 5])
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
     @test -53 == @inferred MOI.Utilities.get_fallback(
         model,
         MOI.DualObjectiveValue(),
@@ -93,6 +94,7 @@ function test_dual_objective_value_open_interval_Interval_variable_index()
     ]
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.set.(model, MOI.ConstraintDual(), c, dual)
+        MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, obj)
         MOI.set.(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -142,6 +144,7 @@ function test_dual_objective_value_open_interval_Interval()
     ]
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.set.(model, MOI.ConstraintDual(), c, dual)
+        MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, obj)
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -193,6 +196,7 @@ function test_dual_objective_value_open_interval_Hyperrectangle_variable_index()
     ]
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.set(model, MOI.ConstraintDual(), c, dual)
+        MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, obj)
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
@@ -242,12 +246,48 @@ function test_dual_objective_value_open_interval_Hyperrectangle()
     ]
         MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
         MOI.set(model, MOI.ConstraintDual(), c, dual)
+        MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, obj)
         MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
         d = MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64)
         @test isapprox(d, -obj)
     end
+    return
+end
+
+function test_get_fallback_DualObjectiveValue()
+    T = Float64
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+        T,
+    )
+    x = MOI.add_variables(model, 2)
+    c1 = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.HyperRectangle(T[3, -7], T[5, -2]),
+    )
+    c2 = MOI.add_constraint(
+        model,
+        MOI.Utilities.vectorize(x .+ T[11, 13]),
+        MOI.HyperRectangle(T[-T(6), -T(4)], [T(3), T(2)]),
+    )
+    attr = MOI.DualObjectiveValue()
+    @test_throws(
+        MOI.GetAttributeNotAllowed(attr, "No dual solution is available"),
+        MOI.Utilities.get_fallback(model, attr, T),
+    )
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.ConstraintDual(), c1, T[4, -3])
+    MOI.set(model, MOI.ConstraintDual(), c2, T[-2, 5])
+    @test MOI.Utilities.get_fallback(model, attr, T) == -53
+    MOI.set(model, MOI.ResultCount(), 2)
+    attr = MOI.DualObjectiveValue(2)
+    @test_throws(
+        MOI.GetAttributeNotAllowed(attr, "No dual solution is available"),
+        MOI.Utilities.get_fallback(model, attr, T),
+    )
     return
 end
 

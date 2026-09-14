@@ -92,11 +92,12 @@ function test_optimizer_solve_with_result()
         ),
         MOI.get(optimizer, MOI.ObjectiveValue(2))
     )
+    MOI.set(optimizer, MOI.DualStatus(1), MOI.FEASIBLE_POINT)
     @test_throws(
         ErrorException(
             "No mock dual is set for constraint `$c1` at result index `1`.",
         ),
-        MOI.get(optimizer, MOI.DualObjectiveValue())
+        MOI.get(optimizer, MOI.DualObjectiveValue(1))
     )
     @test MOI.get(optimizer, MOI.DualObjectiveValue(2)) == 5.9
     @test MOI.get(optimizer, MOI.PrimalStatus()) == MOI.FEASIBLE_POINT
