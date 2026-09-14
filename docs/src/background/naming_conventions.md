@@ -29,6 +29,6 @@ following conventions:
   not `Integers`.
 * As much as possible, the names should follow established conventions in the
   domain where this set is used: for instance, convex sets should have names
-  close to those of [CVX](https://web.cvxr.com/cvx/doc/), and
+  close to those of [CVX](https://cvxr.com/cvx/doc/index.html), and
   constraint-programming sets should follow
   [MiniZinc](https://www.minizinc.org/doc-latest/en/)'s constraints.
