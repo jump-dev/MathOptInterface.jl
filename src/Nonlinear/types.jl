@@ -157,6 +157,8 @@ It has the following fields:
    `OrderedDict` is used instead of a `Vector` to support constraint deletion.
  * `parameters::Vector{Float64}` : holds the current values of the parameters.
  * `operators::OperatorRegistry` : stores the operators used in the model.
+ * `has_deleted_constraint::Bool` : records whether a constraint was deleted
+   through the legacy nonlinear API.
 """
 mutable struct Model <: MOI.ModelLike
     objective::Union{Nothing,Expression}
@@ -178,6 +180,7 @@ mutable struct Model <: MOI.ModelLike
     # would trigger a heap allocation for each expression
     cache::Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}
     cache_expressions::Vector{Expression}
+    has_deleted_constraint::Bool
     function Model()
         return new(
             nothing,
@@ -192,6 +195,7 @@ mutable struct Model <: MOI.ModelLike
             0,
             Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}(),
             Expression[],
+            false,
         )
     end
 end

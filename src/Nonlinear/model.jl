@@ -15,6 +15,7 @@ function MOI.empty!(model::Model)
     empty!(model.moi_functions)
     empty!(model.constraint_dual_start)
     model.last_constraint_index = 0
+    model.has_deleted_constraint = false
     return
 end
 
@@ -222,6 +223,7 @@ function delete(model::Model, c::ConstraintIndex)
     delete!(model.constraints, c)
     delete!(model.moi_functions, c)
     delete!(model.constraint_dual_start, c)
+    model.has_deleted_constraint = true
     return
 end
 
@@ -313,12 +315,16 @@ function MOI.set(model::Model, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex, set
     return
 end
 
-function MOI.delete(model::Model, ci::MOI.ConstraintIndex)
-    MOI.throw_if_not_valid(model, ci)
-    return delete(model, _nonlinear_index(ci))
-end
-
 function MOI.Utilities.rows(model::Model, ci::MOI.ConstraintIndex)
+    if model.has_deleted_constraint
+        error(
+            "`MOI.Utilities.rows` is not supported after a constraint has " *
+            "been deleted with `MOI.Nonlinear.delete`. For this reason, ",
+            "`MOI.delete` is not implemented for `MOI.Nonlinear.Model` ",
+            "solvers using this model as backedn shouldn't implement it ",
+            "either.",
+        )
+    end
     MOI.throw_if_not_valid(model, ci)
     index = _nonlinear_index(ci)
     return findfirst(isequal(index), collect(keys(model.constraints)))
