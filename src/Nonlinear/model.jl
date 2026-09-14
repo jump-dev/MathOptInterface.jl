@@ -326,8 +326,7 @@ function MOI.Utilities.rows(model::Model, ci::MOI.ConstraintIndex)
         )
     end
     MOI.throw_if_not_valid(model, ci)
-    index = _nonlinear_index(ci)
-    return findfirst(isequal(index), collect(keys(model.constraints)))
+    return ci.value
 end
 
 function MOI.Utilities.constraint_bounds(model::Model)
