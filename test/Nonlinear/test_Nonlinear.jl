@@ -1464,6 +1464,42 @@ function test_extract_subexpression()
     @test model.expressions == [expected_sub]
     @test model.cache[sub] == Nonlinear.ExpressionIndex(1)
 
+    # Test extraction of an expression without values, and ensure that cached
+    # nested expressions are updated to point into the extracted expression.
+    model = Nonlinear.Model()
+    inner = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    outer = MOI.ScalarNonlinearFunction(:+, Any[inner, x])
+    repeated = MOI.ScalarNonlinearFunction(:*, Any[outer, outer])
+    expr = Nonlinear.parse_expression(model, repeated)
+    @test isempty(model.expressions[1].values)
+    @test model.cache[inner] == (model.expressions[1], 2)
+    @test model.cache[outer] == Nonlinear.ExpressionIndex(1)
+    @test expr.nodes == [
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+    ]
+
+    # A zero-argument call consists of one node, so extracting it exercises
+    # the single-node path, which has no values to delete.
+    model = Nonlinear.Model()
+    empty_sum = MOI.ScalarNonlinearFunction(:+, Any[])
+    repeated = MOI.ScalarNonlinearFunction(:+, Any[empty_sum, empty_sum])
+    expr = Nonlinear.parse_expression(model, repeated)
+    @test model.expressions == [
+        Nonlinear.Expression(
+            [Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1)],
+            Float64[],
+        ),
+    ]
+    @test expr.nodes == [
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+    ]
+
+    model = Nonlinear.Model()
+    Nonlinear.parse_expression(model, f)
     h = MOI.ScalarNonlinearFunction(:*, Any[2, sub, 1])
     g = MOI.ScalarNonlinearFunction(:+, Any[sub, h])
     expr = MOI.Nonlinear.parse_expression(model, g)
