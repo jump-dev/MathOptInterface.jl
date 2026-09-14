@@ -264,8 +264,9 @@ Create an [`MOI.NLPBlockData`](@ref) object from an [`Evaluator`](@ref)
 object.
 """
 function MOI.NLPBlockData(evaluator::Evaluator)
+    bounds = MOI.Utilities.constraint_bounds(evaluator.model)
     return MOI.NLPBlockData(
-        [_bound(c.set) for (_, c) in evaluator.model.constraints],
+        MOI.NLPBoundsPair.(bounds.lower, bounds.upper),
         evaluator,
         evaluator.model.objective !== nothing,
     )
