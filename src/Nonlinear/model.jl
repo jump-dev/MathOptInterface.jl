@@ -79,8 +79,7 @@ julia> MOI.Nonlinear.set_objective(model, nothing)
 """
 function set_objective(model::Model, obj)
     model.objective = parse_expression(model, obj)
-    model.moi_objective =
-        obj isa MOI.ScalarNonlinearFunction ? obj : nothing
+    model.moi_objective = obj isa MOI.ScalarNonlinearFunction ? obj : nothing
     if model.objective_sense == MOI.FEASIBILITY_SENSE
         model.objective_sense = MOI.MIN_SENSE
     end
@@ -239,18 +238,16 @@ end
 # available, but model layers and solvers communicate with this model only via
 # these methods.
 
-const _ScalarSet{T} = Union{
-    MOI.GreaterThan{T},
-    MOI.LessThan{T},
-    MOI.EqualTo{T},
-    MOI.Interval{T},
-}
+const _ScalarSet{T} =
+    Union{MOI.GreaterThan{T},MOI.LessThan{T},MOI.EqualTo{T},MOI.Interval{T}}
 
-MOI.supports_constraint(
+function MOI.supports_constraint(
     ::Model,
     ::Type{MOI.ScalarNonlinearFunction},
     ::Type{<:_ScalarSet{Float64}},
-) = true
+)
+    return true
+end
 
 function MOI.add_constraint(
     model::Model,
@@ -268,7 +265,8 @@ function MOI.is_valid(
     ci::MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,S},
 ) where {S<:_ScalarSet{Float64}}
     index = _nonlinear_index(ci)
-    return haskey(model.constraints, index) && model.constraints[index].set isa S
+    return haskey(model.constraints, index) &&
+           model.constraints[index].set isa S
 end
 
 function MOI.get(
@@ -297,7 +295,11 @@ function MOI.get(model::Model, ::MOI.ListOfConstraintTypesPresent)
     return types
 end
 
-function MOI.get(model::Model, ::MOI.ConstraintFunction, ci::MOI.ConstraintIndex)
+function MOI.get(
+    model::Model,
+    ::MOI.ConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
     MOI.throw_if_not_valid(model, ci)
     return model.moi_functions[_nonlinear_index(ci)]
 end
@@ -307,7 +309,12 @@ function MOI.get(model::Model, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex)
     return model.constraints[_nonlinear_index(ci)].set
 end
 
-function MOI.set(model::Model, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex, set)
+function MOI.set(
+    model::Model,
+    ::MOI.ConstraintSet,
+    ci::MOI.ConstraintIndex,
+    set,
+)
     MOI.throw_if_not_valid(model, ci)
     index = _nonlinear_index(ci)
     constraint = model.constraints[index]
@@ -350,12 +357,21 @@ end
 MOI.supports(::Model, ::MOI.ObjectiveSense) = true
 MOI.get(model::Model, ::MOI.ObjectiveSense) = model.objective_sense
 
-function MOI.set(model::Model, ::MOI.ObjectiveSense, sense::MOI.OptimizationSense)
+function MOI.set(
+    model::Model,
+    ::MOI.ObjectiveSense,
+    sense::MOI.OptimizationSense,
+)
     model.objective_sense = sense
     return
 end
 
-MOI.supports(::Model, ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}) = true
+function MOI.supports(
+    ::Model,
+    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction},
+)
+    return true
+end
 
 function MOI.set(
     model::Model,
@@ -393,7 +409,11 @@ function MOI.supports(
     return true
 end
 
-function MOI.get(model::Model, ::MOI.ConstraintDualStart, ci::MOI.ConstraintIndex)
+function MOI.get(
+    model::Model,
+    ::MOI.ConstraintDualStart,
+    ci::MOI.ConstraintIndex,
+)
     return get(model.constraint_dual_start, _nonlinear_index(ci), nothing)
 end
 

@@ -14,44 +14,55 @@ end
 
 function ModelWithOracles{T}(inner::M) where {T,M}
     constraints = Tuple{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}}[]
-    return ModelWithOracles{T,M}(
-        constraints,
-        Union{Nothing,Vector{T}}[],
-        inner,
-    )
+    return ModelWithOracles{T,M}(constraints, Union{Nothing,Vector{T}}[], inner)
 end
 
 ModelWithOracles(inner) = ModelWithOracles{Float64}(inner)
 
 _parameter_values(model::ModelWithOracles) = _parameter_values(model.inner)
 # Backward-compatible forwarding for users of the pre-MOI Nonlinear API.
-add_parameter(model::ModelWithOracles, value::Real) =
-    add_parameter(model.inner, value)
-add_expression(model::ModelWithOracles, expression) =
-    add_expression(model.inner, expression)
-set_objective(model::ModelWithOracles, objective) =
-    set_objective(model.inner, objective)
-add_constraint(model::ModelWithOracles, f, s) =
-    add_constraint(model.inner, f, s)
-Base.getindex(model::ModelWithOracles, index::ExpressionIndex) =
-    model.inner[index]
+function add_parameter(model::ModelWithOracles, value::Real)
+    return add_parameter(model.inner, value)
+end
+function add_expression(model::ModelWithOracles, expression)
+    return add_expression(model.inner, expression)
+end
+function set_objective(model::ModelWithOracles, objective)
+    return set_objective(model.inner, objective)
+end
+function add_constraint(model::ModelWithOracles, f, s)
+    return add_constraint(model.inner, f, s)
+end
+function Base.getindex(model::ModelWithOracles, index::ExpressionIndex)
+    return model.inner[index]
+end
 function register_operator(model::ModelWithOracles, op, nargs, functions...)
     return register_operator(model.inner, op, nargs, functions...)
 end
 
-MOI.supports_incremental_interface(model::ModelWithOracles) =
-    MOI.supports_incremental_interface(model.inner)
-MOI.supports(model::ModelWithOracles, attr::MOI.AbstractModelAttribute) =
-    MOI.supports(model.inner, attr)
-MOI.get(model::ModelWithOracles, attr::MOI.AbstractModelAttribute) =
-    MOI.get(model.inner, attr)
-MOI.set(model::ModelWithOracles, attr::MOI.AbstractModelAttribute, value) =
-    MOI.set(model.inner, attr, value)
-MOI.supports(
+function MOI.supports_incremental_interface(model::ModelWithOracles)
+    return MOI.supports_incremental_interface(model.inner)
+end
+function MOI.supports(model::ModelWithOracles, attr::MOI.AbstractModelAttribute)
+    return MOI.supports(model.inner, attr)
+end
+function MOI.get(model::ModelWithOracles, attr::MOI.AbstractModelAttribute)
+    return MOI.get(model.inner, attr)
+end
+function MOI.set(
+    model::ModelWithOracles,
+    attr::MOI.AbstractModelAttribute,
+    value,
+)
+    return MOI.set(model.inner, attr, value)
+end
+function MOI.supports(
     model::ModelWithOracles,
     attr::MOI.AbstractConstraintAttribute,
     CI::Type{<:MOI.ConstraintIndex},
-) = MOI.supports(model.inner, attr, CI)
+)
+    return MOI.supports(model.inner, attr, CI)
+end
 function MOI.get(
     model::ModelWithOracles,
     attr::MOI.ListOfSupportedNonlinearOperators,
@@ -59,37 +70,54 @@ function MOI.get(
     return MOI.get(model.inner, attr)
 end
 MOI.add_variable(model::ModelWithOracles) = MOI.add_variable(model.inner)
-MOI.add_constrained_variable(
+function MOI.add_constrained_variable(
     model::ModelWithOracles,
     set::MOI.AbstractScalarSet,
-) =
-    MOI.add_constrained_variable(model.inner, set)
-MOI.supports_add_constrained_variable(
+)
+    return MOI.add_constrained_variable(model.inner, set)
+end
+function MOI.supports_add_constrained_variable(
     model::ModelWithOracles,
     S::Type{<:MOI.AbstractScalarSet},
-) =
-    MOI.supports_add_constrained_variable(model.inner, S)
-MOI.is_valid(model::ModelWithOracles, x::MOI.VariableIndex) =
-    MOI.is_valid(model.inner, x)
-MOI.get(model::ModelWithOracles, attr::MOI.AbstractVariableAttribute, x) =
-    MOI.get(model.inner, attr, x)
-MOI.set(model::ModelWithOracles, attr::MOI.AbstractVariableAttribute, x, v) =
-    MOI.set(model.inner, attr, x, v)
+)
+    return MOI.supports_add_constrained_variable(model.inner, S)
+end
+function MOI.is_valid(model::ModelWithOracles, x::MOI.VariableIndex)
+    return MOI.is_valid(model.inner, x)
+end
+function MOI.get(
+    model::ModelWithOracles,
+    attr::MOI.AbstractVariableAttribute,
+    x,
+)
+    return MOI.get(model.inner, attr, x)
+end
+function MOI.set(
+    model::ModelWithOracles,
+    attr::MOI.AbstractVariableAttribute,
+    x,
+    v,
+)
+    return MOI.set(model.inner, attr, x, v)
+end
 
 const _OracleFunction = MOI.VectorOfVariables
 const _OracleSet{T} = MOI.VectorNonlinearOracle{T}
 
-MOI.supports_constraint(
+function MOI.supports_constraint(
     ::ModelWithOracles{T},
     ::Type{MOI.VectorOfVariables},
     ::Type{MOI.VectorNonlinearOracle{T}},
-) where {T} = true
-MOI.supports_constraint(
+) where {T}
+    return true
+end
+function MOI.supports_constraint(
     model::ModelWithOracles,
     F::Type{<:MOI.AbstractFunction},
     S::Type{<:MOI.AbstractSet},
-) =
-    MOI.supports_constraint(model.inner, F, S)
+)
+    return MOI.supports_constraint(model.inner, F, S)
+end
 
 function MOI.add_constraint(
     model::ModelWithOracles{T},
@@ -102,12 +130,13 @@ function MOI.add_constraint(
     return MOI.ConstraintIndex{typeof(f),typeof(s)}(length(model.constraints))
 end
 
-MOI.add_constraint(
+function MOI.add_constraint(
     model::ModelWithOracles,
     f::MOI.AbstractFunction,
     s::MOI.AbstractSet,
-) =
-    MOI.add_constraint(model.inner, f, s)
+)
+    return MOI.add_constraint(model.inner, f, s)
+end
 
 function MOI.is_valid(
     model::ModelWithOracles{T},
@@ -115,8 +144,9 @@ function MOI.is_valid(
 ) where {T}
     return 1 <= ci.value <= length(model.constraints)
 end
-MOI.is_valid(model::ModelWithOracles, ci::MOI.ConstraintIndex) =
-    MOI.is_valid(model.inner, ci)
+function MOI.is_valid(model::ModelWithOracles, ci::MOI.ConstraintIndex)
+    return MOI.is_valid(model.inner, ci)
+end
 
 function MOI.get(
     model::ModelWithOracles{T},
@@ -147,7 +177,9 @@ end
 function MOI.supports(
     ::ModelWithOracles{T},
     ::MOI.LagrangeMultiplierStart,
-    ::Type{MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}}},
+    ::Type{
+        MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}},
+    },
 ) where {T}
     return true
 end
@@ -168,16 +200,31 @@ function MOI.set(
     return
 end
 
-MOI.get(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute, ci) =
-    MOI.get(model.inner, attr, ci)
-MOI.get(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute) =
-    MOI.get(model.inner, attr)
-MOI.set(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute, ci, v) =
-    MOI.set(model.inner, attr, ci, v)
+function MOI.get(
+    model::ModelWithOracles,
+    attr::MOI.AbstractConstraintAttribute,
+    ci,
+)
+    return MOI.get(model.inner, attr, ci)
+end
+function MOI.get(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute)
+    return MOI.get(model.inner, attr)
+end
+function MOI.set(
+    model::ModelWithOracles,
+    attr::MOI.AbstractConstraintAttribute,
+    ci,
+    v,
+)
+    return MOI.set(model.inner, attr, ci, v)
+end
 function MOI.get(model::ModelWithOracles, ::MOI.ListOfConstraintTypesPresent)
     types = MOI.get(model.inner, MOI.ListOfConstraintTypesPresent())
     if !isempty(model.constraints)
-        pushfirst!(types, (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{Float64}))
+        pushfirst!(
+            types,
+            (MOI.VectorOfVariables, MOI.VectorNonlinearOracle{Float64}),
+        )
     end
     return types
 end
@@ -188,11 +235,13 @@ function MOI.empty!(model::ModelWithOracles)
     MOI.empty!(model.inner)
     return
 end
-MOI.is_empty(model::ModelWithOracles) =
-    isempty(model.constraints) && MOI.is_empty(model.inner)
+function MOI.is_empty(model::ModelWithOracles)
+    return isempty(model.constraints) && MOI.is_empty(model.inner)
+end
 
-MOI.Utilities.variable_bounds(model::ModelWithOracles) =
-    MOI.Utilities.variable_bounds(model.inner)
+function MOI.Utilities.variable_bounds(model::ModelWithOracles)
+    return MOI.Utilities.variable_bounds(model.inner)
+end
 
 function MOI.Utilities.rows(
     model::ModelWithOracles{T},
@@ -244,16 +293,35 @@ mutable struct EvaluatorWithOracles{T,M,E<:MOI.AbstractNLPEvaluator} <:
     x_buffer::Vector{Vector{T}}
 end
 
-function EvaluatorWithOracles(model::ModelWithOracles{T,M}, inner::E, vars) where {T,M,E}
-    return EvaluatorWithOracles{T,M,E}(model, inner, vars, Vector{Int}[], Vector{T}[])
+function EvaluatorWithOracles(
+    model::ModelWithOracles{T,M},
+    inner::E,
+    vars,
+) where {T,M,E}
+    return EvaluatorWithOracles{T,M,E}(
+        model,
+        inner,
+        vars,
+        Vector{Int}[],
+        Vector{T}[],
+    )
 end
 
-function Evaluator(model::ModelWithOracles, backend, vars::Vector{MOI.VariableIndex})
-    return EvaluatorWithOracles(model, Evaluator(model.inner, backend, vars), vars)
+function Evaluator(
+    model::ModelWithOracles,
+    backend,
+    vars::Vector{MOI.VariableIndex},
+)
+    return EvaluatorWithOracles(
+        model,
+        Evaluator(model.inner, backend, vars),
+        vars,
+    )
 end
 
-_num_rows(d::EvaluatorWithOracles) =
-    sum(s.output_dimension for (_, s) in d.model.constraints; init = 0)
+function _num_rows(d::EvaluatorWithOracles)
+    return sum(s.output_dimension for (_, s) in d.model.constraints; init = 0)
+end
 
 function MOI.features_available(d::EvaluatorWithOracles)
     features = filter(
@@ -263,7 +331,9 @@ function MOI.features_available(d::EvaluatorWithOracles)
     if !isempty(d.model.constraints)
         filter!(f -> !(f in (:JacVec, :HessVec)), features)
     end
-    if any(s.eval_hessian_lagrangian === nothing for (_, s) in d.model.constraints)
+    if any(
+        s.eval_hessian_lagrangian === nothing for (_, s) in d.model.constraints
+    )
         filter!(f -> f != :Hess, features)
     end
     return features
@@ -290,8 +360,9 @@ function _gather!(d::EvaluatorWithOracles, k, x)
 end
 
 MOI.eval_objective(d::EvaluatorWithOracles, x) = MOI.eval_objective(d.inner, x)
-MOI.eval_objective_gradient(d::EvaluatorWithOracles, g, x) =
-    MOI.eval_objective_gradient(d.inner, g, x)
+function MOI.eval_objective_gradient(d::EvaluatorWithOracles, g, x)
+    return MOI.eval_objective_gradient(d.inner, g, x)
+end
 
 function MOI.eval_constraint(d::EvaluatorWithOracles, g, x)
     offset = 0
@@ -311,7 +382,10 @@ function MOI.jacobian_structure(d::EvaluatorWithOracles)
         end
         offset += s.output_dimension
     end
-    append!(J, ((row + offset, col) for (row, col) in MOI.jacobian_structure(d.inner)))
+    append!(
+        J,
+        ((row + offset, col) for (row, col) in MOI.jacobian_structure(d.inner)),
+    )
     return J
 end
 

@@ -318,10 +318,10 @@ function test_add_constraint_delete()
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.constraint_expr(evaluator, 1) == :(sqrt(x[$x]) <= 1.0)
     @test_throws BoundsError MOI.constraint_expr(evaluator, 2)
-    moi_c2 = MOI.ConstraintIndex{
-        MOI.ScalarNonlinearFunction,
-        MOI.LessThan{Float64},
-    }(c2.value)
+    moi_c2 =
+        MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{Float64}}(
+            c2.value,
+        )
     @test_throws ErrorException MOI.Utilities.rows(model, moi_c2)
     MOI.empty!(model)
     @test !model.has_deleted_constraint
