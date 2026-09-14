@@ -30,10 +30,22 @@ function test_moi_model_stack()
     @test oracles isa MOI.ModelLike
     @test inner isa MOI.ModelLike
     x = MOI.add_variable(model)
+    q = MOI.add_constraint(
+        model,
+        MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0),
+        MOI.LessThan(2.0),
+    )
     set = _oracle()
     c = MOI.add_constraint(model, MOI.VectorOfVariables([x]), set)
     @test MOI.supports_constraint(model, MOI.VectorOfVariables, typeof(set))
     @test MOI.get(model, MOI.ConstraintSet(), c) === set
+    @test MOI.Utilities.rows(model, q) == 1
+    @test MOI.Utilities.rows(model, c) == 2:2
+    bounds = MOI.Utilities.constraint_bounds(model)
+    @test bounds == MOI.Utilities.Hyperrectangle([-Inf, 0.0], [2.0, 4.0])
+    variable_bounds = MOI.Utilities.variable_bounds(model)
+    @test variable_bounds.lower == [-Inf]
+    @test variable_bounds.upper == [Inf]
     MOI.set(model, MOI.LagrangeMultiplierStart(), c, [0.5])
     @test MOI.get(model, MOI.LagrangeMultiplierStart(), c) == [0.5]
     f = MOI.ScalarQuadraticFunction(
@@ -50,9 +62,9 @@ function test_moi_model_stack()
     )
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     @test MOI.eval_objective(evaluator, [2.0]) == -4.0
-    g = zeros(1)
+    g = zeros(2)
     MOI.eval_constraint(evaluator, g, [2.0])
-    @test g == [4.0]
+    @test g == [2.0, 4.0]
 end
 
 function test_default_backend_model()
