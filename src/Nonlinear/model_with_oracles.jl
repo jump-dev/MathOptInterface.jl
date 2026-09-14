@@ -88,14 +88,14 @@ end
 function MOI.get(
     model::ModelWithOracles,
     attr::MOI.AbstractVariableAttribute,
-    x,
+    x::MOI.VariableIndex,
 )
     return MOI.get(model.inner, attr, x)
 end
 function MOI.set(
     model::ModelWithOracles,
     attr::MOI.AbstractVariableAttribute,
-    x,
+    x::MOI.VariableIndex,
     v,
 )
     return MOI.set(model.inner, attr, x, v)
@@ -203,7 +203,7 @@ end
 function MOI.get(
     model::ModelWithOracles,
     attr::MOI.AbstractConstraintAttribute,
-    ci,
+    ci::MOI.ConstraintIndex,
 )
     return MOI.get(model.inner, attr, ci)
 end
@@ -213,7 +213,7 @@ end
 function MOI.set(
     model::ModelWithOracles,
     attr::MOI.AbstractConstraintAttribute,
-    ci,
+    ci::MOI.ConstraintIndex,
     v,
 )
     return MOI.set(model.inner, attr, ci, v)
