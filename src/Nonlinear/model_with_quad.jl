@@ -295,17 +295,29 @@ before the rows of the inner model in the corresponding evaluator.
 """
 Base.length(model::ModelWithQuad) = length(model.qp)
 
-_variable_bounds(model::ModelWithQuad) =
-    (model.variables.lower, model.variables.upper)
-function constraint_rows(
+function MOI.Utilities.variable_bounds(model::ModelWithQuad)
+    return MOI.Utilities.Hyperrectangle(
+        model.variables.lower,
+        model.variables.upper,
+    )
+end
+function MOI.Utilities.rows(
     ::ModelWithQuad{T},
     ci::MOI.ConstraintIndex{F,S},
 ) where {T,F<:_QPFunction{T},S<:_QPSet{T}}
-    return [ci.value]
+    return ci.value
 end
 
-function constraint_rows(model::ModelWithQuad, ci::MOI.ConstraintIndex)
-    return length(model.qp) .+ constraint_rows(model.inner, ci)
+function MOI.Utilities.rows(model::ModelWithQuad, ci::MOI.ConstraintIndex)
+    return length(model.qp) .+ MOI.Utilities.rows(model.inner, ci)
+end
+
+function MOI.Utilities.constraint_bounds(model::ModelWithQuad{T}) where {T}
+    inner = MOI.Utilities.constraint_bounds(model.inner)
+    return MOI.Utilities.Hyperrectangle(
+        vcat(model.qp.g_L, inner.lower),
+        vcat(model.qp.g_U, inner.upper),
+    )
 end
 
 function constraint_dual_starts(model::ModelWithQuad)
@@ -738,23 +750,6 @@ function MOI.eval_hessian_lagrangian_product(
     return
 end
 
-# The lower and upper bounds of each constraint row, in the row order of the
-# evaluator. Solvers that use their own inner evaluator type can add a method
-# for it so that `MOI.NLPBlockData(::EvaluatorWithQuad)` works.
-function _constraint_bounds(evaluator::Evaluator)
-    return MOI.NLPBoundsPair[
-        _bound(c.set) for (_, c) in evaluator.model.constraints
-    ]
-end
-
-function _constraint_bounds(d::EvaluatorWithQuad)
-    bounds = MOI.NLPBoundsPair[
-        MOI.NLPBoundsPair(l, u) for
-        (l, u) in zip(d.model.qp.g_L, d.model.qp.g_U)
-    ]
-    return append!(bounds, _constraint_bounds(d.inner))
-end
-
 _has_objective(d::Evaluator) = d.model.objective !== nothing
 
 function _has_objective(d::EvaluatorWithQuad)
@@ -765,5 +760,7 @@ function _has_objective(d::EvaluatorWithQuad)
 end
 
 function MOI.NLPBlockData(d::EvaluatorWithQuad)
-    return MOI.NLPBlockData(_constraint_bounds(d), d, _has_objective(d))
+    bounds = MOI.Utilities.constraint_bounds(d.model)
+    pairs = MOI.NLPBoundsPair.(bounds.lower, bounds.upper)
+    return MOI.NLPBlockData(pairs, d, _has_objective(d))
 end
