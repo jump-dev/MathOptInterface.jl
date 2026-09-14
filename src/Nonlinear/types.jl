@@ -156,6 +156,8 @@ It has the following fields:
    `OrderedDict` is used instead of a `Vector` to support constraint deletion.
  * `parameters::Vector{Float64}` : holds the current values of the parameters.
  * `operators::OperatorRegistry` : stores the operators used in the model.
+ * `has_deleted_constraint::Bool` : records whether a constraint was deleted
+   through the legacy nonlinear API.
 """
 mutable struct Model <: MOI.ModelLike
     objective::Union{Nothing,Expression}
@@ -169,6 +171,7 @@ mutable struct Model <: MOI.ModelLike
     constraint_dual_start::Dict{ConstraintIndex,Float64}
     # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
+    has_deleted_constraint::Bool
     function Model()
         return new(
             nothing,
@@ -181,6 +184,7 @@ mutable struct Model <: MOI.ModelLike
             Dict{ConstraintIndex,MOI.ScalarNonlinearFunction}(),
             Dict{ConstraintIndex,Float64}(),
             0,
+            false,
         )
     end
 end
