@@ -318,10 +318,21 @@ function MOI.delete(model::Model, ci::MOI.ConstraintIndex)
     return delete(model, _nonlinear_index(ci))
 end
 
-function constraint_rows(model::Model, ci::MOI.ConstraintIndex)
+function MOI.Utilities.rows(model::Model, ci::MOI.ConstraintIndex)
     MOI.throw_if_not_valid(model, ci)
     index = _nonlinear_index(ci)
-    return [findfirst(isequal(index), collect(keys(model.constraints)))]
+    return findfirst(isequal(index), collect(keys(model.constraints)))
+end
+
+function MOI.Utilities.constraint_bounds(model::Model)
+    lower = Float64[]
+    upper = Float64[]
+    for constraint in values(model.constraints)
+        bound = _bound(constraint.set)
+        push!(lower, bound.lower)
+        push!(upper, bound.upper)
+    end
+    return MOI.Utilities.Hyperrectangle(lower, upper)
 end
 
 function constraint_dual_starts(model::Model)
