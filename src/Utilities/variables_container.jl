@@ -468,9 +468,12 @@ Hyperrectangle{T}() where {T} = Hyperrectangle{T}(T[], T[])
 """
     variable_bounds(model)
 
-Return a [`Hyperrectangle`](@ref) containing the bounds of the variables of
-`model`. Variable indices must be `MOI.VariableIndex.(1:n)` and correspond in
-that order to the entries of the returned bounds container.
+Return an [`AbstractVectorBounds`](@ref) containing the bounds of the variables
+of `model`. Variable indices must be `MOI.VariableIndex.(1:n)` and correspond
+in that order to the entries of the returned bounds container.
+
+The returned bounds may alias storage owned by `model`; callers must not modify
+them.
 """
 function variable_bounds end
 
