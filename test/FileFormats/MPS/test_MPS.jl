@@ -1832,12 +1832,25 @@ function test_unsupported_kwarg()
     return
 end
 
+function test_round_trip_semicontinuous()
+    _test_model_equality(
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in Semicontinuous(2.0, 3.0)
+        """,
+        ["x"],
+        String[],
+    )
+    return
+end
+
 function test_round_trip_semiinteger()
     _test_model_equality(
         """
         variables: x
         minobjective: 1.0 * x
-        x in Semicontinuous(1.0, 2.0)
+        x in Semiinteger(2.0, 3.0)
         """,
         ["x"],
         String[],
