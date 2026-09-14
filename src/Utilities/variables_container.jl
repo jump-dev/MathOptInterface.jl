@@ -4,6 +4,11 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+"""
+    AbstractVectorBounds
+
+An abstract container of vector bounds with `lower` and `upper` fields.
+"""
 abstract type AbstractVectorBounds end
 
 function set_from_constants(
