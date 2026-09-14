@@ -202,7 +202,8 @@ function MOI.is_valid(
     model::ModelWithQuad{T},
     ci::MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{T}},
 ) where {T}
-    return MOI.is_valid(model, MOI.VariableIndex(ci.value))
+    x = MOI.VariableIndex(ci.value)
+    return _is_parameter(x) && MOI.is_valid(model, x)
 end
 
 function MOI.get(
@@ -296,19 +297,6 @@ Base.length(model::ModelWithQuad) = length(model.qp)
 
 _variable_bounds(model::ModelWithQuad) =
     (model.variables.lower, model.variables.upper)
-_has_nonlinear_data(model::ModelWithQuad) = _has_nonlinear_data(model.inner)
-_is_nonlinear_input(
-    ::ModelWithQuad{T},
-    ::_QPFunction{T},
-    ::_QPSet{T},
-) where {T} = false
-_is_nonlinear_input(model::ModelWithQuad, f, s) =
-    _is_nonlinear_input(model.inner, f, s)
-_is_nonlinear_objective(::ModelWithQuad{T}, ::_QPFunction{T}) where {T} = false
-_is_nonlinear_objective(::ModelWithQuad, ::MOI.VariableIndex) = false
-_is_nonlinear_objective(model::ModelWithQuad, f) =
-    _is_nonlinear_objective(model.inner, f)
-
 function constraint_rows(
     ::ModelWithQuad{T},
     ci::MOI.ConstraintIndex{F,S},
