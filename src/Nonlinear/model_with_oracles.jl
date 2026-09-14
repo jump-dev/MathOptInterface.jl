@@ -174,9 +174,6 @@ MOI.get(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute) =
     MOI.get(model.inner, attr)
 MOI.set(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute, ci, v) =
     MOI.set(model.inner, attr, ci, v)
-MOI.delete(model::ModelWithOracles, ci::MOI.ConstraintIndex) =
-    MOI.delete(model.inner, ci)
-
 function MOI.get(model::ModelWithOracles, ::MOI.ListOfConstraintTypesPresent)
     types = MOI.get(model.inner, MOI.ListOfConstraintTypesPresent())
     if !isempty(model.constraints)
