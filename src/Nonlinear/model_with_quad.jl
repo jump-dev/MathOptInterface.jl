@@ -241,7 +241,7 @@ end
 function MOI.get(
     model::ModelWithQuad,
     attr::MOI.AbstractConstraintAttribute,
-    ci,
+    ci::MOI.ConstraintIndex,
 )
     return MOI.get(model.inner, attr, ci)
 end
@@ -253,7 +253,7 @@ end
 function MOI.set(
     model::ModelWithQuad,
     attr::MOI.AbstractConstraintAttribute,
-    ci,
+    ci::MOI.ConstraintIndex,
     value,
 )
     return MOI.set(model.inner, attr, ci, value)
