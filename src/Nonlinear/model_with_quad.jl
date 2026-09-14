@@ -160,13 +160,6 @@ function MOI.set(
     return MOI.set(model.variables, attr, ci, set)
 end
 
-function MOI.delete(
-    model::ModelWithQuad,
-    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:_QPSet},
-)
-    return MOI.delete(model.variables, ci)
-end
-
 function MOI.add_constrained_variable(
     model::ModelWithQuad{T},
     set::MOI.Parameter{T},
@@ -249,9 +242,6 @@ function MOI.set(
 )
     return MOI.set(model.inner, attr, ci, value)
 end
-
-MOI.delete(model::ModelWithQuad, ci::MOI.ConstraintIndex) =
-    MOI.delete(model.inner, ci)
 
 function MOI.get(
     model::ModelWithQuad{T},
