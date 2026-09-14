@@ -194,9 +194,10 @@ end
 MOI.is_empty(model::ModelWithOracles) =
     isempty(model.constraints) && MOI.is_empty(model.inner)
 
-_variable_bounds(model::ModelWithOracles) = _variable_bounds(model.inner)
+MOI.Utilities.variable_bounds(model::ModelWithOracles) =
+    MOI.Utilities.variable_bounds(model.inner)
 
-function constraint_rows(
+function MOI.Utilities.rows(
     model::ModelWithOracles{T},
     ci::MOI.ConstraintIndex{MOI.VectorOfVariables,MOI.VectorNonlinearOracle{T}},
 ) where {T}
@@ -207,9 +208,22 @@ function constraint_rows(
     return offset .+ (1:model.constraints[ci.value][2].output_dimension)
 end
 
-function constraint_rows(model::ModelWithOracles, ci::MOI.ConstraintIndex)
+function MOI.Utilities.rows(model::ModelWithOracles, ci::MOI.ConstraintIndex)
     offset = sum(s.output_dimension for (_, s) in model.constraints; init = 0)
-    return offset .+ constraint_rows(model.inner, ci)
+    return offset .+ MOI.Utilities.rows(model.inner, ci)
+end
+
+function MOI.Utilities.constraint_bounds(model::ModelWithOracles{T}) where {T}
+    lower = T[]
+    upper = T[]
+    for (_, set) in model.constraints
+        append!(lower, set.l)
+        append!(upper, set.u)
+    end
+    inner = MOI.Utilities.constraint_bounds(model.inner)
+    append!(lower, inner.lower)
+    append!(upper, inner.upper)
+    return MOI.Utilities.Hyperrectangle(lower, upper)
 end
 
 function constraint_dual_starts(model::ModelWithOracles{T}) where {T}
@@ -347,14 +361,6 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithOracles, H, x, σ, μ)
         view(μ, (row_offset+1):length(μ)),
     )
     return
-end
-
-function _constraint_bounds(d::EvaluatorWithOracles)
-    bounds = MOI.NLPBoundsPair[]
-    for (_, s) in d.model.constraints
-        append!(bounds, MOI.NLPBoundsPair.(s.l, s.u))
-    end
-    return append!(bounds, _constraint_bounds(d.inner))
 end
 
 _has_objective(d::EvaluatorWithOracles) = _has_objective(d.inner)

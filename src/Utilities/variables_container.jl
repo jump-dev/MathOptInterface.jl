@@ -465,6 +465,15 @@ end
 
 Hyperrectangle{T}() where {T} = Hyperrectangle{T}(T[], T[])
 
+"""
+    variable_bounds(model)
+
+Return a [`Hyperrectangle`](@ref) containing the bounds of the variables of
+`model`. Variable indices must be `MOI.VariableIndex.(1:n)` and correspond in
+that order to the entries of the returned bounds container.
+"""
+function variable_bounds end
+
 function Base.:(==)(a::Hyperrectangle, b::Hyperrectangle)
     return a.lower == b.lower && a.upper == b.upper
 end
