@@ -295,12 +295,7 @@ before the rows of the inner model in the corresponding evaluator.
 """
 Base.length(model::ModelWithQuad) = length(model.qp)
 
-function MOI.Utilities.variable_bounds(model::ModelWithQuad)
-    return MOI.Utilities.Hyperrectangle(
-        model.variables.lower,
-        model.variables.upper,
-    )
-end
+MOI.Utilities.variable_bounds(model::ModelWithQuad) = model.variables
 function MOI.Utilities.rows(
     ::ModelWithQuad{T},
     ci::MOI.ConstraintIndex{F,S},
