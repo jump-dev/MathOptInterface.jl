@@ -75,22 +75,28 @@ mutable struct ModelWithQuad{T,M} <: MOI.ModelLike
     end
 end
 
-MOI.supports_incremental_interface(model::ModelWithQuad) =
-    MOI.supports_incremental_interface(model.inner)
+function MOI.supports_incremental_interface(model::ModelWithQuad)
+    return MOI.supports_incremental_interface(model.inner)
+end
 
 # Model attributes not owned by this layer, including `ObjectiveSense`, are
 # deliberately forwarded through the MOI API.
-MOI.supports(model::ModelWithQuad, attr::MOI.AbstractModelAttribute) =
-    MOI.supports(model.inner, attr)
-MOI.get(model::ModelWithQuad, attr::MOI.AbstractModelAttribute) =
-    MOI.get(model.inner, attr)
-MOI.set(model::ModelWithQuad, attr::MOI.AbstractModelAttribute, value) =
-    MOI.set(model.inner, attr, value)
-MOI.supports(
+function MOI.supports(model::ModelWithQuad, attr::MOI.AbstractModelAttribute)
+    return MOI.supports(model.inner, attr)
+end
+function MOI.get(model::ModelWithQuad, attr::MOI.AbstractModelAttribute)
+    return MOI.get(model.inner, attr)
+end
+function MOI.set(model::ModelWithQuad, attr::MOI.AbstractModelAttribute, value)
+    return MOI.set(model.inner, attr, value)
+end
+function MOI.supports(
     model::ModelWithQuad,
     attr::MOI.AbstractConstraintAttribute,
     CI::Type{<:MOI.ConstraintIndex},
-) = MOI.supports(model.inner, attr, CI)
+)
+    return MOI.supports(model.inner, attr, CI)
+end
 
 function ModelWithQuad{T}(inner) where {T}
     return ModelWithQuad{T}(QPBlockData{T}(), inner)
@@ -122,7 +128,11 @@ function MOI.supports(
     return true
 end
 
-function MOI.add_constraint(model::ModelWithQuad, x::MOI.VariableIndex, set::_QPSet)
+function MOI.add_constraint(
+    model::ModelWithQuad,
+    x::MOI.VariableIndex,
+    set::_QPSet,
+)
     return MOI.add_constraint(model.variables, x, set)
 end
 
@@ -171,10 +181,12 @@ function MOI.add_constrained_variable(
     return x, ci
 end
 
-MOI.supports_add_constrained_variable(
+function MOI.supports_add_constrained_variable(
     ::ModelWithQuad{T},
     ::Type{MOI.Parameter{T}},
-) where {T} = true
+) where {T}
+    return true
+end
 
 function MOI.get(model::ModelWithQuad, ::MOI.NumberOfVariables)
     return length(model.list_of_variable_indices)
@@ -226,7 +238,11 @@ function MOI.is_valid(model::ModelWithQuad, ci::MOI.ConstraintIndex)
     return MOI.is_valid(model.inner, ci)
 end
 
-function MOI.get(model::ModelWithQuad, attr::MOI.AbstractConstraintAttribute, ci)
+function MOI.get(
+    model::ModelWithQuad,
+    attr::MOI.AbstractConstraintAttribute,
+    ci,
+)
     return MOI.get(model.inner, attr, ci)
 end
 
@@ -417,11 +433,22 @@ end
 function MOI.supports(
     ::ModelWithQuad{T},
     ::MOI.ObjectiveFunction{F},
-) where {T,F<:Union{MOI.VariableIndex,MOI.ScalarAffineFunction{T},MOI.ScalarQuadraticFunction{T}}}
+) where {
+    T,
+    F<:Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{T},
+        MOI.ScalarQuadraticFunction{T},
+    },
+}
     return true
 end
 
-function MOI.set(model::ModelWithQuad, ::MOI.ObjectiveFunction{F}, f::F) where {F}
+function MOI.set(
+    model::ModelWithQuad,
+    ::MOI.ObjectiveFunction{F},
+    f::F,
+) where {F}
     sense = MOI.get(model, MOI.ObjectiveSense())
     set_objective(model, f)
     MOI.set(model, MOI.ObjectiveSense(), sense)
@@ -483,7 +510,10 @@ function MOI.get(model::ModelWithQuad, attr::MOI.ListOfConstraintTypesPresent)
     append!(types, MOI.get(model.qp, attr))
     append!(types, MOI.get(model.inner, attr))
     if !isempty(model.qp.parameters)
-        push!(types, (MOI.VariableIndex, MOI.Parameter{eltype(model.qp.parameters)}))
+        push!(
+            types,
+            (MOI.VariableIndex, MOI.Parameter{eltype(model.qp.parameters)}),
+        )
     end
     return unique!(types)
 end
@@ -654,8 +684,9 @@ function MOI.eval_hessian_lagrangian(d::EvaluatorWithQuad, H, x, σ, μ)
     m = length(d.model.qp)
     # If the objective is not in the QP block, `d.model.qp.objective` is zero, so
     # passing `σ` is harmless; and vice versa for the inner evaluator.
-    qp_σ = d.model.objective_sink == _QUAD ?
-           _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * σ : σ
+    qp_σ =
+        d.model.objective_sink == _QUAD ?
+        _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * σ : σ
     MOI.eval_hessian_lagrangian(d.model.qp, H, x, qp_σ, view(μ, 1:m))
     MOI.eval_hessian_lagrangian(
         d.inner,
@@ -722,16 +753,10 @@ function MOI.eval_hessian_lagrangian_product(
         σ,
         view(μ, (m+1):length(μ)),
     )
-    qp_σ = d.model.objective_sink == _QUAD ?
-           _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * σ : σ
-    _add_hessian_lagrangian_product(
-        d.model.qp,
-        H,
-        x,
-        v,
-        qp_σ,
-        view(μ, 1:m),
-    )
+    qp_σ =
+        d.model.objective_sink == _QUAD ?
+        _objective_sign(MOI.get(d.model, MOI.ObjectiveSense())) * σ : σ
+    _add_hessian_lagrangian_product(d.model.qp, H, x, v, qp_σ, view(μ, 1:m))
     return
 end
 
