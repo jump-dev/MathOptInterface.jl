@@ -148,7 +148,9 @@ function MOI.constraint_expr(evaluator::Evaluator, i::Int)
     end
 end
 
-_objective_sign(sense) = sense == MOI.MAX_SENSE ? -1 : sense == MOI.MIN_SENSE ? 1 : 0
+function _objective_sign(sense)
+    return sense == MOI.MAX_SENSE ? -1 : sense == MOI.MIN_SENSE ? 1 : 0
+end
 
 function MOI.eval_objective(evaluator::Evaluator, x)
     start = time()

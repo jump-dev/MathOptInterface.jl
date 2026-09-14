@@ -56,11 +56,8 @@ function test_moi_model_stack()
     )
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
-    evaluator = MOI.Nonlinear.Evaluator(
-        model,
-        MOI.Nonlinear.SparseReverseMode(),
-        [x],
-    )
+    evaluator =
+        MOI.Nonlinear.Evaluator(model, MOI.Nonlinear.SparseReverseMode(), [x])
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     @test MOI.eval_objective(evaluator, [2.0]) == -4.0
     g = zeros(2)
