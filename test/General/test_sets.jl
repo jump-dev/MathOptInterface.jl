@@ -503,6 +503,24 @@ function test_VectorNonlinearOracle()
     return
 end
 
+function test_SOS1_constructor()
+    @test_throws DimensionMismatch MOI.SOS1{Float64}(Float64[])
+    @test_throws DimensionMismatch MOI.SOS1(Float64[])
+    @test_throws DimensionMismatch MOI.SOS1(1:0)
+    @test MOI.SOS1(1:3) == MOI.SOS1{Int}(Int[1, 2, 3])
+    @test MOI.SOS1{Float64}(1:3) == MOI.SOS1{Float64}([1.0, 2.0, 3.0])
+    return
+end
+
+function test_SOS2_constructor()
+    @test_throws DimensionMismatch MOI.SOS2{Float64}(Float64[])
+    @test_throws DimensionMismatch MOI.SOS2(Float64[])
+    @test_throws DimensionMismatch MOI.SOS2(1:0)
+    @test MOI.SOS2(1:3) == MOI.SOS2{Int}(Int[1, 2, 3])
+    @test MOI.SOS2{Float64}(1:3) == MOI.SOS2{Float64}([1.0, 2.0, 3.0])
+    return
+end
+
 end  # module
 
 TestSets.runtests()
