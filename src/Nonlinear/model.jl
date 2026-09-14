@@ -33,13 +33,6 @@ function MOI.is_empty(model::Model)
 end
 
 _parameter_values(model::Model) = model.parameters
-_has_nonlinear_data(model::Model) =
-    model.objective !== nothing ||
-    !isempty(model.constraints) ||
-    !isempty(model.parameters)
-_is_nonlinear_input(::Model, ::MOI.AbstractFunction, ::MOI.AbstractSet) = true
-_is_nonlinear_objective(::Model, ::MOI.AbstractFunction) = true
-
 function Base.copy(::Model)
     return error("Copying nonlinear problems not yet implemented")
 end

@@ -24,18 +24,6 @@ end
 ModelWithOracles(inner) = ModelWithOracles{Float64}(inner)
 
 _parameter_values(model::ModelWithOracles) = _parameter_values(model.inner)
-_has_nonlinear_data(model::ModelWithOracles) =
-    !isempty(model.constraints) || _has_nonlinear_data(model.inner)
-_is_nonlinear_input(
-    ::ModelWithOracles{T},
-    ::MOI.VectorOfVariables,
-    ::MOI.VectorNonlinearOracle{T},
-) where {T} = true
-_is_nonlinear_input(model::ModelWithOracles, f, s) =
-    _is_nonlinear_input(model.inner, f, s)
-_is_nonlinear_objective(model::ModelWithOracles, f) =
-    _is_nonlinear_objective(model.inner, f)
-
 # Backward-compatible forwarding for users of the pre-MOI Nonlinear API.
 add_parameter(model::ModelWithOracles, value::Real) =
     add_parameter(model.inner, value)
