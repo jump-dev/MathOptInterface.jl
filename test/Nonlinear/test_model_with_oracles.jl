@@ -44,6 +44,7 @@ function test_moi_model_stack()
     bounds = MOI.Utilities.constraint_bounds(model)
     @test bounds == MOI.Utilities.Hyperrectangle([-Inf, 0.0], [2.0, 4.0])
     variable_bounds = MOI.Utilities.variable_bounds(model)
+    @test variable_bounds === model.variables
     @test variable_bounds.lower == [-Inf]
     @test variable_bounds.upper == [Inf]
     MOI.set(model, MOI.LagrangeMultiplierStart(), c, [0.5])
