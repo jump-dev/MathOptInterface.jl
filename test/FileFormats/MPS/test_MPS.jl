@@ -1539,14 +1539,6 @@ function test_unsupported_variable_types()
         MOI.UnsupportedConstraint,
         MOI.add_constrained_variable(model, MOI.Parameter(2.0)),
     )
-    @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constrained_variable(model, MOI.Semicontinuous(2.0, 3.0)),
-    )
-    @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0)),
-    )
     return
 end
 
@@ -1837,6 +1829,100 @@ function test_unsupported_kwarg()
         ),
         MPS.Model(; foo = 1),
     )
+    return
+end
+
+function test_round_trip_semicontinuous()
+    _test_model_equality(
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in Semicontinuous(2.0, 3.0)
+        """,
+        ["x"],
+        String[],
+    )
+    return
+end
+
+function test_round_trip_semiinteger()
+    _test_model_equality(
+        """
+        variables: x
+        minobjective: 1.0 * x
+        x in Semiinteger(2.0, 3.0)
+        """,
+        ["x"],
+        String[],
+    )
+    return
+end
+
+function test_semi_reading_1()
+    LB, UB = [-1.0, 0.0, 1.0], [-0.5, 0.0, 0.5, 1.5]
+    for lb in LB, ub in UB, SC in ["SC", "SI"], LO in ["LO", "LI"]
+        if lb > ub
+            continue
+        end
+        l_row = iszero(lb) ? "" : "$LO bounds    x        $lb\n"
+        src = """
+        NAME
+        ROWS
+        N obj
+        COLUMNS
+            x         obj      1.0
+        RHS
+        BOUNDS
+        $(l_row)$(SC) bounds    x        $ub
+        ENDATA
+        """
+        target = if SC == "SC" && (iszero(lb) || LO == "LO")
+            MOI.Semicontinuous(lb, ub)
+        else
+            MOI.Semiinteger(lb, ub)
+        end
+        model = MPS.Model()
+        read!(IOBuffer(src), model)
+        dest = MOI.Utilities.Model{Float64}()
+        MOI.copy_to(dest, model)
+        x = MOI.get(dest, MOI.VariableIndex, "x")
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(target)}(x.value)
+        @test MOI.get(dest, MOI.ConstraintSet(), ci) == target
+    end
+    return
+end
+
+function test_semi_reading_2()
+    LB, UB = [-1.0, 0.0, 1.0], [-0.5, 0.0, 0.5, 1.5]
+    for lb in LB, ub in UB, SC in ["SC", "SI"], LO in ["LO", "LI"]
+        if lb > ub
+            continue
+        end
+        l_row = iszero(lb) ? "" : "$LO bounds    x        $lb\n"
+        src = """
+        NAME
+        ROWS
+        N obj
+        COLUMNS
+            x         obj      1.0
+        RHS
+        BOUNDS
+        $(SC) bounds    x        $ub
+        $(l_row)ENDATA
+        """
+        target = if SC == "SC" && (iszero(lb) || LO == "LO")
+            MOI.Semicontinuous(lb, ub)
+        else
+            MOI.Semiinteger(lb, ub)
+        end
+        model = MPS.Model()
+        read!(IOBuffer(src), model)
+        dest = MOI.Utilities.Model{Float64}()
+        MOI.copy_to(dest, model)
+        x = MOI.get(dest, MOI.VariableIndex, "x")
+        ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(target)}(x.value)
+        @test MOI.get(dest, MOI.ConstraintSet(), ci) == target
+    end
     return
 end
 

@@ -546,11 +546,8 @@ end
 #     UP    upper bound             x <= b
 #     UI    integer variable        x <= b
 #     BV    binary variable    x = 0 or 1
-#
-#  Not yet implemented:
-#
-#     SC    semi-cont variable x = 0 or l <= x <= b
-#           l is the lower bound on the variable. If none set then defaults to 1
+#     SC    semicontinuous variable  x in {0} ∪ [LO, b]
+#     SI    semiinteger variable     x in {0} ∪ [LI, b]
 # ==============================================================================
 
 function write_single_bound(
@@ -560,7 +557,29 @@ function write_single_bound(
     upper::T,
     vtype,
 ) where {T}
-    if lower == upper
+    if vtype == VTYPE_SEMICONTINUOUS
+        write_single_bound(io, var_name, lower, typemax(T), VTYPE_CONTINUOUS)
+        println(
+            io,
+            Card(
+                f1 = "SC",
+                f2 = "bounds",
+                f3 = var_name,
+                f4 = _to_string(upper),
+            ),
+        )
+    elseif vtype == VTYPE_SEMIINTEGER
+        write_single_bound(io, var_name, lower, typemax(T), VTYPE_INTEGER)
+        println(
+            io,
+            Card(
+                f1 = "SI",
+                f2 = "bounds",
+                f3 = var_name,
+                f4 = _to_string(upper),
+            ),
+        )
+    elseif lower == upper
         println(
             io,
             Card(
@@ -613,6 +632,14 @@ update_bounds(x, set::MOI.EqualTo) = (set.value, set.value, x[3])
 
 update_bounds(x, set::MOI.ZeroOne) = (x[1], x[2], VTYPE_BINARY)
 
+function update_bounds(x, set::MOI.Semicontinuous)
+    return (set.lower, set.upper, VTYPE_SEMICONTINUOUS)
+end
+
+function update_bounds(x, set::MOI.Semiinteger)
+    return (set.lower, set.upper, VTYPE_SEMIINTEGER)
+end
+
 function _collect_bounds(bounds, model, ::Type{S}, var_to_column) where {S}
     for index in
         MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
@@ -636,6 +663,8 @@ function write_bounds(io::IO, model::Model{T}, var_to_column) where {T}
     _collect_bounds(bounds, model, MOI.EqualTo{T}, var_to_column)
     _collect_bounds(bounds, model, MOI.Interval{T}, var_to_column)
     _collect_bounds(bounds, model, MOI.ZeroOne, var_to_column)
+    _collect_bounds(bounds, model, MOI.Semiinteger{T}, var_to_column)
+    _collect_bounds(bounds, model, MOI.Semicontinuous{T}, var_to_column)
     for (variable, column) in var_to_column
         var_name = _var_name(model, variable, column, options.generic_names)
         lower, upper, vtype = bounds[column]
