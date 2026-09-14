@@ -990,6 +990,12 @@ function _equality_constraints(
     return model
 end
 
+function test_constraint_bounds()
+    model = _equality_constraints([1.0 2.0; 3.0 4.0], [5.0, 6.0])
+    @test MOI.Utilities.constraint_bounds(model) === model.constants
+    return
+end
+
 # Inspired from MatrixOfConstraints
 function test_lp_standard_form()
     s = """
