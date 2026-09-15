@@ -291,6 +291,30 @@ function test_get_fallback_DualObjectiveValue()
     return
 end
 
+function test_get_fallback_DualObjectiveValue_Quadratic()
+    T = Float64
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{T}()),
+        T,
+    )
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = 1.0 * x * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    MOI.set(model, MOI.ResultCount(), 1)
+    MOI.set(model, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.VariablePrimal(), x, 0.0)
+    @test_throws(
+        MOI.GetAttributeNotAllowed(
+            MOI.DualObjectiveValue(),
+            "Cannot get the dual objective with an objective function of type `$(typeof(f))`",
+        ),
+        MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), T),
+    )
+    return
+end
+
 end  # module TestResults
 
 TestResults.runtests()

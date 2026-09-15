@@ -74,6 +74,14 @@ function get_fallback(
     if status == MOI.NO_SOLUTION
         throw(MOI.GetAttributeNotAllowed(attr, "No dual solution is available"))
     end
+    F = MOI.get(model, MOI.ObjectiveFunctionType())
+    if !(F <: Union{MOI.VariableIndex,MOI.ScalarAffineFunction})
+        err = MOI.GetAttributeNotAllowed(
+            attr,
+            "Cannot get the dual objective with an objective function of type `$F`",
+        )
+        throw(err)
+    end
     value = zero(T) # sum will not work if there are zero constraints
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         value += _dual_objective_value(model, F, S, T, attr.result_index)::T
@@ -83,9 +91,7 @@ function get_fallback(
     end
     if !is_ray(status)
         # The objective constant should not be present in rays
-        F = MOI.get(model, MOI.ObjectiveFunctionType())
-        f = MOI.get(model, MOI.ObjectiveFunction{F}())
-        value += MOI.constant(f, T)
+        value += MOI.constant(MOI.get(model, MOI.ObjectiveFunction{F}()), T)
     end
     return value::T
 end
