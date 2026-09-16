@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.54.0 (September 14, 2026)
+## v1.54.0 (September 16, 2026)
 
 ### Added
 
@@ -40,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   [`Bridges.Constraint.ScalarSlackBridge`](@ref) (#3083)
 - Fixed getting [`DualObjectiveValue`](@ref) in `Utilities.get_fallback` when
   [`DualStatus`](@ref) is `NO_SOLUTION` (#3081)
+- Fixed getting [`DualObjectiveValue`](@ref) in `Utilities.get_fallback` with
+  a non-affine objective (#3086)
 
 ### Other
 
