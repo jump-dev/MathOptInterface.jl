@@ -33,22 +33,38 @@ function _replace_moi_variables(
     return new_nodes
 end
 
-@enum(Linearity, CONSTANT, LINEAR, PIECEWISE_LINEAR, NONLINEAR)
+@enum(Linearity, CONSTANT, LINEAR, PIECEWISE_LINEAR, QUADRATIC, NONLINEAR)
 
 """
     _classify_linearity(
         nodes::Vector{Nonlinear.Node},
         adj::SparseArrays.SparseMatrixCSC,
         subexpression_linearity::Vector{Linearity},
+        const_values::Vector{Float64},
     )
 
-Classify the nodes in a tree as constant, linear, or nonlinear with respect to
-the input.
+Classify the nodes in a tree as constant, linear, piecewise linear, quadratic,
+or nonlinear with respect to the input.
+
+The classification is conservative: a node may be classified less strictly
+than the tightest class that applies (for example, an expression that
+simplifies to an affine function may be classified as `NONLINEAR`), but never
+more strictly. For fixed values of the parameters, each class guarantees:
+
+ * `CONSTANT`: the value does not depend on the input
+ * `LINEAR`: the value is an affine function of the input; the gradient is
+   constant and the Hessian is zero
+ * `PIECEWISE_LINEAR`: the gradient is piecewise constant and the Hessian is
+   zero almost everywhere
+ * `QUADRATIC`: the gradient is an affine function of the input and the
+   Hessian is constant
+ * `NONLINEAR`: no guarantee
 """
 function _classify_linearity(
     nodes::Vector{Nonlinear.Node},
     adj::SparseArrays.SparseMatrixCSC,
     subexpression_linearity::Vector{Linearity},
+    const_values::Vector{Float64},
 )
     linearity = Array{Linearity}(undef, length(nodes))
     children_arr = SparseArrays.rowvals(adj)
@@ -68,46 +84,32 @@ function _classify_linearity(
             continue
         end
         children_idx = SparseArrays.nzrange(adj, k)
-        num_constant_children, any_nonlinear = 0, false
+        num_constant, num_piecewise, num_quadratic = 0, 0, 0
+        worst = CONSTANT
         for r in children_idx
-            if linearity[children_arr[r]] == NONLINEAR
-                any_nonlinear = true
-                break
-            elseif linearity[children_arr[r]] == CONSTANT
-                num_constant_children += 1
+            child = linearity[children_arr[r]]
+            worst = max(worst, child)
+            if child == CONSTANT
+                num_constant += 1
+            elseif child == PIECEWISE_LINEAR
+                num_piecewise += 1
+            elseif child == QUADRATIC
+                num_quadratic += 1
             end
         end
-        if any_nonlinear
-            # If any children are nonlinear, then we're nonlinear...
-            linearity[k] = NONLINEAR
-            # ...except in the case of ifelse. If the operands are linear then
-            # we're piecewise linear.
-            op = get(
-                Nonlinear.DEFAULT_MULTIVARIATE_OPERATORS,
-                node.index,
-                nothing,
-            )
-            if (
-                node.type == Nonlinear.NODE_CALL_MULTIVARIATE &&
-                op == :ifelse &&
-                linearity[children_arr[children_idx[2]]] == LINEAR &&
-                linearity[children_arr[children_idx[3]]] == LINEAR
-            )
-                linearity[k] = PIECEWISE_LINEAR
-            end
-            continue
-        elseif num_constant_children == length(children_idx)
+        if worst == CONSTANT
             # If all children are constant, then we're constant.
             linearity[k] = CONSTANT
             continue
         end
-        # By this point, some children are constant and some are linear, so if
-        # the operator is nonlinear, then we're nonlinear.
         if node.type == Nonlinear.NODE_CALL_UNIVARIATE
             op =
                 get(Nonlinear.DEFAULT_UNIVARIATE_OPERATORS, node.index, nothing)
             if op == :+ || op == :-
-                linearity[k] = LINEAR
+                # A unary plus or minus preserves the linearity of the child.
+                linearity[k] = worst
+            elseif op == :abs && worst <= PIECEWISE_LINEAR
+                linearity[k] = PIECEWISE_LINEAR
             else
                 linearity[k] = NONLINEAR
             end
@@ -117,26 +119,60 @@ function _classify_linearity(
                 node.index,
                 nothing,
             )
-            if op == :+
-                linearity[k] = LINEAR
-            elseif op == :-
-                linearity[k] = LINEAR
+            if op == :+ || op == :-
+                if num_quadratic > 0 && num_piecewise > 0
+                    # The sum of a quadratic term and a piecewise linear term
+                    # is piecewise quadratic: neither class applies.
+                    linearity[k] = NONLINEAR
+                else
+                    linearity[k] = worst
+                end
             elseif op == :*
-                # Multiplication is linear if there is one non-constant term.
-                one_op = num_constant_children == length(children_idx) - 1
-                linearity[k] = one_op ? LINEAR : NONLINEAR
+                num_nonconstant = length(children_idx) - num_constant
+                if num_nonconstant == 1
+                    # Multiplication by constants preserves the linearity of
+                    # the non-constant term.
+                    linearity[k] = worst
+                elseif num_nonconstant == 2 && worst == LINEAR
+                    # The product of two linear terms is quadratic.
+                    linearity[k] = QUADRATIC
+                else
+                    linearity[k] = NONLINEAR
+                end
             elseif op == :^
-                linearity[k] = NONLINEAR
+                expo = nodes[children_arr[children_idx[2]]]
+                if expo.type == Nonlinear.NODE_VALUE &&
+                   const_values[expo.index] == 2.0 &&
+                   linearity[children_arr[children_idx[1]]] == LINEAR
+                    # A linear term squared is quadratic. We do not attempt to
+                    # classify other constant exponents; note in particular
+                    # that a NODE_PARAMETER exponent is CONSTANT but its value
+                    # may change between solves, so it must stay NONLINEAR.
+                    linearity[k] = QUADRATIC
+                else
+                    linearity[k] = NONLINEAR
+                end
             elseif op == :/
                 if linearity[children_arr[children_idx[2]]] == CONSTANT
-                    # If the denominator is constant, we're linear.
-                    linearity[k] = LINEAR
+                    # If the denominator is constant, division preserves the
+                    # linearity of the numerator.
+                    linearity[k] = linearity[children_arr[children_idx[1]]]
                 else
                     linearity[k] = NONLINEAR
                 end
             elseif op == :ifelse
-                linearity[k] = NONLINEAR
-            else  # User-defined functions
+                # The condition is typically NONLINEAR (comparisons are), but
+                # if both branches are at worst piecewise linear, so are we.
+                if linearity[children_arr[children_idx[2]]] <=
+                   PIECEWISE_LINEAR &&
+                   linearity[children_arr[children_idx[3]]] <= PIECEWISE_LINEAR
+                    linearity[k] = PIECEWISE_LINEAR
+                else
+                    linearity[k] = NONLINEAR
+                end
+            elseif (op == :min || op == :max) && worst <= PIECEWISE_LINEAR
+                linearity[k] = PIECEWISE_LINEAR
+            else  # Other operators and user-defined functions
                 linearity[k] = NONLINEAR
             end
         elseif node.type == Nonlinear.NODE_LOGIC
