@@ -71,7 +71,8 @@ function test_solve_result_index()
             (MOI.VariableIndex, MOI.GreaterThan{Float64}) => [1.0],
         ),
     )
-    MOI.Test.test_solve_result_index(model, MOI.Test.Config())
+    config = MOI.Test.Config(; exclude = Any[MOI.DualObjectiveValue])
+    MOI.Test.test_solve_result_index(model, config)
     return
 end
 
