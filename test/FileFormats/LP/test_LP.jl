@@ -1873,6 +1873,24 @@ function test_empty_function()
     return
 end
 
+function test_read_empty_constraint()
+    model = MOI.FileFormats.LP.Model{Float64}()
+    read!(IOBuffer("min\nst\n>= 0\nend"), model)
+    target = MOI.FileFormats.LP.Model{Float64}()
+    f = zero(MOI.ScalarAffineFunction{Float64})
+    MOI.add_constraint(target, f, MOI.GreaterThan(0.0))
+    @test sprint(print, model) == sprint(print, target)
+    # With name
+    model = MOI.FileFormats.LP.Model{Float64}()
+    read!(IOBuffer("min\nst\nc: == 2\nend"), model)
+    target = MOI.FileFormats.LP.Model{Float64}()
+    f = zero(MOI.ScalarAffineFunction{Float64})
+    c = MOI.add_constraint(target, f, MOI.EqualTo(2.0))
+    MOI.set(target, MOI.ConstraintName(), c, "c")
+    @test sprint(print, model) == sprint(print, target)
+    return
+end
+
 end  # module
 
 TestLP.runtests()

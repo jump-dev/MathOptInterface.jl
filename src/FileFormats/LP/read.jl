@@ -1109,17 +1109,26 @@ function _parse_constraint_indicator(
     )
 end
 
+function _is_empty_constraint(state::_LexerState)
+    return _next_token_is(state, _TOKEN_GREATER_THAN) ||
+           _next_token_is(state, _TOKEN_LESS_THAN) ||
+           _next_token_is(state, _TOKEN_EQUAL_TO)
+end
+
 # <constraint> :==
-#     <name> <expression> <set-suffix>
+#     <name> [<expression>] <set-suffix>
 #   | <name> <constraint-sos>
 #   | <name> <constraint-indicator>
-function _parse_constraint(state::_LexerState, cache::_ReadCache)
+function _parse_constraint(state::_LexerState, cache::_ReadCache{T}) where {T}
     name = _parse_name(state, cache)
     # Check if this is an SOS constraint
     c = if _is_sos_constraint(state)
         _parse_constraint_sos(state, cache)
     elseif _is_indicator_constraint(state)
         _parse_constraint_indicator(state, cache)
+    elseif _is_empty_constraint(state)
+        set = _parse_set_suffix(state, cache)::MOI.AbstractScalarSet
+        MOI.add_constraint(cache.model, zero(MOI.ScalarAffineFunction{T}), set)
     else
         f = _parse_expression(state, cache)
         # The type annotation is needed for JET.
