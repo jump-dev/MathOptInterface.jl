@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed bugs in various bridges to do with non-zero function constants. These
   typically affected [`ConstraintPrimal`](@ref) and
   [`ConstraintPrimalStart`](@ref) (#3069)
-- Fixed a bug in the LP writer when there are functions with no terms (#3070)
+- Fixed the LP format when there are functions with no terms (#3070), (#3088)
 - Fixed the derivative of `atan(y, x)` in `Nonlinear.SymbolicAD` (#3071)
 - Fixed the Hessian computation for `min` and `max` operators (#3072)
 - Fixed modifying [`Bridges.Constraint.SplitIntervalBridge`](@ref) when the
