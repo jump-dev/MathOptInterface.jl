@@ -189,7 +189,7 @@ macro head_to_val(f, arg1, args...)
         push!(leaf.args, new_expr)
         leaf = new_expr
     end
-    push!(leaf.args, Expr(:return, Val(head)))
+    push!(leaf.args, :(return Val(Symbol($head))))
     quote
         function $(esc(f))($head::String)
             return $body

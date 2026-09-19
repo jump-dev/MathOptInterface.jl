@@ -1681,6 +1681,14 @@ function test_unsupported_objectives()
     return
 end
 
+function test_head_to_val()
+    @test MOF.head_to_set("Nonnegatives") === Val(:Nonnegatives)
+    @test MOF.head_to_set("CustomSet") === Val(:CustomSet)
+    @test MOF.head_to_function("VectorOfVariables") === Val(:VectorOfVariables)
+    @test MOF.head_to_function("CustomFunction") === Val(:CustomFunction)
+    return
+end
+
 function test_unsupported_kwarg()
     @test_throws(
         ErrorException(
