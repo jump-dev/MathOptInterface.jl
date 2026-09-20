@@ -1681,6 +1681,29 @@ function test_unsupported_objectives()
     return
 end
 
+struct CustomSet <: MOI.AbstractVectorSet
+    dimension::Int
+end
+
+function MOF.set_to_moi(::Val{:CustomSet}, object::Dict)
+    return CustomSet(object["dimension"])
+end
+
+function test_custom_set_to_moi()
+    object = Dict{String,Any}("type" => "CustomSet", "dimension" => 3)
+    @test MOF.set_to_moi(Val(:CustomSet), Float64, object) == CustomSet(3)
+    @test MOF.set_to_moi(Float64, object) == CustomSet(3)
+    return
+end
+
+function test_head_to_val()
+    @test MOF.head_to_set("Nonnegatives") === Val(:Nonnegatives)
+    @test MOF.head_to_set("CustomSet") === Val(:CustomSet)
+    @test MOF.head_to_function("VectorOfVariables") === Val(:VectorOfVariables)
+    @test MOF.head_to_function("CustomFunction") === Val(:CustomFunction)
+    return
+end
+
 function test_unsupported_kwarg()
     @test_throws(
         ErrorException(
