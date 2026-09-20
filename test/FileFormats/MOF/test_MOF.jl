@@ -1691,6 +1691,48 @@ function test_unsupported_kwarg()
     return
 end
 
+function test_v1_8()
+    io = IOBuffer(
+        """
+        {
+            "version": {"major": 1, "minor": 8},
+            "variables": [{"name": "t"}, {"name": "x"}, {"name": "y"}],
+            "objective": {"sense": "feasibility"},
+            "constraints": [{
+                "function": {"type": "VectorOfVariables", "variables": ["t", "x", "y"]},
+                "set": {"type": "DualGeometricMeanCone", "dimension": 3}
+            }]
+        }
+        """,
+    )
+    model = MOI.FileFormats.MOF.Model()
+    read!(io, model)
+    ret = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test only(ret) == (MOI.VectorOfVariables, MOI.DualGeometricMeanCone)
+    return
+end
+
+function test_v1_9()
+    io = IOBuffer(
+        """
+        {
+            "version": {"major": 1, "minor": 9},
+            "variables": [{"name": "u"}, {"name": "v"}, {"name": "w"}],
+            "objective": {"sense": "feasibility"},
+            "constraints": [{
+                "function": {"type": "VectorOfVariables", "variables": ["u", "v", "w"]},
+                "set": {"type": "DualRelativeEntropyCone", "dimension": 3}
+            }]
+        }
+        """,
+    )
+    model = MOI.FileFormats.MOF.Model()
+    read!(io, model)
+    ret = MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    @test only(ret) == (MOI.VectorOfVariables, MOI.DualRelativeEntropyCone)
+    return
+end
+
 end
 
 TestMOF.runtests()
