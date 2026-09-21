@@ -353,10 +353,10 @@ function test_moi_model_api()
         @test MOI.get(model, MOI.ConstraintSet(), ci) == set
         @test MOI.Utilities.rows(model, ci) == row
     end
-    wrong_set_ci = MOI.ConstraintIndex{
-        MOI.ScalarNonlinearFunction,
-        MOI.LessThan{Float64},
-    }(indices[1].value)
+    wrong_set_ci =
+        MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{Float64}}(
+            indices[1].value,
+        )
     @test !MOI.is_valid(model, wrong_set_ci)
     @test_throws MOI.InvalidIndex MOI.get(
         model,
@@ -364,7 +364,8 @@ function test_moi_model_api()
         wrong_set_ci,
     )
 
-    expected_types = [(MOI.ScalarNonlinearFunction, typeof(set)) for set in sets]
+    expected_types =
+        [(MOI.ScalarNonlinearFunction, typeof(set)) for set in sets]
     @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == expected_types
     MOI.set(model, MOI.ConstraintSet(), indices[2], MOI.LessThan(6.0))
     @test MOI.get(model, MOI.ConstraintSet(), indices[2]) == MOI.LessThan(6.0)
@@ -377,7 +378,8 @@ function test_moi_model_api()
     @test MOI.get(model, MOI.ConstraintDualStart(), indices[1]) === nothing
     MOI.set(model, MOI.ConstraintDualStart(), indices[1], 2)
     @test MOI.get(model, MOI.ConstraintDualStart(), indices[1]) == 2.0
-    @test Nonlinear.constraint_dual_starts(model) == [2.0, nothing, nothing, nothing]
+    @test Nonlinear.constraint_dual_starts(model) ==
+          [2.0, nothing, nothing, nothing]
     MOI.set(model, MOI.ConstraintDualStart(), indices[1], nothing)
     @test MOI.get(model, MOI.ConstraintDualStart(), indices[1]) === nothing
 
