@@ -114,7 +114,7 @@ MathOptInterface.Utilities.IndexMap with 1 entry:
 julia> MOI.write_to_file(dest, "file.mof.json")
 
 julia> print(read("file.mof.json", String))
-{"name":"MathOptFormat Model","version":{"major":1,"minor":7},"variables":[{"name":"x1"}],"objective":{"sense":"feasibility"},"constraints":[]}
+{"name":"MathOptFormat Model","version":{"major":1,"minor":9},"variables":[{"name":"x1"}],"objective":{"sense":"feasibility"},"constraints":[]}
 ```
 
 ## Read from file
@@ -244,10 +244,7 @@ Then, check if a model file is valid using `isvalid`:
 ```jldoctest schema_mof
 julia> good_model = JSON.parse("""
        {
-         "version": {
-           "major": 1,
-           "minor": 5
-         },
+         "version": {"major": 1, "minor": 9},
          "variables": [{"name": "x"}],
          "objective": {"sense": "feasibility"},
          "constraints": []
@@ -263,10 +260,7 @@ validation fails:
 ```jldoctest schema_mof
 julia> bad_model = JSON.parse("""
        {
-         "version": {
-           "major": 1,
-           "minor": 5
-         },
+         "version": {"major": 1, "minor": 9},
          "variables": [{"NaMe": "x"}],
          "objective": {"sense": "feasibility"},
          "constraints": []
