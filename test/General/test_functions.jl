@@ -491,6 +491,77 @@ function test_convert_VectorAffineFunction_VectorQuadraticFunction()
     return
 end
 
+function test_convert_VectorNonlinearFunction_VectorOfVariables()
+    x, y = MOI.VariableIndex.(1:2)
+    for variables in ([y, x, y], MOI.VariableIndex[])
+        f = MOI.VectorOfVariables(variables)
+        g = @inferred convert(MOI.VectorNonlinearFunction, f)
+        @test MOI.output_dimension(g) == length(variables)
+        @test g ≈ MOI.VectorNonlinearFunction([
+            MOI.ScalarNonlinearFunction(:+, Any[v]) for v in variables
+        ])
+    end
+    return
+end
+
+function test_convert_VectorNonlinearFunction_VectorAffineFunction()
+    x, y = MOI.VariableIndex.(1:2)
+    for T in (Int, Float64, Rational{Int})
+        f = MOI.Utilities.vectorize([
+            T(2) * x + T(3) * y + T(4),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], zero(T)),
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], T(5)),
+        ])
+        g = @inferred convert(MOI.VectorNonlinearFunction, f)
+        @test MOI.output_dimension(g) == 3
+        @test MOI.Utilities.eval_variables(
+            v -> T(v.value),
+            MOI.Utilities.Model{T}(),
+            g,
+        ) == T[12, 0, 5]
+        for (row, scalar) in zip(g.rows, MOI.Utilities.scalarize(f))
+            @test row ≈ convert(MOI.ScalarNonlinearFunction, scalar)
+        end
+        empty_f = MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], T[])
+        empty_g = @inferred convert(MOI.VectorNonlinearFunction, empty_f)
+        @test isempty(empty_g.rows)
+    end
+    return
+end
+
+function test_convert_VectorNonlinearFunction_VectorQuadraticFunction()
+    x, y = MOI.VariableIndex.(1:2)
+    for T in (Int, Float64, Rational{Int})
+        f = MOI.Utilities.vectorize([
+            T(2) * x * x + T(3) * x * y + T(4) * y + T(5),
+            MOI.ScalarQuadraticFunction(
+                MOI.ScalarQuadraticTerm{T}[],
+                MOI.ScalarAffineTerm{T}[],
+                zero(T),
+            ),
+            T(2) * y * y + T(1),
+        ])
+        g = @inferred convert(MOI.VectorNonlinearFunction, f)
+        @test MOI.output_dimension(g) == 3
+        @test MOI.Utilities.eval_variables(
+            v -> T(v.value),
+            MOI.Utilities.Model{T}(),
+            g,
+        ) == T[21, 0, 9]
+        for (row, scalar) in zip(g.rows, MOI.Utilities.scalarize(f))
+            @test row ≈ convert(MOI.ScalarNonlinearFunction, scalar)
+        end
+        empty_f = MOI.VectorQuadraticFunction(
+            MOI.VectorQuadraticTerm{T}[],
+            MOI.VectorAffineTerm{T}[],
+            T[],
+        )
+        empty_g = @inferred convert(MOI.VectorNonlinearFunction, empty_f)
+        @test isempty(empty_g.rows)
+    end
+    return
+end
+
 function test_copy_ScalarNonlinearFunction()
     N = 10_000
     x = MOI.VariableIndex.(1:N)

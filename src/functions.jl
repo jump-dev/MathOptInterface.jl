@@ -1469,6 +1469,18 @@ function Base.convert(
     )
 end
 
+# VectorNonlinearFunction
+
+function Base.convert(
+    ::Type{VectorNonlinearFunction},
+    f::Union{VectorOfVariables,VectorAffineFunction,VectorQuadraticFunction},
+)
+    rows = ScalarNonlinearFunction[
+        convert(ScalarNonlinearFunction, row) for row in Utilities.eachscalar(f)
+    ]
+    return VectorNonlinearFunction(rows)
+end
+
 for f in (
     :ScalarAffineTerm,
     :ScalarAffineFunction,
