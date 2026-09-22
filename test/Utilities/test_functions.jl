@@ -221,6 +221,21 @@ function test_eval_variables()
     @test MOI.output_dimension(fvq) == 2
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fvq) ≈ [13, 1]
     @test MOI.Utilities.eval_variables(vi -> vals[vi], fvq) ≈ [13, 1]
+    model = MOI.Utilities.Model{Float64}()
+    value_fn = vi -> vals[vi]
+    for (func, expected) in (
+        (z, 5),
+        (fvv, [3, 5, 1]),
+        (fsa, 22.0),
+        (fva, [12.0, 7.0]),
+        (fsq, 16.0),
+        (fvq, [13.0, 1.0]),
+    )
+        @test (@inferred MOI.Utilities.eval_variables(value_fn, func)) ==
+              expected
+        @test (@inferred MOI.Utilities.eval_variables(value_fn, model, func)) ==
+              expected
+    end
     return
 end
 
