@@ -333,6 +333,36 @@ function test_FunctionConversionBridge()
     return
 end
 
+function test_FunctionConversionBridge_VectorNonlinearFunction()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    BT = MOI.Bridges.Constraint.FunctionConversionBridge{
+        Float64,
+        MOI.VectorNonlinearFunction,
+    }
+    model = MOI.Bridges.Constraint.SingleBridgeOptimizer{BT}(inner)
+    x, y = MOI.add_variables(model, 2)
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
+    for f in (
+        MOI.VectorOfVariables([x, y, x]),
+        MOI.Utilities.vectorize([1.0 * x, 2.0 * y, 3.0 * x + 1.0]),
+        MOI.Utilities.vectorize([1.0 * x * x, 2.0 * x * y, 3.0 * y * y + 1.0]),
+    )
+        @test MOI.supports_constraint(model, typeof(f), typeof(set))
+        ci = MOI.add_constraint(model, f, set)
+        bridge = MOI.get(model, MOI.Bridges.FirstBridge(), ci)
+        @test MOI.get(inner, MOI.ConstraintFunction(), bridge.constraint) ≈
+              convert(MOI.VectorNonlinearFunction, f)
+        @test MOI.get(model, MOI.ConstraintSet(), ci) == set
+        g = MOI.Utilities.eachscalar(f)[[3, 2, 1]]
+        MOI.set(model, MOI.ConstraintFunction(), ci, g)
+        @test MOI.get(inner, MOI.ConstraintFunction(), bridge.constraint) ≈
+              convert(MOI.VectorNonlinearFunction, g)
+        MOI.delete(model, ci)
+        @test !MOI.is_valid(inner, bridge.constraint)
+    end
+    return
+end
+
 function test_canonical_constraint_function()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
