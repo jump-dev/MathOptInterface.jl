@@ -402,7 +402,11 @@ end
 
 function MOI.get(
     model::AbstractModel,
-    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    attr::Union{
+        UnsafeConstraintFunction,
+        MOI.ConstraintFunction,
+        MOI.ConstraintSet,
+    },
     ci::MOI.ConstraintIndex,
 )
     return MOI.get(constraints(model, ci), attr, ci)
@@ -530,7 +534,10 @@ function MOI.supports(model::AbstractModel, attr::MOI.ObjectiveFunction)
     return MOI.supports(model.objective, attr)
 end
 
-function MOI.get(model::AbstractModel, attr::MOI.ObjectiveFunction)
+function MOI.get(
+    model::AbstractModel,
+    attr::Union{UnsafeObjectiveFunction,MOI.ObjectiveFunction},
+)
     return MOI.get(model.objective, attr)
 end
 

@@ -310,7 +310,7 @@ MOI.is_valid(::VariablesContainer, ::MOI.ConstraintIndex) = false
 
 function MOI.get(
     model::VariablesContainer,
-    ::MOI.ConstraintFunction,
+    ::Union{UnsafeConstraintFunction,MOI.ConstraintFunction},
     ci::MOI.ConstraintIndex{MOI.VariableIndex},
 )
     MOI.throw_if_not_valid(model, ci)
