@@ -103,7 +103,14 @@ function MOI.get(
 ) where {F,S}
     MOI.throw_if_not_valid(v, ci)
     f, _ = v.constraints[ci]::Tuple{F,S}
-    return copy(f)
+    # Since `MA.mutability(MOI.ScalarNonlinearFunction)` is `MA.IsNotMutable`,
+    # this does not copy `MOI.ScalarNonlinearFunction`. This is important if the
+    # function share aliases of the same subexpression at different parts of
+    # it's expression graph or the expression graph of other functions of the
+    # model. If we `copy`, they won't be aliases of the same subexpression
+    # anymore hence `MOI.Nonlinear.ReverseAD` won't detect them as common
+    # subexpressions.
+    return MA.copy_if_mutable(f)
 end
 
 function MOI.get(
