@@ -163,6 +163,7 @@ function instantiate(
     (@nospecialize optimizer_constructor);
     with_bridge_type::Union{Nothing,Type} = nothing,
     with_cache_type::Union{Nothing,Type} = nothing,
+    cache_only_if_incremental_interface_not_supported = false,
 )
     if with_bridge_type !== nothing && with_cache_type !== nothing
         if with_bridge_type != with_cache_type
@@ -175,20 +176,22 @@ function instantiate(
         end
     end
     optimizer = _instantiate_and_check(optimizer_constructor)
-    if with_bridge_type === nothing
-        if with_cache_type === nothing
-            return optimizer
-        end
-        cache = default_cache(optimizer, with_cache_type)
-        return Utilities.CachingOptimizer(cache, optimizer)
-    else
-        if with_cache_type !== nothing ||
-           !supports_incremental_interface(optimizer)
-            cache = default_cache(optimizer, with_bridge_type)
-            optimizer = Utilities.CachingOptimizer(cache, optimizer)
-        end
-        return Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
+    if !isnothing(with_bridge_type) && isnothing(with_cache_type)
+        with_cache_type = with_bridge_type
+        cache_only_if_incremental_interface_not_supported = true
     end
+    if cache_only_if_incremental_interface_not_supported &&
+       supports_incremental_interface(optimizer)
+       with_cache_type = nothing
+   end
+   if !isnothing(with_cache_type)
+        cache = default_cache(optimizer, with_cache_type)
+        optimizer = Utilities.CachingOptimizer(cache, optimizer)
+    end
+    if !isnothing(with_bridge_type)
+        optimizer = Bridges.full_bridge_optimizer(optimizer, with_bridge_type)
+    end
+    return optimizer
 end
 
 """
