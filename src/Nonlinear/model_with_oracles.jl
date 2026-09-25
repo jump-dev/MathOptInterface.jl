@@ -207,9 +207,6 @@ function MOI.get(
 )
     return MOI.get(model.inner, attr, ci)
 end
-function MOI.get(model::ModelWithOracles, attr::MOI.AbstractConstraintAttribute)
-    return MOI.get(model.inner, attr)
-end
 function MOI.set(
     model::ModelWithOracles,
     attr::MOI.AbstractConstraintAttribute,
@@ -317,10 +314,6 @@ function Evaluator(
         Evaluator(model.inner, backend, vars),
         vars,
     )
-end
-
-function _num_rows(d::EvaluatorWithOracles)
-    return sum(s.output_dimension for (_, s) in d.model.constraints; init = 0)
 end
 
 function MOI.features_available(d::EvaluatorWithOracles)
