@@ -308,7 +308,7 @@ function test_add_constraint_delete()
     model = Nonlinear.Model()
     x = MOI.VariableIndex(1)
     c1 = Nonlinear.add_constraint(model, :($x^2 + 1), MOI.LessThan(1.0))
-    _ = Nonlinear.add_constraint(model, :(sqrt($x)), MOI.LessThan(1.0))
+    c2 = Nonlinear.add_constraint(model, :(sqrt($x)), MOI.LessThan(1.0))
     evaluator = Nonlinear.Evaluator(model)
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.constraint_expr(evaluator, 1) == :(x[$x]^2.0 + 1.0 <= 1.0)
@@ -318,6 +318,89 @@ function test_add_constraint_delete()
     MOI.initialize(evaluator, [:ExprGraph])
     @test MOI.constraint_expr(evaluator, 1) == :(sqrt(x[$x]) <= 1.0)
     @test_throws BoundsError MOI.constraint_expr(evaluator, 2)
+    moi_c2 =
+        MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{Float64}}(
+            c2.value,
+        )
+    @test_throws ErrorException MOI.Utilities.rows(model, moi_c2)
+    MOI.empty!(model)
+    @test !model.has_deleted_constraint
+    return
+end
+
+function test_moi_model_api()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    f = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    sets = (
+        MOI.GreaterThan(1.0),
+        MOI.LessThan(2.0),
+        MOI.EqualTo(3.0),
+        MOI.Interval(4.0, 5.0),
+    )
+    indices = map(sets) do set
+        @test MOI.supports_constraint(model, typeof(f), typeof(set))
+        return MOI.add_constraint(model, f, set)
+    end
+
+    for (row, (ci, set)) in enumerate(zip(indices, sets))
+        F, S = typeof(f), typeof(set)
+        @test MOI.is_valid(model, ci)
+        @test !MOI.is_valid(model, MOI.ConstraintIndex{F,S}(ci.value + 10))
+        @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [ci]
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+        @test MOI.get(model, MOI.ConstraintFunction(), ci) == f
+        @test MOI.get(model, MOI.ConstraintSet(), ci) == set
+        @test MOI.Utilities.rows(model, ci) == row
+    end
+    wrong_set_ci =
+        MOI.ConstraintIndex{MOI.ScalarNonlinearFunction,MOI.LessThan{Float64}}(
+            indices[1].value,
+        )
+    @test !MOI.is_valid(model, wrong_set_ci)
+    @test_throws MOI.InvalidIndex MOI.get(
+        model,
+        MOI.ConstraintFunction(),
+        wrong_set_ci,
+    )
+
+    expected_types =
+        [(MOI.ScalarNonlinearFunction, typeof(set)) for set in sets]
+    @test MOI.get(model, MOI.ListOfConstraintTypesPresent()) == expected_types
+    MOI.set(model, MOI.ConstraintSet(), indices[2], MOI.LessThan(6.0))
+    @test MOI.get(model, MOI.ConstraintSet(), indices[2]) == MOI.LessThan(6.0)
+    bounds = MOI.Utilities.constraint_bounds(model)
+    @test bounds.lower == [1.0, -Inf, 3.0, 4.0]
+    @test bounds.upper == [Inf, 6.0, 3.0, 5.0]
+
+    CI = typeof(indices[1])
+    @test MOI.supports(model, MOI.ConstraintDualStart(), CI)
+    @test MOI.get(model, MOI.ConstraintDualStart(), indices[1]) === nothing
+    MOI.set(model, MOI.ConstraintDualStart(), indices[1], 2)
+    @test MOI.get(model, MOI.ConstraintDualStart(), indices[1]) == 2.0
+    @test Nonlinear.constraint_dual_starts(model) ==
+          [2.0, nothing, nothing, nothing]
+    MOI.set(model, MOI.ConstraintDualStart(), indices[1], nothing)
+    @test MOI.get(model, MOI.ConstraintDualStart(), indices[1]) === nothing
+
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.FEASIBILITY_SENSE
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) === nothing
+    @test MOI.supports(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == typeof(f)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) == f
+
+    udf = MOI.UserDefinedFunction(:square_for_model_api, 1)
+    @test MOI.supports(model, udf)
+    MOI.set(model, udf, (z -> z^2,))
+    @test :square_for_model_api in
+          MOI.get(model, MOI.ListOfSupportedNonlinearOperators())
     return
 end
 
