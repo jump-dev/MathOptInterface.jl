@@ -246,10 +246,6 @@ function MOI.get(
     return MOI.get(model.inner, attr, ci)
 end
 
-function MOI.get(model::ModelWithQuad, attr::MOI.AbstractConstraintAttribute)
-    return MOI.get(model.inner, attr)
-end
-
 function MOI.set(
     model::ModelWithQuad,
     attr::MOI.AbstractConstraintAttribute,
