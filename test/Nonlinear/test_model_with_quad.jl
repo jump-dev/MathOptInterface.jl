@@ -461,6 +461,65 @@ function test_quad_only_with_empty_inner()
     return
 end
 
+function test_moi_bounds_and_objectives()
+    model = Nonlinear.model(Nonlinear.SparseReverseMode())
+    @test !MOI.supports_incremental_interface(model)
+    @test MOI.supports(model, MOI.ObjectiveSense())
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
+          MOI.ScalarAffineFunction{Float64}
+    x = MOI.add_variable(model)
+    @test MOI.supports_constraint(
+        model,
+        MOI.VariableIndex,
+        MOI.LessThan{Float64},
+    )
+    b = MOI.add_constraint(model, x, MOI.LessThan(10.0))
+    @test MOI.is_valid(model, b)
+    @test MOI.get(model, MOI.ConstraintFunction(), b) == x
+    @test MOI.get(model, MOI.ConstraintSet(), b) == MOI.LessThan(10.0)
+    MOI.set(model, MOI.ConstraintSet(), b, MOI.LessThan(20.0))
+    @test MOI.Utilities.variable_bounds(model).upper == [20.0]
+    @test MOI.get(
+        model,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.LessThan{Float64}}(),
+    ) == 1
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.LessThan{Float64}}(),
+    ) == [b]
+    @test MOI.supports_add_constrained_variable(model, MOI.Parameter{Float64})
+    MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    @test (MOI.VariableIndex, MOI.Parameter{Float64}) in
+          MOI.get(model, MOI.ListOfConstraintTypesPresent())
+    f = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    @test MOI.is_valid(model, c)
+    @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == typeof(f)
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) == f
+    for F in (
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    )
+        @test MOI.supports(model, MOI.ObjectiveFunction{F}())
+    end
+    affine = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(2.0, x)], 0.0)
+    for set in (MOI.LessThan(3.0), MOI.EqualTo(4.0), MOI.Interval(5.0, 6.0))
+        @test MOI.supports_constraint(model, typeof(affine), typeof(set))
+        ci = MOI.add_constraint(model, affine, set)
+        @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(ci))
+        MOI.set(model, MOI.ConstraintSet(), ci, set)
+        @test MOI.get(model, MOI.ConstraintSet(), ci) == set
+        MOI.set(model, MOI.ConstraintDualStart(), ci, 2.0)
+    end
+    @test Nonlinear.constraint_dual_starts(model) == [2.0, 2.0, 2.0, nothing]
+    oracles = Nonlinear.ModelWithOracles(model)
+    @test MOI.Utilities.variable_bounds(oracles) === model.variables
+    return
+end
+
 end  # module
 
 TestNonlinearModelWithQuad.runtests()
