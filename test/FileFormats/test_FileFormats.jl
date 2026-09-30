@@ -178,6 +178,31 @@ function test_unique_names()
     return
 end
 
+function test_unique_names_replacements()
+    replace_spaces = name -> replace(name, " " => "_")
+    replacements = (replace_spaces, uppercase)
+    @test (@inferred MOI.FileFormats._replace("a b", ())) == "a b"
+    @test (@inferred MOI.FileFormats._replace("a b", replacements)) == "A_B"
+    for functions in (replacements, Function[replacements...])
+        model = MOI.Utilities.Model{Float64}()
+        x = MOI.add_variables(model, 3)
+        MOI.set.(model, MOI.VariableName(), x, ["x a", "x_a", "X_A_1"])
+        constraints = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo(1.0))
+        MOI.set.(
+            model,
+            MOI.ConstraintName(),
+            constraints,
+            ["c a", "c_a", "C_A_1"],
+        )
+        MOI.FileFormats.create_unique_names(model; replacements = functions)
+        @test MOI.get.(model, MOI.VariableName(), x) ==
+              ["X_A", "X_A_2", "X_A_1"]
+        @test MOI.get.(model, MOI.ConstraintName(), constraints) ==
+              ["C_A", "C_A_2", "C_A_1"]
+    end
+    return
+end
+
 end
 
 TestFileFormats.runtests()
