@@ -74,3 +74,28 @@ jobs:
         with:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
+  JuliaC:
+    name: JuliaC - ${{ github.event_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+          arch: x64
+      - uses: julia-actions/cache@v3
+      - uses: julia-actions/julia-buildpkg@v1
+      - shell: julia --color=yes --project=test/JuliaC/MOFWriter {0}
+        run: |
+          using Pkg
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.instantiate()
+      - shell: julia --color=yes --project=test/JuliaC {0}
+        run: |
+          using Pkg
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.instantiate()
+      - run: julia --color=yes --project=JuliaC runtests.jl
+        working-directory: test
+        env:
+          MOI_TEST_MODULES: JuliaC

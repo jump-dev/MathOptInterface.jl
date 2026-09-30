@@ -18,6 +18,7 @@
 #  * Nonlinear
 #  * Test
 #  * Utilities
+#  * JuliaC (opt-in; requires the test/JuliaC environment)
 #
 # If present, the tests run only those submodules defined above. `General` is
 # not a submodule, but it runs all of the top-level tests in MOI.
