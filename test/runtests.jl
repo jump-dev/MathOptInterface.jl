@@ -18,7 +18,11 @@
 #  * Nonlinear
 #  * Test
 #  * Utilities
-#
+#  * JuliaC [opt-in]
+
+# JuliaC is off by default because it requires instantiating the
+# `test/JuliaC/MyApp` environment. We explicitly do this in CI.
+
 # If present, the tests run only those submodules defined above. `General` is
 # not a submodule, but it runs all of the top-level tests in MOI.
 

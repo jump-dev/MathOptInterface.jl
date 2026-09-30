@@ -50,6 +50,14 @@ jobs:
             arch: x86
             downgrade: false
             depwarn: error
+        include:
+          - moi_test_modules: 'JuliaC'
+            machine:
+              version: '1'
+              os: ubuntu-latest
+              arch: default
+              downgrade: false
+              depwarn: yes
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
@@ -62,6 +70,13 @@ jobs:
         with:
           mode: deps
       - uses: julia-actions/julia-buildpkg@v1
+      - if: ${{ contains(matrix.moi_test_modules, 'JuliaC') }}
+        # Instantiate MyApp/Project.toml iff we are running the JuliaC tests
+        shell: julia --color=yes --project=test/JuliaC/MyApp {0}
+        run: |
+          using Pkg
+          Pkg.develop(PackageSpec(path=pwd()))
+          Pkg.instantiate()
       - uses: julia-actions/julia-runtest@v1
         with:
           depwarn: ${{ matrix.machine.depwarn }}
