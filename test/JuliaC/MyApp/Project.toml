@@ -1,4 +1,4 @@
-name = "MOFWriter"
+name = "MyApp"
 uuid = "4768c16f-14ab-4f22-afac-abe0e8586942"
 
 [deps]
