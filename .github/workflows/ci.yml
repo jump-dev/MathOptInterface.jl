@@ -70,7 +70,7 @@ jobs:
         with:
           mode: deps
       - uses: julia-actions/julia-buildpkg@v1
-      - if: ${{ contains(moi_test_modules, 'JuliaC') }}
+      - if: ${{ contains(matrix.moi_test_modules, 'JuliaC') }}
         # Instantiate MyApp/Project.toml iff we are running the JuliaC tests
         shell: julia --color=yes --project=test/JuliaC/MyApp {0}
         run: |
