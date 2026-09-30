@@ -50,14 +50,14 @@ jobs:
             arch: x86
             downgrade: false
             depwarn: error
-      include:
-        - moi_test_modules: 'JuliaCI'
-          machine:
-            version: '1'
-            os: ubuntu-latest
-            arch: default
-            downgrade: false
-            depwarn: yes
+        include:
+          - moi_test_modules: 'JuliaCI'
+            machine:
+              version: '1'
+              os: ubuntu-latest
+              arch: default
+              downgrade: false
+              depwarn: yes
     steps:
       - uses: actions/checkout@v7
       - uses: julia-actions/setup-julia@v3
