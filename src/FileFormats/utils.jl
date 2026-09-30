@@ -12,7 +12,7 @@
     create_unique_names(
         model::MOI.ModelLike;
         warn::Bool = false,
-        replacements::Vector{Function} = Function[],
+        replacements = (),
     )
 
 Rename variables in `model` to ensure that all variables and constraints have
@@ -24,7 +24,7 @@ If `warn`, print a warning if a variable or constraint is renamed.
 function create_unique_names(
     model::MOI.ModelLike;
     warn::Bool = false,
-    replacements::Vector{Function} = Function[],
+    replacements = (),
 )
     create_unique_variable_names(model, warn, replacements)
     create_unique_constraint_names(model, warn, replacements)
@@ -74,7 +74,7 @@ function create_generic_constraint_names(
     return i
 end
 
-function _replace(s::String, replacements::Vector{Function})
+function _replace(s::String, replacements)
     for f in replacements
         s = f(s)
     end
@@ -170,7 +170,7 @@ end
 function create_unique_constraint_names(
     model::MOI.ModelLike,
     warn::Bool,
-    replacements::Vector{Function},
+    replacements,
 )
     original_names = Set{String}()
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
@@ -194,7 +194,7 @@ end
 function create_unique_variable_names(
     model::MOI.ModelLike,
     warn::Bool,
-    replacements::Vector{Function},
+    replacements,
 )
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     # This is a list of all of the names currently in the model. We're going to

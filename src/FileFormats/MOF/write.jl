@@ -145,15 +145,90 @@ function _write_constraints(
     constraints::Vector{NamedTuple},
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
+    storage = model,
 )
     has_scalar_nonlinear = false
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        has_scalar_nonlinear |= (F == MOI.ScalarNonlinearFunction)
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            push!(constraints, moi_to_object(index, model, name_map))
-        end
+    for (F, S) in MOI.get(storage, MOI.ListOfConstraintTypesPresent())
+        has_scalar_nonlinear |=
+            _write_constraints(constraints, model, name_map, storage, F, S)
     end
     return has_scalar_nonlinear
+end
+
+function _write_constraints(
+    constraints,
+    model,
+    name_map,
+    storage,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    indices = MOI.get(storage, MOI.ListOfConstraintIndices{F,S}())
+    for index in indices
+        # Query the outer model for attributes held by UniversalFallback.
+        push!(constraints, moi_to_object(index, model, name_map))
+    end
+    return F == MOI.ScalarNonlinearFunction && !isempty(indices)
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.UniversalFallback,
+)
+    has_scalar_nonlinear =
+        _write_constraints(constraints, model, name_map, storage.model)
+    for S in keys(storage.single_variable_constraints)
+        has_scalar_nonlinear |= _write_constraints(
+            constraints,
+            model,
+            name_map,
+            storage,
+            MOI.VariableIndex,
+            S,
+        )
+    end
+    for inner in values(storage.constraints)
+        has_scalar_nonlinear |=
+            _write_constraints(constraints, model, name_map, inner)
+    end
+    return has_scalar_nonlinear
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.GenericModel,
+)
+    has_scalar_nonlinear =
+        _write_constraints(constraints, model, name_map, storage.constraints)
+    has_scalar_nonlinear |=
+        _write_constraints(constraints, model, name_map, storage.variables)
+    return has_scalar_nonlinear
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.StructOfConstraints,
+)
+    ret = MOI.Utilities.mapreduce_constraints(|, storage, false) do inner
+        return inner !== nothing &&
+               _write_constraints(constraints, model, name_map, inner)
+    end
+    return something(ret, false)
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.VectorOfConstraints{F,S},
+) where {F,S}
+    return _write_constraints(constraints, model, name_map, storage, F, S)
 end
 
 """
@@ -444,11 +519,9 @@ function moi_to_object(
     set::SetType,
     ::Dict{MOI.VariableIndex,String},
 ) where {SetType}
-    pairs = Pair{Symbol,Any}[:type=>head_name(SetType)]
-    for key in fieldnames(SetType)
-        push!(pairs, Symbol(string(key)) => getfield(set, key))
-    end
-    return NamedTuple(pairs)
+    names = fieldnames(SetType)
+    values = map(name -> getfield(set, name), names)
+    return NamedTuple{(:type, names...)}((head_name(SetType), values...))
 end
 
 # ========== Non-typed scalar sets ==========

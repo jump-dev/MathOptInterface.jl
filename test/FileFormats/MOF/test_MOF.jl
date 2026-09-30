@@ -60,6 +60,13 @@ struct UnsupportedSet <: MOI.AbstractSet end
 
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
+struct NamedFieldsSet{T} <: MOI.AbstractScalarSet
+    lower_bound::T
+    count::Int
+end
+
+MOF.head_name(::Type{<:NamedFieldsSet}) = "NamedFieldsSet"
+
 function _test_model_equality(
     model_string,
     variables,
@@ -332,13 +339,31 @@ function test_nonempty_model()
         model,
         joinpath(@__DIR__, "empty_model.mof.json"),
     )
-    options = MOF.get_options(model)
+    options = @inferred MOF.get_options(model)
     @test options.warn
     MOI.empty!(model)
     @test MOI.is_empty(model)
     MOI.read_from_file(model, joinpath(@__DIR__, "empty_model.mof.json"))
-    options2 = MOF.get_options(model)
+    options2 = @inferred MOF.get_options(model)
     @test options2.warn
+end
+
+function test_set_object_inference()
+    names = Dict{MOI.VariableIndex,String}()
+    @test (@inferred MOF.moi_to_object(MOI.Integer(), names)) ==
+          (type = "Integer",)
+    @test (@inferred MOF.moi_to_object(MOI.LessThan(2.0), names)) ==
+          (type = "LessThan", upper = 2.0)
+    @test (@inferred MOF.moi_to_object(MOI.Interval(1.0f0, 2.0f0), names)) ==
+          (type = "Interval", lower = 1.0f0, upper = 2.0f0)
+    set = MOI.SOS1([1.0, 2.0])
+    object = @inferred MOF.moi_to_object(set, names)
+    @test object == (type = "SOS1", weights = [1.0, 2.0])
+    @test object.weights === set.weights
+    set = NamedFieldsSet(1.0f0, 2)
+    @test (@inferred MOF.moi_to_object(set, names)) ==
+          (type = "NamedFieldsSet", lower_bound = 1.0f0, count = 2)
+    return
 end
 
 function test_failing_models()
@@ -1315,6 +1340,159 @@ function test_constraint_start_vector()
         @test _cmp(MOI.get(model_r, MOI.ConstraintPrimalStart(), ci), primal)
         @test _cmp(MOI.get(model_r, MOI.ConstraintDualStart(), ci), dual)
     end
+    return
+end
+
+MOI.Utilities.@struct_of_constraints_by_function_types(EmptyConstraintStorage)
+
+function test_write_constraints_empty_struct()
+    constraints = NamedTuple[]
+    @test MOF._write_constraints(
+        constraints,
+        MOF.Model(),
+        Dict{MOI.VariableIndex,String}(),
+        EmptyConstraintStorage{Float64}(),
+    ) === false
+    @test isempty(constraints)
+    return
+end
+
+function _constraint_objects_reference(model, name_map)
+    constraints = NamedTuple[]
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            push!(constraints, MOF.moi_to_object(ci, model, name_map))
+        end
+    end
+    return constraints
+end
+
+function test_write_constraints_storage_traversal()
+    model = MOF.Model()
+    x, y, z = MOI.add_variables(model, 3)
+    name_map = Dict(x => "x", y => "y", z => "z")
+    for (variable, name) in name_map
+        MOI.set(model, MOI.VariableName(), variable, name)
+    end
+    # Add the different stores in an order that differs from their traversal.
+    fallback_bound = MOI.add_constraint(model, z, NamedFieldsSet(-2.0, 3))
+    quadratic = MOI.add_constraint(model, 2.0 * x * y, MOI.GreaterThan(-1.0))
+    fallback_affine = MOI.add_constraint(model, 3.0 * y, NamedFieldsSet(0.0, 2))
+    bound = MOI.add_constraint(model, x, MOI.Interval(-1.0, 2.0))
+    affine = MOI.add_constraint(model, 1.0 * x + y, MOI.LessThan(2.0))
+    affine_2 = MOI.add_constraint(model, 2.0 * x + y, MOI.LessThan(3.0))
+    nonlinear = MOI.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:sin, Any[x]),
+        MOI.EqualTo(0.0),
+    )
+    fallback_nonlinear = MOI.add_constraint(
+        model,
+        MOI.ScalarNonlinearFunction(:cos, Any[y]),
+        NamedFieldsSet(0.0, 1),
+    )
+    fallback_vector = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([z, y]),
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(2.0)),
+    )
+    for (ci, name) in [
+        quadratic => "quadratic",
+        fallback_affine => "fallback_affine",
+        affine => "affine",
+        affine_2 => "affine_2",
+        nonlinear => "nonlinear",
+        fallback_nonlinear => "fallback_nonlinear",
+        fallback_vector => "fallback_vector",
+    ]
+        MOI.set(model, MOI.ConstraintName(), ci, name)
+    end
+    for ci in
+        [bound, fallback_bound, affine, fallback_affine, fallback_nonlinear]
+        MOI.set(model, MOI.ConstraintPrimalStart(), ci, 1.5)
+        MOI.set(model, MOI.ConstraintDualStart(), ci, -2.5)
+    end
+    MOI.set(model, MOI.ConstraintPrimalStart(), fallback_vector, [1.0, 2.0])
+    MOI.set(model, MOI.ConstraintDualStart(), fallback_vector, [3.0, 4.0])
+    reference = _constraint_objects_reference(model, name_map)
+    constraints = NamedTuple[]
+    @test MOF._write_constraints(constraints, model, name_map)
+    @test constraints == reference
+    @test length(constraints) == 9
+    empty!(constraints)
+    storage = MOI.Utilities.ModelFilter(_ -> true, model)
+    @test MOF._write_constraints(constraints, model, name_map, storage)
+    @test constraints == reference
+    empty!(constraints)
+    @test !(@inferred MOF._write_constraints(
+        constraints,
+        model,
+        name_map,
+        storage,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.LessThan{Float64},
+    ))
+    @test constraints == [
+        MOF.moi_to_object(affine, model, name_map),
+        MOF.moi_to_object(affine_2, model, name_map),
+    ]
+    object = JSON.parse(sprint(write, model))
+    @test object["constraints"] == JSON.parse(JSON.json(reference))
+    @test object["has_scalar_nonlinear"]
+    return
+end
+
+function test_write_constraints_empty_nonlinear_storage()
+    # Both concrete inner stores and fallback stores retain their type after
+    # deleting the final constraint. Neither should set has_scalar_nonlinear.
+    for set in (MOI.EqualTo(0.0), NamedFieldsSet(0.0, 1))
+        model = MOF.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        name_map = Dict(x => "x")
+        constraints = NamedTuple[]
+        @test !MOF._write_constraints(constraints, model, name_map)
+        @test isempty(constraints)
+        ci = MOI.add_constraint(
+            model,
+            MOI.ScalarNonlinearFunction(:sin, Any[x]),
+            set,
+        )
+        @test MOF._write_constraints(constraints, model, name_map)
+        @test length(constraints) == 1
+        empty!(constraints)
+        storage = MOI.Utilities.ModelFilter(item -> item != ci, model)
+        @test !MOF._write_constraints(constraints, model, name_map, storage)
+        @test isempty(constraints)
+        MOI.delete(model, ci)
+        empty!(constraints)
+        @test !MOF._write_constraints(constraints, model, name_map)
+        @test isempty(constraints)
+        object = JSON.parse(sprint(write, model))
+        @test isempty(object["constraints"])
+        @test !haskey(object, "has_scalar_nonlinear")
+    end
+    return
+end
+
+function test_write_constraints_vector_nonlinear_flag()
+    model = MOF.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    ci = MOI.add_constraint(
+        model,
+        MOI.VectorNonlinearFunction([
+            MOI.ScalarNonlinearFunction(:sin, Any[x]),
+        ]),
+        MOI.Zeros(1),
+    )
+    name_map = Dict(x => "x")
+    constraints = NamedTuple[]
+    @test !MOF._write_constraints(constraints, model, name_map)
+    @test constraints == [MOF.moi_to_object(ci, model, name_map)]
+    object = JSON.parse(sprint(write, model))
+    @test length(object["constraints"]) == 1
+    @test !haskey(object, "has_scalar_nonlinear")
     return
 end
 
