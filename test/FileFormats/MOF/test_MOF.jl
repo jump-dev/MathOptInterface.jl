@@ -60,6 +60,13 @@ struct UnsupportedSet <: MOI.AbstractSet end
 
 struct UnsupportedFunction <: MOI.AbstractFunction end
 
+struct NamedFieldsSet{T} <: MOI.AbstractScalarSet
+    lower_bound::T
+    count::Int
+end
+
+MOF.head_name(::Type{<:NamedFieldsSet}) = "NamedFieldsSet"
+
 function _test_model_equality(
     model_string,
     variables,
@@ -332,13 +339,31 @@ function test_nonempty_model()
         model,
         joinpath(@__DIR__, "empty_model.mof.json"),
     )
-    options = MOF.get_options(model)
+    options = @inferred MOF.get_options(model)
     @test options.warn
     MOI.empty!(model)
     @test MOI.is_empty(model)
     MOI.read_from_file(model, joinpath(@__DIR__, "empty_model.mof.json"))
-    options2 = MOF.get_options(model)
+    options2 = @inferred MOF.get_options(model)
     @test options2.warn
+end
+
+function test_set_object_inference()
+    names = Dict{MOI.VariableIndex,String}()
+    @test (@inferred MOF.moi_to_object(MOI.Integer(), names)) ==
+          (type = "Integer",)
+    @test (@inferred MOF.moi_to_object(MOI.LessThan(2.0), names)) ==
+          (type = "LessThan", upper = 2.0)
+    @test (@inferred MOF.moi_to_object(MOI.Interval(1.0f0, 2.0f0), names)) ==
+          (type = "Interval", lower = 1.0f0, upper = 2.0f0)
+    set = MOI.SOS1([1.0, 2.0])
+    object = @inferred MOF.moi_to_object(set, names)
+    @test object == (type = "SOS1", weights = [1.0, 2.0])
+    @test object.weights === set.weights
+    set = NamedFieldsSet(1.0f0, 2)
+    @test (@inferred MOF.moi_to_object(set, names)) ==
+          (type = "NamedFieldsSet", lower_bound = 1.0f0, count = 2)
+    return
 end
 
 function test_failing_models()

@@ -444,11 +444,9 @@ function moi_to_object(
     set::SetType,
     ::Dict{MOI.VariableIndex,String},
 ) where {SetType}
-    pairs = Pair{Symbol,Any}[:type=>head_name(SetType)]
-    for key in fieldnames(SetType)
-        push!(pairs, Symbol(string(key)) => getfield(set, key))
-    end
-    return NamedTuple(pairs)
+    names = fieldnames(SetType)
+    values = map(name -> getfield(set, name), names)
+    return NamedTuple{(:type, names...)}((head_name(SetType), values...))
 end
 
 # ========== Non-typed scalar sets ==========
