@@ -69,7 +69,6 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
             d.data.expressions[k],
             d.subexpression_linearity,
             moi_index_to_consecutive_index,
-            d.want_hess,
         )
         d.subexpressions[k] = subex
         d.subexpression_linearity[k] = subex.linearity
@@ -88,6 +87,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
                 subex.nodes,
                 subex.adj,
                 d.subexpression_linearity,
+                subex.const_values,
             )
             edgelist = _compute_hessian_sparsity(
                 subex.nodes,
