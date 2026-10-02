@@ -52,13 +52,20 @@ function create_generic_variable_names(model::MOI.ModelLike)
 end
 
 function create_generic_constraint_names(model::MOI.ModelLike)
-    i = 1
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F != MOI.VariableIndex
-            i = create_generic_constraint_names(model, F, S, i)
-        end
+    i = Ref(1)
+    MOI.Utilities.foreach_constraint_type(model) do F, S
+        return i[] = create_generic_constraint_names(model, F, S, i[])
     end
     return
+end
+
+function create_generic_constraint_names(
+    ::MOI.ModelLike,
+    ::Type{MOI.VariableIndex},
+    ::Type{S},
+    i::Int,
+) where {S}
+    return i  # VariableIndex constraints do not need a name.
 end
 
 function create_generic_constraint_names(
@@ -173,12 +180,18 @@ function create_unique_constraint_names(
     replacements,
 )
     original_names = Set{String}()
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _get_original_names_inner(model, replacements, original_names, F, S)
+    MOI.Utilities.foreach_constraint_type(model) do F, S
+        return _get_original_names_inner(
+            model,
+            replacements,
+            original_names,
+            F,
+            S,
+        )
     end
     added_names = Set{String}()
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _create_unique_constraint_names_inner(
+    MOI.Utilities.foreach_constraint_type(model) do F, S
+        return _create_unique_constraint_names_inner(
             model,
             warn,
             replacements,
