@@ -132,13 +132,98 @@ function _write_objective(
     if sense == MOI.FEASIBILITY_SENSE
         return (; :sense => moi_to_object(sense)), false
     end
+    return _write_objective(model, name_map, sense)
+end
+
+function _write_objective(model, name_map, sense)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
-    objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
+    return _write_objective(
+        MOI.get(model, MOI.ObjectiveFunction{F}()),
+        name_map,
+        sense,
+    )
+end
+
+function _write_objective(
+    model::MOI.Utilities.UniversalFallback,
+    name_map,
+    sense,
+)
+    if model.objective === nothing
+        return _write_objective(model.model, name_map, sense)
+    end
+    return _write_objective(something(model.objective), name_map, sense)
+end
+
+function _write_objective(model::MOI.Utilities.GenericModel, name_map, sense)
+    return _write_objective(model.objective, name_map, sense)
+end
+
+function _write_objective(
+    objective::MOI.Utilities.ObjectiveContainer{T},
+    name_map,
+    sense,
+) where {T}
+    # Build the complete objective inside each branch, while the function type
+    # is concrete. Returning the function first would merge its types again.
+    if objective.scalar_affine !== nothing
+        return _write_objective(
+            something(objective.scalar_affine),
+            name_map,
+            sense,
+        )
+    elseif objective.single_variable !== nothing
+        return _write_objective(
+            something(objective.single_variable),
+            name_map,
+            sense,
+        )
+    elseif objective.scalar_quadratic !== nothing
+        return _write_objective(
+            something(objective.scalar_quadratic),
+            name_map,
+            sense,
+        )
+    elseif objective.scalar_nonlinear !== nothing
+        return _write_objective(
+            something(objective.scalar_nonlinear),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_variables !== nothing
+        return _write_objective(
+            something(objective.vector_variables),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_affine !== nothing
+        return _write_objective(
+            something(objective.vector_affine),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_quadratic !== nothing
+        return _write_objective(
+            something(objective.vector_quadratic),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_nonlinear !== nothing
+        return _write_objective(
+            something(objective.vector_nonlinear),
+            name_map,
+            sense,
+        )
+    end
+    return _write_objective(zero(MOI.ScalarAffineFunction{T}), name_map, sense)
+end
+
+function _write_objective(f::MOI.AbstractFunction, name_map, sense)
     object = (;
         :sense => moi_to_object(sense),
-        :function => moi_to_object(objective_function, name_map),
+        :function => moi_to_object(f, name_map),
     )
-    return object, (F == MOI.ScalarNonlinearFunction)
+    return object, f isa MOI.ScalarNonlinearFunction
 end
 
 function _write_constraints(
