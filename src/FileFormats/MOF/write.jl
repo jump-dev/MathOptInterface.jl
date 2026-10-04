@@ -298,6 +298,36 @@ function _write_constraints(
     constraints::Vector{NamedTuple},
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.VariablesContainer{T},
+) where {T}
+    function write_bound(::Type{S}) where {S}
+        return _write_constraints(
+            constraints,
+            model,
+            name_map,
+            storage,
+            MOI.VariableIndex,
+            S,
+        )
+    end
+    # Match ListOfConstraintTypesPresent order. A tuple of types would erase
+    # the concrete set types, so call the typed helper for each set directly.
+    write_bound(MOI.EqualTo{T})
+    write_bound(MOI.GreaterThan{T})
+    write_bound(MOI.LessThan{T})
+    write_bound(MOI.Interval{T})
+    write_bound(MOI.Semicontinuous{T})
+    write_bound(MOI.Semiinteger{T})
+    write_bound(MOI.Integer)
+    write_bound(MOI.ZeroOne)
+    write_bound(MOI.Parameter{T})
+    return false
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
     storage::MOI.Utilities.StructOfConstraints,
 )
     ret = MOI.Utilities.mapreduce_constraints(|, storage, false) do inner

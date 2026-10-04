@@ -1562,6 +1562,110 @@ function test_write_constraints_storage_traversal()
     return
 end
 
+function test_write_constraints_variable_bounds()
+    for T in (Float32, Float64)
+        model = MOF.Model(; coefficient_type = T)
+        x = MOI.add_variables(model, 10)
+        name_map = Dict(x[i] => "x$i" for i in eachindex(x))
+        for (variable, name) in name_map
+            MOI.set(model, MOI.VariableName(), variable, name)
+        end
+        sets = (
+            MOI.EqualTo(T(1)),
+            MOI.GreaterThan(T(2)),
+            MOI.LessThan(T(3)),
+            MOI.Interval(T(4), T(5)),
+            MOI.Semicontinuous(T(6), T(7)),
+            MOI.Semiinteger(T(8), T(9)),
+            MOI.Integer(),
+            MOI.ZeroOne(),
+            MOI.Parameter(T(10)),
+        )
+        # Neither insertion order nor variable order is the traversal order.
+        for i in reverse(eachindex(sets))
+            MOI.add_constraint(model, x[i], sets[i])
+        end
+        MOI.add_constraint(model, x[10], MOI.GreaterThan(T(-1)))
+        bound = MOI.add_constraint(model, x[2], MOI.LessThan(T(11)))
+        # Starts are stored by UniversalFallback, not VariablesContainer.
+        MOI.set(model, MOI.ConstraintPrimalStart(), bound, T(3))
+        MOI.set(model, MOI.ConstraintDualStart(), bound, T(-4))
+        constraints = NamedTuple[]
+        @test !(@inferred MOF._write_constraints(
+            constraints,
+            model,
+            name_map,
+            model.model.variables,
+        ))
+        @test constraints == _constraint_objects_reference(model, name_map)
+        @test [object.set.type for object in constraints] == [
+            "EqualTo",
+            "GreaterThan",
+            "GreaterThan",
+            "LessThan",
+            "LessThan",
+            "Interval",
+            "Semicontinuous",
+            "Semiinteger",
+            "Integer",
+            "ZeroOne",
+            "Parameter",
+        ]
+        @test [object[:function].name for object in constraints] == [
+            "x1",
+            "x2",
+            "x10",
+            "x2",
+            "x3",
+            "x4",
+            "x5",
+            "x6",
+            "x7",
+            "x8",
+            "x9",
+        ]
+        @test all(
+            value isa T for object in constraints for
+            value in Base.tail(values(object.set))
+        )
+        @test constraints[4].primal_start === T(3)
+        @test constraints[4].dual_start === T(-4)
+        @test !haskey(constraints[2], :primal_start)
+        object = JSON.parse(sprint(write, model))
+        @test object["constraints"] == JSON.parse(JSON.json(constraints))
+        @test !haskey(object, "has_scalar_nonlinear")
+    end
+    return
+end
+
+function test_write_constraints_variable_bounds_deleted()
+    model = MOF.Model()
+    name_map = Dict{MOI.VariableIndex,String}()
+    constraints = NamedTuple[]
+    @test !MOF._write_constraints(
+        constraints,
+        model,
+        name_map,
+        model.model.variables,
+    )
+    @test isempty(constraints)
+    x, y = MOI.add_variables(model, 2)
+    name_map[x], name_map[y] = "x", "y"
+    MOI.add_constraint(model, x, MOI.EqualTo(1.0))
+    lower = MOI.add_constraint(model, y, MOI.GreaterThan(0.0))
+    upper = MOI.add_constraint(model, y, MOI.LessThan(2.0))
+    MOI.delete(model, x)
+    MOI.delete(model, upper)
+    @test !MOF._write_constraints(constraints, model, name_map)
+    @test constraints == _constraint_objects_reference(model, name_map)
+    @test constraints == [MOF.moi_to_object(lower, model, name_map)]
+    MOI.delete(model, lower)
+    empty!(constraints)
+    @test !MOF._write_constraints(constraints, model, name_map)
+    @test isempty(constraints)
+    return
+end
+
 function test_write_constraints_empty_nonlinear_storage()
     # Both concrete inner stores and fallback stores retain their type after
     # deleting the final constraint. Neither should set has_scalar_nonlinear.
