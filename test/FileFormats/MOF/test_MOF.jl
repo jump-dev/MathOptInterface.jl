@@ -1807,6 +1807,72 @@ function test_nonlinear_variable_complex_nodes()
     return
 end
 
+function test_nonlinear_argument_fast_paths()
+    x = MOI.VariableIndex(1)
+    name_map = Dict(x => "x")
+    node_list = Any[]
+    @test (@inferred MOF._convert_nonlinear_argument_to_mof(
+        x,
+        node_list,
+        name_map,
+    )) == "x"
+    for value in (2, 3.0)
+        @test (@inferred MOF._convert_nonlinear_argument_to_mof(
+            value,
+            node_list,
+            name_map,
+        )) === value
+    end
+    @test isempty(node_list)
+    f = MOI.ScalarNonlinearFunction(
+        :+,
+        Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2, 3.0],
+    )
+    object = MOF.moi_to_object(f, name_map)
+    @test object == (
+        type = "ScalarNonlinearFunction",
+        root = (type = "node", index = 2),
+        node_list = Any[
+            (type = "sin", args = Any["x"]),
+            (type = "+", args = Any[(type = "node", index = 1), 2, 3.0]),
+        ],
+    )
+    @test object.node_list[2].args[2] === 2
+    @test object.node_list[2].args[3] === 3.0
+    return
+end
+
+struct CustomNonlinearArgument <: MOI.AbstractScalarFunction
+    value::Float64
+end
+
+function MOF._convert_nonlinear_to_mof(
+    arg::CustomNonlinearArgument,
+    ::Vector{Any},
+    ::Dict{MOI.VariableIndex,String},
+)
+    return arg.value
+end
+
+function test_nonlinear_argument_fallback()
+    name_map = Dict{MOI.VariableIndex,String}()
+    for (arg, expected) in (
+        (2.0f0, 2.0f0),
+        (2 // 3, 2 // 3),
+        (2 + 3im, (type = "complex", real = 2, imag = 3)),
+        (CustomNonlinearArgument(4.0), 4.0),
+    )
+        f = MOI.ScalarNonlinearFunction(:sin, Any[arg])
+        object = MOF.moi_to_object(f, name_map)
+        @test object.root == (type = "node", index = 1)
+        @test only(object.node_list).args == Any[expected]
+        @test only(only(object.node_list).args) === expected
+    end
+    f = MOI.ScalarNonlinearFunction(:sin, Any[:unsupported_argument])
+    @test_throws MethodError MOF.moi_to_object(f, name_map)
+    return
+end
+
 function test_mof_scalaraffinefunction()
     x = MOI.VariableIndex(1)
     f = 1.0 * x + 2.0

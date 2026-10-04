@@ -408,10 +408,30 @@ function _convert_nonlinear_to_mof(
 )
     node = (type = string(f.head), args = Any[])
     for arg in f.args
-        push!(node[:args], _convert_nonlinear_to_mof(arg, node_list, name_map))
+        push!(
+            node[:args],
+            _convert_nonlinear_argument_to_mof(arg, node_list, name_map),
+        )
     end
     push!(node_list, node)
     return (type = "node", index = length(node_list))
+end
+
+@inline function _convert_nonlinear_argument_to_mof(
+    arg,
+    node_list::Vector{Any},
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    # Nonlinear arguments are stored as Any. Keep common dispatch targets
+    # visible to the compiler without restricting the supported arguments.
+    if arg isa MOI.VariableIndex
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    elseif arg isa MOI.ScalarNonlinearFunction
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    elseif arg isa Union{Int,Float64}
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    end
+    return _convert_nonlinear_to_mof(arg, node_list, name_map)
 end
 
 function _convert_nonlinear_to_mof(
