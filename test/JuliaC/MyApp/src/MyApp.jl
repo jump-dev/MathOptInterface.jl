@@ -27,6 +27,9 @@ function @main(args::Vector{String})::Cint
     if head == "--linear"
         return run_linear(args)
     end
+    if head == "--objective"
+        return run_objective(args)
+    end
     return 1  # Incorrect head
 end
 
@@ -76,6 +79,18 @@ function run_linear(args::Vector{String})::Cint
     objective = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(objective)}(), objective)
+    return _write(model, args)
+end
+
+# An objective type that the traced model does not have.
+function run_objective(args::Vector{String})::Cint
+    model, x = _model()
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        MOI.ScalarAffineTerm{Float64}[],
+        0.0,
+    )
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     return _write(model, args)
 end
 

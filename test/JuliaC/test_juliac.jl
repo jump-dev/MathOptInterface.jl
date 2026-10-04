@@ -136,6 +136,14 @@ function test_linear(output_dir)
     return
 end
 
+function test_objective(output_dir)
+    compiled, reference = _run(output_dir, "--objective")
+    @test compiled == reference
+    object = JSON.parse(compiled)
+    @test object["objective"]["function"]["type"] == "ScalarQuadraticFunction"
+    return
+end
+
 end # module TestJuliaC
 
 TestJuliaC.runtests()
