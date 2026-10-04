@@ -146,7 +146,17 @@ function _write_objective(
     if sense == MOI.FEASIBILITY_SENSE
         return (; :sense => moi_to_object(sense)), false
     end
-    F = MOI.get(model, MOI.ObjectiveFunctionType())
+    return MOI.Utilities.with_objective_function_type(model) do F
+        return _write_objective(model, name_map, sense, F)
+    end
+end
+
+function _write_objective(
+    model::MOI.ModelLike,
+    name_map::Dict{MOI.VariableIndex,String},
+    sense::MOI.OptimizationSense,
+    ::Type{F},
+) where {F}
     objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
     object = (;
         :sense => moi_to_object(sense),
