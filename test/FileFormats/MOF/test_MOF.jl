@@ -67,6 +67,17 @@ end
 
 MOF.head_name(::Type{<:NamedFieldsSet}) = "NamedFieldsSet"
 
+struct ObjectiveStorage{T}
+    inner::T
+end
+
+function MOI.get(
+    storage::ObjectiveStorage,
+    attr::Union{MOI.ObjectiveFunctionType,MOI.ObjectiveFunction},
+)
+    return MOI.get(storage.inner, attr)
+end
+
 function _test_model_equality(
     model_string,
     variables,
@@ -483,6 +494,115 @@ function test_max_objective()
         String[],
         suffix = ".gz",
     )
+end
+
+function test_write_objective_storage_traversal()
+    model = MOF.Model()
+    x, y = MOI.add_variables(model, 2)
+    name_map = Dict(x => "x", y => "y")
+    affine = 2.0 * x + y + 3.0
+    quadratic = 2.0 * x * y + affine
+    nonlinear = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    @test (@inferred MOF._write_objective(affine, name_map, MOI.MIN_SENSE)) == (
+        (; :sense => "min", :function => MOF.moi_to_object(affine, name_map)),
+        false,
+    )
+    functions = (
+        x,
+        affine,
+        quadratic,
+        nonlinear,
+        MOI.VectorOfVariables([x, y]),
+        MOI.Utilities.vectorize([affine, 3.0 * y]),
+        MOI.Utilities.vectorize([quadratic, 3.0 * y * y]),
+        MOI.VectorNonlinearFunction([nonlinear]),
+    )
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    for f in functions
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+        expected =
+            (; :sense => "min", :function => MOF.moi_to_object(f, name_map))
+        has_scalar_nonlinear = f isa MOI.ScalarNonlinearFunction
+        @test model.objective === nothing
+        @test MOF._write_objective(model, name_map, MOI.MIN_SENSE) ==
+              (expected, has_scalar_nonlinear)
+        @test MOF._write_objective(model, name_map) ==
+              (expected, has_scalar_nonlinear)
+    end
+    return
+end
+
+function test_write_objective_default_and_feasibility()
+    for T in (Float64, Int)
+        model = MOF.Model(; coefficient_type = T)
+        name_map = Dict{MOI.VariableIndex,String}()
+        expected =
+            MOF.moi_to_object(zero(MOI.ScalarAffineFunction{T}), name_map)
+        for (sense, text) in ((MOI.MIN_SENSE, "min"), (MOI.MAX_SENSE, "max"))
+            MOI.set(model, MOI.ObjectiveSense(), sense)
+            @test MOF._write_objective(model, name_map) ==
+                  ((; :sense => text, :function => expected), false)
+        end
+        MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+        x = MOI.add_variable(model)
+        # A stored objective must not be serialized for feasibility sense. The
+        # empty name map would make serialization of either objective fail.
+        for f in (
+            MOI.ScalarNonlinearFunction(:sin, Any[x]),
+            MOF.Nonlinear(:(sin($x))),
+        )
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            @test MOF._write_objective(model, name_map) ==
+                  ((; sense = "feasibility"), false)
+        end
+    end
+    return
+end
+
+function test_write_objective_universal_fallback()
+    model = MOF.Model()
+    x = MOI.add_variable(model)
+    name_map = Dict(x => "x")
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MAX_SENSE)
+    affine = 2.0 * x + 3.0
+    # Integer coefficients and legacy nonlinear expressions are stored by the
+    # fallback, whereas Float64 affine objectives use the inner model.
+    for f in (affine, 4 * x + 5, affine, MOF.Nonlinear(:(sin($x))), affine)
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+        @test (model.objective === nothing) ==
+              (f isa MOI.ScalarAffineFunction{Float64})
+        expected = MOF.moi_to_object(f, name_map)
+        @test MOF._write_objective(model, name_map) ==
+              ((; :sense => "max", :function => expected), false)
+    end
+    return
+end
+
+function test_write_objective_generic_storage()
+    inner = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(inner)
+    name_map = Dict(x => "x")
+    # GenericModel permits custom objective storage, even without ModelLike.
+    objective = ObjectiveStorage(inner.objective)
+    model = MOI.Utilities.GenericModel{Float64}(
+        objective,
+        inner.variables,
+        inner.constraints,
+    )
+    for f in (2.0 * x + 3.0, MOI.ScalarNonlinearFunction(:sin, Any[x]))
+        MOI.set(inner, MOI.ObjectiveFunction{typeof(f)}(), f)
+        expected = (
+            (; :sense => "min", :function => MOF.moi_to_object(f, name_map)),
+            f isa MOI.ScalarNonlinearFunction,
+        )
+        @test MOF._write_objective(model, name_map, MOI.MIN_SENSE) == expected
+        @test MOF._write_objective(
+            MOI.Utilities.UniversalFallback(model),
+            name_map,
+            MOI.MIN_SENSE,
+        ) == expected
+    end
+    return
 end
 
 function test_min_scalaraffine()
