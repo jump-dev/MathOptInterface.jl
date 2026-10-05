@@ -2341,11 +2341,7 @@ julia> x = [MOI.add_constrained_variable(model, MOI.Integer())[1] for _ in 1:3]
  MOI.VariableIndex(3)
  MOI.VariableIndex(4)
 
-julia> set = Set([3, 4, 5])
-Set{Int64} with 3 elements:
-  5
-  4
-  3
+julia> set = Set([3, 4, 5]);
 
 julia> MOI.add_constraint(model, MOI.VectorOfVariables([n; x]), MOI.CountBelongs(4, set))
 MathOptInterface.ConstraintIndex{MathOptInterface.VectorOfVariables, MathOptInterface.CountBelongs}(1)
