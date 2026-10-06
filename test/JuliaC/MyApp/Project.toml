@@ -1,0 +1,8 @@
+name = "MyApp"
+uuid = "4768c16f-14ab-4f22-afac-abe0e8586942"
+
+[deps]
+MathOptInterface = "b8f27783-ece8-5eb3-8dc8-9495eed66fee"
+
+[compat]
+MathOptInterface = "1"

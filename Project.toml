@@ -33,6 +33,7 @@ CodecZlib = "0.6, 0.7"
 ForwardDiff = "1"
 JSON = "0.21, 1"
 JSONSchema = "1"
+JuliaC = "0.3"
 LinearAlgebra = "1"
 MutableArithmetics = "1"
 NaNMath = "0.3, 1"
@@ -49,7 +50,8 @@ julia = "1.10"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CliqueTrees = "60701a23-6482-424a-84db-faee86b9b1f8"
 JSONSchema = "7d188eb4-7ad8-530c-ae41-71a32a6d4692"
+JuliaC = "acedd4c2-ced6-4a15-accc-2607eb759ba2"
 ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 
 [targets]
-test = ["BenchmarkTools", "CliqueTrees", "JSONSchema", "ParallelTestRunner"]
+test = ["BenchmarkTools", "CliqueTrees", "JSONSchema", "JuliaC", "ParallelTestRunner"]
