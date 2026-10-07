@@ -24,18 +24,29 @@ function Base.write(io::IO, model::Model)
         objective, has_scalar_nonlinear = _write_objective(model, name_map)
     end
     has_scalar_nonlinear |= _write_constraints(constraints, model, name_map)
-    object = (;
-        name = "MathOptFormat Model",
-        version = (
-            major = Int(_SUPPORTED_VERSIONS[1].major),
-            minor = Int(_SUPPORTED_VERSIONS[1].minor),
-        ),
-        variables = variables,
-        objective = objective,
-        constraints = constraints,
+    version = (
+        major = Int(_SUPPORTED_VERSIONS[1].major),
+        minor = Int(_SUPPORTED_VERSIONS[1].minor),
     )
-    if has_scalar_nonlinear
-        object = (; has_scalar_nonlinear = true, object...)
+    # Construct both layouts directly instead of merging a tuple whose
+    # objective type may not be inferred.
+    object = if has_scalar_nonlinear
+        (;
+            has_scalar_nonlinear = true,
+            name = "MathOptFormat Model",
+            version = version,
+            variables = variables,
+            objective = objective,
+            constraints = constraints,
+        )
+    else
+        (;
+            name = "MathOptFormat Model",
+            version = version,
+            variables = variables,
+            objective = objective,
+            constraints = constraints,
+        )
     end
     Base.write(io, JSON.json(object))
     return
