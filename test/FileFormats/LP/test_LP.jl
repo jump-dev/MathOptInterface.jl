@@ -1174,14 +1174,6 @@ function test_unsupported_variable_types()
         MOI.UnsupportedConstraint,
         MOI.add_constrained_variable(model, MOI.Parameter(2.0)),
     )
-    @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constrained_variable(model, MOI.Semicontinuous(2.0, 3.0)),
-    )
-    @test_throws(
-        MOI.UnsupportedConstraint,
-        MOI.add_constrained_variable(model, MOI.Semiinteger(2.0, 3.0)),
-    )
     return
 end
 
@@ -1888,6 +1880,82 @@ function test_read_empty_constraint()
     c = MOI.add_constraint(target, f, MOI.EqualTo(2.0))
     MOI.set(target, MOI.ConstraintName(), c, "c")
     @test sprint(print, model) == sprint(print, target)
+    return
+end
+
+function test_read_repeated_bound()
+    function _test_roundtrip(input, output)
+        model = MOI.FileFormats.LP.Model{Float64}()
+        read!(IOBuffer(input), model)
+        @test output == sprint(write, model)
+        return
+    end
+    # We always take the last bound
+    _test_roundtrip(
+        "min x\nst\nbounds\nx >= 1\n2 <= x\nend",
+        "minimize\nobj: 1 x\nsubject to\nBounds\nx >= 2\nEnd\n",
+    )
+    _test_roundtrip(
+        "min x\nst\nbounds\nx >= 2\n1 <= x\nend",
+        "minimize\nobj: 1 x\nsubject to\nBounds\nx >= 1\nEnd\n",
+    )
+    _test_roundtrip(
+        "min x\nst\nbounds\nx <= 1\n2 >= x\nend",
+        "minimize\nobj: 1 x\nsubject to\nBounds\n0 <= x <= 2\nEnd\n",
+    )
+    _test_roundtrip(
+        "min x\nst\nbounds\nx <= 2\n1 >= x\nend",
+        "minimize\nobj: 1 x\nsubject to\nBounds\n0 <= x <= 1\nEnd\n",
+    )
+    _test_roundtrip(
+        "min x\nst\nbounds\nx == 3\n2 == x\nend",
+        "minimize\nobj: 1 x\nsubject to\nBounds\nx = 2\nEnd\n",
+    )
+    _test_roundtrip(
+        "min x\nst\nbounds\nx == 2\n3 == x\nend",
+        "minimize\nobj: 1 x\nsubject to\nBounds\nx = 3\nEnd\n",
+    )
+    return
+end
+
+function test_semicontinuous()
+    function _test_roundtrip(input, output)
+        model = MOI.FileFormats.LP.Model{Float64}()
+        read!(IOBuffer(input), model)
+        @test output == sprint(write, model)
+        return
+    end
+    for semi in ["semi", "semis", "SeMIs", "SeMICONTINUOUS"]
+        _test_roundtrip(
+            "min x\nst\nbounds\n2 <= x <= 3\n$semi\nx\nend",
+            "minimize\nobj: 1 x\nsubject to\nBounds\n2 <= x <= 3\nSemicontinuous\nx\nEnd\n",
+        )
+        _test_roundtrip(
+            "min x\nst\nbounds\nx >= 3\ngeneral\nx\n$semi\nx\nend",
+            "minimize\nobj: 1 x\nsubject to\nBounds\nx >= 3\nGeneral\nx\nSemicontinuous\nx\nEnd\n",
+        )
+        _test_roundtrip(
+            "min x + y\nst\nbounds\ny == 4\nx >= 3\ngeneral\nx\n$semi\nx y\nend",
+            "minimize\nobj: 1 x + 1 y\nsubject to\nBounds\nx >= 3\ny = 4\nGeneral\nx\nSemicontinuous\ny\nx\nEnd\n",
+        )
+    end
+    return
+end
+
+function test_semicontinuous_binary()
+    model = MOI.FileFormats.LP.Model{Float64}()
+    io = IOBuffer("min x\nst\nbounds\nbinary\nx\nsemi\nx\nend")
+    @test_throws(
+        ErrorException(
+            """
+            The variable `x` appears in both the BINARY and SEMICONTINUOUS sections.
+
+            A variable cannot be in both. Did you mean to create a semi-integer \
+            variable by putting the variable in both GENERAL and SEMICONTINUOUS?
+            """,
+        ),
+        read!(io, model),
+    )
     return
 end
 

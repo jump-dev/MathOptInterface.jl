@@ -208,22 +208,48 @@ function _write_objective(
     return
 end
 
-function _write_integrality(
-    io::IO,
-    model::Model,
-    key::String,
-    ::Type{S},
-    variable_names::Dict{MOI.VariableIndex,String},
-) where {S}
-    indices = MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
-    if length(indices) == 0
-        return
+function _get_names!(names, model::Model, ::Type{S}, variable_names) where {S}
+    for ci in MOI.get(model, MOI.ListOfConstraintIndices{MOI.VariableIndex,S}())
+        f = MOI.get(model, MOI.ConstraintFunction(), ci)
+        push!(names, variable_names[f])
     end
-    println(io, key)
-    for index in indices
-        f = MOI.get(model, MOI.ConstraintFunction(), index)
-        _write_function(io, model, f, variable_names)
-        println(io)
+    return
+end
+
+function _write_general(io::IO, model::Model{T}, variable_names) where {T}
+    names = String[]
+    _get_names!(names, model, MOI.Integer, variable_names)
+    _get_names!(names, model, MOI.Semiinteger{T}, variable_names)
+    if !isempty(names)
+        println(io, "General")
+        for name in names
+            println(io, name)
+        end
+    end
+    return
+end
+
+function _write_binary(io::IO, model::Model, variable_names)
+    names = String[]
+    _get_names!(names, model, MOI.ZeroOne, variable_names)
+    if !isempty(names)
+        println(io, "Binary")
+        for name in names
+            println(io, name)
+        end
+    end
+    return
+end
+
+function _write_semi(io::IO, model::Model{T}, variable_names) where {T}
+    names = String[]
+    _get_names!(names, model, MOI.Semicontinuous{T}, variable_names)
+    _get_names!(names, model, MOI.Semiinteger{T}, variable_names)
+    if !isempty(names)
+        println(io, "Semicontinuous")
+        for name in names
+            println(io, name)
+        end
     end
     return
 end
@@ -375,7 +401,7 @@ function Base.write(io::IO, model::Model{T}) where {T}
     println(io, "Bounds")
     CI = MOI.ConstraintIndex{MOI.VariableIndex,MOI.ZeroOne}
     for x in MOI.get(model, MOI.ListOfVariableIndices())
-        lb, ub = MOI.Utilities.get_bounds(model, T, x)
+        lb, ub = _get_bounds(model, T, x)
         if lb == typemin(T) && ub == typemax(T)
             if MOI.is_valid(model, CI(x.value))
                 # If a variable is binary, it should not be listed as `free` in
@@ -399,9 +425,25 @@ function Base.write(io::IO, model::Model{T}) where {T}
         end
         println(io)
     end
-    _write_integrality(io, model, "General", MOI.Integer, variable_names)
-    _write_integrality(io, model, "Binary", MOI.ZeroOne, variable_names)
+    _write_general(io, model, variable_names)
+    _write_binary(io, model, variable_names)
+    _write_semi(io, model, variable_names)
     _write_sos_constraints(io, model, variable_names)
     println(io, "End")
     return
+end
+
+function _get_bounds(model, ::Type{T}, x::MOI.VariableIndex) where {T}
+    F, SC, SI = MOI.VariableIndex, MOI.Semicontinuous{T}, MOI.Semiinteger{T}
+    ci_sc = MOI.ConstraintIndex{F,SC}(x.value)
+    if MOI.is_valid(model, ci_sc)
+        set = MOI.get(model, MOI.ConstraintSet(), ci_sc)
+        return set.lower, set.upper
+    end
+    ci_si = MOI.ConstraintIndex{F,SI}(x.value)
+    if MOI.is_valid(model, ci_si)
+        set = MOI.get(model, MOI.ConstraintSet(), ci_si)
+        return set.lower, set.upper
+    end
+    return MOI.Utilities.get_bounds(model, T, x)
 end
