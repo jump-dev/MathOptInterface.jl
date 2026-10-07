@@ -457,6 +457,49 @@ function test_FEASIBILITY_SENSE()
     return MOI.Test.util_test_models_equal(model, model_2, ["x"], String[])
 end
 
+function test_write_document_layout()
+    for mode in
+        (:feasibility, :linear, :nonlinear_objective, :nonlinear_constraint)
+        model = MOF.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        name_map = Dict(x => "x")
+        nonlinear = MOI.ScalarNonlinearFunction(:sin, Any[x])
+        objective = (sense = "feasibility",)
+        if mode != :feasibility
+            f = mode == :nonlinear_objective ? nonlinear : 1.0 * x
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            objective =
+                (; :sense => "min", :function => MOF.moi_to_object(f, name_map))
+        end
+        constraints = NamedTuple[]
+        if mode == :nonlinear_constraint
+            c = MOI.add_constraint(model, nonlinear, MOI.LessThan(1.0))
+            MOI.set(model, MOI.ConstraintName(), c, "c")
+            push!(constraints, MOF.moi_to_object(c, model, name_map))
+        end
+        version = MOF._SUPPORTED_VERSIONS[1]
+        expected = (
+            name = "MathOptFormat Model",
+            version = (major = Int(version.major), minor = Int(version.minor)),
+            variables = [(name = "x",)],
+            objective = objective,
+            constraints = constraints,
+        )
+        has_nonlinear = mode in (:nonlinear_objective, :nonlinear_constraint)
+        if has_nonlinear
+            expected = (; has_scalar_nonlinear = true, expected...)
+        end
+        # Compare bytes as well as the flag, including root field order.
+        contents = sprint(write, model)
+        @test contents == JSON.json(expected)
+        @test haskey(JSON.parse(contents), "has_scalar_nonlinear") ==
+              has_nonlinear
+    end
+    return
+end
+
 function test_empty_function_term()
     model = MOF.Model()
     x = MOI.add_variable(model)
