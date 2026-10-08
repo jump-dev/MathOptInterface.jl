@@ -500,6 +500,68 @@ function test_write_document_layout()
     return
 end
 
+struct JSONNumber <: Number
+    text::String
+end
+
+JSON.tostring(value::JSONNumber) = value.text
+
+function test_json_tree_nested_records()
+    object = (z = (b = Any[(last = 1,), (first = "x",)], a = 2), m = [3, 4])
+    tree = MOF._json_tree(object)
+    @test tree isa JSON.Object{String,Any}
+    @test tree["z"] isa JSON.Object{String,Any}
+    @test tree["z"]["b"] isa Vector{Any}
+    @test all(item -> item isa JSON.Object{String,Any}, tree["z"]["b"])
+    @test tree["m"] isa Vector{Any}
+    @test JSON.json(tree) == JSON.json(object)
+    @test JSON.json(tree) ==
+          "{\"z\":{\"b\":[{\"last\":1},{\"first\":\"x\"}],\"a\":2},\"m\":[3,4]}"
+    @test isempty(MOF._json_tree((;)))
+    @test MOF._json_tree(NamedTuple[]) == Any[]
+    return
+end
+
+function test_json_tree_preserves_values()
+    values = Any[
+        nothing,
+        true,
+        2,
+        Float32(1.5),
+        big"123456789012345678901234567890",
+        big"1.234567890123456789",
+        1//3,
+        1+2im,
+        JSONNumber("0.125"),
+        "quoted \" Unicode ☃",
+        :symbol,
+    ]
+    object = (values = values,)
+    tree = MOF._json_tree(object)
+    for (original, normalized) in zip(values, tree["values"])
+        @test normalized === original
+    end
+    @test JSON.json(tree) == JSON.json(object)
+    @test JSON.json(tree["values"][9]) == "0.125"
+    return
+end
+
+function test_json_tree_vector_edge_cases()
+    values = Vector{Any}(undef, 2)
+    values[2] = (value = 3,)
+    tree = MOF._json_tree(values)
+    @test tree[1] === nothing
+    @test tree[2] isa JSON.Object{String,Any}
+    @test !isassigned(values, 1)
+    @test JSON.json(tree) == JSON.json(values) == "[null,{\"value\":3}]"
+    pairs = ["z" => (b = 1,), "a" => (value = 2,)]
+    @test MOF._json_tree(pairs) === pairs
+    @test JSON.json(MOF._json_tree((values = pairs,))) ==
+          JSON.json((values = pairs,))
+    @test JSON.json(pairs) == "{\"z\":{\"b\":1},\"a\":{\"value\":2}}"
+    return
+end
+
 function test_empty_function_term()
     model = MOF.Model()
     x = MOI.add_variable(model)
