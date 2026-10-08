@@ -130,26 +130,18 @@ function Base.read!(io::IO, model::Model{T}) where {T}
         end
     end
     for i in 1:length(cache.type)
-        _add_bound(
-            model,
-            cache,
-            MOI.VariableIndex(i),
-            cache.lower_bound[i],
-            cache.upper_bound[i],
-            cache.type[i],
-        )
+        _add_variable_constraint(model, cache, MOI.VariableIndex(i))
     end
     return
 end
 
-function _add_bound(
+function _add_variable_constraint(
     model::MOI.ModelLike,
-    cache::_ReadCache,
+    cache::_ReadCache{T},
     x::MOI.VariableIndex,
-    l::T,
-    u::T,
-    type::UInt8,
 ) where {T}
+    l, u = cache.lower_bound[x.value], cache.upper_bound[x.value]
+    type = cache.type[x.value]
     if type == _kSEMICONTINUOUS
         MOI.add_constraint(model, x, MOI.Semicontinuous(l, u))
         return
@@ -512,7 +504,7 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
             continue
         end
         # It might be a _TOKEN_KEYWORD.
-        (kw = _case_insenstive_identifier_to_keyword(token.value))
+        kw = _case_insenstive_identifier_to_keyword(token.value)
         if kw == "SEMICONTINUOUS" && _compare_case_insenstive(token, "semi")
             # `semi` might be the start of `semi-continuous`, which the lexer
             # splits into three tokens.
