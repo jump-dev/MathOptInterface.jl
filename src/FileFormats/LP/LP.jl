@@ -31,7 +31,7 @@ MOI.Utilities.@model(
 function MOI.supports_constraint(
     ::Model,
     ::Type{MOI.VariableIndex},
-    ::Type{<:Union{MOI.Parameter,MOI.Semicontinuous,MOI.Semiinteger}},
+    ::Type{<:MOI.Parameter},
 )
     return false
 end

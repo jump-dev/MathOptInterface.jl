@@ -4,6 +4,10 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+const _kINTEGER = UInt8(1)
+const _kBINARY = UInt8(2)
+const _kSEMICONTINUOUS = UInt8(4)
+
 """
     _ReadCache(model::Model{T}) where {T}
 
@@ -19,12 +23,17 @@ This struct stores a few things to help reading the file:
 struct _ReadCache{T}
     model::Model{T}
     variable_name_to_index::Dict{String,MOI.VariableIndex}
-    variable_with_default_bound::Set{MOI.VariableIndex}
+    type::Vector{UInt8}
+    lower_bound::Vector{T}
+    upper_bound::Vector{T}
+
     function _ReadCache(model::Model{T}) where {T}
         return new{T}(
             model,
             Dict{String,MOI.VariableIndex}(),
-            Set{MOI.VariableIndex}(),
+            UInt8[],
+            T[],
+            T[],
         )
     end
 end
@@ -67,10 +76,13 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             _parse_constraint(state, cache)
         elseif keyword == :BINARY
             x = _parse_identifier(state, cache)
-            MOI.add_constraint(cache.model, x, MOI.ZeroOne())
+            cache.type[x.value] |= _kBINARY
         elseif keyword == :INTEGER
             x = _parse_identifier(state, cache)
-            MOI.add_constraint(cache.model, x, MOI.Integer())
+            cache.type[x.value] |= _kINTEGER
+        elseif keyword == :SEMICONTINUOUS
+            x = _parse_identifier(state, cache)
+            cache.type[x.value] |= _kSEMICONTINUOUS
         elseif keyword == :BOUNDS
             _parse_bound_expression(state, cache)
         elseif keyword == :SOS
@@ -117,11 +129,49 @@ function Base.read!(io::IO, model::Model{T}) where {T}
             _expect(state, token, _TOKEN_KEYWORD)
         end
     end
-    # if keyword != :END
-    #     TODO(odow): decide if we should throw an error here.
-    # end
-    for x in cache.variable_with_default_bound
-        MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    for i in 1:length(cache.type)
+        _add_variable_constraint(model, cache, MOI.VariableIndex(i))
+    end
+    return
+end
+
+function _add_variable_constraint(
+    model::MOI.ModelLike,
+    cache::_ReadCache{T},
+    x::MOI.VariableIndex,
+) where {T}
+    l, u = cache.lower_bound[x.value], cache.upper_bound[x.value]
+    type = cache.type[x.value]
+    if type == _kSEMICONTINUOUS
+        MOI.add_constraint(model, x, MOI.Semicontinuous(l, u))
+        return
+    elseif type == _kSEMICONTINUOUS + _kINTEGER
+        MOI.add_constraint(model, x, MOI.Semiinteger(l, u))
+        return
+    elseif type == _kSEMICONTINUOUS + _kBINARY
+        name = MOI.get(model, MOI.VariableName(), x)
+        error(
+            """
+            The variable `$name` appears in both the BINARY and SEMICONTINUOUS sections.
+
+            A variable cannot be in both. Did you mean to create a semi-integer \
+            variable by putting the variable in both GENERAL and SEMICONTINUOUS?
+            """,
+        )
+    elseif type == _kINTEGER
+        MOI.add_constraint(model, x, MOI.Integer())
+    elseif type == _kBINARY
+        MOI.add_constraint(model, x, MOI.ZeroOne())
+    end
+    if l == u
+        MOI.add_constraint(model, x, MOI.EqualTo(l))
+    else
+        if l > typemin(T)
+            MOI.add_constraint(model, x, MOI.GreaterThan(l))
+        end
+        if u < typemax(T)
+            MOI.add_constraint(model, x, MOI.LessThan(u))
+        end
     end
     return
 end
@@ -146,6 +196,7 @@ end
 
 const _MAXIMIZE_KEYWORDS = ("max", "maximize", "maximise", "maximum")
 const _MINIMIZE_KEYWORDS = ("min", "minimize", "minimise", "minimum")
+const _SEMI_KEYWORDS = ("semi", "semis", "semicontinuous")
 
 """
     _case_insenstive_identifier_to_keyword(input::String)
@@ -159,7 +210,7 @@ every identifier.
 This function tries to be a little cleverer and doesn't allocate.
 """
 function _case_insenstive_identifier_to_keyword(input::String)
-    if !(2 <= length(input) <= 8)
+    if !((2 <= length(input) <= 8) || length(input) == 14)
         return nothing  # identifiers outside these lengths are not recognized
     elseif _compare_case_insenstive(input, 'm', _MAXIMIZE_KEYWORDS)
         return "MAXIMIZE"
@@ -178,6 +229,8 @@ function _case_insenstive_identifier_to_keyword(input::String)
         return "INTEGER"
     elseif _compare_case_insenstive(input, 'b', ("bin", "binary", "binaries"))
         return "BINARY"
+    elseif _compare_case_insenstive(input, 's', _SEMI_KEYWORDS)
+        return "SEMICONTINUOUS"
     elseif _compare_case_insenstive(input, "end")
         return "END"
     end
@@ -451,8 +504,13 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
             continue
         end
         # It might be a _TOKEN_KEYWORD.
-        (kw = _case_insenstive_identifier_to_keyword(token.value))
-        if kw !== nothing
+        kw = _case_insenstive_identifier_to_keyword(token.value)
+        if kw == "SEMICONTINUOUS" && _compare_case_insenstive(token, "semi")
+            # `semi` might be the start of `semi-continuous`, which the lexer
+            # splits into three tokens.
+            _peek_semi_continuous(state, token)
+            continue
+        elseif kw !== nothing
             # The token matches a single word keyword. All keywords are followed
             # by a new line, or an EOF.
             t = _peek_inner(state)
@@ -497,6 +555,45 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
         end
     end
     return state.peek_tokens[n]
+end
+
+"""
+    _peek_semi_continuous(state::_LexerState, token::_Token)
+
+The keyword `semi-continuous` is lexed as three tokens: `semi`, `-`, and
+`continuous`. This function is called after `token` (`semi`) has been pushed to
+`state.peek_tokens` and it replaces the tokens by a single `_TOKEN_KEYWORD` if
+they are adjacent (no whitespace) and followed by a new line or EOF.
+
+`semi` by itself, followed by a new line or EOF, is also a keyword.
+"""
+function _peek_semi_continuous(state::_LexerState, token::_Token)
+    t = _peek_inner(state)
+    if t !== nothing && t.kind == _TOKEN_SUBTRACTION && t.pos == token.pos + 4
+        t_c = _peek_inner(state)
+        if t_c !== nothing &&
+           _compare_case_insenstive(t_c, "continuous") &&
+           t_c.pos == t.pos + 1
+            t_nl = _peek_inner(state)
+            if _nothing_or_newline(t_nl)
+                state.peek_tokens[end] =
+                    _Token(_TOKEN_KEYWORD, "SEMICONTINUOUS", token.pos)
+            else
+                push!(state.peek_tokens, t, t_c)
+            end
+            t = t_nl
+        else
+            push!(state.peek_tokens, t)
+            t = t_c
+        end
+    elseif _nothing_or_newline(t)
+        state.peek_tokens[end] =
+            _Token(_TOKEN_KEYWORD, "SEMICONTINUOUS", token.pos)
+    end
+    if t !== nothing
+        push!(state.peek_tokens, t)
+    end
+    return
 end
 
 # We're a bit more relaxed than typical, allowing any letter or digit, not just
@@ -609,8 +706,8 @@ end
 #   Anything that makes it here is deemed acceptable.
 function _parse_identifier(
     state::_LexerState,
-    cache::_ReadCache,
-)::MOI.VariableIndex
+    cache::_ReadCache{T},
+)::MOI.VariableIndex where {T}
     _skip_newlines(state)
     token = read(state, _Token, _TOKEN_IDENTIFIER)
     x = get(cache.variable_name_to_index, token.value, nothing)
@@ -628,7 +725,9 @@ function _parse_identifier(
     end
     MOI.set(cache.model, MOI.VariableName(), x, token.value)
     cache.variable_name_to_index[token.value] = x
-    push!(cache.variable_with_default_bound, x)
+    push!(cache.lower_bound, zero(T))
+    push!(cache.upper_bound, typemax(T))
+    push!(cache.type, zero(UInt8))
     return x
 end
 
@@ -973,29 +1072,28 @@ function _add_bound(
     x::MOI.VariableIndex,
     set::MOI.GreaterThan,
 )
-    delete!(cache.variable_with_default_bound, x)
-    if isfinite(set.lower)
-        MOI.add_constraint(cache.model, x, set)
-    end
+    cache.lower_bound[x.value] = set.lower
     return
 end
 
 function _add_bound(cache::_ReadCache, x::MOI.VariableIndex, set::MOI.LessThan)
-    if isfinite(set.upper)
-        MOI.add_constraint(cache.model, x, set)
-    end
+    cache.upper_bound[x.value] = set.upper
     return
 end
 
 function _add_bound(cache::_ReadCache, x::MOI.VariableIndex, set::MOI.EqualTo)
-    delete!(cache.variable_with_default_bound, x)
-    MOI.add_constraint(cache.model, x, set)
+    cache.lower_bound[x.value] = cache.upper_bound[x.value] = set.value
     return
 end
 
 # x free
-function _add_bound(cache::_ReadCache, x::MOI.VariableIndex, ::Nothing)
-    delete!(cache.variable_with_default_bound, x)
+function _add_bound(
+    cache::_ReadCache{T},
+    x::MOI.VariableIndex,
+    ::Nothing,
+) where {T}
+    cache.lower_bound[x.value] = typemin(T)
+    cache.upper_bound[x.value] = typemax(T)
     return
 end
 
