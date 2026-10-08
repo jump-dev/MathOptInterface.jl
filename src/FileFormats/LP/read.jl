@@ -204,7 +204,7 @@ end
 
 const _MAXIMIZE_KEYWORDS = ("max", "maximize", "maximise", "maximum")
 const _MINIMIZE_KEYWORDS = ("min", "minimize", "minimise", "minimum")
-const _SEMI_KEYWORDS = ("semi", "semis", "semicontinuous", "semi-continuous")
+const _SEMI_KEYWORDS = ("semi", "semis", "semicontinuous")
 
 """
     _case_insenstive_identifier_to_keyword(input::String)
@@ -218,7 +218,7 @@ every identifier.
 This function tries to be a little cleverer and doesn't allocate.
 """
 function _case_insenstive_identifier_to_keyword(input::String)
-    if !((2 <= length(input) <= 8) || (14 <= length(input) <= 15))
+    if !((2 <= length(input) <= 8) || length(input) == 14)
         return nothing  # identifiers outside these lengths are not recognized
     elseif _compare_case_insenstive(input, 'm', _MAXIMIZE_KEYWORDS)
         return "MAXIMIZE"
@@ -513,7 +513,12 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
         end
         # It might be a _TOKEN_KEYWORD.
         (kw = _case_insenstive_identifier_to_keyword(token.value))
-        if kw !== nothing
+        if kw == "SEMICONTINUOUS" && _compare_case_insenstive(token, "semi")
+            # `semi` might be the start of `semi-continuous`, which the lexer
+            # splits into three tokens.
+            _peek_semi_continuous(state, token)
+            continue
+        elseif kw !== nothing
             # The token matches a single word keyword. All keywords are followed
             # by a new line, or an EOF.
             t = _peek_inner(state)
@@ -558,6 +563,45 @@ function Base.peek(state::_LexerState, ::Type{_Token}, n::Int = 1)
         end
     end
     return state.peek_tokens[n]
+end
+
+"""
+    _peek_semi_continuous(state::_LexerState, token::_Token)
+
+The keyword `semi-continuous` is lexed as three tokens: `semi`, `-`, and
+`continuous`. This function is called after `token` (`semi`) has been pushed to
+`state.peek_tokens` and it replaces the tokens by a single `_TOKEN_KEYWORD` if
+they are adjacent (no whitespace) and followed by a new line or EOF.
+
+`semi` by itself, followed by a new line or EOF, is also a keyword.
+"""
+function _peek_semi_continuous(state::_LexerState, token::_Token)
+    t = _peek_inner(state)
+    if t !== nothing && t.kind == _TOKEN_SUBTRACTION && t.pos == token.pos + 4
+        t_c = _peek_inner(state)
+        if t_c !== nothing &&
+           _compare_case_insenstive(t_c, "continuous") &&
+           t_c.pos == t.pos + 1
+            t_nl = _peek_inner(state)
+            if _nothing_or_newline(t_nl)
+                state.peek_tokens[end] =
+                    _Token(_TOKEN_KEYWORD, "SEMICONTINUOUS", token.pos)
+            else
+                push!(state.peek_tokens, t, t_c)
+            end
+            t = t_nl
+        else
+            push!(state.peek_tokens, t)
+            t = t_c
+        end
+    elseif _nothing_or_newline(t)
+        state.peek_tokens[end] =
+            _Token(_TOKEN_KEYWORD, "SEMICONTINUOUS", token.pos)
+    end
+    if t !== nothing
+        push!(state.peek_tokens, t)
+    end
+    return
 end
 
 # We're a bit more relaxed than typical, allowing any letter or digit, not just

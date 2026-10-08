@@ -1925,7 +1925,14 @@ function test_semicontinuous()
         @test output == sprint(write, model)
         return
     end
-    for semi in ["semi", "semis", "SeMIs", "SeMICONTINUOUS"]
+    for semi in [
+        "semi",
+        "semis",
+        "SeMIs",
+        "SeMICONTINUOUS",
+        "semi-continuous",
+        "Semi-Continuous",
+    ]
         _test_roundtrip(
             "min x\nst\nbounds\n2 <= x <= 3\n$semi\nx\nend",
             "minimize\nobj: 1 x\nsubject to\nBounds\n2 <= x <= 3\nSemicontinuous\nx\nEnd\n",
@@ -1938,6 +1945,22 @@ function test_semicontinuous()
             "min x + y\nst\nbounds\ny == 4\nx >= 3\ngeneral\nx\n$semi\nx y\nend",
             "minimize\nobj: 1 x + 1 y\nsubject to\nBounds\nx >= 3\ny = 4\nGeneral\nx\nSemicontinuous\ny\nx\nEnd\n",
         )
+    end
+    return
+end
+
+function test_semi_continuous_not_keyword()
+    for (input, output) in [
+        # `semi - continuous` with whitespace is an expression
+        "min\nsemi - continuous\nst\nend" => "minimize\nobj: 1 semi - 1 continuous\nsubject to\nBounds\nsemi >= 0\ncontinuous >= 0\nEnd\n",
+        # `semi-continuous` not followed by a newline is an expression
+        "min\nsemi-continuous + x\nst\nend" => "minimize\nobj: 1 semi - 1 continuous + 1 x\nsubject to\nBounds\nsemi >= 0\ncontinuous >= 0\nx >= 0\nEnd\n",
+        # `semi-x` is an expression
+        "min\nsemi-x\nst\nend" => "minimize\nobj: 1 semi - 1 x\nsubject to\nBounds\nsemi >= 0\nx >= 0\nEnd\n",
+    ]
+        model = MOI.FileFormats.LP.Model{Float64}()
+        read!(IOBuffer(input), model)
+        @test output == sprint(write, model)
     end
     return
 end
