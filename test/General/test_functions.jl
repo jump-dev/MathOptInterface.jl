@@ -562,6 +562,8 @@ function test_convert_VectorNonlinearFunction_VectorQuadraticFunction()
     return
 end
 
+# Temporary JuliaC experiment: nonlinear copy returns the original function,
+# so these tests deliberately check shared mutable storage.
 function test_copy_ScalarNonlinearFunction()
     N = 10_000
     x = MOI.VariableIndex.(1:N)
@@ -576,10 +578,11 @@ function test_copy_ScalarNonlinearFunction()
         f2 = MOI.ScalarNonlinearFunction(:+, Any[f2, g])
     end
     f_copy = @inferred copy(f1)
+    @test f_copy === f1
     @test ≈(f_copy, f2)
     f1.args[2].args[2] = 2.0  # x[1]^1 --> x[1]^2
-    @test !isapprox(f_copy, f1)
-    @test isapprox(f_copy, f2)
+    @test isapprox(f_copy, f1)
+    @test !isapprox(f_copy, f2)
     return
 end
 
@@ -597,10 +600,11 @@ function test_copy_ScalarNonlinearFunction_with_arg()
         f2 = MOI.ScalarNonlinearFunction(:+, Any[f2, g])
     end
     f_copy = @inferred copy(f1)
+    @test f_copy === f1
     @test ≈(f_copy, f2)
     f1.args[2].constant += 1
-    @test !isapprox(f_copy, f1)
-    @test isapprox(f_copy, f2)
+    @test isapprox(f_copy, f1)
+    @test !isapprox(f_copy, f2)
     return
 end
 
@@ -618,24 +622,26 @@ function test_copy_ScalarNonlinearFunction_leaf_types()
         Any[child, 1.0f0, big"4.0", 1//5, big"6"],
     )
     g = @inferred copy(f)
+    @test g === f
     @test g ≈ f
-    @test g.args !== f.args
-    @test g.args[1].args !== child.args
-    @test g.args[1].args[1].terms !== affine.terms
-    @test g.args[1].args[2].quadratic_terms !== quadratic.quadratic_terms
+    @test g.args === f.args
+    @test g.args[1].args === child.args
+    @test g.args[1].args[1].terms === affine.terms
+    @test g.args[1].args[2].quadratic_terms === quadratic.quadratic_terms
     @test typeof(g.args[2]) == Float32
     @test typeof(g.args[3]) == BigFloat
     @test typeof(g.args[4]) == Rational{Int}
     @test typeof(g.args[5]) == BigInt
     affine.constant += 1
     quadratic.constant += 1
-    @test g.args[1].args[1].constant == 3
-    @test g.args[1].args[2].constant == 1 // 2
+    @test g.args[1].args[1].constant == 4
+    @test g.args[1].args[2].constant == 3 // 2
     empty_f = MOI.ScalarNonlinearFunction(:+, Any[])
     empty_g = @inferred copy(empty_f)
+    @test empty_g === empty_f
     @test empty_g.head == :+
     @test isempty(empty_g.args)
-    @test empty_g.args !== empty_f.args
+    @test empty_g.args === empty_f.args
     return
 end
 
