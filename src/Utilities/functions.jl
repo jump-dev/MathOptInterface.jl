@@ -994,22 +994,9 @@ is_canonical(::MOI.AbstractFunction) = false
 
 is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 
-function is_canonical(f::MOI.ScalarNonlinearFunction)
-    # Don't use recursion here. This gets called for all scalar nonlinear
-    # constraints.
-    stack = Any[arg for arg in f.args]
-    while !isempty(stack)
-        arg = pop!(stack)
-        if arg isa MOI.ScalarNonlinearFunction
-            for a in arg.args
-                push!(stack, a)
-            end
-        else
-            if !is_canonical(arg)
-                return false
-            end
-        end
-    end
+# Temporary JuliaC workaround: skip checking nonlinear argument canonicality.
+# Remove this override before merging the general JuliaC improvements.
+function is_canonical(::MOI.ScalarNonlinearFunction)
     return true
 end
 
