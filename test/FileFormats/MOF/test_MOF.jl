@@ -421,6 +421,113 @@ function test_FEASIBILITY_SENSE()
     return MOI.Test.util_test_models_equal(model, model_2, ["x"], String[])
 end
 
+function test_write_document_layout()
+    for mode in
+        (:feasibility, :linear, :nonlinear_objective, :nonlinear_constraint)
+        model = MOF.Model()
+        x = MOI.add_variable(model)
+        MOI.set(model, MOI.VariableName(), x, "x")
+        name_map = Dict(x => "x")
+        nonlinear = MOI.ScalarNonlinearFunction(:sin, Any[x])
+        objective = (sense = "feasibility",)
+        if mode != :feasibility
+            f = mode == :nonlinear_objective ? nonlinear : 1.0 * x
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+            MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            objective =
+                (; :sense => "min", :function => MOF.moi_to_object(f, name_map))
+        end
+        constraints = NamedTuple[]
+        if mode == :nonlinear_constraint
+            c = MOI.add_constraint(model, nonlinear, MOI.LessThan(1.0))
+            MOI.set(model, MOI.ConstraintName(), c, "c")
+            push!(constraints, MOF.moi_to_object(c, model, name_map))
+        end
+        version = MOF._SUPPORTED_VERSIONS[1]
+        expected = (
+            name = "MathOptFormat Model",
+            version = (major = Int(version.major), minor = Int(version.minor)),
+            variables = [(name = "x",)],
+            objective = objective,
+            constraints = constraints,
+        )
+        has_nonlinear = mode in (:nonlinear_objective, :nonlinear_constraint)
+        if has_nonlinear
+            expected = (; has_scalar_nonlinear = true, expected...)
+        end
+        # Compare bytes as well as the flag, including root field order.
+        contents = sprint(write, model)
+        @test contents == JSON.json(expected)
+        @test haskey(JSON.parse(contents), "has_scalar_nonlinear") ==
+              has_nonlinear
+    end
+    return
+end
+
+struct JSONNumber <: Number
+    text::String
+end
+
+JSON.tostring(value::JSONNumber) = value.text
+
+function test_json_tree_nested_records()
+    object = (z = (b = Any[(last = 1,), (first = "x",)], a = 2), m = [3, 4])
+    tree = MOF._json_tree(object)
+    @test tree isa JSON.Object{String,Any}
+    @test tree["z"] isa JSON.Object{String,Any}
+    @test tree["z"]["b"] isa Vector{Any}
+    @test all(item -> item isa JSON.Object{String,Any}, tree["z"]["b"])
+    @test tree["m"] isa Vector{Any}
+    @test JSON.json(tree) == JSON.json(object)
+    @test JSON.json(tree) ==
+          "{\"z\":{\"b\":[{\"last\":1},{\"first\":\"x\"}],\"a\":2},\"m\":[3,4]}"
+    @test isempty(MOF._json_tree((;)))
+    @test MOF._json_tree(NamedTuple[]) == Any[]
+    return
+end
+
+function test_json_tree_preserves_values()
+    values = Any[
+        nothing,
+        true,
+        2,
+        Float32(1.5),
+        big"123456789012345678901234567890",
+        big"1.234567890123456789",
+        1//3,
+        1+2im,
+        JSONNumber("0.125"),
+        "quoted \" Unicode ☃",
+        :symbol,
+    ]
+    object = (values = values,)
+    tree = MOF._json_tree(object)
+    for (original, normalized) in zip(values, tree["values"])
+        @test normalized === original
+    end
+    @test JSON.json(tree) == JSON.json(object)
+    @test JSON.json(tree["values"][9]) == "0.125"
+    return
+end
+
+function test_json_tree_vector_edge_cases()
+    values = Vector{Any}(undef, 2)
+    values[2] = (value = 3,)
+    # MOF never writes undefined entries
+    @test_throws UndefRefError MOF._json_tree(values)
+    values[1] = nothing
+    tree = MOF._json_tree(values)
+    @test tree[1] === nothing
+    @test tree[2] isa JSON.Object{String,Any}
+    @test JSON.json(tree) == JSON.json(values) == "[null,{\"value\":3}]"
+    pairs = ["z" => (b = 1,), "a" => (value = 2,)]
+    @test MOF._json_tree(pairs) === pairs
+    @test JSON.json(MOF._json_tree((values = pairs,))) ==
+          JSON.json((values = pairs,))
+    @test JSON.json(pairs) == "{\"z\":{\"b\":1},\"a\":{\"value\":2}}"
+    return
+end
+
 function test_empty_function_term()
     model = MOF.Model()
     x = MOI.add_variable(model)

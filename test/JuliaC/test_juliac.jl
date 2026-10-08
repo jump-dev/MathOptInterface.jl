@@ -119,6 +119,23 @@ function test_mathoptformat(output_dir)
     return
 end
 
+function test_starts(output_dir)
+    compiled, reference = _run(output_dir, "--starts")
+    @test compiled == reference
+    object = JSON.parse(compiled)
+    @test object["variables"] == [Dict("name" => "x", "primal_start" => 1.0)]
+    return
+end
+
+function test_linear(output_dir)
+    compiled, reference = _run(output_dir, "--linear")
+    @test compiled == reference
+    object = JSON.parse(compiled)
+    @test !haskey(object, "has_scalar_nonlinear")
+    @test length(object["constraints"]) == 1
+    return
+end
+
 end # module TestJuliaC
 
 TestJuliaC.runtests()

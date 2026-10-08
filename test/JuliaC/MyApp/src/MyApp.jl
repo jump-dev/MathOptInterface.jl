@@ -21,6 +21,12 @@ function @main(args::Vector{String})::Cint
     end
     # The following commands are not traced by `test_juliac.jl`: the compiled
     # binary must run them with the methods resolved at compile time.
+    if head == "--starts"
+        return run_starts(args)
+    end
+    if head == "--linear"
+        return run_linear(args)
+    end
     return 1  # Incorrect head
 end
 
@@ -51,6 +57,25 @@ end
 
 function run_mathoptformat(args::Vector{String})::Cint
     model, _ = _model()
+    return _write(model, args)
+end
+
+# A starting value, which adds a field to the object of the variable.
+function run_starts(args::Vector{String})::Cint
+    model, x = _model()
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
+    return _write(model, args)
+end
+
+# Without the nonlinear constraint, the model has another layout.
+function run_linear(args::Vector{String})::Cint
+    model = MOI.FileFormats.MOF.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    objective = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(objective)}(), objective)
     return _write(model, args)
 end
 
