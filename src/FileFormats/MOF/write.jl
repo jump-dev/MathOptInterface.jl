@@ -48,8 +48,42 @@ function Base.write(io::IO, model::Model)
             constraints = constraints,
         )
     end
-    Base.write(io, JSON.json(object))
+    tree = _json_tree(object)::JSON.Object{String,Any}
+    Base.write(io, JSON.json(tree))
     return
+end
+
+# Keep object shapes in data, rather than in NamedTuple types, so JSON can
+# traverse heterogeneous records with its existing Any-value fast paths.
+@noinline function _json_tree(@nospecialize(value))
+    if value isa NamedTuple
+        object = JSON.Object{String,Any}()
+        # Inline accessors so trimming does not need the concrete record type.
+        names = @inline keys(value)
+        for i in 1:nfields(value)
+            name = getfield(names, i)
+            object[String(name)] = _json_tree(getfield(value, i))
+        end
+        return object
+    elseif value isa Vector && !(value isa AbstractVector{<:Pair})
+        # Vectors of pairs are JSON objects, not arrays.
+        array = Any[]
+        sizehint!(array, length(value))
+        for i in eachindex(value)
+            # Like JSON, write undefined array entries as null.
+            item = try
+                @inline @inbounds value[i]
+            catch err
+                if !(err isa UndefRefError)
+                    rethrow()
+                end
+                nothing
+            end
+            push!(array, _json_tree(item))
+        end
+        return array
+    end
+    return value
 end
 
 function _write_variables(variables::Vector{NamedTuple}, model::Model)
@@ -394,11 +428,12 @@ function moi_to_object(
     end
     push!(pairs, :function => moi_to_object(func, name_map))
     push!(pairs, :set => moi_to_object(set, name_map))
+    # Start values have type Any, so construct the destination pair directly.
     if !isnothing(dual_start)
-        push!(pairs, :dual_start => dual_start)
+        push!(pairs, Pair{Symbol,Any}(:dual_start, dual_start))
     end
     if !isnothing(primal_start)
-        push!(pairs, :primal_start => primal_start)
+        push!(pairs, Pair{Symbol,Any}(:primal_start, primal_start))
     end
     return NamedTuple(pairs)
 end
