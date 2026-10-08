@@ -37,6 +37,10 @@ function MA.mutable_copy(func::MOI.ScalarQuadraticFunction)
     )
 end
 
+function MA.mutable_copy(func::TypedVectorLike)
+    return operate_coefficients(MA.copy_if_mutable, func)
+end
+
 function MA.isequal_canonical(
     f::F,
     g::F,

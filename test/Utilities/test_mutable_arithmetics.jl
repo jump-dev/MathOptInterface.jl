@@ -96,6 +96,68 @@ end
 test_scaling_Float64() = _test_scaling(Float64)
 test_scaling_Float32() = _test_scaling(Float32)
 
+function _test_vector_mutable_copy(f, term_fields)
+    for copy_function in (MA.mutable_copy, MA.copy_if_mutable)
+        g = @inferred copy_function(f)
+        @test g isa typeof(f)
+        @test g ≈ f
+        @test g.constants !== f.constants
+        coefficients = copy(f.constants)
+        copied_coefficients = copy(g.constants)
+        for field in term_fields
+            terms = getfield(f, field)
+            copied_terms = getfield(g, field)
+            @test copied_terms !== terms
+            @test MOI.term_indices.(copied_terms) == MOI.term_indices.(terms)
+            append!(coefficients, MOI.coefficient.(terms))
+            append!(copied_coefficients, MOI.coefficient.(copied_terms))
+        end
+        for (coefficient, copied_coefficient) in
+            zip(coefficients, copied_coefficients)
+            @test copied_coefficient == coefficient
+            if MA.mutability(typeof(coefficient)) == MA.IsMutable()
+                @test copied_coefficient !== coefficient
+                MA.operate!(*, copied_coefficient, 2)
+                @test copied_coefficient == 2 * coefficient
+            end
+        end
+    end
+    return
+end
+
+function test_mutable_copy_VectorAffineFunction()
+    x = MOI.VariableIndex(1)
+    for T in (Float64, BigInt, BigFloat)
+        f = MOI.VectorAffineFunction(
+            [MOI.VectorAffineTerm(2, MOI.ScalarAffineTerm(T(2), x))],
+            T[3, 4],
+        )
+        _test_vector_mutable_copy(f, (:terms,))
+        f = MOI.VectorAffineFunction(MOI.VectorAffineTerm{T}[], T[])
+        _test_vector_mutable_copy(f, (:terms,))
+    end
+    return
+end
+
+function test_mutable_copy_VectorQuadraticFunction()
+    x, y = MOI.VariableIndex(1), MOI.VariableIndex(2)
+    for T in (Float64, BigInt, BigFloat)
+        f = MOI.VectorQuadraticFunction(
+            [MOI.VectorQuadraticTerm(2, MOI.ScalarQuadraticTerm(T(2), x, y))],
+            [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(T(3), y))],
+            T[4, 5],
+        )
+        _test_vector_mutable_copy(f, (:quadratic_terms, :affine_terms))
+        f = MOI.VectorQuadraticFunction(
+            MOI.VectorQuadraticTerm{T}[],
+            MOI.VectorAffineTerm{T}[],
+            T[],
+        )
+        _test_vector_mutable_copy(f, (:quadratic_terms, :affine_terms))
+    end
+    return
+end
+
 function test_unary_minus()
     for T in [Float64, Float32]
         x = MOI.VariableIndex(1)
