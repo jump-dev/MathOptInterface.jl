@@ -174,10 +174,10 @@ function _add_bound(
     if l == u
         MOI.add_constraint(model, x, MOI.EqualTo(l))
     else
-        if l >= typemin(T)
+        if l > typemin(T)
             MOI.add_constraint(model, x, MOI.GreaterThan(l))
         end
-        if u <= typemax(T)
+        if u < typemax(T)
             MOI.add_constraint(model, x, MOI.LessThan(u))
         end
     end
