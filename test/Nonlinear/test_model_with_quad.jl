@@ -520,6 +520,29 @@ function test_moi_bounds_and_objectives()
     return
 end
 
+function test_enums()
+    @test instances(Nonlinear._ObjectiveSink) ==
+          (Nonlinear._NONE, Nonlinear._QUAD, Nonlinear._INNER)
+    @test map(
+        k -> Nonlinear._function_type_to_func(Float64, k),
+        instances(Nonlinear._FunctionType),
+    ) == (
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction{Float64},
+        MOI.ScalarQuadraticFunction{Float64},
+    )
+    @test map(
+        k -> Nonlinear._bound_type_to_set(Float64, k),
+        instances(Nonlinear._BoundType),
+    ) == (
+        MOI.LessThan{Float64},
+        MOI.GreaterThan{Float64},
+        MOI.EqualTo{Float64},
+        MOI.Interval{Float64},
+    )
+    return
+end
+
 end  # module
 
 TestNonlinearModelWithQuad.runtests()
