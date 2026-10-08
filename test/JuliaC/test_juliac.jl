@@ -30,7 +30,7 @@ function compile()
     image_recipe = JuliaC.ImageRecipe(
         output_type = "--output-exe",
         file = joinpath(@__DIR__, "MyApp"),
-        trim_mode = "no",
+        trim_mode = "unsafe-warn",
         add_ccallables = false,
         verbose = true,
     )

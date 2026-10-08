@@ -24,21 +24,66 @@ function Base.write(io::IO, model::Model)
         objective, has_scalar_nonlinear = _write_objective(model, name_map)
     end
     has_scalar_nonlinear |= _write_constraints(constraints, model, name_map)
-    object = (;
-        name = "MathOptFormat Model",
-        version = (
-            major = Int(_SUPPORTED_VERSIONS[1].major),
-            minor = Int(_SUPPORTED_VERSIONS[1].minor),
-        ),
-        variables = variables,
-        objective = objective,
-        constraints = constraints,
+    version = (
+        major = Int(_SUPPORTED_VERSIONS[1].major),
+        minor = Int(_SUPPORTED_VERSIONS[1].minor),
     )
-    if has_scalar_nonlinear
-        object = (; has_scalar_nonlinear = true, object...)
+    # Construct both layouts directly instead of merging a tuple whose
+    # objective type may not be inferred.
+    object = if has_scalar_nonlinear
+        (;
+            has_scalar_nonlinear = true,
+            name = "MathOptFormat Model",
+            version = version,
+            variables = variables,
+            objective = objective,
+            constraints = constraints,
+        )
+    else
+        (;
+            name = "MathOptFormat Model",
+            version = version,
+            variables = variables,
+            objective = objective,
+            constraints = constraints,
+        )
     end
-    Base.write(io, JSON.json(object))
+    tree = _json_tree(object)::JSON.Object{String,Any}
+    Base.write(io, JSON.json(tree))
     return
+end
+
+# Keep object shapes in data, rather than in NamedTuple types, so JSON can
+# traverse heterogeneous records with its existing Any-value fast paths.
+@noinline function _json_tree(@nospecialize(value))
+    if value isa NamedTuple
+        object = JSON.Object{String,Any}()
+        # Inline accessors so trimming does not need the concrete record type.
+        names = @inline keys(value)
+        for i in 1:nfields(value)
+            name = getfield(names, i)
+            object[String(name)] = _json_tree(getfield(value, i))
+        end
+        return object
+    elseif value isa Vector && !(value isa AbstractVector{<:Pair})
+        # Vectors of pairs are JSON objects, not arrays.
+        array = Any[]
+        sizehint!(array, length(value))
+        for i in eachindex(value)
+            # Like JSON, write undefined array entries as null.
+            item = try
+                @inline @inbounds value[i]
+            catch err
+                if !(err isa UndefRefError)
+                    rethrow()
+                end
+                nothing
+            end
+            push!(array, _json_tree(item))
+        end
+        return array
+    end
+    return value
 end
 
 function _write_variables(variables::Vector{NamedTuple}, model::Model)
@@ -132,28 +177,218 @@ function _write_objective(
     if sense == MOI.FEASIBILITY_SENSE
         return (; :sense => moi_to_object(sense)), false
     end
+    return _write_objective(model, name_map, sense)
+end
+
+function _write_objective(model, name_map, sense)
     F = MOI.get(model, MOI.ObjectiveFunctionType())
-    objective_function = MOI.get(model, MOI.ObjectiveFunction{F}())
+    return _write_objective(
+        MOI.get(model, MOI.ObjectiveFunction{F}()),
+        name_map,
+        sense,
+    )
+end
+
+function _write_objective(
+    model::MOI.Utilities.UniversalFallback,
+    name_map,
+    sense,
+)
+    if model.objective === nothing
+        return _write_objective(model.model, name_map, sense)
+    end
+    return _write_objective(something(model.objective), name_map, sense)
+end
+
+function _write_objective(model::MOI.Utilities.GenericModel, name_map, sense)
+    return _write_objective(model.objective, name_map, sense)
+end
+
+function _write_objective(
+    objective::MOI.Utilities.ObjectiveContainer{T},
+    name_map,
+    sense,
+) where {T}
+    # Build the complete objective inside each branch, while the function type
+    # is concrete. Returning the function first would merge its types again.
+    if objective.scalar_affine !== nothing
+        return _write_objective(
+            something(objective.scalar_affine),
+            name_map,
+            sense,
+        )
+    elseif objective.single_variable !== nothing
+        return _write_objective(
+            something(objective.single_variable),
+            name_map,
+            sense,
+        )
+    elseif objective.scalar_quadratic !== nothing
+        return _write_objective(
+            something(objective.scalar_quadratic),
+            name_map,
+            sense,
+        )
+    elseif objective.scalar_nonlinear !== nothing
+        return _write_objective(
+            something(objective.scalar_nonlinear),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_variables !== nothing
+        return _write_objective(
+            something(objective.vector_variables),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_affine !== nothing
+        return _write_objective(
+            something(objective.vector_affine),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_quadratic !== nothing
+        return _write_objective(
+            something(objective.vector_quadratic),
+            name_map,
+            sense,
+        )
+    elseif objective.vector_nonlinear !== nothing
+        return _write_objective(
+            something(objective.vector_nonlinear),
+            name_map,
+            sense,
+        )
+    end
+    return _write_objective(zero(MOI.ScalarAffineFunction{T}), name_map, sense)
+end
+
+function _write_objective(f::MOI.AbstractFunction, name_map, sense)
     object = (;
         :sense => moi_to_object(sense),
-        :function => moi_to_object(objective_function, name_map),
+        :function => moi_to_object(f, name_map),
     )
-    return object, (F == MOI.ScalarNonlinearFunction)
+    return object, f isa MOI.ScalarNonlinearFunction
 end
 
 function _write_constraints(
     constraints::Vector{NamedTuple},
     model::Model,
     name_map::Dict{MOI.VariableIndex,String},
+    storage = model,
 )
     has_scalar_nonlinear = false
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        has_scalar_nonlinear |= (F == MOI.ScalarNonlinearFunction)
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            push!(constraints, moi_to_object(index, model, name_map))
-        end
+    for (F, S) in MOI.get(storage, MOI.ListOfConstraintTypesPresent())
+        has_scalar_nonlinear |=
+            _write_constraints(constraints, model, name_map, storage, F, S)
     end
     return has_scalar_nonlinear
+end
+
+function _write_constraints(
+    constraints,
+    model,
+    name_map,
+    storage,
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    indices = MOI.get(storage, MOI.ListOfConstraintIndices{F,S}())
+    for index in indices
+        # Query the outer model for attributes held by UniversalFallback.
+        push!(constraints, moi_to_object(index, model, name_map))
+    end
+    return F == MOI.ScalarNonlinearFunction && !isempty(indices)
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.UniversalFallback,
+)
+    has_scalar_nonlinear =
+        _write_constraints(constraints, model, name_map, storage.model)
+    for S in keys(storage.single_variable_constraints)
+        has_scalar_nonlinear |= _write_constraints(
+            constraints,
+            model,
+            name_map,
+            storage,
+            MOI.VariableIndex,
+            S,
+        )
+    end
+    for inner in values(storage.constraints)
+        has_scalar_nonlinear |=
+            _write_constraints(constraints, model, name_map, inner)
+    end
+    return has_scalar_nonlinear
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.GenericModel,
+)
+    has_scalar_nonlinear =
+        _write_constraints(constraints, model, name_map, storage.constraints)
+    has_scalar_nonlinear |=
+        _write_constraints(constraints, model, name_map, storage.variables)
+    return has_scalar_nonlinear
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.VariablesContainer{T},
+) where {T}
+    function write_bound(::Type{S}) where {S}
+        return _write_constraints(
+            constraints,
+            model,
+            name_map,
+            storage,
+            MOI.VariableIndex,
+            S,
+        )
+    end
+    # Match ListOfConstraintTypesPresent order. A tuple of types would erase
+    # the concrete set types, so call the typed helper for each set directly.
+    write_bound(MOI.EqualTo{T})
+    write_bound(MOI.GreaterThan{T})
+    write_bound(MOI.LessThan{T})
+    write_bound(MOI.Interval{T})
+    write_bound(MOI.Semicontinuous{T})
+    write_bound(MOI.Semiinteger{T})
+    write_bound(MOI.Integer)
+    write_bound(MOI.ZeroOne)
+    write_bound(MOI.Parameter{T})
+    return false
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.StructOfConstraints,
+)
+    ret = MOI.Utilities.mapreduce_constraints(|, storage, false) do inner
+        return inner !== nothing &&
+               _write_constraints(constraints, model, name_map, inner)
+    end
+    return something(ret, false)
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::Model,
+    name_map::Dict{MOI.VariableIndex,String},
+    storage::MOI.Utilities.VectorOfConstraints{F,S},
+) where {F,S}
+    return _write_constraints(constraints, model, name_map, storage, F, S)
 end
 
 """
@@ -193,11 +428,12 @@ function moi_to_object(
     end
     push!(pairs, :function => moi_to_object(func, name_map))
     push!(pairs, :set => moi_to_object(set, name_map))
+    # Start values have type Any, so construct the destination pair directly.
     if !isnothing(dual_start)
-        push!(pairs, :dual_start => dual_start)
+        push!(pairs, Pair{Symbol,Any}(:dual_start, dual_start))
     end
     if !isnothing(primal_start)
-        push!(pairs, :primal_start => primal_start)
+        push!(pairs, Pair{Symbol,Any}(:primal_start, primal_start))
     end
     return NamedTuple(pairs)
 end
@@ -248,10 +484,30 @@ function _convert_nonlinear_to_mof(
 )
     node = (type = string(f.head), args = Any[])
     for arg in f.args
-        push!(node[:args], _convert_nonlinear_to_mof(arg, node_list, name_map))
+        push!(
+            node[:args],
+            _convert_nonlinear_argument_to_mof(arg, node_list, name_map),
+        )
     end
     push!(node_list, node)
     return (type = "node", index = length(node_list))
+end
+
+@inline function _convert_nonlinear_argument_to_mof(
+    arg,
+    node_list::Vector{Any},
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    # Nonlinear arguments are stored as Any. Keep common dispatch targets
+    # visible to the compiler without restricting the supported arguments.
+    if arg isa MOI.VariableIndex
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    elseif arg isa MOI.ScalarNonlinearFunction
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    elseif arg isa Union{Int,Float64}
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    end
+    return _convert_nonlinear_to_mof(arg, node_list, name_map)
 end
 
 function _convert_nonlinear_to_mof(
@@ -444,11 +700,9 @@ function moi_to_object(
     set::SetType,
     ::Dict{MOI.VariableIndex,String},
 ) where {SetType}
-    pairs = Pair{Symbol,Any}[:type=>head_name(SetType)]
-    for key in fieldnames(SetType)
-        push!(pairs, Symbol(string(key)) => getfield(set, key))
-    end
-    return NamedTuple(pairs)
+    names = fieldnames(SetType)
+    values = map(name -> getfield(set, name), names)
+    return NamedTuple{(:type, names...)}((head_name(SetType), values...))
 end
 
 # ========== Non-typed scalar sets ==========

@@ -2074,10 +2074,23 @@ function test_ScalarNonlinearFunction_is_canonical()
     f = MOI.ScalarNonlinearFunction(:log, Any[1.0*x])
     @test MOI.Utilities.is_canonical(f)
     g = MOI.ScalarNonlinearFunction(:log, Any[1.0*x+1.0*x])
-    @test !MOI.Utilities.is_canonical(g)
+    # Temporary JuliaC workaround treats nonlinear trees as canonical.
+    @test MOI.Utilities.is_canonical(g)
     MOI.Utilities.canonicalize!(g)
     @test MOI.Utilities.is_canonical(g)
     @test g.args[1] ≈ 2.0 * x
+    affine = 1.0 * x + 1.0 * x
+    terms = copy(affine.terms)
+    nested = MOI.ScalarNonlinearFunction(
+        :log,
+        Any[MOI.ScalarNonlinearFunction(:+, Any[affine, 1.0])],
+    )
+    @test !MOI.Utilities.is_canonical(affine)
+    @test (@inferred MOI.Utilities.is_canonical(nested))
+    @test MOI.Utilities.canonical(nested) === nested
+    @test nested.args[1].args[1] === affine
+    @test affine.terms == terms
+    @test !MOI.Utilities.is_canonical(affine)
     f = MOI.ScalarNonlinearFunction(:^, Any[x, 2])
     @test MOI.Utilities.is_canonical(f)
     # Test deep recursion
@@ -2090,7 +2103,7 @@ function test_ScalarNonlinearFunction_is_canonical()
     for _ in 1:100_000
         g = MOI.ScalarNonlinearFunction(:sin, Any[g])
     end
-    @test !MOI.Utilities.is_canonical(g)
+    @test MOI.Utilities.is_canonical(g)
     MOI.Utilities.canonicalize!(g)
     h = MOI.ScalarNonlinearFunction(:^, Any[2.0*x, 2])
     for _ in 1:100_000
