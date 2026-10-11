@@ -350,24 +350,10 @@ struct ScalarNonlinearFunction <: AbstractScalarFunction
     end
 end
 
-# copy() doesn't recursively copy the children, and deepcopy seems to have a
-# performance problem for deeply nested structs.
+# Temporary JuliaC experiment: share nonlinear graphs instead of copying them.
+# Remove this override before merging the general JuliaC improvements.
 function Base.copy(f::ScalarNonlinearFunction)
-    result = ScalarNonlinearFunction(f.head, similar(f.args))
-    stack = Tuple{ScalarNonlinearFunction,ScalarNonlinearFunction}[(f, result)]
-    while !isempty(stack)
-        source, destination = pop!(stack)
-        for (i, arg) in enumerate(source.args)
-            if arg isa ScalarNonlinearFunction
-                child = ScalarNonlinearFunction(arg.head, similar(arg.args))
-                destination.args[i] = child
-                push!(stack, (arg, child))
-            else
-                destination.args[i] = copy(arg)
-            end
-        end
-    end
-    return result
+    return f
 end
 
 constant(f::ScalarNonlinearFunction, ::Type{T} = Float64) where {T} = zero(T)
