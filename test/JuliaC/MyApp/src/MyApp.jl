@@ -28,9 +28,10 @@ function run_mathoptformat(args::Vector{String})::Cint
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
     MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
-    f = MOI.ScalarNonlinearFunction(
-        :+,
-        Any[MOI.ScalarNonlinearFunction(:sin, Any[x]), 2, 3.0],
+    f = MOI.ScalarQuadraticFunction(
+        [MOI.ScalarQuadraticTerm(2.0, x, x)],
+        [MOI.ScalarAffineTerm(1.0, x)],
+        0.0,
     )
     c = MOI.add_constraint(model, f, MOI.LessThan(7.0))
     MOI.set(model, MOI.ConstraintName(), c, "c")
