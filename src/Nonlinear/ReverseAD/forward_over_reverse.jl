@@ -284,9 +284,9 @@ function _forward_eval_ϵ(
                     @inbounds exponent_ϵ = storage_ϵ[ix2]
                     base_gnum = ForwardDiff.Dual{TAG}(base, base_ϵ)
                     exponent_gnum = ForwardDiff.Dual{TAG}(exponent, exponent_ϵ)
-                    if exponent == 2
+                    if exponent == 2 && exponent_ϵ == zero_ϵ    # issue #3101
                         partials_storage_ϵ[ix1] = 2 * base_ϵ
-                    elseif exponent == 1
+                    elseif exponent == 1 && exponent_ϵ == zero_ϵ
                         partials_storage_ϵ[ix1] = zero_ϵ
                     else
                         partials_storage_ϵ[ix1] = ForwardDiff.partials(

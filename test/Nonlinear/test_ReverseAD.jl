@@ -1515,6 +1515,74 @@ function test_hessian_ifelse()
     return
 end
 
+function test_hessian_pow_variable_exponent()
+    x, y = MOI.VariableIndex.(1:2)
+    function dense_hessian(expr, p)
+        model = MOI.Nonlinear.Model()
+        MOI.Nonlinear.set_objective(model, expr)
+        evaluator = MOI.Nonlinear.Evaluator(
+            model,
+            MOI.Nonlinear.SparseReverseMode(),
+            [x, y],
+        )
+        MOI.initialize(evaluator, [:Grad, :Hess])
+        structure = MOI.hessian_lagrangian_structure(evaluator)
+        V = zeros(length(structure))
+        MOI.eval_hessian_lagrangian(evaluator, V, p, 1.0, Float64[])
+        H = zeros(2, 2)
+        for ((i, j), v) in zip(structure, V)
+            H[i, j] += v
+            if i != j
+                H[j, i] += v
+            end
+        end
+        v, Hv = [1.0, -2.0], zeros(2)
+        MOI.eval_hessian_lagrangian_product(evaluator, Hv, p, v, 1.0, Float64[])
+        @test isapprox(Hv, H * v)
+        return H
+    end
+    # The Hessian of `x^g(y)` at `x > 0`, where `g`, `dg`, and `d2g` are the
+    # value and the first and second derivatives of `g` at `y`.
+    function pow_hessian(x, g, dg, d2g)
+        H_xy = dg * x^(g - 1) * (1 + g * log(x))
+        H_yy = x^g * (d2g * log(x) + (dg * log(x))^2)
+        return [g*(g-1)*x^(g-2) H_xy; H_xy H_yy]
+    end
+    for y_val in (1.0, 2.0, 3.0)
+        H = dense_hessian(:($x^$y), [1.5, y_val])
+        @test isapprox(H, pow_hessian(1.5, y_val, 1.0, 0.0))
+    end
+    for y_val in (1.0, -1.0)
+        # (x^2)^(y^2) = x^(2 * y^2), and the outer exponent is 1.
+        H = dense_hessian(:(($x^2)^($y^2)), [1.5, y_val])
+        @test isapprox(H, pow_hessian(1.5, 2.0, 4 * y_val, 4.0))
+        # (x^2)^(y^2 + 1) = x^(2 * y^2 + 2), and the outer exponent is 2.
+        H = dense_hessian(:(($x^2)^($y^2 + 1)), [1.5, y_val])
+        @test isapprox(H, pow_hessian(1.5, 4.0, 4 * y_val, 4.0))
+    end
+    return
+end
+
+function test_hessian_pow_constant_exponent_nonpositive_base()
+    x, y = MOI.VariableIndex.(1:2)
+    model = MOI.Nonlinear.Model()
+    MOI.Nonlinear.set_objective(model, :($x^2 * $y + $x^1 * $y^2))
+    evaluator = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) ==
+          [(1, 1), (2, 2), (2, 1)]
+    H = zeros(3)
+    for x_val in (-1.5, 0.0)
+        MOI.eval_hessian_lagrangian(evaluator, H, [x_val, 2.0], 1.0, Float64[])
+        @test isapprox(H, [4.0, 2 * x_val, 2 * x_val + 4.0])
+    end
+    return
+end
+
 end  # module
 
 TestReverseAD.runtests()
