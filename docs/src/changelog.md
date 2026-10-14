@@ -7,6 +7,44 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.55.0 (October 29, 2026)
+
+### Added
+
+ - Added support for [`Semicontinuous`](@ref) and [`Semiinteger`](@ref) in
+   `FileFormats.LP` (#3097)
+ - Common subexpressions (defined as expressions that are the same `objectid`)
+   are not exploited by default in `MOI.Nonlinear.Model`. The code does not
+   detect common subexpressions that are algebraically the same but composed of
+   different objects (#2788)
+ - Added an identity mode to `Utilities.CleverDicts.CleverDict` and use it to
+   improve performance in [`IndexMap`](@ref) (#3117) (#3118)
+
+### Fixed
+
+ - Fixed inference of `Utilities.eval_variables` (#3093)
+ - Fixed type-stability of copying [`ScalarNonlinearFunction`](@ref) (#3095)
+ - Fixed Hessian of `x^y` for `y ∈ {1, 2}` (#3102)
+ - Fixed performance of printing functions with many terms (#3107)
+ - Fixed bridges querying information before `final_touch` and after bound
+   changes (#3108)
+ - Fixed `FileFormats.MPS` to throw an error when the function constant is not
+   zero (#3110)
+ - Fixed the use of a generic type in the distance to `SecondOrderCone` (#3112)
+ - Fixed the inference of `ConstraintFunction` getter in copy (#3114)
+ - Fixed `MOI.AbstractFunctionModification` with
+   `Bridges.Constraint.SetMapBridge` (#3115)
+ - Changed `CleverDicts` to use `map!(f, values(dict))` (#3119)
+ - Fixed copying sets that are not `isbitstype` (#3120)
+ - Fixed [`Utilities.get_fallback`](@ref) to [`DualObjectiveValue`](@ref) to
+   linear programs (#3121)
+ - Added a test of sum with `; init` (#3122)
+
+### Other
+
+ - Added a CI job for JuliaC (#3094)
+ - Fixed a doctest for upcoming Julia nightly (#3096)
+
 ## v1.54.0 (September 22, 2026)
 
 ### Added
