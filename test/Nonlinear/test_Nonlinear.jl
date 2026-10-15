@@ -1462,7 +1462,7 @@ function test_extract_subexpression()
         [3.0],
     )
     @test model.expressions == [expected_sub]
-    @test model.cache[sub] == Nonlinear.ExpressionIndex(1)
+    @test model.cache[sub] == (1, 0)
 
     # Test extraction of an expression without values, and ensure that cached
     # nested expressions are updated to point into the extracted expression.
@@ -1472,13 +1472,38 @@ function test_extract_subexpression()
     repeated = MOI.ScalarNonlinearFunction(:*, Any[outer, outer])
     expr = Nonlinear.parse_expression(model, repeated)
     @test isempty(model.expressions[1].values)
-    @test model.cache[inner] == (model.expressions[1], 2)
-    @test model.cache[outer] == Nonlinear.ExpressionIndex(1)
+    index, node = model.cache[inner]
+    @test model.cache_expressions[index] === model.expressions[1]
+    @test node == 2
+    @test model.cache[outer] == (1, 0)
     @test expr.nodes == [
         Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
         Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
         Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
     ]
+
+    # Reusing an extracted expression does not register another tape.
+    num_cached_expressions = length(model.cache_expressions)
+    reused = Nonlinear.parse_expression(model, outer)
+    @test length(model.cache_expressions) == num_cached_expressions
+    @test reused.nodes == [Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, -1)]
+
+    # A nested expression can still be extracted after moving to another tape.
+    reused = Nonlinear.parse_expression(model, inner)
+    @test model.cache[inner] == (2, 0)
+    @test reused.nodes == [Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, -1)]
+    @test model.expressions[1].nodes[2] ==
+          Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 1)
+    Nonlinear.set_objective(model, repeated)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.eval_objective(evaluator, [0.5]) ≈ (sin(0.5) + 0.5)^2
+    gradient = zeros(1)
+    MOI.eval_objective_gradient(evaluator, gradient, [0.5])
+    @test gradient[1] ≈ 2 * (sin(0.5) + 0.5) * (cos(0.5) + 1)
+    hessian = zeros(length(MOI.hessian_lagrangian_structure(evaluator)))
+    MOI.eval_hessian_lagrangian(evaluator, hessian, [0.5], 1.0, Float64[])
+    @test hessian ≈ [2 * (cos(0.5) + 1)^2 - 2 * (sin(0.5) + 0.5) * sin(0.5)]
 
     # A zero-argument call consists of one node, so extracting it exercises
     # the single-node path, which has no values to delete.

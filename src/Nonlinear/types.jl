@@ -166,11 +166,14 @@ mutable struct Model
     operators::OperatorRegistry
     # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
-    # This is a private field, used to detect common subexpressions.
-    cache::Dict{
-        MOI.ScalarNonlinearFunction,
-        Union{ExpressionIndex,Tuple{Expression,Int}},
-    }
+    # Cache values are (expression index, node index). A zero node index
+    # identifies an extracted subexpression in `expressions`; otherwise the
+    # expression index refers to `cache_expressions`.
+    # We use a separate vector `cache_expressions` instead of storing
+    # a `Tuple{Expression,Int}` in the `Dict` as creating such tuple
+    # would trigger a heap allocation for each expression
+    cache::Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}
+    cache_expressions::Vector{Expression}
     function Model()
         return new(
             nothing,
@@ -179,10 +182,8 @@ mutable struct Model
             Float64[],
             OperatorRegistry(),
             0,
-            Dict{
-                MOI.ScalarNonlinearFunction,
-                Union{ExpressionIndex,Tuple{Expression,Int}},
-            }(),
+            Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}(),
+            Expression[],
         )
     end
 end
