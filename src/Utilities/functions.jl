@@ -473,7 +473,7 @@ function substitute_variables(
         # renaming is allowed in contexts that require a `VariableIndex`.
         return f
     end
-    error("Cannot substitute `$x` as it is bridged into `$f`.")
+    return error("Cannot substitute `$x` as it is bridged into `$f`.")
 end
 
 # This method is used when submitting `HeuristicSolution`.
