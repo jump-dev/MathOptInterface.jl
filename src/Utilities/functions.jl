@@ -361,7 +361,11 @@ end
 function map_indices(
     index_map::F,
     f::MOI.ScalarNonlinearFunction,
+    nl_cache = nothing,
 ) where {F<:Function}
+    if !isnothing(nl_cache) && haskey(nl_cache, f)
+        return nl_cache[f]
+    end
     root = MOI.ScalarNonlinearFunction(f.head, similar(f.args))
     stack = Tuple{MOI.ScalarNonlinearFunction,Int,MOI.ScalarNonlinearFunction}[]
     for (i, fi) in enumerate(f.args)
@@ -374,6 +378,10 @@ function map_indices(
     while !isempty(stack)
         parent, i, arg = pop!(stack)
         if arg isa MOI.ScalarNonlinearFunction
+            if !isnothing(nl_cache) && haskey(nl_cache, arg)
+                parent.args[i] = nl_cache[arg]
+                continue
+            end
             child = MOI.ScalarNonlinearFunction(arg.head, similar(arg.args))
             for (j, argj) in enumerate(arg.args)
                 if argj isa MOI.ScalarNonlinearFunction
@@ -383,9 +391,15 @@ function map_indices(
                 end
             end
             parent.args[i] = child
+            if !isnothing(nl_cache)
+                nl_cache[arg] = child
+            end
         else
             parent.args[i] = MOI.Utilities.map_indices(index_map, arg)
         end
+    end
+    if !isnothing(nl_cache)
+        nl_cache[f] = root
     end
     return root
 end
