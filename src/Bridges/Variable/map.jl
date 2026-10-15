@@ -254,11 +254,7 @@ end
 Return a fresh `Int64` value to use as a `ConstraintIndex{F, S}.value` in
 the outer namespace and advance the internal `(F, S)` counter.
 """
-function next_outer_constraint!(
-    map::Map,
-    ::Type{F},
-    ::Type{S},
-) where {F,S}
+function next_outer_constraint!(map::Map, ::Type{F}, ::Type{S}) where {F,S}
     @assert is_constraint_mapping_active(map, F, S)
     value = map.next_outer_constraint[(F, S)]
     map.next_outer_constraint[(F, S)] = value + 1
@@ -273,15 +269,18 @@ Return `true` if `vi` is (or was) a variable bridged by `map`. Unlike
 outer index is never reused), matching the role of the former
 `vi.value < 0` test.
 """
-is_bridged_variable(map::Map, vi::MOI.VariableIndex) =
-    haskey(map.variable_to_slot, vi.value)
+function is_bridged_variable(map::Map, vi::MOI.VariableIndex)
+    return haskey(map.variable_to_slot, vi.value)
+end
 
 # Internal `slot` of the bridged variable `vi`, i.e. the index into the dense
 # per-bridge `Vector`s. Errors if `vi` is not a bridged variable.
 _slot(map::Map, vi::MOI.VariableIndex) = map.variable_to_slot[vi.value]
 
 # Outer `VariableIndex` stored at `slot`.
-_variable(map::Map, slot::Integer) = MOI.VariableIndex(map.slot_to_variable[slot])
+function _variable(map::Map, slot::Integer)
+    return MOI.VariableIndex(map.slot_to_variable[slot])
+end
 
 function bridge_index(map::Map, vi::MOI.VariableIndex)
     slot = _slot(map, vi)

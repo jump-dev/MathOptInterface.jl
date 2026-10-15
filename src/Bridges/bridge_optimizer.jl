@@ -484,10 +484,7 @@ translation is in effect at this layer:
 This is the canonical "if variable bridges are used, use the index map;
 else return the index unchanged" helper.
 """
-function outer_to_inner(
-    b::AbstractBridgeOptimizer,
-    vi::MOI.VariableIndex,
-)
+function outer_to_inner(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     map = Variable.bridges(b)
     if Variable.has_bridges(map)
         return map.outer_to_inner[vi]
@@ -525,10 +522,7 @@ Inverse of [`outer_to_inner`](@ref): translate `idx` from `b.model`'s
 namespace to `b`'s user-facing namespace. Returns `idx` unchanged when no
 translation is in effect at this layer.
 """
-function inner_to_outer(
-    b::AbstractBridgeOptimizer,
-    vi::MOI.VariableIndex,
-)
+function inner_to_outer(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     map = Variable.bridges(b)
     if Variable.has_bridges(map)
         return map.inner_to_outer[vi]
@@ -1104,8 +1098,7 @@ function _remove_inner_constraint_mapping!(
     inner_ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       Variable.is_constraint_mapping_active(map, F, S)
+    if map isa Variable.Map && Variable.is_constraint_mapping_active(map, F, S)
         delete!(map.outer_to_inner, outer_ci)
         delete!(map.inner_to_outer, inner_ci)
     end
@@ -1139,8 +1132,7 @@ function MOI.delete(
         else
             delete!(Constraint.bridges(b)::Constraint.Map, ci)
         end
-        if F === MOI.VariableIndex &&
-           is_bridged(b, MOI.VariableIndex(ci.value))
+        if F === MOI.VariableIndex && is_bridged(b, MOI.VariableIndex(ci.value))
             # Constraint on a bridged variable so we need to remove the flag
             # if it is a bound
             MOI.delete(Variable.bridges(b), ci)
@@ -1337,7 +1329,9 @@ end
 # variable may share a value with an outer user variable; under the old
 # negative indexing this was a no-op because the namespaces were
 # value-disjoint.)
-_remove_variable_bridged(list, bridge, attr) = _remove_bridged(list, bridge, attr)
+function _remove_variable_bridged(list, bridge, attr)
+    return _remove_bridged(list, bridge, attr)
+end
 
 _remove_variable_bridged(list, bridge, ::MOI.ListOfVariableIndices) = nothing
 
@@ -2024,10 +2018,8 @@ function MOI.get(
     else
         # This constraint is not bridged, but it might contain variables that
         # are.
-        func = _from_inner_value(
-            b,
-            MOI.get(b.model, attr, outer_to_inner(b, ci)),
-        )
+        func =
+            _from_inner_value(b, MOI.get(b.model, attr, outer_to_inner(b, ci)))
         return unbridged_constraint_function(b, func)
     end
 end
