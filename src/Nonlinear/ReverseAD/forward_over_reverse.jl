@@ -43,7 +43,7 @@ function _eval_hessian(
         return 0
     end
     chunk = min(size(ex.seed_matrix, 2), d.max_chunk)
-    Coloring.prepare_seed_matrix!(ex.seed_matrix, ex.rinfo)
+    _prepare_seed_matrix!(ex.seed_matrix, ex.rinfo)
     # Compute hessian-vector products
     num_products = size(ex.seed_matrix, 2) # number of hessian-vector products
     num_chunks = div(num_products, chunk)
@@ -66,11 +66,11 @@ function _eval_hessian(
     end
     # TODO(odow): consider reverting to a view.
     output_slice = _UnsafeVectorView(nzcount, length(ex.hess_I), pointer(H))
-    Coloring.recover_from_matmat!(
+    _recover_from_matmat!(
+        ex.hess_colptr,
         output_slice,
         ex.seed_matrix,
         ex.rinfo,
-        d.output_ϵ,
     )
     for i in 1:length(output_slice)
         output_slice[i] *= scale
