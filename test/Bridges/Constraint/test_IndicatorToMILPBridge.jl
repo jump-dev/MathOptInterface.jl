@@ -302,6 +302,35 @@ function test_delete_before_final_touch()
     return
 end
 
+function test_list_before_final_touch()
+    F = MOI.ScalarAffineFunction{Float64}
+    for set in (MOI.LessThan(1.0), MOI.GreaterThan(1.0), MOI.EqualTo(1.0))
+        S = typeof(set)
+        model = MOI.Bridges.Constraint.IndicatorToMILP{Float64}(
+            MOI.Utilities.Model{Float64}(),
+        )
+        x = MOI.add_variables(model, 2)
+        MOI.add_constraint(model, x[1], MOI.ZeroOne())
+        MOI.add_constraint(model, x[2], MOI.Interval(-10.0, 10.0))
+        c = MOI.add_constraint(model, 1.0 * x[2], set)
+        MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables(x),
+            MOI.Indicator{MOI.ACTIVATE_ON_ONE}(set),
+        )
+        @test MOI.get(model, MOI.NumberOfVariables()) == 2
+        @test MOI.get(model, MOI.ListOfVariableIndices()) == x
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+        @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+        MOI.Bridges.final_touch(model)
+        @test MOI.get(model, MOI.NumberOfVariables()) == 2
+        @test MOI.get(model, MOI.ListOfVariableIndices()) == x
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+        @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+    end
+    return
+end
+
 function test_runtests_error_not_binary()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)

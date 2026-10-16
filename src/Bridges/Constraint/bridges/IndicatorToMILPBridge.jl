@@ -138,9 +138,14 @@ function MOI.delete(
     return
 end
 
-MOI.get(bridge::IndicatorToMILPBridge, ::MOI.NumberOfVariables)::Int64 = 1
+function MOI.get(bridge::IndicatorToMILPBridge, ::MOI.NumberOfVariables)::Int64
+    return bridge.slack === nothing ? 0 : 1
+end
 
 function MOI.get(bridge::IndicatorToMILPBridge, ::MOI.ListOfVariableIndices)
+    if bridge.slack === nothing
+        return MOI.VariableIndex[]
+    end
     return [bridge.slack::MOI.VariableIndex]
 end
 
@@ -148,13 +153,16 @@ function MOI.get(
     bridge::IndicatorToMILPBridge{T,F,A,S},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},S},
 )::Int64 where {T,F,A,S<:Union{MOI.GreaterThan,MOI.EqualTo}}
-    return 1
+    return bridge.slack === nothing ? 0 : 1
 end
 
 function MOI.get(
     bridge::IndicatorToMILPBridge{T,F,A,S},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},S},
 ) where {T,F,A,S}
+    if bridge.slack === nothing
+        return MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},S}[]
+    end
     return [bridge.constraint]
 end
 
@@ -176,6 +184,9 @@ function MOI.get(
     bridge::IndicatorToMILPBridge{T,F,A,MOI.LessThan{T}},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
 )::Int64 where {T,F,A}
+    if bridge.slack === nothing
+        return 0
+    end
     return 1 + length(bridge.slack_bounds)
 end
 
@@ -183,6 +194,9 @@ function MOI.get(
     bridge::IndicatorToMILPBridge{T,F,A,MOI.LessThan{T}},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.LessThan{T}},
 ) where {T,F,A}
+    if bridge.slack === nothing
+        return MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.LessThan{T}}[]
+    end
     return vcat(bridge.constraint, bridge.slack_bounds)
 end
 
