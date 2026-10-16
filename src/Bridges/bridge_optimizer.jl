@@ -487,7 +487,7 @@ else return the index unchanged" helper.
 function outer_to_inner(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     map = Variable.bridges(b)
     if Variable.has_bridges(map)
-        return map.outer_to_inner[vi]
+        return Variable.outer_to_inner(map, vi)
     end
     return vi
 end
@@ -499,7 +499,7 @@ function outer_to_inner(
     map = Variable.bridges(b)
     if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
-        return map.outer_to_inner[ci]
+        return Variable.outer_to_inner(map, ci)
     end
     return ci
 end
@@ -525,7 +525,7 @@ translation is in effect at this layer.
 function inner_to_outer(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     map = Variable.bridges(b)
     if Variable.has_bridges(map)
-        return map.inner_to_outer[vi]
+        return Variable.inner_to_outer(map, vi)
     end
     return vi
 end
@@ -537,7 +537,7 @@ function inner_to_outer(
     map = Variable.bridges(b)
     if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
-        return map.inner_to_outer[ci]
+        return Variable.inner_to_outer(map, ci)
     end
     return ci
 end
@@ -589,15 +589,12 @@ end
 
 function (f::_TotalInnerToOuter)(vi::MOI.VariableIndex)
     map = Variable.bridges(f.b)::Variable.Map
-    return get(map.inner_to_outer.var_map, vi, vi)
+    return Variable.inner_to_outer(map, vi, vi)
 end
 
 function (f::_TotalInnerToOuter)(ci::MOI.ConstraintIndex{F,S}) where {F,S}
     map = Variable.bridges(f.b)::Variable.Map
-    if haskey(map.inner_to_outer.con_map, ci)
-        return map.inner_to_outer.con_map[ci]
-    end
-    return ci
+    return Variable.inner_to_outer(map, ci, ci)
 end
 
 function (f::_TotalInnerToOuter)(
@@ -710,6 +707,11 @@ function _record_inner_constraint!(
         map.inner_to_outer[inner_ci] = outer_ci
         return outer_ci
     end
+    # Only `VectorOfVariables` constraints can be force-bridged, so the
+    # constraint mapping is never activated for other functions.
+    if F == MOI.VectorOfVariables && map isa Variable.Map
+        Variable.record_identity!(map, inner_ci)
+    end
     return inner_ci
 end
 
@@ -724,14 +726,11 @@ function MOI.is_valid(b::AbstractBridgeOptimizer, vi::MOI.VariableIndex)
     if is_bridged(b, vi)
         return haskey(Variable.bridges(b), vi)
     end
-    map = Variable.bridges(b)
-    if Variable.has_bridges(map)
-        # Outer/inner translation is in effect. Outer `vi` must be in
-        # `outer_to_inner` to be valid; the entry then points to the inner
-        # index to forward.
-        haskey(map.outer_to_inner, vi) || return false
+    inner_vi = _inner_index_or_nothing(b, vi)
+    if inner_vi === nothing
+        return false
     end
-    return MOI.is_valid(b.model, outer_to_inner(b, vi))
+    return MOI.is_valid(b.model, inner_vi)
 end
 
 function MOI.is_valid(
@@ -793,7 +792,7 @@ function _inner_index_or_nothing(
 )
     map = Variable.bridges(b)
     if Variable.has_bridges(map)
-        return get(map.outer_to_inner.var_map, vi, nothing)
+        return Variable.outer_to_inner(map, vi, nothing)
     end
     return vi
 end
@@ -805,10 +804,7 @@ function _inner_index_or_nothing(
     map = Variable.bridges(b)
     if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
-        if haskey(map.outer_to_inner.con_map, ci)
-            return map.outer_to_inner.con_map[ci]
-        end
-        return nothing
+        return Variable.outer_to_inner(map, ci, nothing)
     end
     return ci
 end
@@ -1231,7 +1227,7 @@ function _get_all_including_bridged(
         # would produce a wrong (duplicate) match.
         map_b = Variable.bridges(b)
         key = if Variable.has_bridges(map_b)
-            get(map_b.inner_to_outer.var_map, inner_variable, inner_variable)
+            Variable.inner_to_outer(map_b, inner_variable, inner_variable)
         else
             inner_variable
         end
@@ -2400,8 +2396,9 @@ function _outer_variable_for_name_lookup(
     if !Variable.has_bridges(map)
         return vi
     end
-    if haskey(map.inner_to_outer.var_map, vi)
-        return map.inner_to_outer.var_map[vi]
+    outer_vi = Variable.inner_to_outer(map, vi, nothing)
+    if outer_vi !== nothing
+        return outer_vi
     end
     for (outer_vi, bridge_) in map
         variables = MOI.get(bridge_, MOI.ListOfVariableIndices())
@@ -2543,7 +2540,7 @@ function _is_available_constraint_index(
     map = Variable.bridges(b)
     if map isa Variable.Map &&
        Variable.is_constraint_mapping_active(map, F, S) &&
-       haskey(map.outer_to_inner.con_map, ci)
+       Variable.outer_to_inner(map, ci, nothing) !== nothing
         return false
     end
     return true
@@ -2675,11 +2672,11 @@ function MOI.add_constraint(
             if any(vi -> is_bridged(b, vi), f.variables)
                 # This is the first (or another) force-bridged `F`-in-`S`:
                 # from now on the outer and inner `CI{F,S}` namespaces are
-                # distinct, so materialize identity entries for all inner
-                # constraints of this type before they can drift apart.
+                # distinct, so the outer indices of new constraints of this
+                # type are allocated after the existing inner ones.
                 v_map = Variable.bridges(b)
                 if v_map isa Variable.Map
-                    Variable.activate_constraint_mapping!(v_map, b.model, F, S)
+                    Variable.activate_constraint_mapping!(v_map, F, S)
                 end
                 BridgeType = Constraint.concrete_bridge_type(
                     constraint_vector_functionize_bridge(b),
@@ -2920,7 +2917,8 @@ end
 If `b` uses variable bridges (`Variable.has_bridges`), allocate a fresh
 outer `VariableIndex` value and record the bidirectional mapping.
 Otherwise (identity mode, or `b` does not own a `Variable.Map` at all),
-return `inner_vi` unchanged.
+return `inner_vi` unchanged, recording it with `Variable.record_identity!`
+if `b` owns a `Variable.Map`.
 """
 function _record_inner_variable!(
     b::AbstractBridgeOptimizer,
@@ -2928,6 +2926,9 @@ function _record_inner_variable!(
 )
     map = Variable.bridges(b)
     if !Variable.has_bridges(map)
+        if map isa Variable.Map
+            Variable.record_identity!(map, inner_vi)
+        end
         return inner_vi
     end
     outer_vi = MOI.VariableIndex(Variable.next_outer_variable!(map))
@@ -2997,7 +2998,7 @@ function MOI.add_constrained_variables(
         # before allocating the new bridged variables. This ensures every
         # variable visible to the user from now on lives in the outer
         # namespace.
-        Variable.activate_variable_mapping!(v_map, b.model)
+        Variable.activate_variable_mapping!(v_map)
         # The constrained-variable `CI{VectorOfVariables, S}` shares the outer
         # `(VOV, S)` namespace with inner passthrough constraints and force-
         # bridged constraints. Activate the constraint mapping for `(VOV, S)`
@@ -3006,7 +3007,6 @@ function MOI.add_constrained_variables(
         # already taken by `Constraint.bridges` or by an inner constraint.
         Variable.activate_constraint_mapping!(
             v_map,
-            b.model,
             MOI.VectorOfVariables,
             typeof(set),
         )
@@ -3054,10 +3054,7 @@ function MOI.add_constrained_variable(
         BridgeType = Variable.concrete_bridge_type(b, typeof(set))
         # Activate the outer/inner variable translation at this layer before
         # allocating the new bridged variable.
-        Variable.activate_variable_mapping!(
-            Variable.bridges(b)::Variable.Map,
-            b.model,
-        )
+        Variable.activate_variable_mapping!(Variable.bridges(b)::Variable.Map)
         return Variable.add_key_for_bridge(
             Variable.bridges(b)::Variable.Map,
             () -> Variable.bridge_constrained_variable(
