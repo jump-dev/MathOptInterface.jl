@@ -142,8 +142,9 @@ function _recover_from_matmat!(
     R::AbstractMatrix{T},
     result::ColoringResult{<:SMC.StarSetColoringResult},
 ) where {T}
-    # SMC.decompress_csc! only supports substitution decompression. Mirror
-    # SMC.decompress! for a lower-triangular CSC matrix without constructing it.
+    # `SMC.decompress_csc!` only supports substitution decompression. Mirror
+    # `SMC.decompress!` for a lower-triangular CSC matrix without constructing
+    # it.
     S = SMC.sparsity_pattern(result.result)
     rows = SparseArrays.rowvals(S)
     compressed_indices = result.result.compressed_indices
