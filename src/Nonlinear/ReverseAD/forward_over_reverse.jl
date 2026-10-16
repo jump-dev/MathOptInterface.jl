@@ -38,8 +38,7 @@ function _eval_hessian(
     scale::Float64,
     nzcount::Int,
 )::Int
-    if ex.linearity == LINEAR
-        @assert length(ex.hess_I) == 0
+    if isempty(ex.hess_I)
         return 0
     end
     chunk = min(size(ex.seed_matrix, 2), d.max_chunk)

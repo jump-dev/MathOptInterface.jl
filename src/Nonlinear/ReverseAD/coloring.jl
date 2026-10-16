@@ -31,7 +31,8 @@ diagonal. Diagonal entries absent from `edgelist` are not added to the pattern.
 
 Returns `(colptr, I, J, result)` where `colptr` contains the local lower-
 triangular CSC column pointers and `I`, `J` give the corresponding entries
-in global variable indices. `result` wraps an SMC coloring result.
+in global variable indices. `result` wraps an SMC coloring result, or is
+`nothing` if the pattern is empty.
 """
 function _hessian_color_preprocess(
     edgelist,
@@ -49,6 +50,10 @@ function _hessian_color_preprocess(
     end
     local_indices = sort!(collect(seen_idx))
     empty!(seen_idx)
+    # SMC's star coloring does not support an empty pattern.
+    if isempty(local_indices)
+        return [1], Int[], Int[], nothing
+    end
 
     global_to_local_idx = seen_idx.nzidx # steal for storage
     for k in eachindex(local_indices)
@@ -84,6 +89,10 @@ function _seed_matrix(result::ColoringResult)
     n = length(result.local_indices)
     ncolors = SMC.ncolors(result.result)
     return Matrix{Float64}(undef, n, ncolors)
+end
+
+function _seed_matrix(::Nothing)
+    return Matrix{Float64}(undef, 0, 0)
 end
 
 """
@@ -123,5 +132,28 @@ function _recover_from_matmat!(
     result::ColoringResult,
 ) where {T}
     SMC.decompress_csc!(V, colptr, R, result.result, :L)
+    return
+end
+
+function _recover_from_matmat!(
+    colptr::AbstractVector,
+    V::AbstractVector{T},
+    R::AbstractMatrix{T},
+    result::ColoringResult{<:SMC.StarSetColoringResult},
+) where {T}
+    # SMC.decompress_csc! only supports substitution decompression. Mirror
+    # SMC.decompress! for a lower-triangular CSC matrix without constructing it.
+    S = SMC.sparsity_pattern(result.result)
+    rows = SparseArrays.rowvals(S)
+    compressed_indices = result.result.compressed_indices
+    l = 0
+    for j in axes(S, 2)
+        for k in SparseArrays.nzrange(S, j)
+            if rows[k] >= j
+                l += 1
+                V[l] = R[compressed_indices[k]]
+            end
+        end
+    end
     return
 end

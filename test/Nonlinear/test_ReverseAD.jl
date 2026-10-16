@@ -481,18 +481,35 @@ end
 function test_hessian_structurally_zero_diagonal()
     variables = MOI.VariableIndex.(1:4)
     x, y = variables[2], variables[4]
-    for (expr, structure) in
-        ((:($x * $y), [(4, 2)]), (:($x * $y + $y^3), [(4, 2), (4, 4)]))
+    for decompression in (:direct, :substitution),
+        (expr, structure) in (
+            (:($x * $y), [(4, 2)]),
+            (:($x * $y + $y^3), [(4, 2), (4, 4)]),
+            (:($x + $y), Tuple{Int,Int}[]),
+            (:(3.0), Tuple{Int,Int}[]),
+            (:(ifelse($x < 0, $x, $y)), Tuple{Int,Int}[]),
+        )
+
         model = Nonlinear.Model()
         Nonlinear.set_objective(model, expr)
-        evaluator =
-            Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), variables)
+        algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(; decompression)
+        evaluator = Nonlinear.Evaluator(
+            model,
+            Nonlinear.SparseReverseMode(algorithm),
+            variables,
+        )
         MOI.initialize(evaluator, [:Hess])
         @test MOI.hessian_objective_structure(evaluator) == structure
         @test MOI.hessian_lagrangian_structure(evaluator) == structure
         for y_value in (0.0, 2.0)
             values = [0.0, 3.0, 0.0, y_value]
-            expected = length(structure) == 1 ? [1.0] : [1.0, 6 * y_value]
+            expected = if isempty(structure)
+                Float64[]
+            elseif length(structure) == 1
+                [1.0]
+            else
+                [1.0, 6 * y_value]
+            end
             H = fill(NaN, length(structure))
             MOI.eval_hessian_objective(evaluator, H, values)
             @test H == expected
@@ -504,11 +521,11 @@ function test_hessian_structurally_zero_diagonal()
 end
 
 function test_coloring_lower_triangular_recovery()
-    for order in (ReverseAD.SMC.NaturalOrder(), ReverseAD.SMC.LargestFirst())
-        algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(
-            order;
-            decompression = :substitution,
-        )
+    for (T, decompression) in
+        ((Float32, :direct), (Float64, :direct), (Float64, :substitution)),
+        order in (ReverseAD.SMC.NaturalOrder(), ReverseAD.SMC.LargestFirst())
+
+        algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(order; decompression)
         for edges in (
             Set([(2, 4), (4, 7), (7, 9)]),
             Set([(4, 2), (2, 7), (9, 2), (7, 7)]),
@@ -517,7 +534,7 @@ function test_coloring_lower_triangular_recovery()
             Set([(2, 2), (9, 9)]),
             Set{Tuple{Int,Int}}(),
         )
-            H = zeros(9, 9)
+            H = zeros(T, 9, 9)
             for (i, j) in edges
                 H[i, j] = H[j, i] = 10 * min(i, j) + max(i, j)
             end
@@ -528,11 +545,17 @@ function test_coloring_lower_triangular_recovery()
                 by = reverse,
             )
             @test collect(zip(I, J)) == expected_structure
-            R = ReverseAD._seed_matrix(result)
+            R = Matrix{T}(ReverseAD._seed_matrix(result))
+            if isempty(expected_structure)
+                @test result === nothing
+                @test colptr == [1]
+                @test size(R) == (0, 0)
+                continue
+            end
             ReverseAD._prepare_seed_matrix!(R, result)
             local_indices = result.local_indices
             compressed = H[local_indices, local_indices] * R
-            V = fill(NaN, length(I))
+            V = fill(T(NaN), length(I))
             ReverseAD._recover_from_matmat!(colptr, V, compressed, result)
             @test V == [H[i, j] for (i, j) in expected_structure]
             @test 0 == @allocated ReverseAD._recover_from_matmat!(
@@ -542,6 +565,38 @@ function test_coloring_lower_triangular_recovery()
                 result,
             )
         end
+    end
+    return
+end
+
+function test_hessian_star_coloring()
+    x, y = MOI.VariableIndex.(1:2)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :((1 - $x)^2 + 100 * ($y - $x^2)^2))
+    Nonlinear.add_constraint(model, :($x * $y), MOI.LessThan(2.0))
+    Nonlinear.add_constraint(model, :($y^2), MOI.LessThan(2.0))
+    algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(; decompression = :direct)
+    evaluator = Nonlinear.Evaluator(
+        model,
+        Nonlinear.SparseReverseMode(algorithm),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) ==
+          [(1, 1), (2, 1), (2, 2), (2, 1), (2, 2)]
+    H = zeros(5)
+    μ = [2.0, 3.0]
+    for xv in ([1.0, 1.0], [-1.2, 1.0])
+        MOI.eval_hessian_lagrangian(evaluator, H, xv, 1.5, μ)
+        @test H ≈ [
+            1.5 * (2 + 1200 * xv[1]^2 - 400 * xv[2]),
+            1.5 * (-400 * xv[1]),
+            300.0,
+            2.0,
+            6.0,
+        ]
+        @test 0 ==
+              @allocated MOI.eval_hessian_lagrangian(evaluator, H, xv, 1.5, μ)
     end
     return
 end
