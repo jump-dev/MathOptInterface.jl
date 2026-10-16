@@ -153,6 +153,10 @@ function MOI.get(
     return convert(F, zero(MOI.ScalarAffineFunction{T}))
 end
 
+function MOI.get(o::ObjectiveContainer, ::MOI.ObjectiveFunction{F}) where {F}
+    return copy(MOI.get(o, UnsafeObjectiveFunction{F}()))
+end
+
 function _empty_keeping_sense(o::ObjectiveContainer)
     sense, is_sense_set = o.sense, o.is_sense_set
     MOI.empty!(o)
