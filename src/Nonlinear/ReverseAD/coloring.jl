@@ -51,6 +51,7 @@ function _hessian_color_preprocess(
     local_indices = sort!(collect(seen_idx))
     empty!(seen_idx)
     # SMC's star coloring does not support an empty pattern.
+    # TODO: remove when https://github.com/JuliaDiff/SparseMatrixColorings.jl/pull/352 lands
     if isempty(local_indices)
         return [1], Int[], Int[], nothing
     end
