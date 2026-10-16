@@ -178,6 +178,139 @@ function test_unique_names()
     return
 end
 
+function test_unique_names_replacements()
+    replace_spaces = name -> replace(name, " " => "_")
+    replacements = (replace_spaces, uppercase)
+    @test (@inferred MOI.FileFormats._replace("a b", ())) == "a b"
+    @test (@inferred MOI.FileFormats._replace("a b", replacements)) == "A_B"
+    for functions in (replacements, Function[replacements...])
+        model = MOI.Utilities.Model{Float64}()
+        x = MOI.add_variables(model, 3)
+        MOI.set.(model, MOI.VariableName(), x, ["x a", "x_a", "X_A_1"])
+        constraints = MOI.add_constraint.(model, 1.0 .* x, MOI.EqualTo(1.0))
+        MOI.set.(
+            model,
+            MOI.ConstraintName(),
+            constraints,
+            ["c a", "c_a", "C_A_1"],
+        )
+        MOI.FileFormats.create_unique_names(model; replacements = functions)
+        @test MOI.get.(model, MOI.VariableName(), x) ==
+              ["X_A", "X_A_2", "X_A_1"]
+        @test MOI.get.(model, MOI.ConstraintName(), constraints) ==
+              ["C_A", "C_A_2", "C_A_1"]
+    end
+    return
+end
+
+struct GenericNamingModel{M<:MOI.ModelLike} <: MOI.ModelLike
+    model::M
+end
+
+function MOI.get(model::GenericNamingModel, attr::MOI.AbstractModelAttribute)
+    return MOI.get(model.model, attr)
+end
+
+function MOI.get(
+    model::GenericNamingModel,
+    attr::MOI.ConstraintName,
+    index::MOI.ConstraintIndex,
+)
+    return MOI.get(model.model, attr, index)
+end
+
+function MOI.set(
+    model::GenericNamingModel,
+    attr::MOI.ConstraintName,
+    index::MOI.ConstraintIndex,
+    name::String,
+)
+    return MOI.set(model.model, attr, index, name)
+end
+
+struct NamingFallbackSet <: MOI.AbstractScalarSet end
+
+Base.copy(set::NamingFallbackSet) = set
+
+function test_constraint_naming_typed_traversal()
+    for model in (MOI.Utilities.Model{Float64}(), MOI.FileFormats.MOF.Model())
+        x = MOI.add_variable(model)
+        bound = MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+        MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+        MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0))
+        MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(1.0))
+        MOI.add_constraint(model, 1.0 * x * x, MOI.LessThan(1.0))
+        deleted = MOI.add_constraint(model, 1.0 * x, MOI.Interval(0.0, 1.0))
+        MOI.delete(model, deleted)
+        if model isa MOI.Utilities.UniversalFallback
+            # This name is stored on the outer model, after the inner types.
+            MOI.add_constraint(model, 1.0 * x, NamingFallbackSet())
+        end
+        constraints = [
+            index for
+            (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent()) if
+            F != MOI.VariableIndex for
+            index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+        ]
+        original_names = fill("c", length(constraints))
+        original_names[end-1] = ""
+        original_names[end] = "c_1"
+        MOI.set.(model, MOI.ConstraintName(), constraints, original_names)
+        MOI.FileFormats.create_unique_constraint_names(model, false, ())
+        typed_names = MOI.get.(model, MOI.ConstraintName(), constraints)
+        @test typed_names[1:2] == ["c", "c_2"]
+        @test typed_names[end] == "c_1"
+        @test all(!isempty, typed_names)
+        @test allunique(typed_names)
+        # Force the generic ModelLike traversal over exactly the same storage.
+        generic = GenericNamingModel(model)
+        MOI.set.(model, MOI.ConstraintName(), constraints, original_names)
+        MOI.FileFormats.create_unique_constraint_names(generic, false, ())
+        @test MOI.get.(model, MOI.ConstraintName(), constraints) == typed_names
+        MOI.FileFormats.create_generic_constraint_names(model)
+        @test MOI.get.(model, MOI.ConstraintName(), constraints) ==
+              ["R$i" for i in eachindex(constraints)]
+        MOI.set.(model, MOI.ConstraintName(), constraints, original_names)
+        MOI.FileFormats.create_generic_constraint_names(generic)
+        @test MOI.get.(model, MOI.ConstraintName(), constraints) ==
+              ["R$i" for i in eachindex(constraints)]
+        @test MOI.is_valid(model, bound)
+        @test !MOI.is_valid(model, deleted)
+    end
+    return
+end
+
+function test_constraint_type_traversal_allocations()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+    MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0))
+    deleted = MOI.add_constraint(model, 1.0 * x, MOI.Interval(0.0, 1.0))
+    MOI.delete(model, deleted)
+    count = Ref(0)
+    visit = function (F, S)
+        count[] += 1
+        return
+    end
+    @test (@inferred MOI.FileFormats._for_each_constraint_type(
+        visit,
+        model,
+    )) === nothing
+    @test count[] == 2
+    count[] = 0
+    @test (@allocated MOI.FileFormats._for_each_constraint_type(
+        visit,
+        model,
+    )) == 0
+    @test count[] == 2
+    MOI.empty!(model)
+    count[] = 0
+    MOI.FileFormats._for_each_constraint_type(visit, model)
+    @test count[] == 0
+    return
+end
+
 end
 
 TestFileFormats.runtests()
