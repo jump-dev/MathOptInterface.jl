@@ -14,19 +14,23 @@ Mapping between bridged variables and the bridge that bridged the variable.
 The user-facing ("outer") `VariableIndex` and `ConstraintIndex` namespaces are
 independent from the ones used by `b.model` ("inner"). When no variable bridge
 has ever been added to this `Map` the two namespaces coincide (identity
-mapping) and no translation is performed. As soon as the first variable bridge
-is added, [`activate_variable_mapping!`](@ref) is called: every existing
-inner variable is copied into [`outer_to_inner`](@ref) and
-[`inner_to_outer`](@ref) as an identity entry, and from that point on the
-two namespaces drift apart: bridged variables get a fresh outer index with no
-inner counterpart, non-bridged variables get a fresh outer index recorded
-alongside their inner index.
+mapping) and no translation is performed, but the largest inner index seen so
+far is recorded (see [`record_identity!`](@ref)). As soon as the first
+variable bridge is added, [`activate_variable_mapping!`](@ref) is called: the
+indices up to that largest one keep being translated by the identity (see
+[`is_identity_index`](@ref)), and from that point on the two namespaces drift
+apart: bridged variables get a fresh outer index with no inner counterpart,
+non-bridged variables get a fresh outer index recorded alongside their inner
+index in `outer_to_inner` and `inner_to_outer`.
 
 Constraint indices follow the same rule per `(F, S)` pair. The first force-
 bridged `CI{VariableIndex, S}` or `CI{VectorOfVariables, S}` triggers
-[`activate_constraint_mapping!`](@ref) for that `(F, S)`: all existing inner
-`CI{F, S}` are copied in as identity entries; afterwards the outer and inner
-`CI{F, S}` namespaces are independent.
+[`activate_constraint_mapping!`](@ref) for that `(F, S)`: the existing inner
+`CI{F, S}` keep being translated by the identity; afterwards the outer and
+inner `CI{F, S}` namespaces are independent.
+
+As the inner model is never queried for its existing indices, it must be
+empty when wrapped by the bridge optimizer and only be modified through it.
 
 ## Internal slot indexing
 
@@ -78,17 +82,22 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # `slot` -> outer `VariableIndex.value` (inverse of `variable_to_slot`,
     # parallel to `bridges`).
     slot_to_variable::Vector{Int64}
-    # Outer (user-facing) -> inner (`b.model`) translation. Empty until the
-    # first variable bridge is added, at which point existing inner variables
-    # are added as identity. After activation, every variable in the outer
-    # namespace has an entry here (bridged ones map to the sentinel `0`).
+    # Outer (user-facing) -> inner (`b.model`) translation of the
+    # non-bridged indices allocated after the activation of the mapping.
+    # The indices allocated before are translated by the identity and have no
+    # entry here, see `is_identity_index`.
     outer_to_inner::MOI.Utilities.IndexMap
-    # Reverse of `outer_to_inner` for the entries that have an inner
-    # counterpart (i.e., bridged outer-only entries are absent).
+    # Reverse of `outer_to_inner`.
     inner_to_outer::MOI.Utilities.IndexMap
-    # Next available outer `VariableIndex.value`. Defaults to `1`;
-    # `activate_variable_mapping!` resets it above the inner model's existing
-    # variables when the first variable bridge is added.
+    # Largest inner `VariableIndex.value` allocated before the first variable
+    # bridge was added. It is updated by `record_identity!` until then.
+    last_identity_variable::Int64
+    # Same as `last_identity_variable` but for `ConstraintIndex{F, S}`, until
+    # the constraint mapping is activated for `(F, S)`.
+    last_identity_constraint::Dict{Tuple{DataType,DataType},Int64}
+    # Next available outer `VariableIndex.value`.
+    # `activate_variable_mapping!` sets it after `last_identity_variable`
+    # when the first variable bridge is added.
     next_outer_variable::Int64
     # Per-`(F, S)` next available outer `ConstraintIndex{F, S}.value`. A
     # missing entry means that `(F, S)` is in identity mode; presence means
@@ -113,6 +122,8 @@ function Map()
         Int64[],
         MOI.Utilities.IndexMap(),
         MOI.Utilities.IndexMap(),
+        0,
+        Dict{Tuple{DataType,DataType},Int64}(),
         1,
         Dict{Tuple{DataType,DataType},Int64}(),
     )
@@ -143,6 +154,8 @@ function Base.empty!(map::Map)
     empty!(map.slot_to_variable)
     map.outer_to_inner = MOI.Utilities.IndexMap()
     map.inner_to_outer = MOI.Utilities.IndexMap()
+    map.last_identity_variable = 0
+    empty!(map.last_identity_constraint)
     map.next_outer_variable = 1
     empty!(map.next_outer_constraint)
     return map
@@ -172,66 +185,111 @@ function is_constraint_mapping_active(
 end
 
 """
-    activate_variable_mapping!(map::Map, model::MOI.ModelLike)
+    record_identity!(map::Map, idx::MOI.Index)
 
-Materialize identity mappings for every variable currently in `model`, so
-that subsequent outer-only or inner-only allocations can extend the two
-namespaces independently. No-op if the mapping is already active.
-
-`model` is the inner model that this `Map` translates against (typically
-`b.model` of the enclosing `AbstractBridgeOptimizer`).
+Record that the inner model allocated `idx` while its type is translated by
+the identity, so that [`activate_variable_mapping!`](@ref) and
+[`activate_constraint_mapping!`](@ref) can later allocate the outer indices
+after it.
 """
-function activate_variable_mapping!(map::Map, model::MOI.ModelLike)
-    # `has_bridges` flips to `true` only inside `add_key_for_bridge` (which
-    # pushes to `map.info`), and that always runs *after* this function in
-    # `add_constrained_variable`. So on the first variable bridge this is
-    # still `false` and we populate; any nested re-entry (a variable bridge
-    # that itself adds constrained variables) sees `true` and is a no-op.
-    if has_bridges(map)
-        return
-    end
-    max_value = Int64(0)
-    for inner_vi in MOI.get(model, MOI.ListOfVariableIndices())
-        map.outer_to_inner[inner_vi] = inner_vi
-        map.inner_to_outer[inner_vi] = inner_vi
-        if inner_vi.value > max_value
-            max_value = inner_vi.value
-        end
-    end
-    map.next_outer_variable = max_value + 1
+function record_identity!(map::Map, vi::MOI.VariableIndex)
+    map.last_identity_variable = max(map.last_identity_variable, vi.value)
+    return
+end
+
+function record_identity!(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+    last = get(map.last_identity_constraint, (F, S), Int64(0))
+    map.last_identity_constraint[(F, S)] = max(last, ci.value)
     return
 end
 
 """
-    activate_constraint_mapping!(
-        map::Map,
-        model::MOI.ModelLike,
-        ::Type{F},
-        ::Type{S},
-    )
+    is_identity_index(map::Map, idx::MOI.Index)::Bool
 
-Materialize identity mappings for every `CI{F, S}` currently in `model`.
-Called when the first `CI{F, S}` is force-bridged at this layer. No-op if
-already active for `(F, S)`.
+Return `true` if `idx` was allocated before the activation of the mapping for
+its type. Such an index is translated by the identity in both directions and
+has no entry in `map.outer_to_inner` nor `map.inner_to_outer`.
+"""
+function is_identity_index(map::Map, vi::MOI.VariableIndex)
+    return vi.value <= map.last_identity_variable
+end
+
+function is_identity_index(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
+    return ci.value <= get(map.last_identity_constraint, (F, S), 0)
+end
+
+"""
+    outer_to_inner(map::Map, idx::MOI.Index[, default])
+
+Return the inner index corresponding to the outer index `idx`, assuming that
+the mapping is active for the type of `idx`. If there is none, return
+`default` or throw a `KeyError` if `default` is not given.
+"""
+function outer_to_inner(map::Map, idx::MOI.Index)
+    return is_identity_index(map, idx) ? idx : map.outer_to_inner[idx]
+end
+
+function outer_to_inner(map::Map, idx::MOI.Index, default)
+    if is_identity_index(map, idx)
+        return idx
+    end
+    return haskey(map.outer_to_inner, idx) ? map.outer_to_inner[idx] : default
+end
+
+"""
+    inner_to_outer(map::Map, idx::MOI.Index[, default])
+
+Inverse of [`outer_to_inner`](@ref).
+"""
+function inner_to_outer(map::Map, idx::MOI.Index)
+    return is_identity_index(map, idx) ? idx : map.inner_to_outer[idx]
+end
+
+function inner_to_outer(map::Map, idx::MOI.Index, default)
+    if is_identity_index(map, idx)
+        return idx
+    end
+    return haskey(map.inner_to_outer, idx) ? map.inner_to_outer[idx] : default
+end
+
+"""
+    activate_variable_mapping!(map::Map)
+
+Start allocating outer variable indices after the ones allocated so far by the
+inner model, so that subsequent outer-only or inner-only allocations can
+extend the two namespaces independently. No-op if the mapping is already
+active.
+"""
+function activate_variable_mapping!(map::Map)
+    # `has_bridges` flips to `true` only inside `add_key_for_bridge` (which
+    # pushes to `map.info`), and that always runs *after* this function in
+    # `add_constrained_variable`. So on the first variable bridge this is
+    # still `false` and we activate; any nested re-entry (a variable bridge
+    # that itself adds constrained variables) sees `true` and is a no-op.
+    if has_bridges(map)
+        return
+    end
+    map.next_outer_variable = map.last_identity_variable + 1
+    return
+end
+
+"""
+    activate_constraint_mapping!(map::Map, ::Type{F}, ::Type{S})
+
+Start allocating outer `CI{F, S}` after the ones allocated so far by the inner
+model. Called when the first `CI{F, S}` is force-bridged at this layer. No-op
+if already active for `(F, S)`.
 """
 function activate_constraint_mapping!(
     map::Map,
-    model::MOI.ModelLike,
     ::Type{F},
     ::Type{S},
 ) where {F,S}
     if is_constraint_mapping_active(map, F, S)
         return
     end
-    max_value = Int64(0)
-    for inner_ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-        map.outer_to_inner[inner_ci] = inner_ci
-        map.inner_to_outer[inner_ci] = inner_ci
-        if inner_ci.value > max_value
-            max_value = inner_ci.value
-        end
-    end
-    map.next_outer_constraint[(F, S)] = max_value + 1
+    last = get(map.last_identity_constraint, (F, S), Int64(0))
+    map.next_outer_constraint[(F, S)] = last + 1
     return
 end
 
