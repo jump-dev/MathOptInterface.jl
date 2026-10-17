@@ -167,9 +167,12 @@ function MOI.Bridges.final_touch(
     elseif ret[1] == typemin(T) || ret[2] == typemax(T)
         throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, bridge.x))
     elseif bridge.last_bounds !== nothing
-        # The bounds have changed since the last call to final_touch. Delete
-        # the old reformulation and start again.
+        # There is a stored bound, and the current bounds do not match. This
+        # means the model has been modified since the previous call to
+        # final_touch. We need to delete the bridge and start again.
         MOI.delete(model, bridge)
+        MOI.Bridges.final_touch(bridge, model)
+        return
     end
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), bridge.x)], T(0))
     lb, ub = ceil(Int, ret[1]), floor(Int, ret[2])
