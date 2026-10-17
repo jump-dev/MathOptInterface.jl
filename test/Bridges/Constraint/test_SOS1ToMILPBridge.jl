@@ -164,6 +164,30 @@ function test_bridge_does_not_apply_if_vector_slack_exists()
     return
 end
 
+function test_list_before_final_touch()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.SOS1ToMILP{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    MOI.add_constraint.(model, x, MOI.Interval(0.0, 2.0))
+    c = MOI.add_constraint(model, 1.0 * x[1] + 1.0 * x[2], MOI.EqualTo(1.0))
+    f = MOI.VectorOfVariables(x)
+    ci = MOI.add_constraint(model, f, MOI.SOS1([1.0, 2.0, 3.0]))
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    bridge = MOI.Bridges.bridge(model, ci)
+    @test MOI.get(bridge, MOI.NumberOfConstraints{F,S}()) == 0
+    @test isempty(MOI.get(bridge, MOI.ListOfConstraintIndices{F,S}()))
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+    dest = MOI.Utilities.Model{Float64}()
+    MOI.copy_to(dest, model)
+    @test MOI.get(dest, MOI.NumberOfConstraints{F,S}()) == 1
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(bridge, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+    return
+end
+
 end  # module
 
 TestConstraintSOS1ToMILP.runtests()

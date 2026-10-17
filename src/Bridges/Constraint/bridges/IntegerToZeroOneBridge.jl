@@ -139,13 +139,16 @@ function MOI.get(
     bridge::IntegerToZeroOneBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 )::Int64 where {T}
-    return 1
+    return bridge.last_bounds === nothing ? 0 : 1
 end
 
 function MOI.get(
     bridge::IntegerToZeroOneBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
+    if bridge.last_bounds === nothing
+        return MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
+    end
     return [bridge.ci]
 end
 

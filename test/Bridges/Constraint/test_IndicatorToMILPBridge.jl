@@ -341,11 +341,18 @@ function test_list_before_final_touch()
         MOI.add_constraint(model, x[1], MOI.ZeroOne())
         MOI.add_constraint(model, x[2], MOI.Interval(-10.0, 10.0))
         c = MOI.add_constraint(model, 1.0 * x[2], set)
-        MOI.add_constraint(
+        ci = MOI.add_constraint(
             model,
             MOI.VectorOfVariables(x),
             MOI.Indicator{MOI.ACTIVATE_ON_ONE}(set),
         )
+        bridge = MOI.Bridges.bridge(model, ci)
+        @test MOI.get(bridge, MOI.NumberOfVariables()) == 0
+        @test isempty(MOI.get(bridge, MOI.ListOfVariableIndices()))
+        for G in (S, MOI.LessThan{Float64})
+            @test MOI.get(bridge, MOI.NumberOfConstraints{F,G}()) == 0
+            @test isempty(MOI.get(bridge, MOI.ListOfConstraintIndices{F,G}()))
+        end
         @test MOI.get(model, MOI.NumberOfVariables()) == 2
         @test MOI.get(model, MOI.ListOfVariableIndices()) == x
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
