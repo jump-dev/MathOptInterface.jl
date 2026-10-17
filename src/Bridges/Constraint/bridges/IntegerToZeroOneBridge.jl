@@ -108,6 +108,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::IntegerToZeroOneBridge)
     end
     MOI.delete(model, bridge.ci)
     MOI.delete(model, bridge.y)
+    empty!(bridge.y)
+    bridge.last_bounds = nothing
     return
 end
 
@@ -164,6 +166,10 @@ function MOI.Bridges.final_touch(
         return nothing  # final_touch already called
     elseif ret[1] == typemin(T) || ret[2] == typemax(T)
         throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, bridge.x))
+    elseif bridge.last_bounds !== nothing
+        # The bounds have changed since the last call to final_touch. Delete
+        # the old reformulation and start again.
+        MOI.delete(model, bridge)
     end
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), bridge.x)], T(0))
     lb, ub = ceil(Int, ret[1]), floor(Int, ret[2])

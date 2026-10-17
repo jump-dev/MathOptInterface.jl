@@ -94,6 +94,23 @@ function test_final_touch_twice()
     return
 end
 
+function test_resolve_with_modified()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.IntegerToZeroOne{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.Interval(0.0, 3.0))
+    MOI.add_constraint(model, x, MOI.Integer())
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.EqualTo{Float64}
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 3
+    MOI.set(model, MOI.ConstraintSet(), c, MOI.Interval(0.0, 7.0))
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 4
+    @test MOI.get(inner, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
+    return
+end
+
 function test_delete_before_final_touch()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.IntegerToZeroOne{Int}(inner)
