@@ -133,7 +133,7 @@ function MOI.delete(
     MOI.delete(model, bridge.constraint)
     MOI.delete(model, bridge.slack::MOI.VariableIndex)
     bridge.slack = nothing
-    empty(bridge.slack_bounds)
+    empty!(bridge.slack_bounds)
     bridge.bounds = (typemin(T), typemax(T))
     return
 end

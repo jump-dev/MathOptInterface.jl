@@ -177,6 +177,23 @@ function test_delete_before_final_touch()
     return
 end
 
+function test_list_before_final_touch()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.ReifiedCountDistinctToMILP{Int}(inner)
+    x = MOI.add_variables(model, 4)
+    c = MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    MOI.add_constraint.(model, x[2:4], MOI.Interval(0, 2))
+    f = MOI.VectorOfVariables(x)
+    MOI.add_constraint(model, f, MOI.Reified(MOI.CountDistinct(3)))
+    F, S = MOI.VariableIndex, MOI.ZeroOne
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+    MOI.Bridges.final_touch(model)
+    @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
+    @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [c]
+    return
+end
+
 end  # module
 
 TestConstraintReifiedCountDistinct.runtests()

@@ -248,6 +248,34 @@ function test_resolve_with_modified()
     return
 end
 
+function test_resolve_with_modified_repeatedly()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.IndicatorToMILP{Float64}(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    c = MOI.add_constraint(model, x[2], MOI.Interval(0.0, 10.0))
+    ci = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables(x),
+        MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(5.0)),
+    )
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    for u in (20.0, 30.0, 40.0)
+        MOI.Bridges.final_touch(model)
+        @test MOI.get(inner, MOI.NumberOfConstraints{F,S}()) == 2
+        @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 0
+        indices = MOI.get(model.map[ci], MOI.ListOfConstraintIndices{F,S}())
+        @test length(indices) == 2
+        @test all(MOI.is_valid.(inner, indices))
+        MOI.set(model, MOI.ConstraintSet(), c, MOI.Interval(0.0, u))
+    end
+    MOI.delete(model, ci)
+    @test !MOI.is_valid(model, ci)
+    @test MOI.get(inner, MOI.NumberOfVariables()) == 2
+    @test MOI.get(inner, MOI.NumberOfConstraints{F,S}()) == 0
+    return
+end
+
 function test_runtests_error_variable()
     inner = MOI.Utilities.Model{Int}()
     model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)
