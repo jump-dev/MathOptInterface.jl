@@ -108,6 +108,8 @@ function MOI.delete(model::MOI.ModelLike, bridge::IntegerToZeroOneBridge)
     end
     MOI.delete(model, bridge.ci)
     MOI.delete(model, bridge.y)
+    empty!(bridge.y)
+    bridge.last_bounds = nothing
     return
 end
 
@@ -139,13 +141,16 @@ function MOI.get(
     bridge::IntegerToZeroOneBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 )::Int64 where {T}
-    return 1
+    return bridge.last_bounds === nothing ? 0 : 1
 end
 
 function MOI.get(
     bridge::IntegerToZeroOneBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
+    if bridge.last_bounds === nothing
+        return MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
+    end
     return [bridge.ci]
 end
 
@@ -161,6 +166,13 @@ function MOI.Bridges.final_touch(
         return nothing  # final_touch already called
     elseif ret[1] == typemin(T) || ret[2] == typemax(T)
         throw(MOI.Bridges.BridgeRequiresFiniteDomainError(bridge, bridge.x))
+    elseif bridge.last_bounds !== nothing
+        # There is a stored bound, and the current bounds do not match. This
+        # means the model has been modified since the previous call to
+        # final_touch. We need to delete the bridge and start again.
+        MOI.delete(model, bridge)
+        MOI.Bridges.final_touch(bridge, model)
+        return
     end
     f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(T(1), bridge.x)], T(0))
     lb, ub = ceil(Int, ret[1]), floor(Int, ret[2])

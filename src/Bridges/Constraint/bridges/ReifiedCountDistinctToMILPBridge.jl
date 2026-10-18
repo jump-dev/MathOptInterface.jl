@@ -204,6 +204,9 @@ function MOI.get(
     bridge::ReifiedCountDistinctToMILPBridge,
     ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.ZeroOne},
 )::Int64
+    if isempty(bridge.variables)
+        return 0
+    end
     return length(bridge.variables) - 2
 end
 

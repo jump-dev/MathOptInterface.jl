@@ -167,13 +167,16 @@ function MOI.get(
     bridge::SOS2ToMILPBridge{T},
     ::MOI.NumberOfConstraints{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 )::Int64 where {T}
-    return 1
+    return isempty(bridge.variables) ? 0 : 1
 end
 
 function MOI.get(
     bridge::SOS2ToMILPBridge{T},
     ::MOI.ListOfConstraintIndices{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}},
 ) where {T}
+    if isempty(bridge.variables)
+        return MOI.ConstraintIndex{MOI.ScalarAffineFunction{T},MOI.EqualTo{T}}[]
+    end
     return [bridge.equal_to]
 end
 
