@@ -186,11 +186,13 @@ function _to_string(
         s = ""
     end
     is_first = isempty(s)
+    io = IOBuffer()
+    print(io, s)
     for term in f.terms
-        s *= _to_string(options, model, term; is_first = is_first)
+        print(io, _to_string(options, model, term; is_first = is_first))
         is_first = false
     end
-    return s
+    return String(take!(io))
 end
 
 function _to_string(
@@ -223,15 +225,17 @@ function _to_string(
         s = ""
     end
     is_first = isempty(s)
+    io = IOBuffer()
+    print(io, s)
     for term in f.affine_terms
-        s *= _to_string(options, model, term; is_first = is_first)
+        print(io, _to_string(options, model, term; is_first = is_first))
         is_first = false
     end
     for term in f.quadratic_terms
-        s *= _to_string(options, model, term; is_first = is_first)
+        print(io, _to_string(options, model, term; is_first = is_first))
         is_first = false
     end
-    return s
+    return String(take!(io))
 end
 
 function _to_string(
