@@ -551,6 +551,37 @@ function test_enums()
     return
 end
 
+function test_is_empty_and_default_objective()
+    model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    @test MOI.is_empty(model)
+    F = MOI.ScalarAffineFunction{Float64}
+    @test MOI.get(model, MOI.ObjectiveFunctionType()) == F
+    @test MOI.get(model, MOI.ObjectiveFunction{F}()) ≈ zero(F)
+    MOI.add_constraint(model, zero(F), MOI.EqualTo(0.0))
+    @test !MOI.is_empty(model)
+    model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+    @test !MOI.is_empty(model)
+    model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    MOI.set(model, MOI.ObjectiveFunction{F}(), zero(F))
+    @test !MOI.is_empty(model)
+    return
+end
+
+function test_moi_add_constraint_replaces_parameters()
+    model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    f = MOI.ScalarNonlinearFunction(:-, Any[x, 1.0*p])
+    MOI.add_constraint(model, f, MOI.LessThan(0.0))
+    d = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode())
+    MOI.initialize(d, [:Jac])
+    g = zeros(1)
+    MOI.eval_constraint(d, g, [3.0])
+    @test g == [1.0]
+    return
+end
+
 end  # module
 
 TestNonlinearModelWithQuad.runtests()

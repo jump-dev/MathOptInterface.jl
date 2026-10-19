@@ -98,6 +98,13 @@ function MOI.supports(
     return MOI.supports(model.inner, attr, CI)
 end
 
+function MOI.is_empty(model::ModelWithQuad)
+    return isempty(model.list_of_variable_indices) &&
+           iszero(length(model.qp)) &&
+           model.objective_sink == _NONE &&
+           MOI.is_empty(model.inner)
+end
+
 function ModelWithQuad{T}(inner) where {T}
     return ModelWithQuad{T}(QPBlockData{T}(), inner)
 end
@@ -231,6 +238,9 @@ function MOI.add_constraint(
     func::MOI.AbstractFunction,
     set::MOI.AbstractSet,
 )
+    if !isempty(model.qp.parameters)
+        func = _replace_parameters(func)
+    end
     return MOI.add_constraint(model.inner, func, set)
 end
 
@@ -461,10 +471,10 @@ function MOI.get(model::ModelWithQuad, attr::MOI.ObjectiveFunctionType)
 end
 
 function MOI.get(model::ModelWithQuad, attr::MOI.ObjectiveFunction{F}) where {F}
-    if model.objective_sink == _QUAD
-        return MOI.get(model.qp, attr)
+    if model.objective_sink == _INNER
+        return MOI.get(model.inner, attr)
     end
-    return MOI.get(model.inner, attr)
+    return MOI.get(model.qp, attr)
 end
 
 # The affine and quadratic constraints. The MOI attribute methods are
