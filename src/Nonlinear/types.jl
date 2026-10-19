@@ -167,8 +167,6 @@ mutable struct Model <: MOI.ModelLike
     parameters::Vector{Float64}
     operators::OperatorRegistry
     objective_sense::MOI.OptimizationSense
-    moi_objective::Union{Nothing,MOI.ScalarNonlinearFunction}
-    moi_functions::Dict{ConstraintIndex,MOI.ScalarNonlinearFunction}
     constraint_dual_start::Dict{ConstraintIndex,Float64}
     # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
@@ -189,8 +187,6 @@ mutable struct Model <: MOI.ModelLike
             Float64[],
             OperatorRegistry(),
             MOI.FEASIBILITY_SENSE,
-            nothing,
-            Dict{ConstraintIndex,MOI.ScalarNonlinearFunction}(),
             Dict{ConstraintIndex,Float64}(),
             0,
             Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}(),

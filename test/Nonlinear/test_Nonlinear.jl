@@ -349,7 +349,10 @@ function test_moi_model_api()
         @test !MOI.is_valid(model, MOI.ConstraintIndex{F,S}(ci.value + 10))
         @test MOI.get(model, MOI.ListOfConstraintIndices{F,S}()) == [ci]
         @test MOI.get(model, MOI.NumberOfConstraints{F,S}()) == 1
-        @test MOI.get(model, MOI.ConstraintFunction(), ci) == f
+        @test_throws(
+            MOI.GetAttributeNotAllowed,
+            MOI.get(model, MOI.ConstraintFunction(), ci),
+        )
         @test MOI.get(model, MOI.ConstraintSet(), ci) == set
         @test MOI.Utilities.rows(model, ci) == row
     end
@@ -360,7 +363,7 @@ function test_moi_model_api()
     @test !MOI.is_valid(model, wrong_set_ci)
     @test_throws MOI.InvalidIndex MOI.get(
         model,
-        MOI.ConstraintFunction(),
+        MOI.ConstraintSet(),
         wrong_set_ci,
     )
 
@@ -394,7 +397,10 @@ function test_moi_model_api()
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     @test MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == typeof(f)
-    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) == f
+    @test_throws(
+        MOI.GetAttributeNotAllowed,
+        MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()),
+    )
 
     udf = MOI.UserDefinedFunction(:square_for_model_api, 1)
     @test MOI.supports(model, udf)
