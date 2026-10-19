@@ -223,10 +223,14 @@ end
 
 Return the inner index corresponding to the outer index `idx`, assuming that
 the mapping is active for the type of `idx`. If there is none, return
-`default` or throw a `KeyError` if `default` is not given.
+`default` or throw `MOI.InvalidIndex(idx)` if `default` is not given.
 """
 function outer_to_inner(map::Map, idx::MOI.Index)
-    return is_identity_index(map, idx) ? idx : map.outer_to_inner[idx]
+    inner = outer_to_inner(map, idx, nothing)
+    if inner === nothing
+        throw(MOI.InvalidIndex(idx))
+    end
+    return inner
 end
 
 function outer_to_inner(map::Map, idx::MOI.Index, default)
