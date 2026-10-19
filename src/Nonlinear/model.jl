@@ -11,8 +11,6 @@ function MOI.empty!(model::Model)
     empty!(model.parameters)
     model.operators = OperatorRegistry()
     model.objective_sense = MOI.FEASIBILITY_SENSE
-    model.moi_objective = nothing
-    empty!(model.moi_functions)
     empty!(model.constraint_dual_start)
     model.last_constraint_index = 0
     model.has_deleted_constraint = false
@@ -27,8 +25,6 @@ function MOI.is_empty(model::Model)
            isempty(model.operators.registered_univariate_operators) &&
            isempty(model.operators.registered_multivariate_operators) &&
            model.objective_sense == MOI.FEASIBILITY_SENSE &&
-           model.moi_objective === nothing &&
-           isempty(model.moi_functions) &&
            isempty(model.constraint_dual_start) &&
            model.last_constraint_index === Int64(0)
 end
@@ -79,7 +75,6 @@ julia> MOI.Nonlinear.set_objective(model, nothing)
 """
 function set_objective(model::Model, obj)
     model.objective = parse_expression(model, obj)
-    model.moi_objective = obj isa MOI.ScalarNonlinearFunction ? obj : nothing
     if model.objective_sense == MOI.FEASIBILITY_SENSE
         model.objective_sense = MOI.MIN_SENSE
     end
@@ -88,7 +83,6 @@ end
 
 function set_objective(model::Model, ::Nothing)
     model.objective = nothing
-    model.moi_objective = nothing
     return
 end
 
@@ -174,9 +168,6 @@ function add_constraint(
     model.last_constraint_index += 1
     index = ConstraintIndex(model.last_constraint_index)
     model.constraints[index] = Constraint(f, set)
-    if func isa MOI.ScalarNonlinearFunction
-        model.moi_functions[index] = func
-    end
     return index
 end
 
@@ -220,7 +211,6 @@ A Nonlinear.Model with:
 """
 function delete(model::Model, c::ConstraintIndex)
     delete!(model.constraints, c)
-    delete!(model.moi_functions, c)
     delete!(model.constraint_dual_start, c)
     model.has_deleted_constraint = true
     return
@@ -293,15 +283,6 @@ function MOI.get(model::Model, ::MOI.ListOfConstraintTypesPresent)
         pair in types || push!(types, pair)
     end
     return types
-end
-
-function MOI.get(
-    model::Model,
-    ::MOI.ConstraintFunction,
-    ci::MOI.ConstraintIndex,
-)
-    MOI.throw_if_not_valid(model, ci)
-    return model.moi_functions[_nonlinear_index(ci)]
 end
 
 function MOI.get(model::Model, ::MOI.ConstraintSet, ci::MOI.ConstraintIndex)
@@ -386,13 +367,6 @@ end
 
 function MOI.get(model::Model, ::MOI.ObjectiveFunctionType)
     return model.objective === nothing ? nothing : MOI.ScalarNonlinearFunction
-end
-
-function MOI.get(
-    model::Model,
-    ::MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction},
-)
-    return something(model.moi_objective)
 end
 
 MOI.supports(::Model, ::MOI.UserDefinedFunction) = true

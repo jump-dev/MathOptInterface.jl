@@ -495,9 +495,17 @@ function test_moi_bounds_and_objectives()
     c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
     @test MOI.is_valid(model, c)
     @test MOI.supports(model, MOI.ConstraintDualStart(), typeof(c))
+    # Forwarded to the inner `Nonlinear.Model`, which does not keep `f`
+    @test_throws(
+        MOI.GetAttributeNotAllowed,
+        MOI.get(model, MOI.ConstraintFunction(), c),
+    )
     MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
     @test MOI.get(model, MOI.ObjectiveFunctionType()) == typeof(f)
-    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) == f
+    @test_throws(
+        MOI.GetAttributeNotAllowed,
+        MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()),
+    )
     for F in (
         MOI.VariableIndex,
         MOI.ScalarAffineFunction{Float64},
