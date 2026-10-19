@@ -335,8 +335,8 @@ function is_bridged_variable(map::Map, vi::MOI.VariableIndex)
     return haskey(map.variable_to_slot, vi.value)
 end
 
-# Internal `slot` of the bridged variable `vi`, i.e. the index into the dense
-# per-bridge `Vector`s. Errors if `vi` is not a bridged variable.
+# Internal `slot` of the bridged variable `vi`, that is, the index into the
+# dense per-bridge `Vector`s. Errors if `vi` is not a bridged variable.
 _slot(map::Map, vi::MOI.VariableIndex) = map.variable_to_slot[vi.value]
 
 # Outer `VariableIndex` stored at `slot`.
@@ -986,7 +986,3 @@ register_context(::EmptyMap, ::MOI.ConstraintIndex) = nothing
 call_in_context(::EmptyMap, ::MOI.ConstraintIndex, f::Function) = f()
 
 MOI.is_valid(::EmptyMap, ::MOI.ConstraintIndex) = false
-
-Base.haskey(::EmptyMap, ::MOI.VariableIndex) = false
-
-is_bridged_variable(::EmptyMap, ::MOI.VariableIndex) = false

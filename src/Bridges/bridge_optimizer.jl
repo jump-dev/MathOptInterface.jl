@@ -564,21 +564,11 @@ end
 (f::_OuterToInner)(idx::MOI.Index) = outer_to_inner(f.b, idx)
 
 """
-    _InnerToOuter(b::AbstractBridgeOptimizer)
-
-Callable wrapper around [`inner_to_outer`](@ref).
-"""
-struct _InnerToOuter{B<:AbstractBridgeOptimizer} <: Function
-    b::B
-end
-
-(f::_InnerToOuter)(idx::MOI.Index) = inner_to_outer(f.b, idx)
-
-"""
     _TotalInnerToOuter(b::AbstractBridgeOptimizer)
 
-Like [`_InnerToOuter`](@ref) but indices with no recorded outer counterpart
-are returned unchanged instead of throwing. The unrecorded indices are
+Callable wrapper around [`inner_to_outer`](@ref) for use with
+[`MOI.Utilities.map_indices`](@ref), except that indices with no recorded
+outer counterpart are returned unchanged instead of throwing. The unrecorded indices are
 inner variables created by a bridge directly in `b.model` (they are hidden
 from the user); they are subsequently replaced by their expression in terms
 of user variables by [`unbridged_function`](@ref).
@@ -703,6 +693,12 @@ function _record_inner_constraint!(
        Variable.is_constraint_mapping_active(map, F, S)
         outer_ci =
             MOI.ConstraintIndex{F,S}(Variable.next_outer_constraint!(map, F, S))
+        # Skip the values already taken by bridged constraints.
+        while !_is_available_constraint_index(b, outer_ci)
+            outer_ci = MOI.ConstraintIndex{F,S}(
+                Variable.next_outer_constraint!(map, F, S),
+            )
+        end
         map.outer_to_inner[outer_ci] = inner_ci
         map.inner_to_outer[inner_ci] = outer_ci
         return outer_ci
@@ -2382,9 +2378,8 @@ end
     _outer_variable_for_name_lookup(b::AbstractBridgeOptimizer, vi)
 
 Translate the inner variable `vi` found by a name lookup in `b.model` to
-the outer namespace. When the variable mapping is inactive, return `vi`
-unchanged. A recorded passthrough variable translates through the index
-map. An unrecorded inner variable was created by a bridge whose
+the outer namespace, assuming that the variable mapping is active. A
+recorded passthrough variable translates through the index map. An unrecorded inner variable was created by a bridge whose
 `MOI.VariableName` support delegated the user's name to it; reverse that
 delegation by searching the variable bridges.
 """
@@ -2393,23 +2388,22 @@ function _outer_variable_for_name_lookup(
     vi::MOI.VariableIndex,
 )
     map = Variable.bridges(b)
-    if !Variable.has_bridges(map)
-        return vi
-    end
     outer_vi = Variable.inner_to_outer(map, vi, nothing)
     if outer_vi !== nothing
         return outer_vi
     end
-    for (outer_vi, bridge_) in map
-        variables = MOI.get(bridge_, MOI.ListOfVariableIndices())
-        position = findfirst(isequal(vi), variables)
-        if position !== nothing
-            # Bridged vectors of variables use consecutive ascending outer
-            # values starting at the first variable.
-            return MOI.VariableIndex(outer_vi.value + (position - 1))
-        end
+    # An unrecorded inner variable is always created by a variable bridge.
+    # `outer_vi` is the first variable bridged by that bridge.
+    outer_vi = findfirst(map) do bridge_
+        return vi in MOI.get(bridge_, MOI.ListOfVariableIndices())
     end
-    return vi
+    @assert outer_vi !== nothing
+    variables = MOI.get(map[outer_vi], MOI.ListOfVariableIndices())
+    # Bridged vectors of variables use consecutive ascending outer values
+    # starting at the first variable.
+    return MOI.VariableIndex(
+        outer_vi.value + findfirst(isequal(vi), variables) - 1,
+    )
 end
 
 # Query index from name (similar to `UniversalFallback`)
@@ -2772,6 +2766,11 @@ Apply a function modification produced by expanding a bridged variable via
 expansion is in the outer namespace, so we re-enter `MOI.modify` for the
 usual dispatch. Otherwise the expansion is already in the inner namespace
 and we must dispatch directly, bypassing the outer-to-inner translation.
+
+The only bridge optimizer with bridged variables and
+`recursive_model(b) !== b` is `Variable.SingleBridgeOptimizer`, which bridges
+neither the objective nor any constraint that can be modified, so
+`ci_or_obj` is never bridged in that case.
 """
 function _modify_substituted_change(
     b::AbstractBridgeOptimizer,
@@ -2780,8 +2779,6 @@ function _modify_substituted_change(
 )
     if recursive_model(b) === b
         MOI.modify(b, ci, change)
-    elseif is_bridged(b, ci)
-        call_in_context(MOI.modify, b, ci, change)
     else
         MOI.modify(b.model, outer_to_inner(b, ci), change)
     end
@@ -2795,8 +2792,6 @@ function _modify_substituted_change(
 )
     if recursive_model(b) === b
         MOI.modify(b, obj, change)
-    elseif is_bridged(b, obj)
-        MOI.modify(recursive_model(b), bridge(b, obj), change)
     else
         MOI.modify(b.model, obj, change)
     end

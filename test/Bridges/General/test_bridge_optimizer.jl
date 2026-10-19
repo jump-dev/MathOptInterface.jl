@@ -1605,6 +1605,106 @@ function test_issue_2762_fail()
     return
 end
 
+function _zeros_bridge_optimizer()
+    return MOI.Bridges.Variable.Zeros{Float64}(MOI.Utilities.Model{Float64}())
+end
+
+function test_variable_mapping_vector_of_variables_constraint()
+    model = _zeros_bridge_optimizer()
+    x, cx = MOI.add_constrained_variables(model, MOI.Zeros(2))
+    y = MOI.add_variables(model, 2)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(y), MOI.Zeros(2))
+    @test c != cx
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ==
+          MOI.VectorOfVariables(y)
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    @test MOI.get(model, MOI.ConstraintIndex, "c") == c
+    @test MOI.get(model, typeof(c), "c") == c
+    MOI.delete(model, c)
+    @test !MOI.is_valid(model, c)
+    @test_throws MOI.InvalidIndex(c) MOI.delete(model, c)
+    @test MOI.is_valid(model, cx)
+    return
+end
+
+function test_variable_mapping_total_inner_to_outer()
+    model = _zeros_bridge_optimizer()
+    x, _ = MOI.add_constrained_variables(model, MOI.Zeros(2))
+    y = MOI.add_variable(model)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables([y]), MOI.Zeros(1))
+    f = MOI.Bridges._TotalInnerToOuter(model)
+    @test f(MOI.Bridges.outer_to_inner(model, c)) == c
+    inner_y = MOI.Bridges.outer_to_inner(model, y)
+    @test inner_y != y
+    CI = MOI.ConstraintIndex{MOI.VariableIndex,MOI.GreaterThan{Float64}}
+    @test f(CI(inner_y.value)) == CI(y.value)
+    return
+end
+
+function test_variable_mapping_add_constraints()
+    model = _zeros_bridge_optimizer()
+    x, _ = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    y = MOI.add_variables(model, 2)
+    sets = [MOI.GreaterThan(0.0), MOI.GreaterThan(1.0)]
+    c = MOI.add_constraints(model, y, sets)
+    @test MOI.get.(model, MOI.ConstraintFunction(), c) == y
+    @test MOI.get.(model, MOI.ConstraintSet(), c) == sets
+    funcs = [MOI.VectorOfVariables([yi]) for yi in y]
+    d = MOI.add_constraints(model, funcs, [MOI.Nonnegatives(1) for _ in y])
+    @test MOI.get.(model, MOI.ConstraintFunction(), d) == funcs
+    return
+end
+
+function test_variable_mapping_quadratic_coefficient_change()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.Zeros{Float64}(inner)
+    x, _ = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    y = MOI.add_variable(model)
+    inner_y = MOI.Bridges.outer_to_inner(model, y)
+    @test inner_y != y
+    function f(coef, v)
+        return MOI.ScalarQuadraticFunction(
+            [MOI.ScalarQuadraticTerm(coef, v, v)],
+            [MOI.ScalarAffineTerm(1.0, v)],
+            0.0,
+        )
+    end
+    change = MOI.ScalarQuadraticCoefficientChange(y, y, 3.0)
+    c = MOI.add_constraint(model, f(1.0, y), MOI.LessThan(1.0))
+    MOI.modify(model, c, change)
+    inner_c = MOI.Bridges.outer_to_inner(model, c)
+    @test MOI.get(inner, MOI.ConstraintFunction(), inner_c) ≈ f(3.0, inner_y)
+    attr = MOI.ObjectiveFunction{MOI.ScalarQuadraticFunction{Float64}}()
+    MOI.set(model, attr, f(1.0, y))
+    MOI.modify(model, attr, change)
+    @test MOI.get(inner, attr) ≈ f(3.0, inner_y)
+    return
+end
+
+function test_variable_mapping_name_of_bridged_variable()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.ParameterToEqualTo{Float64}(inner)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(1.0))
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), p, "p")
+    MOI.set(model, MOI.VariableName(), y, "y")
+    @test MOI.get(model, MOI.VariableIndex, "p") == p
+    @test MOI.get(model, MOI.VariableIndex, "y") == y
+    return
+end
+
+function test_variable_mapping_modify_objective_bridged_variable()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(inner)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    y = MOI.add_variable(model)
+    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    MOI.set(model, attr, 1.0 * x[1] + 1.0 * y)
+    MOI.modify(model, attr, MOI.ScalarCoefficientChange(x[1], 2.0))
+    @test MOI.get(model, attr) ≈ 2.0 * x[1] + 1.0 * y
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
