@@ -13,12 +13,9 @@ import MathOptInterface.FileFormats: MPS
 import OrderedCollections: OrderedDict
 
 function runtests()
-    for name in names(@__MODULE__; all = true)
-        if startswith("$(name)", "test_")
-            @testset "$name" begin
-                getfield(@__MODULE__, name)()
-            end
-        end
+    is_test(name) = startswith("$name", "test_")
+    @testset "$name" for name in filter(is_test, names(@__MODULE__; all = true))
+        getfield(@__MODULE__, name)()
     end
     return
 end
@@ -1922,6 +1919,55 @@ function test_semi_reading_2()
         x = MOI.get(dest, MOI.VariableIndex, "x")
         ci = MOI.ConstraintIndex{MOI.VariableIndex,typeof(target)}(x.value)
         @test MOI.get(dest, MOI.ConstraintSet(), ci) == target
+    end
+    return
+end
+
+function test_scalar_function_constant_not_zero()
+    for input in [
+        """
+        variables: x
+        c: 1.0 * x + 2.0 >= 3.0
+        """,
+        """
+        variables: x
+        c: 1.0 * x * x + 2.0 >= 3.0
+        """,
+        """
+        variables: x
+        c: 1.0 * x + 2.0 <= 3.0
+        """,
+        """
+        variables: x
+        c: 1.0 * x * x + 2.0 <= 3.0
+        """,
+        """
+        variables: x
+        c: 1.0 * x + 2.0 == 3.0
+        """,
+        """
+        variables: x
+        c: 1.0 * x * x + 2.0 == 3.0
+        """,
+        """
+        variables: x, z
+        c: [z, 1.0 * x + 2.0] in Indicator{ACTIVATE_ON_ONE}(LessThan(1.0))
+        z in ZeroOne()
+        """,
+        """
+        variables: x, z
+        c: [z, 1.0 * x + 2.0] in Indicator{ACTIVATE_ON_ONE}(GreaterThan(1.0))
+        z in ZeroOne()
+        """,
+        """
+        variables: x, z
+        c: [z, 1.0 * x + 2.0] in Indicator{ACTIVATE_ON_ONE}(EqualTo(1.0))
+        z in ZeroOne()
+        """,
+    ]
+        model = MPS.Model()
+        MOI.Utilities.loadfromstring!(model, input)
+        @test_throws(MOI.ScalarFunctionConstantNotZero, sprint(write, model))
     end
     return
 end
