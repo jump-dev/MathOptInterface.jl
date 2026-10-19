@@ -260,6 +260,9 @@ function _collect_coefficients(
     for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
         row_name = MOI.get(model, MOI.ConstraintName(), index)
         func = MOI.get(model, MOI.ConstraintFunction(), index)
+        if !iszero(func.constant)
+            throw(MOI.ScalarFunctionConstantNotZero{T,F,S}(func.constant))
+        end
         _extract_terms(var_to_column, coefficients, row_name, func)
     end
     return
@@ -281,6 +284,9 @@ function _collect_indicator(
         func = MOI.get(model, MOI.ConstraintFunction(), index)
         funcs = MOI.Utilities.eachscalar(func)
         z = convert(MOI.VariableIndex, funcs[1])
+        if !iszero(func.constants[2])
+            throw(MOI.ScalarFunctionConstantNotZero{T,F,S}(func.constants[2]))
+        end
         _extract_terms(var_to_column, coefficients, row_name, funcs[2])
         condition = _activation_condition(S)
         var_name = _var_name(model, z, var_to_column[z], options.generic_names)
