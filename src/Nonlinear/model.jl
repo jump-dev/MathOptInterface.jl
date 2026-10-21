@@ -11,6 +11,9 @@ function MOI.empty!(model::Model)
     empty!(model.parameters)
     model.operators = OperatorRegistry()
     model.last_constraint_index = 0
+    empty!(model.cache)
+    empty!(model.cache_expressions)
+    empty!(model.cache_pending)
     return
 end
 
@@ -322,6 +325,7 @@ function evaluate(
     expr::Expression;
     evaluated_expressions = Dict{Int,Float64}(),
 )
+    MOI.Utilities.final_touch(model)
     storage = zeros(length(expr.nodes))
     adj = adjacency_matrix(expr.nodes)
     children_arr = SparseArrays.rowvals(adj)
