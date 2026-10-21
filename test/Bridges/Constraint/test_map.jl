@@ -156,6 +156,26 @@ function test_map()
     @test sprint(show, map) == ""
 end
 
+function test_allocated_index()
+    map = MOI.Bridges.Constraint.Map()
+    bridge = ConstraintDummyBridge(1)
+    f = MOI.VectorOfVariables([MOI.VariableIndex(1)])
+    ci = MOI.Bridges.Constraint.add_key_for_bridge(
+        map,
+        bridge,
+        f,
+        MOI.Zeros(1),
+        _ -> false;
+        index = Int64(4),
+    )
+    @test ci.value == 4
+    @test map[ci] === bridge
+    @test length(map) == 1
+    @test collect(keys(map)) == [ci]
+    @test !haskey(map, typeof(ci)(1))
+    return
+end
+
 end  # module
 
 TestConstraintMap.runtests()

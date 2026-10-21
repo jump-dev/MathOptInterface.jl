@@ -566,12 +566,10 @@ end
 """
     _TotalInnerToOuter(b::AbstractBridgeOptimizer)
 
-Callable wrapper around [`inner_to_outer`](@ref) for use with
-[`MOI.Utilities.map_indices`](@ref), except that indices with no recorded
-outer counterpart are returned unchanged instead of throwing. The unrecorded indices are
-inner variables created by a bridge directly in `b.model` (they are hidden
-from the user); they are subsequently replaced by their expression in terms
-of user variables by [`unbridged_function`](@ref).
+Translate index-valued attributes and index functions to the outer space.
+Unrecorded indices in custom attribute values are left unchanged. Functions
+that can contain affine bridge expressions instead use the single
+substitution in [`_unbridged_result_from_inner`](@ref).
 """
 struct _TotalInnerToOuter{B<:AbstractBridgeOptimizer} <: Function
     b::B
@@ -615,44 +613,49 @@ function _to_inner_value(b::AbstractBridgeOptimizer, value)
 end
 
 """
-    _from_inner_value(b::AbstractBridgeOptimizer, value)
+    _unbridged_result_from_inner(b::AbstractBridgeOptimizer, value)
 
-Translate every index in `value` from `b.model`'s inner namespace to `b`'s
-outer namespace, right after crossing the `b.model` boundary. Indices with
-no outer counterpart (inner variables created by bridges) are left
-unchanged; the caller is expected to substitute them out via
-[`unbridged_function`](@ref).
+Translate and unbridge an inner value in one substitution. An intermediate
+mixture of inner and outer indices would make numeric collisions ambiguous.
 """
-function _from_inner_value(b::AbstractBridgeOptimizer, value)
-    if Variable.has_bridges(Variable.bridges(b))
-        return MOI.Utilities.map_indices(_TotalInnerToOuter(b), value)
+function _unbridged_result_from_inner(b::AbstractBridgeOptimizer, value)
+    map = Variable.bridges(b)
+    if !Variable.has_bridges(map)
+        return value
     end
+    Variable.throw_if_cannot_unbridge(map)
+    return MOI.Utilities.substitute_variables(value) do vi
+        if recursive_model(b) === b
+            return unbridged_variable_function(
+                b,
+                Variable.inner_to_outer(map, vi, vi),
+            )
+        end
+        func = Variable.unbridged_function(map, vi)
+        return func === nothing ? Variable.inner_to_outer(map, vi, vi) : func
+    end
+end
+
+function _unbridged_result_from_inner(
+    b::AbstractBridgeOptimizer,
+    value::Union{MOI.VariableIndex,MOI.VectorOfVariables},
+)
+    if !Variable.has_bridges(Variable.bridges(b))
+        return value
+    end
+    return MOI.Utilities.map_indices(_TotalInnerToOuter(b), value)
+end
+
+function _unbridged_result_from_inner(
+    ::AbstractBridgeOptimizer,
+    value::MOI.Utilities.ObjectOrTupleOrArrayWithoutIndex,
+)
     return value
 end
 
-"""
-    _unbridged_result_from_inner(b::AbstractBridgeOptimizer, value)
-
-Process an attribute `value` returned by `b.model`: translate its indices
-from the inner to the outer namespace, then substitute any remaining
-bridge-created variables by their expression in user variables.
-"""
-function _unbridged_result_from_inner(b::AbstractBridgeOptimizer, value)
-    return unbridged_function(b, _from_inner_value(b, value))
-end
-
-"""
-    _unbridged_result_from_bridge(b::AbstractBridgeOptimizer, value)
-
-Process an attribute `value` returned by a bridge of `b`. The value is
-expressed in `recursive_model(b)`'s namespace: when that is `b.model`
-(`SingleBridgeOptimizer`), translate as for
-[`_unbridged_result_from_inner`](@ref); when it is `b` itself
-(`LazyBridgeOptimizer`), the value is already in the outer namespace.
-"""
 function _unbridged_result_from_bridge(b::AbstractBridgeOptimizer, value)
     if recursive_model(b) !== b
-        value = _from_inner_value(b, value)
+        return _unbridged_result_from_inner(b, value)
     end
     return unbridged_function(b, value)
 end
@@ -691,17 +694,7 @@ function _record_inner_constraint!(
     map = Variable.bridges(b)
     if Variable.has_bridges(map) &&
        Variable.is_constraint_mapping_active(map, F, S)
-        outer_ci =
-            MOI.ConstraintIndex{F,S}(Variable.next_outer_constraint!(map, F, S))
-        # Skip the values already taken by bridged constraints.
-        while !_is_available_constraint_index(b, outer_ci)
-            outer_ci = MOI.ConstraintIndex{F,S}(
-                Variable.next_outer_constraint!(map, F, S),
-            )
-        end
-        map.outer_to_inner[outer_ci] = inner_ci
-        map.inner_to_outer[inner_ci] = outer_ci
-        return outer_ci
+        return Variable.allocate_constraint!(map, F, S, inner_ci)
     end
     # Only `VectorOfVariables` constraints can be force-bridged, so the
     # constraint mapping is never activated for other functions.
@@ -1003,6 +996,10 @@ function MOI.delete(b::AbstractBridgeOptimizer, vis::Vector{MOI.VariableIndex})
             end
         end
     else
+        if !Variable.has_bridges(Variable.bridges(b))
+            MOI.delete(b.model, vis)
+            return
+        end
         inner_vis = [outer_to_inner(b, vi) for vi in vis]
         MOI.delete(b.model, inner_vis)
         _remove_inner_variable_mapping!(b, vis)
@@ -1059,11 +1056,7 @@ function _remove_inner_variable_mapping!(
     if !Variable.has_bridges(map)
         return
     end
-    inner_vi = get(map.outer_to_inner.var_map, vi, nothing)
-    if inner_vi !== nothing
-        delete!(map.outer_to_inner, vi)
-        delete!(map.inner_to_outer, inner_vi)
-    end
+    Variable.remove_mapping!(map.variable_space, vi.value)
     return
 end
 
@@ -1091,8 +1084,10 @@ function _remove_inner_constraint_mapping!(
 ) where {F,S}
     map = Variable.bridges(b)
     if map isa Variable.Map && Variable.is_constraint_mapping_active(map, F, S)
-        delete!(map.outer_to_inner, outer_ci)
-        delete!(map.inner_to_outer, inner_ci)
+        Variable.remove_mapping!(
+            Variable.index_space(map, outer_ci),
+            outer_ci.value,
+        )
     end
     return
 end
@@ -1153,6 +1148,10 @@ function MOI.delete(
         # deleting each constraint one-by-one.
         MOI.delete.(b, ci)
     else
+        if !Variable.has_bridges(Variable.bridges(b))
+            MOI.delete(b.model, ci)
+            return
+        end
         inner_cis = [outer_to_inner(b, c) for c in ci]
         MOI.delete(b.model, inner_cis)
         for (outer_c, inner_c) in zip(ci, inner_cis)
@@ -1212,21 +1211,9 @@ function _get_all_including_bridged(
     # to undo any Variable.bridges transformations.
     ret = MOI.VariableIndex[]
     for inner_variable in MOI.get(b.model, attr)
-        # `bridge_var_map` is keyed by the indices the bridges received from
-        # `recursive_model(b)`. For a `SingleBridgeOptimizer` that is
-        # `b.model` (inner indices); for a `LazyBridgeOptimizer` it is `b`
-        # itself (outer indices). Translate `inner_variable` to the outer
-        # namespace (identity for a bridge-created inner variable, which has
-        # no outer counterpart) before the lookup. We must NOT "try the raw
-        # inner index first": under positive indexing an inner variable may
-        # coincidentally share a value with an unrelated outer key, which
-        # would produce a wrong (duplicate) match.
-        map_b = Variable.bridges(b)
-        key = if Variable.has_bridges(map_b)
-            Variable.inner_to_outer(map_b, inner_variable, inner_variable)
-        else
+        key =
+            recursive_model(b) === b ? inner_to_outer(b, inner_variable) :
             inner_variable
-        end
         outer_variable = get(bridge_var_map, key, missing)
         # If there is a chain of variable bridges, the `outer_variable` may need
         # to be mapped further. This only happens for a `LazyBridgeOptimizer`
@@ -1242,10 +1229,8 @@ function _get_all_including_bridged(
             end
         end
         if ismissing(outer_variable)
-            # Not a bridge-created variable: report its outer translation
-            # (`key` is already the outer index, or the unchanged inner index
-            # when no translation is in effect).
-            push!(ret, key)
+            # Not a bridge-created variable: report its outer translation.
+            push!(ret, inner_to_outer(b, inner_variable))
         elseif isnothing(outer_variable)
             # inner_variable exists in bridge_var_map, but it is set to `nothing`
             # which means that it is not the first variable in the bridge. Skip
@@ -1278,11 +1263,27 @@ function _get_all_including_bridged(
 ) where {F,S}
     list = MOI.ConstraintIndex{F,S}[]
     is_variable_function = F == MOI.Utilities.variable_function_type(S)
-    # A `F`-in-`S` constraint could be added to the model either if it this
-    # constraint is not bridged or if variables constrained on creations to `S`
-    # are not bridged and `F` is `VariableIndex` or `VectorOfVariables`.
     if !is_bridged(b, F, S) || (is_variable_function && !is_bridged(b, S))
         append!(list, MOI.get(b.model, attr))
+        if Variable.has_bridges(Variable.bridges(b)) && recursive_model(b) === b
+            map!(ci -> inner_to_outer(b, ci), list, list)
+        end
+        if recursive_model(b) !== b
+            # SingleBridgeOptimizer bridges return inner indices. Filter
+            # those before translating and appending outer bridge keys.
+            for bridges in (
+                Variable.bridges(b),
+                Constraint.bridges(b),
+                Objective.bridges(b),
+            )
+                for bridge in values(bridges)
+                    _remove_bridged(list, bridge, attr)
+                end
+            end
+            if Variable.has_bridges(Variable.bridges(b))
+                map!(ci -> inner_to_outer(b, ci), list, list)
+            end
+        end
     end
     # If variable bridged, get the indices from the variable bridges.
     if is_variable_function && is_bridged(b, S) && is_variable_bridged(b, S)
@@ -1299,6 +1300,16 @@ function _get_all_including_bridged(
             ),
         )
     end
+    if recursive_model(b) === b
+        # Lazy bridges can create further bridged constraints. Their outer
+        # keys have just been appended, so filter them in the outer space.
+        for bridges in
+            (Variable.bridges(b), Constraint.bridges(b), Objective.bridges(b))
+            for bridge in values(bridges)
+                _remove_bridged(list, bridge, attr)
+            end
+        end
+    end
     return list
 end
 
@@ -1312,21 +1323,6 @@ function _remove_bridged(list, bridge, attr)
     return
 end
 
-# Filtering applied to the variable bridges only (`Variable.bridges(b)`). For
-# `ListOfConstraintIndices` it removes the constraints those bridges added,
-# like the generic method. For `ListOfVariableIndices` it is a no-op:
-# `_get_all_including_bridged` already maps `b.model`'s variables back to the
-# outer namespace and excludes the variables created by variable bridges.
-# (Removing them here would be incorrect under positive indexing, where such a
-# variable may share a value with an outer user variable; under the old
-# negative indexing this was a no-op because the namespaces were
-# value-disjoint.)
-function _remove_variable_bridged(list, bridge, attr)
-    return _remove_bridged(list, bridge, attr)
-end
-
-_remove_variable_bridged(list, bridge, ::MOI.ListOfVariableIndices) = nothing
-
 # The tactic for this function is to first query all possible indices, and then
 # to filter out the indices that have been bridged.
 #
@@ -1337,8 +1333,8 @@ function MOI.get(
     attr::Union{MOI.ListOfConstraintIndices,MOI.ListOfVariableIndices},
 )
     list = _get_all_including_bridged(b, attr)
-    for bridge in values(Variable.bridges(b))
-        _remove_variable_bridged(list, bridge, attr)
+    if attr isa MOI.ListOfConstraintIndices
+        return list
     end
     for bridge in values(Constraint.bridges(b))
         _remove_bridged(list, bridge, attr)
@@ -1475,7 +1471,11 @@ function MOI.get(
 ) where {F,S}
     if !is_bridged(b, F, S) &&
        MOI.supports(b.model, MOI.ConstraintName(), MOI.ConstraintIndex{F,S})
-        return MOI.get(b.model, attr)
+        indices = MOI.get(b.model, attr)
+        if !Variable.has_bridges(Variable.bridges(b))
+            return indices
+        end
+        return [inner_to_outer(b, ci) for ci in indices]
     end
     return MOI.ConstraintIndex{F,S}[
         ci for ci in keys(b.con_to_name) if ci isa MOI.ConstraintIndex{F,S}
@@ -1577,7 +1577,7 @@ function _bridged_function(b::AbstractBridgeOptimizer, ci::MOI.ConstraintIndex)
         @assert !is_variable_bridged(b, ci)
         return call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
     else
-        return MOI.get(b.model, attr, ci)
+        return MOI.get(b.model, attr, outer_to_inner(b, ci))
     end
 end
 
@@ -1867,9 +1867,9 @@ function MOI.get(
     attr::MOI.AbstractVariableAttribute,
     indices::Vector{MOI.VariableIndex},
 )
-    # `Variable.has_bridges` is used as a shortcut to speedup in case no variable bridge is used
-    if Variable.has_bridges(Variable.bridges(b)) &&
-       any(index -> is_bridged(b, index), indices)
+    if !Variable.has_bridges(Variable.bridges(b))
+        return MOI.get(b.model, attr, indices)
+    elseif any(index -> is_bridged(b, index), indices)
         return MOI.get.(b, attr, indices)
     else
         inner_indices = [outer_to_inner(b, vi) for vi in indices]
@@ -1915,7 +1915,9 @@ function MOI.set(
     indices::Vector{MOI.VariableIndex},
     values::Vector,
 )
-    if any(index -> is_bridged(b, index), indices)
+    if !Variable.has_bridges(Variable.bridges(b))
+        MOI.set(b.model, attr, indices, values)
+    elseif any(index -> is_bridged(b, index), indices)
         MOI.set.(b, attr, indices, values)
     else
         inner_indices = [outer_to_inner(b, vi) for vi in indices]
@@ -1997,22 +1999,17 @@ function MOI.get(
             # Otherwise, we need to query ConstraintFunction in the context of
             # the bridge...
             func = call_in_context(MOI.get, b, ci, attr)
-            if recursive_model(b) !== b
-                # The bridge expressed `func` in `b.model`'s namespace;
-                # translate the non-bridge-created indices to the outer
-                # namespace before unbridging.
-                func = _from_inner_value(b, func)
-            end
-            # and then unbridge this function (because it may contain variables
-            # that are themselves bridged).
-            return unbridged_constraint_function(b, func)
+            return _normalize_unbridged_constraint_function(
+                b,
+                _unbridged_result_from_bridge(b, func),
+            )
         end
     else
-        # This constraint is not bridged, but it might contain variables that
-        # are.
-        func =
-            _from_inner_value(b, MOI.get(b.model, attr, outer_to_inner(b, ci)))
-        return unbridged_constraint_function(b, func)
+        func = MOI.get(b.model, attr, outer_to_inner(b, ci))
+        return _normalize_unbridged_constraint_function(
+            b,
+            _unbridged_result_from_inner(b, func),
+        )
     end
 end
 
@@ -2508,38 +2505,6 @@ function MOI.supports_constraint(
     end
 end
 
-"""
-    _is_available_constraint_index(b, ci::MOI.ConstraintIndex)
-
-Return `true` if `ci` can be allocated (by `Constraint.add_key_for_bridge`
-for a force-bridged constraint, or by `Variable.add_keys_for_bridge` for a
-vector of constrained variables) without clashing with an index already in
-use in the outer `(F, S)` namespace, namely:
-
-  * a vector of constrained variables in `Variable.bridges(b)`,
-  * a force-/constraint-bridged constraint in `Constraint.bridges(b)`,
-  * an inner constraint translated into the outer namespace when the
-    `(F, S)` constraint mapping was activated.
-"""
-function _is_available_constraint_index(
-    b::AbstractBridgeOptimizer,
-    ci::MOI.ConstraintIndex{F,S},
-) where {F,S}
-    if MOI.is_valid(Variable.bridges(b), ci)
-        return false
-    end
-    if haskey(Constraint.bridges(b), ci)
-        return false
-    end
-    map = Variable.bridges(b)
-    if map isa Variable.Map &&
-       Variable.is_constraint_mapping_active(map, F, S) &&
-       Variable.outer_to_inner(map, ci, nothing) !== nothing
-        return false
-    end
-    return true
-end
-
 function add_bridged_constraint(b, BridgeType, f, s)
     map = Constraint.bridges(b)::Constraint.Map
     # Okay, this part is a bit tricky. `Constraint.bridge_constraint` might add
@@ -2557,19 +2522,21 @@ function add_bridged_constraint(b, BridgeType, f, s)
     if MOI.Bridges.needs_final_touch(bridge)
         insert!(map.needs_final_touch, n_final_touch + 1, bridge)
     end
-    # `MOI.VectorOfVariables` constraint indices have negative indices
-    # to distinguish between the indices of the inner model.
-    # However, they can clash with the indices created by the variable
-    # bridges or with inner indices copied into the outer namespace when the
-    # constraint mapping was activated, so we use the last argument to
-    # inform the constraint bridge mapping about indices already taken.
-    ci = Constraint.add_key_for_bridge(
-        map,
-        bridge,
-        f,
-        s,
-        Base.Fix1(_is_available_constraint_index, b),
-    )
+    index = nothing
+    v_map = Variable.bridges(b)
+    if f isa MOI.VectorOfVariables && Variable.has_bridges(v_map)
+        index = Variable.allocate_constraint!(
+            v_map,
+            typeof(f),
+            typeof(s);
+            minimum = length(map.bridges) + 1,
+        ).value
+    end
+    ci = if index === nothing
+        Constraint.add_key_for_bridge(map, bridge, f, s, Returns(true))
+    else
+        Constraint.add_key_for_bridge(map, bridge, f, s, Returns(true); index)
+    end
     Variable.register_context(Variable.bridges(b), ci)
     return ci
 end
@@ -2734,6 +2701,18 @@ function MOI.add_constraints(
         end
     end
     inner_cis = MOI.add_constraints(b.model, f, s)
+    map = Variable.bridges(b)
+    if !Variable.has_bridges(map)
+        if map isa Variable.Map &&
+           F == MOI.VectorOfVariables &&
+           !isempty(inner_cis)
+            Variable.record_identity!(
+                map,
+                MOI.ConstraintIndex{F,S}(maximum(ci -> ci.value, inner_cis)),
+            )
+        end
+        return inner_cis
+    end
     return [_record_inner_constraint!(b, ci) for ci in inner_cis]
 end
 
@@ -2926,10 +2905,23 @@ function _record_inner_variable!(
         end
         return inner_vi
     end
-    outer_vi = MOI.VariableIndex(Variable.next_outer_variable!(map))
-    map.outer_to_inner[outer_vi] = inner_vi
-    map.inner_to_outer[inner_vi] = outer_vi
-    return outer_vi
+    return Variable.allocate_variable!(map, inner_vi)
+end
+
+function _record_inner_variables!(b::AbstractBridgeOptimizer, inner_vis)
+    map = Variable.bridges(b)
+    if !Variable.has_bridges(map)
+        if map isa Variable.Map && !isempty(inner_vis)
+            Variable.record_identity!(
+                map,
+                MOI.VariableIndex(maximum(vi -> vi.value, inner_vis)),
+            )
+        end
+        return inner_vis
+    end
+    return MOI.VariableIndex[
+        Variable.allocate_variable!(map, vi) for vi in inner_vis
+    ]
 end
 
 # Variables
@@ -2949,7 +2941,7 @@ function MOI.add_variables(b::AbstractBridgeOptimizer, n)
         return variables
     end
     inner_vis = MOI.add_variables(b.model, n)
-    return MOI.VariableIndex[_record_inner_variable!(b, vi) for vi in inner_vis]
+    return _record_inner_variables!(b, inner_vis)
 end
 
 # Split in two to avoid ambiguity
@@ -2981,9 +2973,7 @@ function MOI.add_constrained_variables(
 )
     if !is_bridged(b, typeof(set))
         inner_vis, inner_ci = MOI.add_constrained_variables(b.model, set)
-        outer_vis = MOI.VariableIndex[
-            _record_inner_variable!(b, vi) for vi in inner_vis
-        ]
+        outer_vis = _record_inner_variables!(b, inner_vis)
         return outer_vis, _record_inner_constraint!(b, inner_ci)
     end
     if set isa MOI.Reals || is_variable_bridged(b, typeof(set))
@@ -2997,14 +2987,18 @@ function MOI.add_constrained_variables(
         # The constrained-variable `CI{VectorOfVariables, S}` shares the outer
         # `(VOV, S)` namespace with inner passthrough constraints and force-
         # bridged constraints. Activate the constraint mapping for `(VOV, S)`
-        # so that inner indices are translated out of the way, and pass
-        # `_is_available_constraint_index` so the allocation skips any value
-        # already taken by `Constraint.bridges` or by an inner constraint.
+        # so that every allocation uses the same outer constraint space.
         Variable.activate_constraint_mapping!(
             v_map,
             MOI.VectorOfVariables,
             typeof(set),
         )
+        minimum_constraint_index = length(v_map.vector_of_variables_map) + 1
+        c_map = Constraint.bridges(b)
+        if c_map isa Constraint.Map
+            minimum_constraint_index =
+                max(minimum_constraint_index, length(c_map.bridges) + 1)
+        end
         return Variable.add_keys_for_bridge(
             v_map,
             () -> Variable.bridge_constrained_variable(
@@ -3013,7 +3007,14 @@ function MOI.add_constrained_variables(
                 set,
             ),
             set,
-            Base.Fix1(_is_available_constraint_index, b),
+            Returns(true);
+            constraint_index = iszero(MOI.dimension(set)) ? nothing :
+                               Variable.allocate_constraint!(
+                v_map,
+                MOI.VectorOfVariables,
+                typeof(set);
+                minimum = minimum_constraint_index,
+            ).value,
         )
     else
         variables = MOI.add_variables(b, MOI.dimension(set))
@@ -3260,73 +3261,34 @@ function bridged_constraint_function(
     # We use the fact that the initial function constant was zero to
     # implement getters for `MOI.ConstraintFunction` and `MOI.ConstraintSet`.
     #
-    # See `unbridged_constraint_function` for more details.
+    # See `_normalize_unbridged_constraint_function` for more details.
     MOI.throw_if_scalar_and_constant_not_zero(func, typeof(set))
     f = bridged_function(b, func)::typeof(func)
     return MOI.Utilities.normalize_constant(f, set)
 end
 
-"""
-    unbridged_constraint_function(
-       b::AbstractBridgeOptimizer,
-       func::MOI.AbstractFunction
-    )
-
-Similar to `unbridged_function(b, func)` but zero the function constant if it is
-scalar.
-"""
-function unbridged_constraint_function end
-
-# The purpose of unbridged_constraint_function is to convert the result of
-# ConstraintFunction into the un-bridged form. Since variable bridges create
-# substitution rules which are scalar functions, for example, `x => y_1 - y_2`, if the
-# result is a VariableIndex or an AbstractVectorFunction we can return the
-# unbridged function:
-
-function unbridged_constraint_function(
-    b::AbstractBridgeOptimizer,
-    func::MOI.VariableIndex,
+# A scalar variable bridge can shift constants into the constraint set.
+# For example, x = y + 1 turns 2x >= 1 into 2y >= -1. Unbridging gives
+# 2x - 2, but ConstraintFunction must return 2x; ConstraintSet recovers the
+# corresponding set separately. These helpers accept already unbridged
+# functions, so they never reinterpret outer indices as inner indices.
+_normalize_unbridged_constraint_function(::AbstractBridgeOptimizer, f) = f
+function _normalize_unbridged_constraint_function(
+    ::AbstractBridgeOptimizer,
+    f::MOI.VariableIndex,
 )
-    return unbridged_function(b, func)
-end
-
-function unbridged_constraint_function(
-    b::AbstractBridgeOptimizer,
-    func::MOI.AbstractVectorFunction,
-)
-    return unbridged_function(b, func)
-end
-
-# (These are separate methods to avoid ambiguity issues.)
-
-# But if the result is an AbstractScalarFunction, we need to be more careful.
-
-function unbridged_constraint_function(
-    b::AbstractBridgeOptimizer,
-    func::MOI.AbstractScalarFunction,
-)
-    # If `b` has no variable bridges, no substitution can occur, so we return
-    # func.
-    if !Variable.has_bridges(Variable.bridges(b))
-        return func
-    end
-    # Otherwise, first unbridge the function:
-    f = unbridged_function(b, func)::typeof(func)
-    # But now we have to deal with an issue. Something like x in [1, ∞) might
-    # get bridged into y in R₊, with x => y + 1, so if the original constraint is
-    # 2x >= 1, the bridged function is 2y >= -1. Unbridging this with y = x - 1
-    # gives 2x - 2, but we only care about 2x. Where did the -2 come from? It
-    # was moved into the set. This gets handled separately, so for
-    # ConstraintFunction it is sufficient to drop any non-zero constant terms.
-    #
-    # It's also safe to do this because ScalarFunctionConstantNotZero will be
-    # thrown if we can't move the constant into the set, and there is a test to
-    # catch this.
-    c = MOI.constant(f)
-    if !iszero(c)
-        f = MOI.Utilities.operate(-, typeof(c), f, c)
-    end
     return f
+end
+
+function _normalize_unbridged_constraint_function(
+    b::AbstractBridgeOptimizer,
+    f::MOI.AbstractScalarFunction,
+)
+    if !Variable.has_bridges(Variable.bridges(b))
+        return f
+    end
+    c = MOI.constant(f)
+    return iszero(c) ? f : MOI.Utilities.operate(-, typeof(c), f, c)
 end
 
 # TODO add transform

@@ -293,6 +293,33 @@ function test_double_variable_bound()
     return
 end
 
+function test_index_space()
+    V = MOI.Bridges.Variable
+    space = V.IndexSpace()
+    space.last_identity = 3
+    @test space.mapping === nothing
+    @test V.outer_to_inner(space, Int64(2), nothing) == 2
+    @test V.inner_to_outer(space, Int64(2), nothing) == 2
+    @test V.allocate!(space, V.BridgeSlot(1)) == 4
+    @test V.allocate!(space, V.InnerIndex(4)) == 5
+    @test V.destination(space, Int64(4)) == V.BridgeSlot(1)
+    @test V.outer_to_inner(space, Int64(4), nothing) === nothing
+    @test V.outer_to_inner(space, Int64(5), nothing) == 4
+    @test V.inner_to_outer(space, Int64(4), nothing) == 5
+    V.remove_mapping!(space, Int64(5))
+    @test V.outer_to_inner(space, Int64(5), nothing) === nothing
+    @test V.inner_to_outer(space, Int64(4), nothing) === nothing
+    @test V.allocate!(space, nothing; minimum = 8) == 8
+    @test V.allocate!(space, V.InnerIndex(5)) == 9
+    @test V.destination(space, Int64(7)) === nothing
+    other = V.IndexSpace()
+    @test V.allocate!(other, V.BridgeSlot(1)) == 1
+    @test V.allocate!(other, V.InnerIndex(1)) == 2
+    @test something(other.mapping).reverse[V.BridgeSlot(1)] == 1
+    @test V.inner_to_outer(other, Int64(1), nothing) == 2
+    return
+end
+
 end  # module
 
 TestVariableMap.runtests()
