@@ -1455,6 +1455,7 @@ function test_extract_subexpression()
     sub = MOI.ScalarNonlinearFunction(:^, Any[x, 3])
     f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
     expr = Nonlinear.parse_expression(model, f)
+    MOI.Utilities.final_touch(model)
     @test expr == Nonlinear.Expression(
         [
             Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
@@ -1477,6 +1478,7 @@ function _extract_subexpression_nested_model()
     outer = MOI.ScalarNonlinearFunction(:+, Any[inner, x])
     repeated = MOI.ScalarNonlinearFunction(:*, Any[outer, outer])
     expr = Nonlinear.parse_expression(model, repeated)
+    MOI.Utilities.final_touch(model)
     return model, expr, x, inner, outer, repeated
 end
 
@@ -1512,6 +1514,7 @@ function test_extract_subexpression_nested_after_move()
     model, _, x, inner, outer, repeated = _extract_subexpression_nested_model()
     Nonlinear.parse_expression(model, outer)
     reused = Nonlinear.parse_expression(model, inner)
+    MOI.Utilities.final_touch(model)
     @test model.cache[inner] == (2, 0)
     @test reused.nodes == [Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, -1)]
     @test model.expressions[1].nodes[2] ==
@@ -1536,6 +1539,7 @@ function test_extract_subexpression_single_node()
     empty_sum = MOI.ScalarNonlinearFunction(:+, Any[])
     repeated = MOI.ScalarNonlinearFunction(:+, Any[empty_sum, empty_sum])
     expr = Nonlinear.parse_expression(model, repeated)
+    MOI.Utilities.final_touch(model)
     @test model.expressions == [
         Nonlinear.Expression(
             [Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1)],
@@ -1579,6 +1583,7 @@ function test_extract_subexpression_already_extracted()
     f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
     Nonlinear.parse_expression(model, f)
     expr = Nonlinear.parse_expression(model, g)
+    MOI.Utilities.final_touch(model)
     @test expr == expected_g
     @test model.expressions == [_extract_subexpression_expected_sub()]
     return
@@ -1589,6 +1594,7 @@ function test_extract_subexpression_objective()
     _, _, _, g, expected_g = _extract_subexpression_shared_functions()
     model = Nonlinear.Model()
     Nonlinear.set_objective(model, g)
+    MOI.Utilities.final_touch(model)
     @test model.objective == expected_g
     @test model.expressions == [_extract_subexpression_expected_sub()]
     return
@@ -1604,6 +1610,7 @@ function test_extract_subexpression_rewrite_objective()
     prod = MOI.ScalarNonlinearFunction(:*, [h, x])
     sum = MOI.ScalarNonlinearFunction(:*, [x, x, x, x, prod])
     expr = Nonlinear.parse_expression(model, sum)
+    MOI.Utilities.final_touch(model)
     @test isempty(model.objective.values)
     @test model.objective.nodes == [
         Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
@@ -1633,6 +1640,88 @@ function test_extract_subexpression_rewrite_objective()
         Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 6),
         Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 6),
     ]
+    return
+end
+
+# Both `inner` and `outer`, which contains `inner`, are extracted by the same
+# call to `final_touch`, so `inner` is moved to the expression of `outer`
+# before being extracted.
+function test_extract_subexpression_nested_same_final_touch()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    inner = MOI.ScalarNonlinearFunction(:^, Any[x, 2])
+    outer = MOI.ScalarNonlinearFunction(:+, Any[inner, 3])
+    repeated = MOI.ScalarNonlinearFunction(:*, Any[outer, outer])
+    expr = Nonlinear.parse_expression(model, repeated)
+    reused = Nonlinear.parse_expression(model, inner)
+    MOI.Utilities.final_touch(model)
+    @test expr == Nonlinear.Expression(
+        [
+            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
+            Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+            Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        ],
+        Float64[],
+    )
+    @test reused.nodes == [Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, -1)]
+    @test model.expressions == [
+        Nonlinear.Expression(
+            [
+                Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
+                Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 1),
+            ],
+            [3.0],
+        ),
+        Nonlinear.Expression(
+            [
+                Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 4, -1),
+                Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 1),
+            ],
+            [2.0],
+        ),
+    ]
+    @test model.cache[outer] == (1, 0)
+    @test model.cache[inner] == (2, 0)
+    @test isempty(model.cache_pending)
+    # Calling `final_touch` again does nothing.
+    MOI.Utilities.final_touch(model)
+    @test length(model.expressions) == 2
+    return
+end
+
+# The extractions are done by `evaluate` and by the `Evaluator` without
+# calling `final_touch` explicitly.
+function test_extract_subexpression_implicit_final_touch()
+    x = MOI.VariableIndex(1)
+    sub = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
+    model = Nonlinear.Model()
+    expr = Nonlinear.parse_expression(model, f)
+    @test model.expressions == [Nonlinear.Expression()]
+    @test Nonlinear.evaluate(Dict(x => 0.5), model, expr) ≈ 2 * sin(0.5)
+    @test isempty(model.cache_pending)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, f)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad])
+    @test MOI.eval_objective(evaluator, [0.5]) ≈ 2 * sin(0.5)
+    gradient = zeros(1)
+    MOI.eval_objective_gradient(evaluator, gradient, [0.5])
+    @test gradient[1] ≈ 2 * cos(0.5)
+    return
+end
+
+function test_extract_subexpression_empty()
+    x = MOI.VariableIndex(1)
+    sub = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, MOI.ScalarNonlinearFunction(:+, [sub, sub]))
+    MOI.empty!(model)
+    @test isempty(model.cache)
+    @test isempty(model.cache_expressions)
+    @test isempty(model.cache_pending)
     return
 end
 

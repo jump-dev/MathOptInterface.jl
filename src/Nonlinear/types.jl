@@ -168,12 +168,17 @@ mutable struct Model
     last_constraint_index::Int64
     # Cache values are (expression index, node index). A zero node index
     # identifies an extracted subexpression in `expressions`; otherwise the
-    # expression index refers to `cache_expressions`.
+    # expression index refers to `cache_expressions`. The node indices refer
+    # to the expressions as they are before the pending extractions are done
+    # by `MOI.Utilities.final_touch`.
     # We use a separate vector `cache_expressions` instead of storing
     # a `Tuple{Expression,Int}` in the `Dict` as creating such tuple
     # would trigger a heap allocation for each expression
     cache::Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}
     cache_expressions::Vector{Expression}
+    # Extractions deferred to `MOI.Utilities.final_touch`. Each element is
+    # (index in `cache_expressions`, node index, index in `expressions`).
+    cache_pending::Vector{Tuple{Int,Int,Int}}
     function Model()
         return new(
             nothing,
@@ -184,6 +189,7 @@ mutable struct Model
             0,
             Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}(),
             Expression[],
+            Tuple{Int,Int,Int}[],
         )
     end
 end
@@ -283,6 +289,7 @@ supported feature is `:ExprGraph`.
 struct ExprGraphOnly <: AbstractAutomaticDifferentiation end
 
 function Evaluator(model::Model, ::ExprGraphOnly, ::Vector{MOI.VariableIndex})
+    MOI.Utilities.final_touch(model)
     return Evaluator(model)
 end
 
@@ -300,6 +307,7 @@ function Evaluator(
     ::SparseReverseMode,
     ordered_variables::Vector{MOI.VariableIndex},
 )
+    MOI.Utilities.final_touch(model)
     return Evaluator(model, ReverseAD.NLPEvaluator(model, ordered_variables))
 end
 
@@ -316,5 +324,6 @@ function Evaluator(
     ::SymbolicMode,
     ordered_variables::Vector{MOI.VariableIndex},
 )
+    MOI.Utilities.final_touch(model)
     return Evaluator(model, SymbolicAD.Evaluator(model, ordered_variables))
 end

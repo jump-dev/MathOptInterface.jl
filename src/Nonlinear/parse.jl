@@ -37,123 +37,135 @@ function parse_expression(::Model, ::Expression, x::Any, ::Int)
 end
 
 """
-    _extract_subexpression!(expr::Expression, root::Int)
+    MOI.Utilities.final_touch(model::Model, index_map = nothing)
 
-Prepare the extraction of the subtree rooted at `expr.nodes[root]` into a
-separate expression. Return `(I, V)` where `I` is the range of `expr.nodes`
-and `V` is the range of `expr.values` (or `nothing` if there are no values)
-corresponding to the subtree.
+Extract the subexpressions that were detected by [`parse_expression`](@ref)
+since the last call to `final_touch`.
 
-Because the nodes are stored in depth-first order, the subtree is the
-contiguous range of nodes `root:(first_out-1)` where `first_out` is the first
-node after `root` whose parent is before `root`. Its values are contiguous for
-the same reason.
+When a `MOI.ScalarNonlinearFunction` is parsed a second time, its first
+occurrence, which was parsed inline into some expression, has to be moved into
+a new subexpression so that both occurrences can share it. Doing this
+immediately would shift the nodes of that expression, so every node index
+stored in the cache (and in the stack of the current parse) would need to be
+updated for each extraction, which is quadratic. Instead, `parse_expression`
+reserves an [`ExpressionIndex`](@ref) for the subexpression, with an empty
+placeholder [`Expression`](@ref), and records the node to extract in
+`model.cache_pending`. This function then rewrites each affected expression
+in a single pass, and remaps the cache in a single pass.
 
-This function only renumbers the nodes, it does not delete anything:
-
- * the nodes in `I` are rewritten so that their `parent` (and the `index` of
-   their `NODE_VALUE`) are relative to the start of `I` (and `V`), so that
-   `Expression(expr.nodes[I], expr.values[V])` is a valid expression with
-   `root` as its root;
- * the nodes after `I` are rewritten as if the nodes `I[2:end]` and the values
-   `V` were already deleted, `root` being kept to be replaced by a
-   `NODE_SUBEXPRESSION`.
+The subexpressions are invalid until this function is called. It is called by
+the [`Evaluator`](@ref) constructors and by [`evaluate`](@ref), and it is a
+no-op if there is nothing to extract.
 """
-function _extract_subexpression!(expr::Expression, root::Int)
-    n = length(expr.nodes)
-    first_out = first_value = last_value = nothing
-    # Renumber the nodes of the subtree so that they are relative to `root`.
-    for i in root:n
-        node = expr.nodes[i]
-        if i != root && node.parent < root
-            # We have left the subtree rooted at `root`.
-            first_out = i
-            break
+function MOI.Utilities.final_touch(model::Model, ::Any = nothing)
+    pending = model.cache_pending
+    if isempty(pending)
+        return
+    end
+    # Group the nodes to extract by expression, sorted by node index.
+    sort!(pending)
+    maps = Dict{Int,Tuple{Vector{Int},Vector{Int}}}()
+    first = 1
+    while first <= length(pending)
+        tape = pending[first][1]
+        last = first
+        while last < length(pending) && pending[last+1][1] == tape
+            last += 1
         end
-        index = node.index
-        if node.type == NODE_VALUE
-            if isnothing(first_value)
-                first_value = node.index
-                last_value = first_value
-            else
-                last_value = node.index
-            end
-            index -= first_value - 1
-        end
-        expr.nodes[i] =
-            Node(node.type, index, i == root ? -1 : node.parent - root + 1)
+        maps[tape] = _extract_subexpressions!(model, tape, pending, first, last)
+        first = last + 1
     end
-    if isnothing(first_out)
-        I = root:n
-    else
-        I = root:(first_out-1)
-    end
-    if isnothing(first_value)
-        V = nothing
-    else
-        V = first_value:last_value
-    end
-    # Shift the nodes after the subtree as if `I[2:end]` and `V` were deleted.
-    if !isnothing(first_out)
-        for i in (last(I)+1):n
-            node = expr.nodes[i]
-            index = node.index
-            if node.type == NODE_VALUE && !isnothing(V)
-                @assert index >= last(V)
-                index -= length(V)
-            end
-            parent = node.parent
-            # A parent cannot be in `root+1:last(I)` since this node is not in
-            # the subtree. If `parent == root`, it is now the parent of the
-            # `NODE_SUBEXPRESSION` so it does not change.
-            if parent > root
-                @assert parent > last(I)
-                parent -= length(I) - 1
-            end
-            expr.nodes[i] = Node(node.type, index, parent)
+    empty!(pending)
+    # Remap the cached nodes of the expressions that were rewritten.
+    for (key, (tape, node)) in model.cache
+        if node != 0 && haskey(maps, tape)
+            new_tape, new_node = maps[tape]
+            model.cache[key] = (new_tape[node], new_node[node])
         end
     end
-    return I, V
+    return
 end
 
 """
-    _extract_subexpression!(data::Model, expr::Expression, root::Int)
+    _extract_subexpressions!(model::Model, tape::Int, pending, first, last)
 
-Move the subtree rooted at `expr.nodes[root]` to a new expression in
-`data.expressions` and replace it in `expr` by a single `NODE_SUBEXPRESSION`
-node pointing to it. Return `(index, I)` where `index` is the
-[`ExpressionIndex`](@ref) of the new subexpression and `I` is the range of
-nodes that the subtree used to occupy in `expr`. As `root` is kept, the
-nodes after `I` are shifted by `length(I) - 1`, the caller is responsible for
-updating any node index into `expr` that it stores.
+Extract the nodes `pending[i][2]` of `model.cache_expressions[tape]` into the
+subexpressions `model.expressions[pending[i][3]]` for `i in first:last`. The
+nodes `pending[first:last]` must be sorted.
 
-This is called when the same `MOI.ScalarNonlinearFunction` is parsed a second
-time: its first occurrence was parsed inline into `expr` and is now replaced by
-a subexpression that both occurrences can share.
+The nodes are stored in depth-first order so a node is visited after its
+parent. Each node is therefore appended to the same expression as its parent,
+unless it is to be extracted, in which case its parent gets a
+`NODE_SUBEXPRESSION` node instead and the node becomes the root of its
+subexpression. Nested extractions are handled in the same way.
 
-This costs `O(length(expr.nodes) + length(expr.values))` as we need to shift
-the nodes after the subtree and delete the nodes and values of the subtree.
+The nodes that stay in `model.cache_expressions[tape]` can only move to a
+smaller index so we rewrite it in place.
+
+Return `(new_tape, new_node)` such that node `i` of the original expression is
+now node `new_node[i]` of `model.cache_expressions[new_tape[i]]`.
 """
-function _extract_subexpression!(data::Model, expr::Expression, root::Int)
-    parent = expr.nodes[root].parent
-    I, V = _extract_subexpression!(expr, root)
-    subexpr =
-        Expression(expr.nodes[I], isnothing(V) ? Float64[] : expr.values[V])
-    push!(data.expressions, subexpr)
-    index = ExpressionIndex(length(data.expressions))
-    # We are replacing the subtree by a subexpression so we keep the root node,
-    # now a `NODE_SUBEXPRESSION`, and remove all the other nodes and values of
-    # the subtree from the tape.
-    expr.nodes[root] = Node(NODE_SUBEXPRESSION, index.value, parent)
-    if length(I) > 1
-        deleteat!(expr.nodes, I[2:end])
-        if !isnothing(V)
-            deleteat!(expr.values, V)
+function _extract_subexpressions!(
+    model::Model,
+    tape::Int,
+    pending::Vector{Tuple{Int,Int,Int}},
+    first::Int,
+    last::Int,
+)
+    expr = model.cache_expressions[tape]
+    n = length(expr.nodes)
+    new_tape = Vector{Int}(undef, n)
+    new_node = Vector{Int}(undef, n)
+    # Number of nodes and values kept in `expr` so far.
+    num_nodes = num_values = 0
+    for i in 1:n
+        node = expr.nodes[i]
+        if node.parent == -1
+            parent_tape, parent = tape, -1
+        else
+            parent_tape, parent = new_tape[node.parent], new_node[node.parent]
         end
-    else
-        @assert isnothing(V)
+        if first <= last && pending[first][2] == i
+            subexpr = pending[first][3]
+            first += 1
+            # Replace the node by a `NODE_SUBEXPRESSION` in its parent's
+            # expression and continue with the node as root of `subexpr`.
+            subexpr_node = Node(NODE_SUBEXPRESSION, subexpr, parent)
+            if parent_tape == tape
+                num_nodes += 1
+                expr.nodes[num_nodes] = subexpr_node
+            else
+                push!(model.cache_expressions[parent_tape].nodes, subexpr_node)
+            end
+            # `subexpr` may contain cached nodes so it needs to be in
+            # `cache_expressions`.
+            push!(model.cache_expressions, model.expressions[subexpr])
+            parent_tape, parent = length(model.cache_expressions), -1
+        end
+        new_tape[i] = parent_tape
+        index = node.index
+        if parent_tape == tape
+            if node.type == NODE_VALUE
+                num_values += 1
+                expr.values[num_values] = expr.values[index]
+                index = num_values
+            end
+            num_nodes += 1
+            expr.nodes[num_nodes] = Node(node.type, index, parent)
+            new_node[i] = num_nodes
+        else
+            target = model.cache_expressions[parent_tape]
+            if node.type == NODE_VALUE
+                push!(target.values, expr.values[index])
+                index = length(target.values)
+            end
+            push!(target.nodes, Node(node.type, index, parent))
+            new_node[i] = length(target.nodes)
+        end
     end
-    return index, I
+    resize!(expr.nodes, num_nodes)
+    resize!(expr.values, num_values)
+    return new_tape, new_node
 end
 
 function parse_expression(
@@ -174,55 +186,18 @@ function parse_expression(
                     # It was already extracted into a subexpression.
                     subexpr = ExpressionIndex(_expr_index)
                 else
-                    # It was parsed inline at node `_node` of `_expr`. This is
-                    # its second occurrence so we extract it into a
-                    # subexpression. This shifts the nodes of `_expr` after
-                    # `I` so we need to update every node index into `_expr`
-                    # that we store: those in `stack` (if `_expr` is the one
-                    # we are parsing into) and those in `data.cache`.
-                    _expr = data.cache_expressions[_expr_index]
-                    subexpr, I = _extract_subexpression!(data, _expr, _node)
-                    # The nodes of the subtree were moved to the new
-                    # subexpression which may itself contain functions that
-                    # are cached so we register it in `cache_expressions`.
+                    # It was parsed inline at node `_node` of
+                    # `data.cache_expressions[_expr_index]`. This is its second
+                    # occurrence so it needs to be extracted into a
+                    # subexpression. We reserve its index and defer the
+                    # extraction to `MOI.Utilities.final_touch` so that no
+                    # node is moved in the meantime.
+                    push!(data.expressions, Expression())
+                    subexpr = ExpressionIndex(length(data.expressions))
                     push!(
-                        data.cache_expressions,
-                        data.expressions[subexpr.value],
+                        data.cache_pending,
+                        (_expr_index, _node, subexpr.value),
                     )
-                    subexpr_index = length(data.cache_expressions)
-                    if expr === _expr
-                        if parent_node > first(I)
-                            @assert parent_node > last(I)
-                            parent_node -= length(I) - 1
-                        end
-                        for i in eachindex(stack)
-                            _parent_node = stack[i][1]
-                            if _parent_node > first(I)
-                                @assert _parent_node > last(I)
-                                stack[i] =
-                                    (_parent_node - length(I) + 1, stack[i][2])
-                            end
-                        end
-                    end
-                    # Cached functions in `I[2:end]` now point into the new
-                    # subexpression and those after `I` are shifted.
-                    # Note that this loops over all the cached functions, so
-                    # extracting `k` subexpressions costs
-                    # `O(k * length(data.cache))`.
-                    for (key, (__expr_index, __node)) in data.cache
-                        if __node != 0
-                            __expr = data.cache_expressions[__expr_index]
-                            if _expr === __expr && __node > first(I)
-                                if __node <= last(I)
-                                    data.cache[key] =
-                                        (subexpr_index, __node - first(I) + 1)
-                                else
-                                    data.cache[key] =
-                                        (__expr_index, __node - length(I) + 1)
-                                end
-                            end
-                        end
-                    end
                     data.cache[arg] = (subexpr.value, 0)
                 end
                 parse_expression(data, expr, subexpr, parent_node)
