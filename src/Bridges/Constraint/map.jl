@@ -298,9 +298,18 @@ function add_key_for_bridge(
     bridge::AbstractBridge,
     ::F,
     ::S,
-    is_available::Function,
+    is_available::Function;
+    index::Union{Nothing,Int64} = nothing,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    _ensure_available(map, F, S, is_available)
+    if index === nothing
+        _ensure_available(map, F, S, is_available)
+    else
+        @assert index > length(map.bridges)
+        while length(map.bridges) + 1 < index
+            push!(map.bridges, nothing)
+            push!(map.constraint_types, (F, S))
+        end
+    end
     push!(map.bridges, bridge)
     push!(map.constraint_types, (F, S))
     return _index(length(map.bridges), F, S)

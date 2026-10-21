@@ -1705,6 +1705,213 @@ function test_variable_mapping_modify_objective_bridged_variable()
     return
 end
 
+function test_variable_mapping_inner_index_collision()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.Free{Float64}(inner)
+    x = MOI.add_variable(model)
+    y, cy = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [x; y]
+    @test MOI.get(model, MOI.NumberOfVariables()) == 2
+    c = MOI.add_constraint(model, 1.0 * y[1], MOI.LessThan(2.0))
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ≈ 1.0 * y[1]
+    attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
+    MOI.set(model, attr, 2.0 * x + 3.0 * y[1])
+    @test MOI.get(model, attr) ≈ 2.0 * x + 3.0 * y[1]
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+    ) == [cy]
+    return
+end
+
+function test_variable_mapping_constraint_lists()
+    model = _zeros_bridge_optimizer()
+    x, cx = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    y = MOI.add_variable(model)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables([y]), MOI.Zeros(1))
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}(),
+    ) == [c, cx]
+    MOI.set(model, MOI.ConstraintName(), c, "c")
+    attr =
+        MOI.ListOfConstraintsWithAttributeSet{MOI.VectorOfVariables,MOI.Zeros}(
+            MOI.ConstraintName(),
+        )
+    @test MOI.get(model, attr) == [c]
+    MOI.delete(model, c)
+    @test isempty(MOI.get(model, attr))
+    @test MOI.get(
+        model,
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}(),
+    ) == [cx]
+    return
+end
+
+function test_variable_mapping_deleted_constraint_indices()
+    model = _zeros_bridge_optimizer()
+    x, cx = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    MOI.delete(model, x)
+    @test !MOI.is_valid(model, cx)
+    y = MOI.add_variable(model)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables([y]), MOI.Zeros(1))
+    @test c != cx
+    @test !MOI.is_valid(model, cx)
+    MOI.delete(model, c)
+    _, cz = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    @test cz != c && cz != cx
+    @test !MOI.is_valid(model, c)
+    @test !MOI.is_valid(model, cx)
+    @test MOI.is_valid(model, cz)
+    return
+end
+
+function test_variable_mapping_identity_prefix()
+    model = _zeros_bridge_optimizer()
+    y = MOI.add_variables(model, 2)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(y), MOI.Zeros(2))
+    map = MOI.Bridges.Variable.bridges(model)
+    @test MOI.Bridges._record_inner_variables!(model, y) === y
+    @test isempty(MOI.add_variables(model, 0))
+    @test map.variable_space.mapping === nothing
+    @test !MOI.Bridges.Variable.is_constraint_mapping_active(
+        map,
+        MOI.VectorOfVariables,
+        MOI.Zeros,
+    )
+    @test MOI.Bridges.outer_to_inner(model, y[1]) == y[1]
+    bulk = MOI.add_constraints(
+        model,
+        [MOI.VectorOfVariables([vi]) for vi in y],
+        [MOI.Zeros(1), MOI.Zeros(1)],
+    )
+    @test !MOI.Bridges.Variable.is_constraint_mapping_active(
+        map,
+        MOI.VectorOfVariables,
+        MOI.Zeros,
+    )
+    x, cx = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    @test cx != c
+    @test all(ci -> ci != cx, bulk)
+    @test MOI.Bridges.outer_to_inner(model, y[1]) == y[1]
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ==
+          MOI.VectorOfVariables(y)
+    z = MOI.add_variable(model)
+    @test z != x[1]
+    @test MOI.get(model, MOI.ListOfVariableIndices()) == [y; z; x]
+    MOI.delete(model, z)
+    @test !MOI.is_valid(model, z)
+    MOI.empty!(model)
+    @test map.variable_space.mapping === nothing
+    @test isempty(map.constraint_spaces)
+    @test MOI.add_variable(model) == MOI.VariableIndex(1)
+    return
+end
+
+MOI.Utilities.@model(
+    MappingModel,
+    (),
+    (),
+    (MOI.Zeros, MOI.Nonnegatives),
+    (),
+    (),
+    (),
+    (MOI.VectorOfVariables,),
+    (MOI.VectorAffineFunction,),
+)
+
+function MOI.supports_add_constrained_variables(
+    ::MappingModel,
+    ::Type{MOI.Zeros},
+)
+    return false
+end
+
+function test_variable_mapping_shared_constraint_allocation()
+    inner = MappingModel{Float64}()
+    outer = MOI.Bridges.LazyBridgeOptimizer(inner)
+    MOI.Bridges.add_bridge(outer, MOI.Bridges.Variable.ZerosBridge{Float64})
+    MOI.Bridges.add_bridge(
+        outer,
+        MOI.Bridges.Constraint.VectorFunctionizeBridge{Float64},
+    )
+    x, cx = MOI.add_constrained_variables(outer, MOI.Zeros(1))
+    y = MOI.add_variable(outer)
+    c = MOI.add_constraint(outer, MOI.VectorOfVariables([y]), MOI.Zeros(1))
+    cf = MOI.add_constraint(outer, MOI.VectorOfVariables(x), MOI.Zeros(1))
+    @test length(Set([cx, c, cf])) == 3
+    @test Set(
+        MOI.get(
+            outer,
+            MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}(),
+        ),
+    ) == Set([cx, c, cf])
+    MOI.delete(outer, cf)
+    cf2 = MOI.add_constraint(outer, MOI.VectorOfVariables(x), MOI.Zeros(1))
+    @test cf2 != cf
+    @test !MOI.is_valid(outer, cf)
+    @test MOI.is_valid(outer, c)
+    @test MOI.is_valid(outer, cx)
+    @test MOI.is_valid(outer, cf2)
+    return
+end
+
+function test_variable_mapping_existing_constraint_bridge()
+    model = MOI.Bridges.LazyBridgeOptimizer(MappingModel{Float64}())
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.NonposToNonnegBridge{Float64},
+    )
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Variable.NonposToNonnegBridge{Float64},
+    )
+    y = MOI.add_variable(model)
+    c = MOI.add_constraint(
+        model,
+        MOI.VectorOfVariables([y]),
+        MOI.Nonpositives(1),
+    )
+    @test !MOI.Bridges.Variable.has_bridges(MOI.Bridges.Variable.bridges(model))
+    x, cx = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    @test cx != c
+    @test MOI.is_valid(model, c)
+    @test MOI.is_valid(model, cx)
+    @test Set(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.Nonpositives,
+            }(),
+        ),
+    ) == Set([c, cx])
+    return
+end
+
+function test_variable_mapping_inactive_bulk_operations()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Variable.Zeros{Float64}(inner)
+    y = MOI.add_variables(model, 2)
+    attr = MOI.VariablePrimalStart()
+    MOI.set(model, attr, y, [1.0, 2.0])
+    @test MOI.get(model, attr, y) == [1.0, 2.0]
+    c = MOI.add_constraints(
+        model,
+        y,
+        [MOI.GreaterThan(0.0), MOI.GreaterThan(1.0)],
+    )
+    MOI.delete(model, c)
+    @test all(ci -> !MOI.is_valid(model, ci), c)
+    MOI.delete(model, y)
+    @test isempty(MOI.get(model, MOI.ListOfVariableIndices()))
+    map = MOI.Bridges.Variable.bridges(model)
+    @test map.variable_space.mapping === nothing
+    _, cx = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    @test cx.value > 0
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

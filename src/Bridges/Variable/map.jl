@@ -4,42 +4,114 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+# Destinations are tagged so an inner index cannot alias a bridge slot.
+struct InnerIndex
+    value::Int64
+end
+
+struct BridgeSlot
+    value::Int64
+end
+
+struct IndexMapping
+    entries::Vector{Union{Nothing,InnerIndex,BridgeSlot}}
+    reverse::Dict{Union{InnerIndex,BridgeSlot},Int64}
+end
+
+function IndexMapping()
+    return IndexMapping(
+        Union{Nothing,InnerIndex,BridgeSlot}[],
+        Dict{Union{InnerIndex,BridgeSlot},Int64}(),
+    )
+end
+
+"""
+    IndexSpace()
+
+An implicit identity prefix followed by a dense table of allocated outer
+indices. The table is created only when the index spaces first diverge.
+Entries identify inner indices or bridge slots; `nothing` reserves an index
+or marks a deleted passthrough index. Allocated indices are never reused.
+"""
+mutable struct IndexSpace
+    last_identity::Int64
+    mapping::Union{Nothing,IndexMapping}
+end
+
+IndexSpace() = IndexSpace(0, nothing)
+
+function activate!(space::IndexSpace)
+    if space.mapping === nothing
+        space.mapping = IndexMapping()
+    end
+    return
+end
+
+function allocate!(space::IndexSpace, destination; minimum::Int = 1)
+    activate!(space)
+    mapping = something(space.mapping)
+    while space.last_identity + length(mapping.entries) + 1 < minimum
+        push!(mapping.entries, nothing)
+    end
+    push!(mapping.entries, destination)
+    value = space.last_identity + length(mapping.entries)
+    if destination !== nothing
+        mapping.reverse[destination] = value
+    end
+    return value
+end
+
+function destination(space::IndexSpace, value::Int64)
+    if space.mapping === nothing
+        return nothing
+    end
+    entries = something(space.mapping).entries
+    i = value - space.last_identity
+    return 1 <= i <= length(entries) ? entries[i] : nothing
+end
+
+function outer_to_inner(space::IndexSpace, value::Int64, default)
+    if value <= space.last_identity
+        return value
+    end
+    entry = destination(space, value)
+    return entry isa InnerIndex ? entry.value : default
+end
+
+function inner_to_outer(space::IndexSpace, value::Int64, default)
+    if value <= space.last_identity
+        return value
+    elseif space.mapping === nothing
+        return default
+    end
+    return get(something(space.mapping).reverse, InnerIndex(value), default)
+end
+
+function remove_mapping!(space::IndexSpace, value::Int64)
+    entry = destination(space, value)
+    if entry isa InnerIndex
+        mapping = something(space.mapping)
+        delete!(mapping.reverse, entry)
+        mapping.entries[value-space.last_identity] = nothing
+    end
+    return
+end
+
 """
     Map <: AbstractDict{MOI.VariableIndex, AbstractBridge}
 
 Mapping between bridged variables and the bridge that bridged the variable.
 
-## Outer / inner index spaces
+The user and inner model share indices until the first variable bridge is
+added. Afterwards `variable_space` allocates both passthrough and bridged
+variables, mapping the latter to slots in the dense bridge storage below.
+`constraint_spaces` provides the same allocation and translation for each
+`VectorOfVariables` constraint type whose namespaces diverge. Scalar variable
+constraints derive their indices from the variable space.
 
-The user-facing ("outer") `VariableIndex` and `ConstraintIndex` namespaces are
-independent from the ones used by `b.model` ("inner"). When no variable bridge
-has ever been added to this `Map` the two namespaces coincide (identity
-mapping) and no translation is performed, but the largest inner index seen so
-far is recorded (see [`record_identity!`](@ref)). As soon as the first
-variable bridge is added, [`activate_variable_mapping!`](@ref) is called: the
-indices up to that largest one keep being translated by the identity (see
-[`is_identity_index`](@ref)), and from that point on the two namespaces drift
-apart: bridged variables get a fresh outer index with no inner counterpart,
-non-bridged variables get a fresh outer index recorded alongside their inner
-index in `outer_to_inner` and `inner_to_outer`.
-
-Constraint indices follow the same rule per `(F, S)` pair. The first force-
-bridged `CI{VariableIndex, S}` or `CI{VectorOfVariables, S}` triggers
-[`activate_constraint_mapping!`](@ref) for that `(F, S)`: the existing inner
-`CI{F, S}` keep being translated by the identity; afterwards the outer and
-inner `CI{F, S}` namespaces are independent.
-
-As the inner model is never queried for its existing indices, it must be
-empty when wrapped by the bridge optimizer and only be modified through it.
-
-## Internal slot indexing
-
-Bridged variables are identified by a **positive** outer `VariableIndex.value`
-allocated from the shared outer counter (see [`next_outer_variable!`](@ref)).
-Internally, the per-bridge data is stored in dense `Vector`s indexed by a
-1-based `slot`. [`variable_to_slot`](@ref) maps an outer value to its slot and
-[`slot_to_variable`](@ref) is the inverse (parallel to `bridges`). A bridged
-variable is **outer-only**: it has no entry in `outer_to_inner`/`inner_to_outer`.
+Before activation, only the largest identity index is recorded. The inner
+model must therefore be empty when wrapped and modified through the bridge
+optimizer only.
 """
 mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     # `slot` ->  `0`: the variable at `slot` was added with `add_constrained_variable`.
@@ -77,32 +149,8 @@ mutable struct Map <: AbstractDict{MOI.VariableIndex,AbstractBridge}
     vector_of_variables_length::Vector{Int64}
     # Same as in `MOI.Utilities.VariablesContainer`
     set_mask::Vector{UInt16}
-    # outer `VariableIndex.value` of a bridged variable -> its `slot`.
-    variable_to_slot::Dict{Int64,Int64}
-    # `slot` -> outer `VariableIndex.value` (inverse of `variable_to_slot`,
-    # parallel to `bridges`).
-    slot_to_variable::Vector{Int64}
-    # Outer (user-facing) -> inner (`b.model`) translation of the
-    # non-bridged indices allocated after the activation of the mapping.
-    # The indices allocated before are translated by the identity and have no
-    # entry here, see `is_identity_index`.
-    outer_to_inner::MOI.Utilities.IndexMap
-    # Reverse of `outer_to_inner`.
-    inner_to_outer::MOI.Utilities.IndexMap
-    # Largest inner `VariableIndex.value` allocated before the first variable
-    # bridge was added. It is updated by `record_identity!` until then.
-    last_identity_variable::Int64
-    # Same as `last_identity_variable` but for `ConstraintIndex{F, S}`, until
-    # the constraint mapping is activated for `(F, S)`.
-    last_identity_constraint::Dict{Tuple{DataType,DataType},Int64}
-    # Next available outer `VariableIndex.value`.
-    # `activate_variable_mapping!` sets it after `last_identity_variable`
-    # when the first variable bridge is added.
-    next_outer_variable::Int64
-    # Per-`(F, S)` next available outer `ConstraintIndex{F, S}.value`. A
-    # missing entry means that `(F, S)` is in identity mode; presence means
-    # constraint mapping has been activated for `(F, S)`.
-    next_outer_constraint::Dict{Tuple{DataType,DataType},Int64}
+    variable_space::IndexSpace
+    constraint_spaces::Dict{Tuple{DataType,DataType},IndexSpace}
 end
 
 function Map()
@@ -111,21 +159,15 @@ function Map()
         Int64[],
         Union{Nothing,AbstractBridge}[],
         Union{Nothing,Type}[],
-        Dict{MOI.VariableIndex,MOI.AbstractScalarFunction}(),
+        Dict{MOI.VariableIndex,Tuple{Int64,MOI.AbstractScalarFunction}}(),
         Int64[],
         0,
         Dict{MOI.ConstraintIndex,Int64}(),
         Int64[],
         Int64[],
         UInt16[],
-        Dict{Int64,Int64}(),
-        Int64[],
-        MOI.Utilities.IndexMap(),
-        MOI.Utilities.IndexMap(),
-        0,
-        Dict{Tuple{DataType,DataType},Int64}(),
-        1,
-        Dict{Tuple{DataType,DataType},Int64}(),
+        IndexSpace(),
+        Dict{Tuple{DataType,DataType},IndexSpace}(),
     )
 end
 
@@ -150,81 +192,41 @@ function Base.empty!(map::Map)
     empty!(map.vector_of_variables_map)
     empty!(map.vector_of_variables_length)
     empty!(map.set_mask)
-    empty!(map.variable_to_slot)
-    empty!(map.slot_to_variable)
-    map.outer_to_inner = MOI.Utilities.IndexMap()
-    map.inner_to_outer = MOI.Utilities.IndexMap()
-    map.last_identity_variable = 0
-    empty!(map.last_identity_constraint)
-    map.next_outer_variable = 1
-    empty!(map.next_outer_constraint)
+    map.variable_space = IndexSpace()
+    empty!(map.constraint_spaces)
     return map
 end
 
-"""
-    is_constraint_mapping_active(map::Map, ::Type{F}, ::Type{S})::Bool
-
-Return `true` once at least one `CI{F, S}` has been force-bridged at this
-layer (and hence the outer/inner translation for `(F, S)` has been
-materialized).
-
-Note that this is strictly stronger than [`has_bridges`](@ref): the latter
-is `true` as soon as any variable bridge exists, while constraint mapping
-only activates for the specific `(F, S)` pairs whose outer and inner
-namespaces have diverged because a `VariableIndex`/`VectorOfVariables`
-constraint was force-bridged. Regular `F`-in-`S` constraints are bridged
-per *type*, never per *instance*, so their namespaces never diverge and
-this stays `false` for them.
-"""
 function is_constraint_mapping_active(
     map::Map,
     ::Type{F},
     ::Type{S},
 ) where {F,S}
-    return haskey(map.next_outer_constraint, (F, S))
+    space = get(map.constraint_spaces, (F, S), nothing)
+    return space !== nothing && space.mapping !== nothing
 end
 
-"""
-    record_identity!(map::Map, idx::MOI.Index)
-
-Record that the inner model allocated `idx` while its type is translated by
-the identity, so that [`activate_variable_mapping!`](@ref) and
-[`activate_constraint_mapping!`](@ref) can later allocate the outer indices
-after it.
-"""
 function record_identity!(map::Map, vi::MOI.VariableIndex)
-    map.last_identity_variable = max(map.last_identity_variable, vi.value)
+    space = map.variable_space
+    space.last_identity = max(space.last_identity, vi.value)
     return
+end
+
+function constraint_space(map::Map, ::Type{F}, ::Type{S}) where {F,S}
+    return get!(IndexSpace, map.constraint_spaces, (F, S))
 end
 
 function record_identity!(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
-    last = get(map.last_identity_constraint, (F, S), Int64(0))
-    map.last_identity_constraint[(F, S)] = max(last, ci.value)
+    space = constraint_space(map, F, S)
+    space.last_identity = max(space.last_identity, ci.value)
     return
 end
 
-"""
-    is_identity_index(map::Map, idx::MOI.Index)::Bool
-
-Return `true` if `idx` was allocated before the activation of the mapping for
-its type. Such an index is translated by the identity in both directions and
-has no entry in `map.outer_to_inner` nor `map.inner_to_outer`.
-"""
-function is_identity_index(map::Map, vi::MOI.VariableIndex)
-    return vi.value <= map.last_identity_variable
+index_space(map::Map, ::MOI.VariableIndex) = map.variable_space
+function index_space(map::Map, ::MOI.ConstraintIndex{F,S}) where {F,S}
+    return constraint_space(map, F, S)
 end
 
-function is_identity_index(map::Map, ci::MOI.ConstraintIndex{F,S}) where {F,S}
-    return ci.value <= get(map.last_identity_constraint, (F, S), 0)
-end
-
-"""
-    outer_to_inner(map::Map, idx::MOI.Index[, default])
-
-Return the inner index corresponding to the outer index `idx`, assuming that
-the mapping is active for the type of `idx`. If there is none, return
-`default` or throw `MOI.InvalidIndex(idx)` if `default` is not given.
-"""
 function outer_to_inner(map::Map, idx::MOI.Index)
     inner = outer_to_inner(map, idx, nothing)
     if inner === nothing
@@ -233,115 +235,69 @@ function outer_to_inner(map::Map, idx::MOI.Index)
     return inner
 end
 
-function outer_to_inner(map::Map, idx::MOI.Index, default)
-    if is_identity_index(map, idx)
-        return idx
-    end
-    return haskey(map.outer_to_inner, idx) ? map.outer_to_inner[idx] : default
+function outer_to_inner(map::Map, idx::I, default) where {I<:MOI.Index}
+    value = outer_to_inner(index_space(map, idx), idx.value, nothing)
+    return value === nothing ? default : I(value)
 end
 
-"""
-    inner_to_outer(map::Map, idx::MOI.Index[, default])
-
-Inverse of [`outer_to_inner`](@ref).
-"""
 function inner_to_outer(map::Map, idx::MOI.Index)
-    return is_identity_index(map, idx) ? idx : map.inner_to_outer[idx]
-end
-
-function inner_to_outer(map::Map, idx::MOI.Index, default)
-    if is_identity_index(map, idx)
-        return idx
+    outer = inner_to_outer(map, idx, nothing)
+    if outer === nothing
+        throw(MOI.InvalidIndex(idx))
     end
-    return haskey(map.inner_to_outer, idx) ? map.inner_to_outer[idx] : default
+    return outer
 end
 
-"""
-    activate_variable_mapping!(map::Map)
+function inner_to_outer(map::Map, idx::I, default) where {I<:MOI.Index}
+    value = inner_to_outer(index_space(map, idx), idx.value, nothing)
+    return value === nothing ? default : I(value)
+end
 
-Start allocating outer variable indices after the ones allocated so far by the
-inner model, so that subsequent outer-only or inner-only allocations can
-extend the two namespaces independently. No-op if the mapping is already
-active.
-"""
 function activate_variable_mapping!(map::Map)
-    # `has_bridges` flips to `true` only inside `add_key_for_bridge` (which
-    # pushes to `map.info`), and that always runs *after* this function in
-    # `add_constrained_variable`. So on the first variable bridge this is
-    # still `false` and we activate; any nested re-entry (a variable bridge
-    # that itself adds constrained variables) sees `true` and is a no-op.
-    if has_bridges(map)
-        return
-    end
-    map.next_outer_variable = map.last_identity_variable + 1
+    activate!(map.variable_space)
     return
 end
 
-"""
-    activate_constraint_mapping!(map::Map, ::Type{F}, ::Type{S})
-
-Start allocating outer `CI{F, S}` after the ones allocated so far by the inner
-model. Called when the first `CI{F, S}` is force-bridged at this layer. No-op
-if already active for `(F, S)`.
-"""
 function activate_constraint_mapping!(
     map::Map,
     ::Type{F},
     ::Type{S},
 ) where {F,S}
-    if is_constraint_mapping_active(map, F, S)
-        return
-    end
-    last = get(map.last_identity_constraint, (F, S), Int64(0))
-    map.next_outer_constraint[(F, S)] = last + 1
+    activate!(constraint_space(map, F, S))
     return
 end
 
-"""
-    next_outer_variable!(map::Map)::Int64
-
-Return a fresh `Int64` value to use as a `VariableIndex.value` in the outer
-namespace and advance the internal counter.
-"""
-function next_outer_variable!(map::Map)
-    @assert has_bridges(map)
-    value = map.next_outer_variable
-    map.next_outer_variable = value + 1
-    return value
+function allocate_variable!(map::Map, inner::MOI.VariableIndex)
+    return MOI.VariableIndex(
+        allocate!(map.variable_space, InnerIndex(inner.value)),
+    )
 end
 
-"""
-    next_outer_constraint!(map::Map, ::Type{F}, ::Type{S})::Int64
-
-Return a fresh `Int64` value to use as a `ConstraintIndex{F, S}.value` in
-the outer namespace and advance the internal `(F, S)` counter.
-"""
-function next_outer_constraint!(map::Map, ::Type{F}, ::Type{S}) where {F,S}
-    @assert is_constraint_mapping_active(map, F, S)
-    value = map.next_outer_constraint[(F, S)]
-    map.next_outer_constraint[(F, S)] = value + 1
-    return value
+function allocate_constraint!(
+    map::Map,
+    ::Type{F},
+    ::Type{S},
+    inner::Union{Nothing,MOI.ConstraintIndex{F,S}} = nothing;
+    minimum::Int = 1,
+) where {F,S}
+    entry = inner === nothing ? nothing : InnerIndex(inner.value)
+    return MOI.ConstraintIndex{F,S}(
+        allocate!(constraint_space(map, F, S), entry; minimum),
+    )
 end
 
-"""
-    is_bridged_variable(map, vi::MOI.VariableIndex)::Bool
-
-Return `true` if `vi` is (or was) a variable bridged by `map`. Unlike
-[`haskey`](@ref), this stays `true` after the variable is deleted (the
-outer index is never reused), matching the role of the former
-`vi.value < 0` test.
-"""
 function is_bridged_variable(map::Map, vi::MOI.VariableIndex)
-    return haskey(map.variable_to_slot, vi.value)
+    return destination(map.variable_space, vi.value) isa BridgeSlot
 end
 
-# Internal `slot` of the bridged variable `vi`, that is, the index into the
-# dense per-bridge `Vector`s. Errors if `vi` is not a bridged variable.
-_slot(map::Map, vi::MOI.VariableIndex) = map.variable_to_slot[vi.value]
+function _slot(map::Map, vi::MOI.VariableIndex)
+    entry = destination(map.variable_space, vi.value)
+    return entry isa BridgeSlot ? entry.value : 0
+end
 
-# Outer `VariableIndex` stored at `slot`.
 function _variable(map::Map, slot::Integer)
-    return MOI.VariableIndex(map.slot_to_variable[slot])
+    mapping = something(map.variable_space.mapping)
+    return MOI.VariableIndex(mapping.reverse[BridgeSlot(slot)])
 end
 
 function bridge_index(map::Map, vi::MOI.VariableIndex)
@@ -355,7 +311,7 @@ function bridge_index(map::Map, vi::MOI.VariableIndex)
 end
 
 function Base.haskey(map::Map, vi::MOI.VariableIndex)
-    slot = get(map.variable_to_slot, vi.value, 0)
+    slot = _slot(map, vi)
     return slot != 0 &&
            map.bridges[bridge_index(map, vi)] !== nothing &&
            map.index_in_vector[slot] != -1
@@ -505,7 +461,7 @@ function constraint(map::Map, vi::MOI.VariableIndex)
     info = map.info[index]
     if iszero(info)
         # Scalar: by MOI convention `ci.value == vi.value`.
-        return MOI.ConstraintIndex{F,S}(map.slot_to_variable[index])
+        return MOI.ConstraintIndex{F,S}(_variable(map, index).value)
     else
         # Vector: `info == -ci.value`.
         return MOI.ConstraintIndex{F,S}(-info)
@@ -529,7 +485,7 @@ function MOI.is_valid(
     map::Map,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
 ) where {S}
-    index = get(map.variable_to_slot, ci.value, 0)
+    index = _slot(map, MOI.VariableIndex(ci.value))
     return index in eachindex(map.bridges) &&
            !isnothing(map.bridges[index]) &&
            map.sets[index] === S
@@ -708,12 +664,7 @@ function add_key_for_bridge(
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
     push!(map.set_mask, 0x0000)
-    # Allocate the positive outer index for the new bridged variable and
-    # record the outer <-> slot bijection. Must be done after pushing to
-    # `map.info` so that `has_bridges(map)` is `true`.
-    value = next_outer_variable!(map)
-    push!(map.slot_to_variable, value)
-    map.variable_to_slot[value] = bridge_index
+    value = allocate!(map.variable_space, BridgeSlot(bridge_index))
     variable = MOI.VariableIndex(value)
     map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
     if map.unbridged_function !== nothing
@@ -751,7 +702,8 @@ function add_keys_for_bridge(
     map::Map,
     bridge_fun::Function,
     set::S,
-    is_available::Function,
+    is_available::Function;
+    constraint_index::Union{Nothing,Int64} = nothing,
 ) where {S<:MOI.AbstractVectorSet}
     if iszero(MOI.dimension(set))
         return MOI.VariableIndex[],
@@ -760,14 +712,16 @@ function add_keys_for_bridge(
     push!(map.parent_index, map.current_context)
     bridge_index = Int64(length(map.parent_index))
     F = MOI.VectorOfVariables
-    # Allocate a positive `CI{VectorOfVariables, S}` value for this vector of
-    # constrained variables, skipping (with placeholders) the values that
-    # `is_available` reports as already taken (by constraint bridges or by
-    # the inner model). `vector_of_variables_map` stays dense, indexed by the
-    # (positive) `ci.value`.
-    while !is_available(
-        MOI.ConstraintIndex{F,S}(length(map.vector_of_variables_map) + 1),
-    )
+    # The optimizer supplies an index from the shared constraint allocator.
+    # Direct map users can instead reserve indices with `is_available`.
+    if constraint_index === nothing
+        constraint_index = length(map.vector_of_variables_map) + 1
+        while !is_available(MOI.ConstraintIndex{F,S}(constraint_index))
+            constraint_index += 1
+        end
+    end
+    @assert constraint_index > length(map.vector_of_variables_map)
+    while length(map.vector_of_variables_map) + 1 < constraint_index
         push!(map.vector_of_variables_map, 0)
         push!(map.vector_of_variables_length, 0)
     end
@@ -779,9 +733,7 @@ function add_keys_for_bridge(
     push!(map.bridges, nothing)
     push!(map.sets, typeof(set))
     push!(map.set_mask, 0x0000)
-    value = next_outer_variable!(map)
-    push!(map.slot_to_variable, value)
-    map.variable_to_slot[value] = bridge_index
+    allocate!(map.variable_space, BridgeSlot(bridge_index))
     for i in 2:MOI.dimension(set)
         push!(map.parent_index, 0)
         push!(map.info, i)
@@ -789,9 +741,7 @@ function add_keys_for_bridge(
         push!(map.bridges, nothing)
         push!(map.sets, nothing)
         push!(map.set_mask, 0x0000)
-        value_i = next_outer_variable!(map)
-        push!(map.slot_to_variable, value_i)
-        map.variable_to_slot[value_i] = bridge_index + i - 1
+        allocate!(map.variable_space, BridgeSlot(bridge_index + i - 1))
     end
     map.bridges[bridge_index] = call_in_context(map, bridge_index, bridge_fun)
     variables = MOI.VariableIndex[
