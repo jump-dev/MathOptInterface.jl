@@ -36,13 +36,37 @@ function parse_expression(::Model, ::Expression, x::Any, ::Int)
     )
 end
 
+"""
+    _extract_subexpression!(expr::Expression, root::Int)
+
+Prepare the extraction of the subtree rooted at `expr.nodes[root]` into a
+separate expression. Return `(I, V)` where `I` is the range of `expr.nodes`
+and `V` is the range of `expr.values` (or `nothing` if there are no values)
+corresponding to the subtree.
+
+Because the nodes are stored in depth-first order, the subtree is the
+contiguous range of nodes `root:(first_out-1)` where `first_out` is the first
+node after `root` whose parent is before `root`. Its values are contiguous for
+the same reason.
+
+This function only renumbers the nodes, it does not delete anything:
+
+ * the nodes in `I` are rewritten so that their `parent` (and the `index` of
+   their `NODE_VALUE`) are relative to the start of `I` (and `V`), so that
+   `Expression(expr.nodes[I], expr.values[V])` is a valid expression with
+   `root` as its root;
+ * the nodes after `I` are rewritten as if the nodes `I[2:end]` and the values
+   `V` were already deleted, `root` being kept to be replaced by a
+   `NODE_SUBEXPRESSION`.
+"""
 function _extract_subexpression!(expr::Expression, root::Int)
     n = length(expr.nodes)
-    # The whole subexpression is continuous in the tape
     first_out = first_value = last_value = nothing
+    # Renumber the nodes of the subtree so that they are relative to `root`.
     for i in root:n
         node = expr.nodes[i]
         if i != root && node.parent < root
+            # We have left the subtree rooted at `root`.
             first_out = i
             break
         end
@@ -69,6 +93,7 @@ function _extract_subexpression!(expr::Expression, root::Int)
     else
         V = first_value:last_value
     end
+    # Shift the nodes after the subtree as if `I[2:end]` and `V` were deleted.
     if !isnothing(first_out)
         for i in (last(I)+1):n
             node = expr.nodes[i]
@@ -78,6 +103,9 @@ function _extract_subexpression!(expr::Expression, root::Int)
                 index -= length(V)
             end
             parent = node.parent
+            # A parent cannot be in `root+1:last(I)` since this node is not in
+            # the subtree. If `parent == root`, it is now the parent of the
+            # `NODE_SUBEXPRESSION` so it does not change.
             if parent > root
                 @assert parent > last(I)
                 parent -= length(I) - 1
@@ -88,6 +116,24 @@ function _extract_subexpression!(expr::Expression, root::Int)
     return I, V
 end
 
+"""
+    _extract_subexpression!(data::Model, expr::Expression, root::Int)
+
+Move the subtree rooted at `expr.nodes[root]` to a new expression in
+`data.expressions` and replace it in `expr` by a single `NODE_SUBEXPRESSION`
+node pointing to it. Return `(index, I)` where `index` is the
+[`ExpressionIndex`](@ref) of the new subexpression and `I` is the range of
+nodes that the subtree used to occupy in `expr`. As `root` is kept, the
+nodes after `I` are shifted by `length(I) - 1`, the caller is responsible for
+updating any node index into `expr` that it stores.
+
+This is called when the same `MOI.ScalarNonlinearFunction` is parsed a second
+time: its first occurrence was parsed inline into `expr` and is now replaced by
+a subexpression that both occurrences can share.
+
+This costs `O(length(expr.nodes) + length(expr.values))` as we need to shift
+the nodes after the subtree and delete the nodes and values of the subtree.
+"""
 function _extract_subexpression!(data::Model, expr::Expression, root::Int)
     parent = expr.nodes[root].parent
     I, V = _extract_subexpression!(expr, root)
@@ -95,6 +141,9 @@ function _extract_subexpression!(data::Model, expr::Expression, root::Int)
         Expression(expr.nodes[I], isnothing(V) ? Float64[] : expr.values[V])
     push!(data.expressions, subexpr)
     index = ExpressionIndex(length(data.expressions))
+    # We are replacing the subtree by a subexpression so we keep the root node,
+    # now a `NODE_SUBEXPRESSION`, and remove all the other nodes and values of
+    # the subtree from the tape.
     expr.nodes[root] = Node(NODE_SUBEXPRESSION, index.value, parent)
     if length(I) > 1
         deleteat!(expr.nodes, I[2:end])
@@ -119,12 +168,23 @@ function parse_expression(
         parent_node, arg = pop!(stack)
         if arg isa MOI.ScalarNonlinearFunction
             if haskey(data.cache, arg)
+                # `arg` was already parsed, we reuse it as a subexpression.
                 _expr_index, _node = data.cache[arg]
                 if _node == 0
+                    # It was already extracted into a subexpression.
                     subexpr = ExpressionIndex(_expr_index)
                 else
+                    # It was parsed inline at node `_node` of `_expr`. This is
+                    # its second occurrence so we extract it into a
+                    # subexpression. This shifts the nodes of `_expr` after
+                    # `I` so we need to update every node index into `_expr`
+                    # that we store: those in `stack` (if `_expr` is the one
+                    # we are parsing into) and those in `data.cache`.
                     _expr = data.cache_expressions[_expr_index]
                     subexpr, I = _extract_subexpression!(data, _expr, _node)
+                    # The nodes of the subtree were moved to the new
+                    # subexpression which may itself contain functions that
+                    # are cached so we register it in `cache_expressions`.
                     push!(
                         data.cache_expressions,
                         data.expressions[subexpr.value],
@@ -144,6 +204,11 @@ function parse_expression(
                             end
                         end
                     end
+                    # Cached functions in `I[2:end]` now point into the new
+                    # subexpression and those after `I` are shifted.
+                    # Note that this loops over all the cached functions, so
+                    # extracting `k` subexpressions costs
+                    # `O(k * length(data.cache))`.
                     for (key, (__expr_index, __node)) in data.cache
                         if __node != 0
                             __expr = data.cache_expressions[__expr_index]
@@ -169,6 +234,8 @@ function parse_expression(
                     arg,
                     parent_node,
                 )
+                # Cache the node of `arg` in `expr` so that we can extract it
+                # if we encounter it again.
                 if expr_index == 0
                     push!(data.cache_expressions, expr)
                     expr_index = length(data.cache_expressions)
