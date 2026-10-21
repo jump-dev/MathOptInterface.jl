@@ -1444,7 +1444,6 @@ function test_extract_subexpression()
     sub = MOI.ScalarNonlinearFunction(:^, Any[x, 3])
     f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
     expr = Nonlinear.parse_expression(model, f)
-    display(expr.nodes)
     @test expr == Nonlinear.Expression(
         [
             Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
