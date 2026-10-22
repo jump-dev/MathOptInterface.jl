@@ -1912,6 +1912,34 @@ function test_variable_mapping_inactive_bulk_operations()
     return
 end
 
+function test_variable_mapping_bulk_delete_constraints()
+    model = _zeros_bridge_optimizer()
+    x, cx = MOI.add_constrained_variables(model, MOI.Zeros(1))
+    y = MOI.add_variables(model, 2)
+    funcs = [MOI.VectorOfVariables([yi]) for yi in y]
+    c = MOI.add_constraints(model, funcs, [MOI.Zeros(1) for _ in y])
+    MOI.delete(model, c)
+    @test all(ci -> !MOI.is_valid(model, ci), c)
+    @test MOI.is_valid(model, cx)
+    @test isempty(
+        MOI.get(
+            model.model,
+            MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Zeros}(),
+        ),
+    )
+    return
+end
+
+function test_variable_mapping_unbridged_function_single_bridge()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.NonposToNonneg{Float64}(inner)
+    x, _ = MOI.add_constrained_variables(model, MOI.Nonpositives(1))
+    y = only(MOI.get(inner, MOI.ListOfVariableIndices()))
+    f = MOI.Bridges.unbridged_function(model, 1.0 * y)
+    @test f ≈ -1.0 * x[1]
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

@@ -300,6 +300,7 @@ function test_index_space()
     @test space.mapping === nothing
     @test V.outer_to_inner(space, Int64(2), nothing) == 2
     @test V.inner_to_outer(space, Int64(2), nothing) == 2
+    @test V.inner_to_outer(space, Int64(4), nothing) === nothing
     @test V.allocate!(space, V.BridgeSlot(1)) == 4
     @test V.allocate!(space, V.InnerIndex(4)) == 5
     @test V.destination(space, Int64(4)) == V.BridgeSlot(1)
@@ -317,6 +318,34 @@ function test_index_space()
     @test V.allocate!(other, V.InnerIndex(1)) == 2
     @test something(other.mapping).reverse[V.BridgeSlot(1)] == 1
     @test V.inner_to_outer(other, Int64(1), nothing) == 2
+    return
+end
+
+function test_inner_to_outer_invalid()
+    map = MOI.Bridges.Variable.Map()
+    vi = MOI.VariableIndex(1)
+    @test_throws MOI.InvalidIndex(vi) MOI.Bridges.Variable.inner_to_outer(
+        map,
+        vi,
+    )
+    return
+end
+
+function test_add_keys_for_bridge_unavailable_index()
+    map = MOI.Bridges.Variable.Map()
+    # The scalar bridge disables unbridging, see `test_map`
+    MOI.Bridges.Variable.add_key_for_bridge(
+        map,
+        () -> VariableDummyBridge(1),
+        MOI.EqualTo(0.0),
+    )
+    _, c = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> VariableDummyBridge(2),
+        MOI.Zeros(1),
+        ci -> ci.value > 2,
+    )
+    @test c.value == 3
     return
 end
 
