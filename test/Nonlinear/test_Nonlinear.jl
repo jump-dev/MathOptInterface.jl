@@ -1438,6 +1438,204 @@ function test_intercept_ForwardDiff_MethodError()
     return
 end
 
+function _extract_subexpression_expected_sub()
+    return Nonlinear.Expression(
+        [
+            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 4, -1)
+            Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1)
+            Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 1)
+        ],
+        [3.0],
+    )
+end
+
+function test_extract_subexpression()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    sub = MOI.ScalarNonlinearFunction(:^, Any[x, 3])
+    f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
+    expr = Nonlinear.parse_expression(model, f)
+    @test expr == Nonlinear.Expression(
+        [
+            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
+            Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+            Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        ],
+        Float64[],
+    )
+    @test model.expressions == [_extract_subexpression_expected_sub()]
+    @test model.cache[sub] == (1, 0)
+    return
+end
+
+# Parses `(sin(x) + x) * (sin(x) + x)` so that `sin(x) + x` is extracted as
+# a subexpression without values, with `sin(x)` cached as a nested node.
+function _extract_subexpression_nested_model()
+    model = Nonlinear.Model()
+    x = MOI.VariableIndex(1)
+    inner = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    outer = MOI.ScalarNonlinearFunction(:+, Any[inner, x])
+    repeated = MOI.ScalarNonlinearFunction(:*, Any[outer, outer])
+    expr = Nonlinear.parse_expression(model, repeated)
+    return model, expr, x, inner, outer, repeated
+end
+
+# Test extraction of an expression without values, and ensure that cached
+# nested expressions are updated to point into the extracted expression.
+function test_extract_subexpression_without_values()
+    model, expr, _, inner, outer, _ = _extract_subexpression_nested_model()
+    @test isempty(model.expressions[1].values)
+    index, node = model.cache[inner]
+    @test model.cache_expressions[index] === model.expressions[1]
+    @test node == 2
+    @test model.cache[outer] == (1, 0)
+    @test expr.nodes == [
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+    ]
+    return
+end
+
+# Reusing an extracted expression does not register another tape.
+function test_extract_subexpression_reuse()
+    model, _, _, _, outer, _ = _extract_subexpression_nested_model()
+    num_cached_expressions = length(model.cache_expressions)
+    reused = Nonlinear.parse_expression(model, outer)
+    @test length(model.cache_expressions) == num_cached_expressions
+    @test reused.nodes == [Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, -1)]
+    return
+end
+
+# A nested expression can still be extracted after moving to another tape.
+function test_extract_subexpression_nested_after_move()
+    model, _, x, inner, outer, repeated = _extract_subexpression_nested_model()
+    Nonlinear.parse_expression(model, outer)
+    reused = Nonlinear.parse_expression(model, inner)
+    @test model.cache[inner] == (2, 0)
+    @test reused.nodes == [Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, -1)]
+    @test model.expressions[1].nodes[2] ==
+          Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 1)
+    Nonlinear.set_objective(model, repeated)
+    evaluator = Nonlinear.Evaluator(model, Nonlinear.SparseReverseMode(), [x])
+    MOI.initialize(evaluator, [:Grad, :Hess])
+    @test MOI.eval_objective(evaluator, [0.5]) ≈ (sin(0.5) + 0.5)^2
+    gradient = zeros(1)
+    MOI.eval_objective_gradient(evaluator, gradient, [0.5])
+    @test gradient[1] ≈ 2 * (sin(0.5) + 0.5) * (cos(0.5) + 1)
+    hessian = zeros(length(MOI.hessian_lagrangian_structure(evaluator)))
+    MOI.eval_hessian_lagrangian(evaluator, hessian, [0.5], 1.0, Float64[])
+    @test hessian ≈ [2 * (cos(0.5) + 1)^2 - 2 * (sin(0.5) + 0.5) * sin(0.5)]
+    return
+end
+
+# A zero-argument call consists of one node, so extracting it exercises
+# the single-node path, which has no values to delete.
+function test_extract_subexpression_single_node()
+    model = Nonlinear.Model()
+    empty_sum = MOI.ScalarNonlinearFunction(:+, Any[])
+    repeated = MOI.ScalarNonlinearFunction(:+, Any[empty_sum, empty_sum])
+    expr = Nonlinear.parse_expression(model, repeated)
+    @test model.expressions == [
+        Nonlinear.Expression(
+            [Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1)],
+            Float64[],
+        ),
+    ]
+    @test expr.nodes == [
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+    ]
+    return
+end
+
+# Returns `x`, `x^3` and `h = 2 * x^3 * 1`, `g = x^3 + h`, as well as the
+# expected expression of `g` once `x^3` is extracted.
+function _extract_subexpression_shared_functions()
+    x = MOI.VariableIndex(1)
+    sub = MOI.ScalarNonlinearFunction(:^, Any[x, 3])
+    h = MOI.ScalarNonlinearFunction(:*, Any[2, sub, 1])
+    g = MOI.ScalarNonlinearFunction(:+, Any[sub, h])
+    expected_g = Nonlinear.Expression(
+        [
+            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1)
+            Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1)
+            Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, 1)
+            Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 3)
+            Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 3)
+            Nonlinear.Node(Nonlinear.NODE_VALUE, 2, 3)
+        ],
+        [2.0, 1.0],
+    )
+    return x, sub, h, g, expected_g
+end
+
+# The subexpression `x^3` of `g` is detected as already extracted from a
+# previously parsed function.
+function test_extract_subexpression_already_extracted()
+    x, sub, _, g, expected_g = _extract_subexpression_shared_functions()
+    model = Nonlinear.Model()
+    f = MOI.ScalarNonlinearFunction(:+, Any[sub, sub])
+    Nonlinear.parse_expression(model, f)
+    expr = Nonlinear.parse_expression(model, g)
+    @test expr == expected_g
+    @test model.expressions == [_extract_subexpression_expected_sub()]
+    return
+end
+
+# The subexpression `x^3` is extracted from within `g` itself.
+function test_extract_subexpression_objective()
+    _, _, _, g, expected_g = _extract_subexpression_shared_functions()
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, g)
+    @test model.objective == expected_g
+    @test model.expressions == [_extract_subexpression_expected_sub()]
+    return
+end
+
+# Test that the objective function gets rewritten as we reuse `h`. Also test
+# that we don't change the parents in the stack of `h` by creating a long
+# stack.
+function test_extract_subexpression_rewrite_objective()
+    x, _, h, g, _ = _extract_subexpression_shared_functions()
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, g)
+    prod = MOI.ScalarNonlinearFunction(:*, [h, x])
+    sum = MOI.ScalarNonlinearFunction(:*, [x, x, x, x, prod])
+    expr = Nonlinear.parse_expression(model, sum)
+    @test isempty(model.objective.values)
+    @test model.objective.nodes == [
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 1, -1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 1),
+    ]
+    @test model.expressions == [
+        _extract_subexpression_expected_sub(),
+        Nonlinear.Expression(
+            [
+                Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 1, 1),
+                Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 1, 1),
+                Nonlinear.Node(Nonlinear.NODE_VALUE, 2, 1),
+            ],
+            [2.0, 1.0],
+        ),
+    ]
+    @test isempty(expr.values)
+    @test expr.nodes == [
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, -1),
+        Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 1),
+        Nonlinear.Node(Nonlinear.NODE_CALL_MULTIVARIATE, 3, 1),
+        Nonlinear.Node(Nonlinear.NODE_SUBEXPRESSION, 2, 6),
+        Nonlinear.Node(Nonlinear.NODE_MOI_VARIABLE, 1, 6),
+    ]
+    return
+end
+
 end  # TestNonlinear
 
 TestNonlinear.runtests()
