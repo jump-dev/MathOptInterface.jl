@@ -176,6 +176,21 @@ function test_allocated_index()
     return
 end
 
+function test_unavailable_index()
+    map = MOI.Bridges.Constraint.Map()
+    f = MOI.VectorOfVariables([MOI.VariableIndex(1)])
+    ci = MOI.Bridges.Constraint.add_key_for_bridge(
+        map,
+        ConstraintDummyBridge(1),
+        f,
+        MOI.Zeros(1),
+        ci -> ci.value > 2,
+    )
+    @test ci.value == 3
+    @test collect(keys(map)) == [ci]
+    return
+end
+
 end  # module
 
 TestConstraintMap.runtests()
