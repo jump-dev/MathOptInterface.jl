@@ -268,42 +268,23 @@ end
         map::Map,
         bridge::AbstractBridge,
         func::MOI.AbstractFunction,
-        set::MOI.AbstractSet,
-        is_available::Function,
+        set::MOI.AbstractSet;
+        index::Union{Nothing,Int64} = nothing,
     )
 
 Return a new constraint index `ci` and store the mapping `ci => bridge`.
-If `func isa MOI.VectorOfVariables` then `ci` is such that `is_available(ci)`,
-otherwise, `is_available` is ignored because there can only be a clash of
-indices between variable and constraint bridge mapping for `MOI.VectorOfVariables`.
+If `index` is given, then `ci.value == index`.
 """
 function add_key_for_bridge end
-
-_ensure_available(::Map, ::Type, ::Type, ::Function) = nothing
-function _ensure_available(
-    map::Map,
-    F::Type{MOI.VectorOfVariables},
-    ::Type{S},
-    is_available::Function,
-) where {S}
-    while !is_available(MOI.ConstraintIndex{F,S}(length(map.bridges) + 1))
-        push!(map.bridges, nothing)
-        push!(map.constraint_types, (F, S))
-    end
-    return
-end
 
 function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,
     ::F,
-    ::S,
-    is_available::Function;
+    ::S;
     index::Union{Nothing,Int64} = nothing,
 ) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
-    if index === nothing
-        _ensure_available(map, F, S, is_available)
-    else
+    if index !== nothing
         @assert index > length(map.bridges)
         while length(map.bridges) + 1 < index
             push!(map.bridges, nothing)
@@ -319,8 +300,8 @@ function add_key_for_bridge(
     map::Map,
     bridge::AbstractBridge,
     func::MOI.VariableIndex,
-    ::S,
-    ::Function,
+    ::S;
+    index::Nothing = nothing,
 ) where {S<:MOI.AbstractScalarSet}
     map.single_variable_constraints[(func.value, S)] = bridge
     return MOI.ConstraintIndex{MOI.VariableIndex,S}(func.value)

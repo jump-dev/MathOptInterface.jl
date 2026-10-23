@@ -34,13 +34,7 @@ function test_map()
     x = MOI.VariableIndex(1)
     y = MOI.VariableIndex(2)
     b1 = ConstraintDummyBridge(1)
-    c1 = MOI.Bridges.Constraint.add_key_for_bridge(
-        map,
-        b1,
-        x,
-        MOI.EqualTo(0.0),
-        ci -> true,
-    )
+    c1 = MOI.Bridges.Constraint.add_key_for_bridge(map, b1, x, MOI.EqualTo(0.0))
 
     @test c1.value == x.value
     @test haskey(map, c1)
@@ -59,7 +53,6 @@ function test_map()
         b2,
         vov,
         MOI.SecondOrderCone(2),
-        ci -> true,
     )
     @test c2.value == 1
     @test haskey(map, c2)
@@ -77,7 +70,6 @@ function test_map()
         b3,
         1.0x + 2.0,
         MOI.EqualTo(0.0),
-        ci -> true,
     )
     @test haskey(map, c3)
     @test map[c3] == b3
@@ -164,8 +156,7 @@ function test_allocated_index()
         map,
         bridge,
         f,
-        MOI.Zeros(1),
-        _ -> false;
+        MOI.Zeros(1);
         index = Int64(4),
     )
     @test ci.value == 4
@@ -173,21 +164,6 @@ function test_allocated_index()
     @test length(map) == 1
     @test collect(keys(map)) == [ci]
     @test !haskey(map, typeof(ci)(1))
-    return
-end
-
-function test_unavailable_index()
-    map = MOI.Bridges.Constraint.Map()
-    f = MOI.VectorOfVariables([MOI.VariableIndex(1)])
-    ci = MOI.Bridges.Constraint.add_key_for_bridge(
-        map,
-        ConstraintDummyBridge(1),
-        f,
-        MOI.Zeros(1),
-        ci -> ci.value > 2,
-    )
-    @test ci.value == 3
-    @test collect(keys(map)) == [ci]
     return
 end
 

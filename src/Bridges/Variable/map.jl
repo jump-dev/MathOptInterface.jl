@@ -688,21 +688,20 @@ end
     function add_keys_for_bridge(
         map::Map,
         bridge_fun::Function,
-        set::MOI.AbstractVectorSet,
-        is_available::Function,
+        set::MOI.AbstractVectorSet;
+        constraint_index::Union{Nothing,Int64} = nothing,
     )
 
 Create vector of variable indices `variables`, stores the mapping
 `vi => bridge` for each `vi ∈ variables` and associate `variables` to
 `typeof(set)`. It returns a tuple with `variables` and a constraint index
-`ci::MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}` such that
-`is_available(ci)`.
+`ci::MOI.ConstraintIndex{MOI.VectorOfVariables, typeof(set)}`. If
+`constraint_index` is given, then `ci.value == constraint_index`.
 """
 function add_keys_for_bridge(
     map::Map,
     bridge_fun::Function,
-    set::S,
-    is_available::Function;
+    set::S;
     constraint_index::Union{Nothing,Int64} = nothing,
 ) where {S<:MOI.AbstractVectorSet}
     if iszero(MOI.dimension(set))
@@ -711,14 +710,9 @@ function add_keys_for_bridge(
     end
     push!(map.parent_index, map.current_context)
     bridge_index = Int64(length(map.parent_index))
-    F = MOI.VectorOfVariables
     # The optimizer supplies an index from the shared constraint allocator.
-    # Direct map users can instead reserve indices with `is_available`.
     if constraint_index === nothing
         constraint_index = length(map.vector_of_variables_map) + 1
-        while !is_available(MOI.ConstraintIndex{F,S}(constraint_index))
-            constraint_index += 1
-        end
     end
     @assert constraint_index > length(map.vector_of_variables_map)
     while length(map.vector_of_variables_map) + 1 < constraint_index
@@ -761,7 +755,8 @@ function add_keys_for_bridge(
             end
         end
     end
-    return variables, MOI.ConstraintIndex{F,S}(constraint_index)
+    return variables,
+    MOI.ConstraintIndex{MOI.VectorOfVariables,S}(constraint_index)
 end
 
 """
