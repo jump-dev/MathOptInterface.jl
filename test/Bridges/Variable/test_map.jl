@@ -85,12 +85,7 @@ function test_map()
     set2 = MOI.Zeros(4)
     F2 = MOI.VectorOfVariables
     S2 = typeof(set2)
-    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(
-        map,
-        () -> b2,
-        set2,
-        ci -> true,
-    )
+    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b2, set2)
     MOI.is_valid(map, c2)
     @test v2[1].value == 2
     @test c2.value == 1
@@ -126,12 +121,7 @@ function test_map()
 
     b3 = VariableDummyBridge(3)
     set3 = MOI.Zeros(0)
-    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(
-        map,
-        () -> b3,
-        set3,
-        ci -> true,
-    )
+    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b3, set3)
 
     @test isempty(v3)
     @test c3.value == 0
@@ -331,7 +321,7 @@ function test_inner_to_outer_invalid()
     return
 end
 
-function test_add_keys_for_bridge_unavailable_index()
+function test_function_for_deleted_variable_in_vector()
     map = MOI.Bridges.Variable.Map()
     # The scalar bridge disables unbridging, see `test_map`
     MOI.Bridges.Variable.add_key_for_bridge(
@@ -339,23 +329,10 @@ function test_add_keys_for_bridge_unavailable_index()
         () -> VariableDummyBridge(1),
         MOI.EqualTo(0.0),
     )
-    _, c = MOI.Bridges.Variable.add_keys_for_bridge(
-        map,
-        () -> VariableDummyBridge(2),
-        MOI.Zeros(1),
-        ci -> ci.value > 2,
-    )
-    @test c.value == 3
-    return
-end
-
-function test_function_for_deleted_variable_in_vector()
-    map = MOI.Bridges.Variable.Map()
     vis, ci = MOI.Bridges.Variable.add_keys_for_bridge(
         map,
-        () -> VariableDummyBridge(1),
+        () -> VariableDummyBridge(2),
         MOI.Nonnegatives(3),
-        ci -> true,
     )
     delete!(map, vis[2])
     @test MOI.Bridges.Variable.function_for(map, ci) ==

@@ -2532,11 +2532,7 @@ function add_bridged_constraint(b, BridgeType, f, s)
             minimum = length(map.bridges) + 1,
         ).value
     end
-    ci = if index === nothing
-        Constraint.add_key_for_bridge(map, bridge, f, s, Returns(true))
-    else
-        Constraint.add_key_for_bridge(map, bridge, f, s, Returns(true); index)
-    end
+    ci = Constraint.add_key_for_bridge(map, bridge, f, s; index)
     Variable.register_context(Variable.bridges(b), ci)
     return ci
 end
@@ -3006,8 +3002,7 @@ function MOI.add_constrained_variables(
                 recursive_model(b),
                 set,
             ),
-            set,
-            Returns(true);
+            set;
             constraint_index = iszero(MOI.dimension(set)) ? nothing :
                                Variable.allocate_constraint!(
                 v_map,
