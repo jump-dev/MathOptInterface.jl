@@ -287,20 +287,39 @@ function Evaluator(model::Model, ::ExprGraphOnly, ::Vector{MOI.VariableIndex})
 end
 
 """
-    SparseReverseMode() <: AbstractAutomaticDifferentiation
+    SparseReverseMode([coloring_algorithm]) <: AbstractAutomaticDifferentiation
 
 An implementation of `AbstractAutomaticDifferentiation` that uses sparse
 reverse-mode automatic differentiation to compute derivatives. Supports all
 features in the MOI nonlinear interface.
+
+The optional `coloring_algorithm` defaults to SparseMatrixColorings' greedy
+coloring with substitution decompression.
 """
-struct SparseReverseMode <: AbstractAutomaticDifferentiation end
+struct SparseReverseMode{C<:SMC.GreedyColoringAlgorithm} <:
+       AbstractAutomaticDifferentiation
+    coloring_algorithm::C
+end
+
+function SparseReverseMode()
+    return SparseReverseMode(
+        SMC.GreedyColoringAlgorithm(; decompression = :substitution),
+    )
+end
 
 function Evaluator(
     model::Model,
-    ::SparseReverseMode,
+    mode::SparseReverseMode,
     ordered_variables::Vector{MOI.VariableIndex},
 )
-    return Evaluator(model, ReverseAD.NLPEvaluator(model, ordered_variables))
+    return Evaluator(
+        model,
+        ReverseAD.NLPEvaluator(
+            model,
+            ordered_variables,
+            mode.coloring_algorithm,
+        ),
+    )
 end
 
 """
