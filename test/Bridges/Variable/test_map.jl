@@ -349,6 +349,20 @@ function test_add_keys_for_bridge_unavailable_index()
     return
 end
 
+function test_function_for_deleted_variable_in_vector()
+    map = MOI.Bridges.Variable.Map()
+    vis, ci = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> VariableDummyBridge(1),
+        MOI.Nonnegatives(3),
+        ci -> true,
+    )
+    delete!(map, vis[2])
+    @test MOI.Bridges.Variable.function_for(map, ci) ==
+          MOI.VectorOfVariables(vis[[1, 3]])
+    return
+end
+
 end  # module
 
 TestVariableMap.runtests()
