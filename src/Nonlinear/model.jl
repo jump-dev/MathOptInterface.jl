@@ -78,6 +78,16 @@ function set_objective(model::Model, ::Nothing)
 end
 
 """
+    model(backend::AbstractAutomaticDifferentiation)
+
+Return a new nonlinear model appropriate for the given AD `backend`.
+
+The default returns `Model()`. Custom AD backends can override this
+to return their own model type.
+"""
+model(::AbstractAutomaticDifferentiation) = Model()
+
+"""
     add_expression(model::Model, expr)::ExpressionIndex
 
 Parse `expr` into a [`Expression`](@ref) and add to `model`. Returns an
