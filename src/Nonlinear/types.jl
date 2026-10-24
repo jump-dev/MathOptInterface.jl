@@ -157,13 +157,17 @@ It has the following fields:
    `OrderedDict` is used instead of a `Vector` to support constraint deletion.
  * `parameters::Vector{Float64}` : holds the current values of the parameters.
  * `operators::OperatorRegistry` : stores the operators used in the model.
+ * `has_deleted_constraint::Bool` : records whether a constraint was deleted
+   through the legacy nonlinear API.
 """
-mutable struct Model
+mutable struct Model <: MOI.ModelLike
     objective::Union{Nothing,Expression}
     expressions::Vector{Expression}
     constraints::OrderedDict{ConstraintIndex,Constraint}
     parameters::Vector{Float64}
     operators::OperatorRegistry
+    objective_sense::MOI.OptimizationSense
+    constraint_dual_start::Dict{ConstraintIndex,Float64}
     # This is a private field, used only to increment the ConstraintIndex.
     last_constraint_index::Int64
     # Cache values are (expression index, node index). A zero node index
@@ -174,6 +178,7 @@ mutable struct Model
     # would trigger a heap allocation for each expression
     cache::Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}
     cache_expressions::Vector{Expression}
+    has_deleted_constraint::Bool
     function Model()
         return new(
             nothing,
@@ -181,9 +186,12 @@ mutable struct Model
             OrderedDict{ConstraintIndex,Constraint}(),
             Float64[],
             OperatorRegistry(),
+            MOI.FEASIBILITY_SENSE,
+            Dict{ConstraintIndex,Float64}(),
             0,
             Dict{MOI.ScalarNonlinearFunction,Tuple{Int,Int}}(),
             Expression[],
+            false,
         )
     end
 end
@@ -267,8 +275,9 @@ Create an [`MOI.NLPBlockData`](@ref) object from an [`Evaluator`](@ref)
 object.
 """
 function MOI.NLPBlockData(evaluator::Evaluator)
+    bounds = MOI.Utilities.constraint_bounds(evaluator.model)
     return MOI.NLPBlockData(
-        [_bound(c.set) for (_, c) in evaluator.model.constraints],
+        MOI.NLPBoundsPair.(bounds.lower, bounds.upper),
         evaluator,
         evaluator.model.objective !== nothing,
     )
