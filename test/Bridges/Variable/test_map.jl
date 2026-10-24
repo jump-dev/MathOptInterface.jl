@@ -59,7 +59,7 @@ function test_map()
         "Cannot unbridge function because some variables are bridged by variable" *
         " bridges that do not support reverse mapping, for example, `ZerosBridge`.",
     )
-    @test v1.value == c1.value == -1
+    @test v1.value == c1.value == 1
     @test MOI.Bridges.Variable.constraint(map, v1) == c1
     @test MOI.Bridges.Variable.length_of_vector_of_variables(map, v1) == 0
     @test haskey(map, v1)
@@ -85,15 +85,10 @@ function test_map()
     set2 = MOI.Zeros(4)
     F2 = MOI.VectorOfVariables
     S2 = typeof(set2)
-    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(
-        map,
-        () -> b2,
-        set2,
-        ci -> true,
-    )
+    v2, c2 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b2, set2)
     MOI.is_valid(map, c2)
-    @test v2[1].value == -2
-    @test c2.value == -1
+    @test v2[1].value == 2
+    @test c2.value == 1
     @test MOI.Bridges.Variable.has_keys(map, v2)
     @test !MOI.Bridges.Variable.has_keys(map, v2[4:-1:1])
     for i in 1:4
@@ -126,12 +121,7 @@ function test_map()
 
     b3 = VariableDummyBridge(3)
     set3 = MOI.Zeros(0)
-    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(
-        map,
-        () -> b3,
-        set3,
-        ci -> true,
-    )
+    v3, c3 = MOI.Bridges.Variable.add_keys_for_bridge(map, () -> b3, set3)
 
     @test isempty(v3)
     @test c3.value == 0
@@ -290,6 +280,63 @@ function test_double_variable_bound()
     set2 = MOI.LessThan(1.0)
     err = MOI.UpperBoundAlreadySet{typeof(set1),typeof(set2)}(v1)
     @test_throws err MOI.add_constraint(map, v1, set2)
+    return
+end
+
+function test_index_space()
+    V = MOI.Bridges.Variable
+    space = V.IndexSpace()
+    space.last_identity = 3
+    @test space.mapping === nothing
+    @test V.outer_to_inner(space, Int64(2), nothing) == 2
+    @test V.inner_to_outer(space, Int64(2), nothing) == 2
+    @test V.inner_to_outer(space, Int64(4), nothing) === nothing
+    @test V.allocate!(space, V.BridgeSlot(1)) == 4
+    @test V.allocate!(space, V.InnerIndex(4)) == 5
+    @test V.destination(space, Int64(4)) == V.BridgeSlot(1)
+    @test V.outer_to_inner(space, Int64(4), nothing) === nothing
+    @test V.outer_to_inner(space, Int64(5), nothing) == 4
+    @test V.inner_to_outer(space, Int64(4), nothing) == 5
+    V.remove_mapping!(space, Int64(5))
+    @test V.outer_to_inner(space, Int64(5), nothing) === nothing
+    @test V.inner_to_outer(space, Int64(4), nothing) === nothing
+    @test V.allocate!(space, nothing; minimum = 8) == 8
+    @test V.allocate!(space, V.InnerIndex(5)) == 9
+    @test V.destination(space, Int64(7)) === nothing
+    other = V.IndexSpace()
+    @test V.allocate!(other, V.BridgeSlot(1)) == 1
+    @test V.allocate!(other, V.InnerIndex(1)) == 2
+    @test something(other.mapping).reverse[V.BridgeSlot(1)] == 1
+    @test V.inner_to_outer(other, Int64(1), nothing) == 2
+    return
+end
+
+function test_inner_to_outer_invalid()
+    map = MOI.Bridges.Variable.Map()
+    vi = MOI.VariableIndex(1)
+    @test_throws MOI.InvalidIndex(vi) MOI.Bridges.Variable.inner_to_outer(
+        map,
+        vi,
+    )
+    return
+end
+
+function test_function_for_deleted_variable_in_vector()
+    map = MOI.Bridges.Variable.Map()
+    # The scalar bridge disables unbridging, see `test_map`
+    MOI.Bridges.Variable.add_key_for_bridge(
+        map,
+        () -> VariableDummyBridge(1),
+        MOI.EqualTo(0.0),
+    )
+    vis, ci = MOI.Bridges.Variable.add_keys_for_bridge(
+        map,
+        () -> VariableDummyBridge(2),
+        MOI.Nonnegatives(3),
+    )
+    delete!(map, vis[2])
+    @test MOI.Bridges.Variable.function_for(map, ci) ==
+          MOI.VectorOfVariables(vis[[1, 3]])
     return
 end
 
