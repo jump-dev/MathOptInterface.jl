@@ -116,10 +116,11 @@ function test_derivatives_and_offsets()
         MOI.Nonlinear.SparseReverseMode(),
         [y, x],
     )
-    @test MOI.features_available(d) == [:Grad, :Jac, :Hess]
-    MOI.initialize(d, [:Grad, :Jac, :Hess])
+    features = [:Grad, :Jac, :JacVec, :Hess, :HessVec]
+    @test MOI.features_available(d) == features
+    MOI.initialize(d, features)
     # Reinitialization must discard old column maps and scratch buffers.
-    MOI.initialize(d, [:Grad, :Jac, :Hess])
+    MOI.initialize(d, features)
     point = [3.0, 2.0]
     @test MOI.eval_objective(d, point) == 6.0
     grad = zeros(2)
@@ -136,6 +137,14 @@ function test_derivatives_and_offsets()
         J[i, j] += v
     end
     @test J == [6.0 0.0; 0.0 4.0; 2.0 3.0]
+    w = [5.0, 7.0]
+    Jw = fill(NaN, 3)
+    MOI.eval_constraint_jacobian_product(d, Jw, point, w)
+    @test Jw ≈ J * w
+    u = [5.0, 7.0, 11.0]
+    Jtu = fill(NaN, 2)
+    MOI.eval_constraint_jacobian_transpose_product(d, Jtu, point, u)
+    @test Jtu ≈ J' * u
     structure = MOI.hessian_lagrangian_structure(d)
     values = zeros(length(structure))
     MOI.eval_hessian_lagrangian(d, values, point, 7.0, [11.0, 13.0, 17.0])
@@ -147,6 +156,16 @@ function test_derivatives_and_offsets()
         end
     end
     @test H == [22.0 24.0; 24.0 26.0]
+    Hw = fill(NaN, 2)
+    MOI.eval_hessian_lagrangian_product(
+        d,
+        Hw,
+        point,
+        w,
+        7.0,
+        [11.0, 13.0, 17.0],
+    )
+    @test Hw ≈ H * w
     @test !MOI.is_empty(model)
     MOI.empty!(model)
     @test MOI.is_empty(model)
@@ -168,7 +187,7 @@ function test_feature_filtering()
         eval_jacobian = (J, x) -> (J[1] = 1.0),
     )
     MOI.add_constraint(model, MOI.VectorOfVariables([x]), s)
-    @test MOI.features_available(d) == [:Grad, :Jac]
+    @test MOI.features_available(d) == [:Grad, :Jac, :JacVec]
     return
 end
 
