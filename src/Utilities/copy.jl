@@ -418,7 +418,7 @@ function _build_copy_variables_with_set_cache(
     F = MOI.VariableIndex
     indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        x = MOI.get(src, MOI.ConstraintFunction(), ci)
+        x = MOI.get(src, MOI.ConstraintFunction(), ci)::F
         if x in cache.variables_with_domain
             # `x` is already assigned to a domain. Add this constraint via
             # `add_constraint`.
@@ -473,7 +473,7 @@ function _build_copy_variables_with_set_cache(
     F = MOI.VectorOfVariables
     indices = MOI.ConstraintIndex{F,S}[]
     for ci in MOI.get(src, MOI.ListOfConstraintIndices{F,S}())
-        f = MOI.get(src, MOI.ConstraintFunction(), ci)
+        f = MOI.get(src, MOI.ConstraintFunction(), ci)::F
         if _is_variable_cone(cache, f)
             for fi in f.variables
                 # We need to assign each variable in `f` to a domain
