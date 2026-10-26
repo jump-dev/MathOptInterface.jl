@@ -38,7 +38,7 @@ end
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::AbstractToIntervalBridge,
-    change::MOI.ScalarCoefficientChange,
+    change::Union{MOI.ScalarConstantChange,MOI.ScalarCoefficientChange},
 )
     MOI.modify(model, bridge.constraint, change)
     return

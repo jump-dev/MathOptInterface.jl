@@ -38,6 +38,15 @@ function concrete_bridge_type(
     return NormSpecialCaseBridge{S,T,F}
 end
 
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::NormSpecialCaseBridge,
+    change::Union{MOI.VectorConstantChange,MOI.MultirowChange},
+)
+    MOI.modify(model, bridge.constraint, change)
+    return
+end
+
 """
     NormOneConeToNormConeBridge{T,F} <: Bridges.Constraint.AbstractBridge
 

@@ -70,6 +70,16 @@ end
 function MOI.modify(
     model::MOI.ModelLike,
     bridge::FlipSignBridge,
+    change::MOI.ScalarConstantChange,
+)
+    new_change = MOI.ScalarConstantChange(-change.new_constant)
+    MOI.modify(model, bridge.constraint, new_change)
+    return
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::FlipSignBridge,
     change::MOI.MultirowChange{T},
 ) where {T}
     new_coefficients = Tuple{Int64,T}[
@@ -80,6 +90,16 @@ function MOI.modify(
         bridge.constraint,
         MOI.MultirowChange(change.variable, new_coefficients),
     )
+    return
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::FlipSignBridge,
+    change::MOI.VectorConstantChange,
+)
+    new_change = MOI.VectorConstantChange(-change.new_constant)
+    MOI.modify(model, bridge.constraint, new_change)
     return
 end
 
