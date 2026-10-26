@@ -226,60 +226,6 @@ function MOI.set(
     return
 end
 
-# By linearity of the map, we can just change the constant/coefficient
-
-function MOI.modify(
-    model::MOI.ModelLike,
-    bridge::BT,
-    change::MOI.ScalarConstantChange,
-) where {BT<:MultiSetMapBridge}
-    new_constant = MOI.Bridges.map_function(BT, change.new_constant)
-    MOI.modify(model, bridge.constraint, MOI.ScalarConstantChange(new_constant))
-    return
-end
-
-function MOI.modify(
-    model::MOI.ModelLike,
-    bridge::BT,
-    change::MOI.VectorConstantChange,
-) where {BT<:MultiSetMapBridge}
-    new_constant = MOI.Bridges.map_function(BT, change.new_constant)
-    MOI.modify(model, bridge.constraint, MOI.VectorConstantChange(new_constant))
-    return
-end
-
-function MOI.modify(
-    model::MOI.ModelLike,
-    bridge::BT,
-    change::MOI.ScalarCoefficientChange,
-) where {BT<:MultiSetMapBridge}
-    new_coefficient = MOI.Bridges.map_function(BT, change.new_coefficient)
-    new_change = MOI.ScalarCoefficientChange(change.variable, new_coefficient)
-    MOI.modify(model, bridge.constraint, new_change)
-    return
-end
-
-function MOI.modify(
-    model::MOI.ModelLike,
-    bridge::BT,
-    change::MOI.MultirowChange{T},
-) where {T,BT<:MultiSetMapBridge{T}}
-    # It is important here that `change.new_coefficients` contains the complete
-    # new sparse column associated to the variable. Calling modify twice with
-    # part of the column won't work since  the linear map might reset all the
-    # column each time.
-    n = MOI.dimension(MOI.get(model, MOI.ConstraintSet(), bridge.constraint))
-    dense = zeros(T, n)
-    for (row, value) in change.new_coefficients
-        dense[row] += value
-    end
-    map_dense = MOI.Bridges.map_function(BT, dense)
-    sparse = Tuple{Int64,T}[rv for rv in enumerate(map_dense) if !iszero(rv[2])]
-    new_change = MOI.MultirowChange(change.variable, sparse)
-    MOI.modify(model, bridge.constraint, new_change)
-    return
-end
-
 """
     abstract type SetMapBridge{T,S2,S1,F,G} <: MultiSetMapBridge{T,S1,G} end
 

@@ -452,6 +452,47 @@ function test_runtests()
     return
 end
 
+function test_GreaterToLess_modify()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.GreaterToLess{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x + 1.0, MOI.GreaterThan(2.0))
+    x_inner = only(MOI.get(inner, MOI.ListOfVariableIndices()))
+    F, S = MOI.ScalarAffineFunction{Float64}, MOI.LessThan{Float64}
+    c_inner = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    f_inner = MOI.get(inner, MOI.ConstraintFunction(), c_inner)
+    @test isapprox(f_inner, -1.0 * x_inner - 1.0)
+    MOI.modify(model, c, MOI.ScalarCoefficientChange(x, -2.0))
+    f_inner = MOI.get(inner, MOI.ConstraintFunction(), c_inner)
+    @test isapprox(f_inner, 2.0 * x_inner - 1.0)
+    MOI.modify(model, c, MOI.ScalarConstantChange(-3.0))
+    f_inner = MOI.get(inner, MOI.ConstraintFunction(), c_inner)
+    @test isapprox(f_inner, 2.0 * x_inner + 3.0)
+    @test MOI.get(inner, MOI.ConstraintSet(), c_inner) == MOI.LessThan(-2.0)
+    return
+end
+
+function test_NonnegToNonpos_modify()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.NonnegToNonpos{Float64}(inner)
+    x = MOI.add_variable(model)
+    f = MOI.Utilities.vectorize([1.0 * x + 1.0])
+    c = MOI.add_constraint(model, f, MOI.Nonnegatives(1))
+    x_inner = only(MOI.get(inner, MOI.ListOfVariableIndices()))
+    F, S = MOI.VectorAffineFunction{Float64}, MOI.Nonpositives
+    c_inner = only(MOI.get(inner, MOI.ListOfConstraintIndices{F,S}()))
+    f_inner = MOI.get(inner, MOI.ConstraintFunction(), c_inner)
+    @test isapprox(f_inner, MOI.Utilities.vectorize([-1.0 * x_inner - 1.0]))
+    MOI.modify(model, c, MOI.MultirowChange(x, [(1, -2.0)]))
+    f_inner = MOI.get(inner, MOI.ConstraintFunction(), c_inner)
+    @test isapprox(f_inner, MOI.Utilities.vectorize([2.0 * x_inner - 1.0]))
+    MOI.modify(model, c, MOI.VectorConstantChange([-3.0]))
+    f_inner = MOI.get(inner, MOI.ConstraintFunction(), c_inner)
+    @test isapprox(f_inner, MOI.Utilities.vectorize([2.0 * x_inner + 3.0]))
+    @test MOI.get(inner, MOI.ConstraintSet(), c_inner) == MOI.Nonpositives(1)
+    return
+end
+
 end  # module
 
 TestConstraintFlipSign.runtests()
