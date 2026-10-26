@@ -31,6 +31,15 @@ MOI.Bridges.inverse_map_function(::Type{<:IdentityBridge}, func) = func
 MOI.Bridges.adjoint_map_function(::Type{<:IdentityBridge}, func) = func
 MOI.Bridges.inverse_adjoint_map_function(::Type{<:IdentityBridge}, func) = func
 
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::ConstraintBridge,
+    change::Union{MOI.ScalarConstantChange,MOI.ScalarCoefficientChange},
+)
+    MOI.modify(model, bridge.constraint, change)
+    return
+end
+
 struct ObjectiveBridge{T} <: MOI.Bridges.Objective.AbstractBridge end
 
 function MOI.Bridges.Objective.bridge_objective(
