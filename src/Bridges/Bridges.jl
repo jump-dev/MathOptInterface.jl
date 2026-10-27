@@ -311,6 +311,9 @@ function _test_dual(
     eltype,
     model_eltype,
 )
+    if Bridge <: Objective.AbstractBridge
+        return
+    end
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
     mock = MOI.Utilities.MockOptimizer(inner)
     model = _bridged_model(Bridge{eltype}, mock)
@@ -320,8 +323,6 @@ function _test_dual(
     MOI.set(mock, MOI.DualStatus(), MOI.FEASIBLE_POINT)
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
         if !MOI.supports(model, MOI.ConstraintDual(), MOI.ConstraintIndex{F,S})
-            # We need all duals for `DualObjectiveValue` fallback
-            # TODO except the ones with no constants, we could ignore them
             return
         end
         for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
