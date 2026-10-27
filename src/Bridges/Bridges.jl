@@ -294,16 +294,16 @@ function runtests(args...; kwargs...)
     return
 end
 
-# A good way to check that the linear mapping implemented in the setter of
-# `ConstraintDual` is the inverse-adjoint of the mapping implemented in the
-# constraint transformation is to check `get_fallback` for `DualObjectiveValue`.
-# Indeed, it will check that the inner product between the constraint constants
-# and the dual is the same before and after the bridge transformations.
-# For this test to be enabled, the bridge should implement `supports`
-# for `ConstraintDual` and implement `MOI.set` for `ConstraintDual`.
-# Typically, this would be achieved using
-# `Union{ConstraintDual,ConstraintDualStart}` for `MOI.get`, `MOI.set` and
-# `MOI.supports`
+# This function tests that ConstraintDual is implemented correctly for a bridge
+# by comparing the DualObjectiveValue of the inner and outer models as it is
+# computed using `get_fallback`.
+#
+# For this test to be enabled, the bridge should implement `MOI.supports` and
+# `MOI.set` for `ConstraintDual`. The easiest way to achieve this is with
+# `Union{ConstraintDual,ConstraintDualStart}`.
+#
+# A limitation of the test is that it requires the dual of every constraint to
+# be set, so it might not work for some bridges.
 function _test_dual(
     Bridge::Type{<:AbstractBridge},
     input_fn::Function;
@@ -316,14 +316,10 @@ function _test_dual(
     model = _bridged_model(Bridge{eltype}, mock)
     input_fn(model)
     final_touch(model)
-    # Should be able to call final_touch multiple times.
     final_touch(model)
-    # If the bridges does not support `ConstraintDualStart`, it probably won't
-    # support `ConstraintDual` so we skip these tests
-    list_of_constraints = MOI.get(model, MOI.ListOfConstraintTypesPresent())
-    attr = MOI.ConstraintDual()
-    for (F, S) in list_of_constraints
-        if !MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
+    MOI.set(mock, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if !MOI.supports(model, MOI.ConstraintDual(), MOI.ConstraintIndex{F,S})
             # We need all duals for `DualObjectiveValue` fallback
             # TODO except the ones with no constants, we could ignore them
             return
@@ -333,12 +329,11 @@ function _test_dual(
             MOI.set(model, MOI.ConstraintDual(), ci, _fake_start(dual, set))
         end
     end
-    model_dual =
-        MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), eltype)
-    mock_dual =
-        MOI.Utilities.get_fallback(mock, MOI.DualObjectiveValue(), eltype)
-    # Need `atol` in case one of them is zero and the other one almost zero
-    Test.@test model_dual ≈ mock_dual atol = 1e-6
+    Test.@test isapprox(
+        MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), eltype),
+        MOI.Utilities.get_fallback(mock, MOI.DualObjectiveValue(), eltype);
+        atol = 1e-6,
+    )
     return
 end
 
@@ -455,13 +450,7 @@ function _runtests(
     end
     if !isnothing(dual)
         Test.@testset "Test ConstraintDual" begin
-            try
-                _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
-            catch err
-                if !(err isa MOI.GetAttributeNotAllowed)
-                    rethrow(err)
-                end
-            end
+            _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
         end
     end
     return
