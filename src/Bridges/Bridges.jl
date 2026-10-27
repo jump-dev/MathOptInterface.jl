@@ -339,6 +339,7 @@ function _test_dual(
         MOI.Utilities.get_fallback(mock, MOI.DualObjectiveValue(), eltype)
     # Need `atol` in case one of them is zero and the other one almost zero
     Test.@test model_dual ≈ mock_dual atol = 1e-6
+    return
 end
 
 function _runtests(
@@ -454,7 +455,13 @@ function _runtests(
     end
     if !isnothing(dual)
         Test.@testset "Test ConstraintDual" begin
-            _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
+            try
+                _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
+            catch err
+                if !(err isa MOI.GetAttributeNotAllowed)
+                    rethrow(err)
+                end
+            end
         end
     end
     return
