@@ -1122,6 +1122,28 @@ function test_copy_names_unsupported()
     return
 end
 
+function test_map_indices_identity_index_map()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(src, 2)
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.Utilities.CleverDicts.is_identity(index_map.var_map)
+    f = 1.0 * x[1] + 2.0 * x[2]
+    @test MOI.Utilities.map_indices(index_map, f) === f
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    @test MOI.Utilities.map_indices(index_map, attr, f) === f
+    change = MOI.ScalarCoefficientChange(x[1], 2.0)
+    @test MOI.Utilities.map_indices(index_map, change) === change
+    index_map[x[1]] = x[2]
+    index_map[x[2]] = x[1]
+    @test !MOI.Utilities.CleverDicts.is_identity(index_map.var_map)
+    g = MOI.Utilities.map_indices(index_map, f)
+    @test isapprox(g, 1.0 * x[2] + 2.0 * x[1])
+    @test MOI.Utilities.map_indices(index_map, change) ==
+          MOI.ScalarCoefficientChange(x[2], 2.0)
+    return
+end
+
 end  # module
 
 TestCopy.runtests()

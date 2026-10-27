@@ -248,6 +248,12 @@ map_indices(::Any, ::MOI.RawOptimizerAttribute, x) = x
     )::X where {T<:MOI.Index,X}
 
 Shortcut for `map_indices(vi -> variable_map[vi], x)`.
+
+!!! note
+    The returned value is not guaranteed to be a copy of `x`. For example, if
+    `variable_map` is an [`IndexMap`](@ref) whose variable map is the
+    identity, `x` may be returned without being copied. Therefore, it should
+    not be modified unless `x` is not used anymore.
 """
 function map_indices(
     variable_map::AbstractDict{T,T},
