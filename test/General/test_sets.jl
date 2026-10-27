@@ -503,6 +503,35 @@ function test_VectorNonlinearOracle()
     return
 end
 
+struct MyNum <: Real
+    x::Base.RefValue{Float64}
+end
+
+Base.copy(x::MyNum) = MyNum(Ref(x.x[]))
+
+Base.:(==)(x::MyNum, y::MyNum) = x.x[] == y.x[]
+
+function test_set_copy_not_isbitstype()
+    # copy(::BigInt) is a shallow copy by explicit design in Julia.
+    set = MOI.GreaterThan(big"1")
+    @test copy(set) === set
+    for set in Any[
+        MOI.GreaterThan(MyNum(Ref(1.0))),
+        MOI.LessThan(MyNum(Ref(1.0))),
+        MOI.EqualTo(MyNum(Ref(1.0))),
+        MOI.Interval(MyNum(Ref(1.0)), MyNum(Ref(3.0))),
+        MOI.Parameter(MyNum(Ref(1.0))),
+        MOI.Semicontinuous(MyNum(Ref(1.0)), MyNum(Ref(3.0))),
+        MOI.Semiinteger(MyNum(Ref(1.0)), MyNum(Ref(3.0))),
+        MOI.PowerCone(MyNum(Ref(1.0))),
+        MOI.DualPowerCone(MyNum(Ref(1.0))),
+    ]
+        @test copy(set) == set
+        @test copy(set) !== set
+    end
+    return
+end
+
 end  # module
 
 TestSets.runtests()
