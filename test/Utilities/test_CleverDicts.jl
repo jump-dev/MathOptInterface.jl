@@ -287,6 +287,124 @@ function test_resize()
     return
 end
 
+function test_identity()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}()
+    @test CleverDicts.is_identity(d)
+    @test isempty(d)
+    @test iterate(d) === nothing
+    x = MOI.VariableIndex.(1:3)
+    for xi in x
+        d[xi] = xi
+    end
+    d[x[2]] = x[2]
+    @test CleverDicts.is_identity(d)
+    @test isempty(d.vector)
+    @test isempty(d.dict)
+    @test !isempty(d)
+    @test length(d) == 3
+    @test haskey(d, x[3])
+    @test !haskey(d, MOI.VariableIndex(4))
+    @test !haskey(d, MOI.VariableIndex(0))
+    @test d[x[2]] == x[2]
+    @test_throws KeyError(MOI.VariableIndex(4)) d[MOI.VariableIndex(4)]
+    @test get(d, x[1], nothing) == x[1]
+    @test get(d, MOI.VariableIndex(4), nothing) === nothing
+    @test d[CleverDicts.LinearIndex(3)] == x[3]
+    @test_throws KeyError(CleverDicts.LinearIndex(4)) d[CleverDicts.LinearIndex(
+        4,
+    )]
+    @test collect(d) == [xi => xi for xi in x]
+    @test collect(keys(d)) == x
+    @test collect(values(d)) == x
+    sizehint!(d, 10)
+    @test CleverDicts.is_identity(d)
+    @test CleverDicts.add_item(d, MOI.VariableIndex(4)) == MOI.VariableIndex(4)
+    @test CleverDicts.is_identity(d)
+    @test length(d) == 4
+    empty!(d)
+    @test CleverDicts.is_identity(d)
+    @test isempty(d)
+    return
+end
+
+function test_identity_not_same_types()
+    d = CleverDicts.CleverDict{MOI.VariableIndex,Int}()
+    @test !CleverDicts.is_identity(d)
+    empty!(d)
+    @test !CleverDicts.is_identity(d)
+    return
+end
+
+function _identity_dict(n)
+    d = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}()
+    for i in 1:n
+        d[MOI.VariableIndex(i)] = MOI.VariableIndex(i)
+    end
+    @test CleverDicts.is_identity(d)
+    return d
+end
+
+function _test_identity_materialized(d, n)
+    @test !CleverDicts.is_identity(d)
+    for i in 1:n
+        x = MOI.VariableIndex(i)
+        @test d[x] == x
+    end
+    return
+end
+
+function test_identity_set_not_identity()
+    d = _identity_dict(3)
+    x = MOI.VariableIndex(2)
+    d[x] = MOI.VariableIndex(3)
+    @test !CleverDicts.is_identity(d)
+    @test d[x] == MOI.VariableIndex(3)
+    @test d.vector == MOI.VariableIndex.([1, 3, 3])
+    d = _identity_dict(3)
+    x = MOI.VariableIndex(4)
+    d[x] = MOI.VariableIndex(1)
+    _test_identity_materialized(d, 3)
+    @test d[x] == MOI.VariableIndex(1)
+    @test length(d.vector) == 4
+    return
+end
+
+function test_identity_set_out_of_order()
+    d = _identity_dict(3)
+    x = MOI.VariableIndex(5)
+    d[x] = x
+    _test_identity_materialized(d, 3)
+    @test d[x] == x
+    @test !CleverDicts._is_dense(d)
+    @test length(d) == 4
+    return
+end
+
+function test_identity_delete()
+    d = _identity_dict(3)
+    delete!(d, MOI.VariableIndex(2))
+    @test !CleverDicts.is_identity(d)
+    @test collect(keys(d)) == MOI.VariableIndex.([1, 3])
+    @test d[CleverDicts.LinearIndex(2)] == MOI.VariableIndex(3)
+    return
+end
+
+function test_identity_resize()
+    d = _identity_dict(2)
+    resize!(d, 3)
+    _test_identity_materialized(d, 2)
+    @test length(d.vector) == 3
+    return
+end
+
+function test_identity_map_values()
+    d = _identity_dict(2)
+    CleverDicts.map_values!(x -> MOI.VariableIndex(x.value + 1), d)
+    @test !CleverDicts.is_identity(d)
+    @test d.vector == MOI.VariableIndex.([2, 3])
+    return
+end
+
 end  # module
 
 TestCleverDicts.runtests()
