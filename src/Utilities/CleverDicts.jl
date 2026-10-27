@@ -309,15 +309,11 @@ function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
     return
 end
 
-# TODO `map!(f, values(dict::AbstractDict))` requires Julia 1.2 or later,
-#      use `map_values` once we drop Julia 1.1 and earlier.
 function map_values!(f::Function, d::CleverDict)
     if _is_dense(d)
         map!(f, d.vector, d.vector)
     else
-        for (k, v) in d.dict
-            d.dict[k] = f(v)
-        end
+        map!(f, values(d.dict))
     end
     return
 end
