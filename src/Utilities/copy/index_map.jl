@@ -104,3 +104,20 @@ Base.length(map::IndexMap) = length(map.var_map) + length(map.con_map)
 function Base.iterate(map::IndexMap, args...)
     return iterate(Base.Iterators.flatten((map.var_map, map.con_map)), args...)
 end
+
+# Objects that may contain `MOI.VariableIndex` but no `MOI.ConstraintIndex`.
+const _OnlyVariableIndices = Union{
+    MOI.VariableIndex,
+    MOI.AbstractFunction,
+    MOI.AbstractFunctionModification,
+}
+
+# The variable map is often the identity, for example, when the destination
+# model of `copy_to` creates its variables in the same order as the source
+# model. In that case, there is no need to map the variables of `x`.
+function map_indices(map::IndexMap, x::X)::X where {X<:_OnlyVariableIndices}
+    if CleverDicts.is_identity(map.var_map)
+        return x
+    end
+    return map_indices(Base.Fix1(getindex, map), x)
+end
