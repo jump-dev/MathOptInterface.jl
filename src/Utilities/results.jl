@@ -68,8 +68,7 @@ function _validate_function(
 end
 
 function _validate_function(::Type{F}, attr, key) where {F}
-    msg =
-        "Cannot get the dual objective with $key function of type `$F`"
+    msg = "Cannot get the dual objective with $key function of type `$F`"
     return throw(MOI.GetAttributeNotAllowed(attr, msg))
 end
 
