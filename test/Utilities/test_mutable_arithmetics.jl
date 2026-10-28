@@ -190,6 +190,19 @@ function test_VariableIndex()
     MA.Test.@test_rewrite(x - a)
 end
 
+function test_VariableIndex_sum_init()
+    x = MOI.VariableIndex.(1:3)
+    for T in (Int, Float32, Float64)
+        init = zero(T)
+        f = sum(x; init)
+        expected =
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), init)
+        @test f isa MOI.ScalarAffineFunction{T}
+        @test f ≈ expected
+    end
+    return
+end
+
 function test_ScalarAffineFunction()
     T = Int
     MA.Test.int_test(
