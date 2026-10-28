@@ -52,6 +52,26 @@ end
 
 # MOI.DualObjectiveValue
 
+function _validate_function(
+    ::Type{F},
+    attr,
+    key,
+) where {
+    F<:Union{
+        MOI.VariableIndex,
+        MOI.ScalarAffineFunction,
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction,
+    },
+}
+    return nothing
+end
+
+function _validate_function(::Type{F}, attr, key) where {F}
+    msg = "Cannot get the dual objective with $key function of type `$F`"
+    return throw(MOI.GetAttributeNotAllowed(attr, msg))
+end
+
 """
     get_fallback(
         model::MOI.ModelLike,
@@ -75,15 +95,10 @@ function get_fallback(
         throw(MOI.GetAttributeNotAllowed(attr, "No dual solution is available"))
     end
     F = MOI.get(model, MOI.ObjectiveFunctionType())
-    if !(F <: Union{MOI.VariableIndex,MOI.ScalarAffineFunction})
-        err = MOI.GetAttributeNotAllowed(
-            attr,
-            "Cannot get the dual objective with an objective function of type `$F`",
-        )
-        throw(err)
-    end
+    _validate_function(F, attr, "an objective")
     value = zero(T) # sum will not work if there are zero constraints
     for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        _validate_function(F, attr, "a constraint")
         value += _dual_objective_value(model, F, S, T, attr.result_index)::T
     end
     if MOI.get(model, MOI.ObjectiveSense()) != MOI.MAX_SENSE

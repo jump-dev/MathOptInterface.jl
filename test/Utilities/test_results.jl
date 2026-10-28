@@ -305,12 +305,55 @@ function test_get_fallback_DualObjectiveValue_Quadratic()
     MOI.set(model, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
     MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
     MOI.set(model, MOI.VariablePrimal(), x, 0.0)
+    msg = "Cannot get the dual objective with an objective function of type `$(typeof(f))`"
     @test_throws(
-        MOI.GetAttributeNotAllowed(
-            MOI.DualObjectiveValue(),
-            "Cannot get the dual objective with an objective function of type `$(typeof(f))`",
-        ),
+        MOI.GetAttributeNotAllowed(MOI.DualObjectiveValue(), msg),
         MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), T),
+    )
+    return
+end
+
+function test_get_fallback_scalar_nonlinear()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.MockOptimizer(inner, Float64)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = 1.0 * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g = MOI.ScalarNonlinearFunction(:-, Any[x, 1.0])
+    c = MOI.add_constraint(model, g, MOI.GreaterThan(0.0))
+    MOI.set(model, MOI.ResultCount(), 1)
+    MOI.set(model, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.VariablePrimal(), x, 1.0)
+    MOI.set(model, MOI.ConstraintDual(), c, 1.0)
+    msg = "Cannot get the dual objective with a constraint function of type `$(typeof(g))`"
+    @test_throws(
+        MOI.GetAttributeNotAllowed(MOI.DualObjectiveValue(), msg),
+        MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64),
+    )
+    return
+end
+
+function test_get_fallback_vector_nonlinear()
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+    model = MOI.Utilities.MockOptimizer(inner, Float64)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = 1.0 * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    g1 = MOI.ScalarNonlinearFunction(:-, Any[x, 1.0])
+    g = MOI.VectorNonlinearFunction([g1])
+    c = MOI.add_constraint(model, g, MOI.Nonnegatives(1))
+    MOI.set(model, MOI.ResultCount(), 1)
+    MOI.set(model, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    MOI.set(model, MOI.VariablePrimal(), x, 1.0)
+    MOI.set(model, MOI.ConstraintDual(), c, 1.0)
+    msg = "Cannot get the dual objective with a constraint function of type `$(typeof(g))`"
+    @test_throws(
+        MOI.GetAttributeNotAllowed(MOI.DualObjectiveValue(), msg),
+        MOI.Utilities.get_fallback(model, MOI.DualObjectiveValue(), Float64),
     )
     return
 end
