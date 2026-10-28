@@ -162,6 +162,8 @@ struct GreaterThan{T<:Real} <: AbstractScalarSet
     lower::T
 end
 
+Base.copy(set::GreaterThan) = GreaterThan(copy(set.lower))
+
 Base.:(==)(a::GreaterThan{T}, b::GreaterThan{T}) where {T} = a.lower == b.lower
 
 """
@@ -185,6 +187,8 @@ struct LessThan{T<:Real} <: AbstractScalarSet
     upper::T
 end
 
+Base.copy(set::LessThan) = LessThan(copy(set.upper))
+
 Base.:(==)(a::LessThan{T}, b::LessThan{T}) where {T} = a.upper == b.upper
 
 """
@@ -207,6 +211,8 @@ MathOptInterface.ConstraintIndex{MathOptInterface.VariableIndex, MathOptInterfac
 struct EqualTo{T<:Number} <: AbstractScalarSet
     value::T
 end
+
+Base.copy(set::EqualTo) = EqualTo(copy(set.value))
 
 Base.:(==)(a::EqualTo{T}, b::EqualTo{T}) where {T} = a.value == b.value
 
@@ -243,6 +249,8 @@ struct Parameter{T<:Number} <: AbstractScalarSet
     value::T
 end
 
+Base.copy(set::Parameter) = Parameter(copy(set.value))
+
 Base.:(==)(a::Parameter{T}, b::Parameter{T}) where {T} = a.value == b.value
 
 """
@@ -273,6 +281,8 @@ end
 function Interval(lower::Real, upper::Real)
     return Interval(promote(lower, upper)...)
 end
+
+Base.copy(set::Interval) = Interval(copy(set.lower), copy(set.upper))
 
 function Base.:(==)(a::Interval{T}, b::Interval{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
@@ -374,6 +384,10 @@ function Semicontinuous(lower::Real, upper::Real)
     return Semicontinuous(promote(lower, upper)...)
 end
 
+function Base.copy(set::Semicontinuous)
+    return Semicontinuous(copy(set.lower), copy(set.upper))
+end
+
 function Base.:(==)(a::Semicontinuous{T}, b::Semicontinuous{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
 end
@@ -407,6 +421,8 @@ end
 function Semiinteger(lower::Real, upper::Real)
     return Semiinteger(promote(lower, upper)...)
 end
+
+Base.copy(set::Semiinteger) = Semiinteger(copy(set.lower), copy(set.upper))
 
 function Base.:(==)(a::Semiinteger{T}, b::Semiinteger{T}) where {T}
     return a.lower == b.lower && a.upper == b.upper
@@ -921,6 +937,8 @@ dual_set_type(::Type{PowerCone{T}}) where {T<:Real} = DualPowerCone{T}
 
 dimension(::PowerCone) = 3
 
+Base.copy(set::PowerCone) = PowerCone(copy(set.exponent))
+
 function Base.:(==)(x::PowerCone{T}, y::PowerCone{T}) where {T}
     return x.exponent == y.exponent
 end
@@ -950,6 +968,8 @@ dual_set(s::DualPowerCone{T}) where {T<:Real} = PowerCone{T}(s.exponent)
 dual_set_type(::Type{DualPowerCone{T}}) where {T<:Real} = PowerCone{T}
 
 dimension(::DualPowerCone) = 3
+
+Base.copy(set::DualPowerCone) = DualPowerCone(copy(set.exponent))
 
 function Base.:(==)(x::DualPowerCone{T}, y::DualPowerCone{T}) where {T}
     return x.exponent == y.exponent
@@ -2944,24 +2964,6 @@ function Base.show(io::IO, s::VectorNonlinearOracle{T}) where {T}
     println(io, "    ...,")
     print(io, ")")
     return
-end
-
-# TODO(odow): these are not necessarily isbits. They may not be safe to return
-# without copying if the number is BigFloat, for example.
-function Base.copy(
-    set::Union{
-        GreaterThan,
-        LessThan,
-        EqualTo,
-        Parameter,
-        Interval,
-        Semicontinuous,
-        Semiinteger,
-        PowerCone,
-        DualPowerCone,
-    },
-)
-    return set
 end
 
 """
