@@ -52,6 +52,14 @@ indices. Note that the integers are `Int64`s.
 Provided no keys are deleted, the backing storage is a `Vector{V}`. Once a key
 has been deleted, the backing storage switches to an `OrderedDict{K, V}`.
 
+If `K == V` and every item set so far maps the key of index `i` to itself for
+`i` in `1:n`, no backing storage is used: only `n` is recorded. This is the
+case, for example, for the variable map of an `Utilities.IndexMap`
+when the destination model creates its variables in the same order as the
+source model. Use `is_identity` to query whether this is the case.
+As soon as a key is deleted or an item that is not the identity is set, the
+backing storage switches to a `Vector{V}`.
+
 Use the `add_item` to enforce adding item in sequence. Once an object is added
 out of order `add_item` does not work anymore and the storage is switched to
 `OrderedDict{K, V}` if it is not one already.
@@ -82,6 +90,9 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
     hash::F
     inverse_hash::I
     is_dense::Bool
+    # If `true`, the dict maps `inverse_hash(i)` to itself for `i` in
+    # `1:last_index` and both `vector` and `dict` are empty.
+    is_identity::Bool
     vector::Vector{V}
     dict::OrderedDict{K,V}
     function CleverDict{K,V}(
@@ -93,6 +104,7 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
             hash,
             inverse_hash,
             true,
+            K === V,
             V[],
             OrderedDict{K,V}(),
         )
@@ -100,6 +112,17 @@ mutable struct CleverDict{K,V,F<:Function,I<:Function} <: AbstractDict{K,V}
 end
 
 _is_dense(c::CleverDict) = c.is_dense
+
+"""
+    is_identity(c::CleverDict)::Bool
+
+Return `true` if `c` is known to map each of its keys to itself and its keys
+are the keys of indices `1:length(c)`.
+
+A return value of `false` does not imply that `c` is not the identity, for
+example, if a key was deleted and then set back again.
+"""
+is_identity(c::CleverDict) = c.is_identity
 
 function _inverse_hash(c::CleverDict{K}, index::Integer) where {K}
     return c.inverse_hash(Int64(index))::K
@@ -110,6 +133,14 @@ function _inverse_hash(
     index::Integer,
 ) where {K,V,F<:Function}
     return index_to_key(K, Int64(index))::K
+end
+
+# Switch from the identity storage to the dense vector storage.
+function _materialize_identity!(c::CleverDict{K,V}) where {K,V}
+    @assert is_identity(c)
+    c.vector = V[_inverse_hash(c, i) for i in 1:c.last_index]
+    c.is_identity = false
+    return
 end
 
 """
@@ -129,27 +160,40 @@ function add_item(c::CleverDict{K,V}, val::V)::K where {K,V}
     return key
 end
 
-function Base.empty!(c::CleverDict)
+function Base.empty!(c::CleverDict{K,V}) where {K,V}
     empty!(c.vector)
     empty!(c.dict)
     c.last_index = 0
     c.is_dense = true
+    c.is_identity = K === V
     return
 end
 
 function Base.length(c::CleverDict)
-    return _is_dense(c) ? length(c.vector) : length(c.dict)
+    if is_identity(c)
+        return Int(c.last_index)
+    elseif _is_dense(c)
+        return length(c.vector)
+    end
+    return length(c.dict)
 end
 
 function Base.haskey(c::CleverDict{K}, key::K) where {K}
-    if _is_dense(c)
+    if is_identity(c)
+        return 1 <= c.hash(key)::Int64 <= c.last_index
+    elseif _is_dense(c)
         return 1 <= c.hash(key)::Int64 <= length(c.vector)
     end
     return haskey(c.dict, key)
 end
 
 function Base.get(c::CleverDict, key, default)
-    if _is_dense(c)
+    if is_identity(c)
+        if !haskey(c, key)
+            return default
+        end
+        return key
+    elseif _is_dense(c)
         if !haskey(c, key)
             return default
         end
@@ -159,7 +203,12 @@ function Base.get(c::CleverDict, key, default)
 end
 
 function Base.getindex(c::CleverDict{K,V}, key::K) where {K,V}
-    if _is_dense(c)
+    if is_identity(c)
+        if !haskey(c, key)
+            throw(KeyError(key))
+        end
+        return key
+    elseif _is_dense(c)
         if !haskey(c, key)
             throw(KeyError(key))
         end
@@ -170,6 +219,13 @@ end
 
 function Base.setindex!(c::CleverDict{K,V}, value::V, key::K)::V where {K,V}
     h = c.hash(key)::Int64
+    if is_identity(c)
+        if value == key && 1 <= h <= c.last_index + 1
+            c.last_index = max(c.last_index, h)
+            return value
+        end
+        _materialize_identity!(c)
+    end
     if c.last_index != -1
         if h == c.last_index + 1
             c.last_index = h
@@ -208,6 +264,9 @@ function _rehash(c::CleverDict{K}) where {K}
 end
 
 function Base.delete!(c::CleverDict{K}, k::K) where {K}
+    if is_identity(c)
+        _materialize_identity!(c)
+    end
     if _is_dense(c)
         _rehash(c)
     end
@@ -225,6 +284,9 @@ end
 function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
     if !(1 <= index.i <= length(c))
         throw(KeyError(index))
+    end
+    if is_identity(c)
+        return _inverse_hash(c, index.i)
     end
     # Get the `index` linear element. If `c.vector` is currently `nothing`
     # (that is, there has been a deletion), rebuild `c.vector`. This is a
@@ -248,13 +310,20 @@ function Base.getindex(c::CleverDict{K,V}, index::LinearIndex)::V where {K,V}
 end
 
 function Base.isempty(c::CleverDict)
-    return _is_dense(c) ? isempty(c.vector) : isempty(c.dict)
+    if is_identity(c)
+        return iszero(c.last_index)
+    elseif _is_dense(c)
+        return isempty(c.vector)
+    end
+    return isempty(c.dict)
 end
 
 Base.haskey(::CleverDict, key) = false
 
 function Base.iterate(c::CleverDict{K,V}) where {K,V}
-    if _is_dense(c)
+    if is_identity(c)
+        return iterate(c, 1)
+    elseif _is_dense(c)
         itr = iterate(c.vector)
         if itr === nothing
             return
@@ -269,7 +338,13 @@ function Base.iterate(c::CleverDict{K,V}) where {K,V}
 end
 
 function Base.iterate(c::CleverDict{K,V}, s::Int) where {K,V}
-    if _is_dense(c)
+    if is_identity(c)
+        if s > c.last_index
+            return
+        end
+        key = _inverse_hash(c, s)
+        return key => convert(V, key), s + 1
+    elseif _is_dense(c)
         itr = iterate(c.vector, s)
         if itr === nothing
             return
@@ -287,6 +362,9 @@ end
 # on `Base`s fallback that uses the iterator protocol
 
 function Base.sizehint!(c::CleverDict{K,V}, n) where {K,V}
+    if is_identity(c)
+        return
+    end
     if _is_dense(c)
         sizehint!(c.vector, n)
     else
@@ -296,6 +374,9 @@ function Base.sizehint!(c::CleverDict{K,V}, n) where {K,V}
 end
 
 function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
+    if is_identity(c)
+        _materialize_identity!(c)
+    end
     if _is_dense(c)
         if n < length(c.vector)
             error(
@@ -310,6 +391,9 @@ function Base.resize!(c::CleverDict{K,V}, n) where {K,V}
 end
 
 function map_values!(f::Function, d::CleverDict)
+    if is_identity(d)
+        _materialize_identity!(d)
+    end
     if _is_dense(d)
         map!(f, d.vector, d.vector)
     else
