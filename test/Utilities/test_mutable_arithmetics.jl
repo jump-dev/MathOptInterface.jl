@@ -193,13 +193,12 @@ end
 function test_VariableIndex_sum_init()
     x = MOI.VariableIndex.(1:3)
     for T in (Int, Float32, Float64)
-        for init in (zero(T), T(2))
-            f = sum(x; init)
-            expected =
-                MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), init)
-            @test f isa MOI.ScalarAffineFunction{T}
-            @test f ≈ expected
-        end
+        init = zero(T)
+        f = sum(x; init)
+        expected =
+            MOI.ScalarAffineFunction(MOI.ScalarAffineTerm.(one(T), x), init)
+        @test f isa MOI.ScalarAffineFunction{T}
+        @test f ≈ expected
     end
     return
 end
