@@ -259,10 +259,18 @@ end
 
 function MOI.supports(
     ::MockOptimizer,
-    ::Union{MOI.ConstraintDual,MockConstraintAttribute},
+    ::MockConstraintAttribute,
     ::Type{<:MOI.ConstraintIndex},
 )
     return true
+end
+
+function MOI.supports(
+    ::MockOptimizer,
+    ::MOI.ConstraintDual,
+    ::Type{MOI.ConstraintIndex{F,S}},
+) where {F,S}
+    return !(S <: Union{MOI.ZeroOne,MOI.Integer,MOI.SOS1,MOI.SOS2})
 end
 
 function MOI.supports(
