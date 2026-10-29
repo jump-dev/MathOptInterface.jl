@@ -32,10 +32,16 @@ function final_touch(model::StructOfConstraints, index_map)
     return
 end
 
+# Avoid compiling the recursive deletion passes for constraint containers that
+# are not present in the model.
 function _throw_if_cannot_delete(model::StructOfConstraints, vis, fast_in_vis)
     broadcastcall(model) do constrs
         if constrs !== nothing
-            _throw_if_cannot_delete(constrs, vis, fast_in_vis)
+            _throw_if_cannot_delete(
+                Base.inferencebarrier(constrs),
+                vis,
+                fast_in_vis,
+            )
         end
         return
     end
@@ -49,7 +55,7 @@ function _deleted_constraints(
 )
     broadcastcall(model) do constrs
         if constrs !== nothing
-            _deleted_constraints(callback, constrs, vi)
+            _deleted_constraints(callback, Base.inferencebarrier(constrs), vi)
         end
         return
     end
