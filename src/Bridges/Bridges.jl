@@ -449,7 +449,7 @@ function _runtests(
     Test.@testset "Test delete" begin                                           # COV_EXCL_LINE
         _test_delete(Bridge, model, inner)
     end
-    if !isnothing(dual)
+    if !isnothing(dual) && !cannot_unbridge
         Test.@testset "Test ConstraintDual" begin
             _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
         end
