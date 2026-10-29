@@ -181,6 +181,24 @@ function test_set_dot_inverse_scaling_constraint_dual_start()
     return
 end
 
+function test_modify()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.SetDotScaling{Float64}(inner)
+    x = MOI.add_variables(model, 3)
+    f = MOI.Utilities.vectorize(1.0 .* x)
+    c = MOI.add_constraint(model, f, MOI.PositiveSemidefiniteConeTriangle(2))
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), f)
+    MOI.modify(model, c, MOI.VectorConstantChange([3.0, 4.0, 5.0]))
+    f.constants .= [3.0, 4.0, 5.0]
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), f)
+    MOI.modify(model, c, MOI.MultirowChange(x[1], [(1, 2.1)]))
+    MOI.modify(model, c, MOI.MultirowChange(x[2], [(2, 2.2)]))
+    MOI.modify(model, c, MOI.MultirowChange(x[3], [(3, 2.3)]))
+    f = MOI.Utilities.vectorize([2.1, 2.2, 2.3] .* x .+ [3.0, 4.0, 5.0])
+    @test ≈(MOI.get(model, MOI.ConstraintFunction(), c), f)
+    return
+end
+
 end  # module
 
 TestConstraintSetDotScaling.runtests()
