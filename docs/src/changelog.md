@@ -7,7 +7,7 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.55.0 (October 29, 2026)
+## v1.55.0 (October 30, 2026)
 
 ### Added
 
@@ -33,12 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed the use of a generic type in the distance to `SecondOrderCone` (#3112)
  - Fixed the inference of `ConstraintFunction` getter in copy (#3114)
  - Fixed `MOI.AbstractFunctionModification` with
-   `Bridges.Constraint.SetMapBridge` (#3115)
+   `Bridges.Constraint.SetMapBridge` (#3115), (#3123)
  - Changed `CleverDicts` to use `map!(f, values(dict))` (#3119)
  - Fixed copying sets that are not `isbitstype` (#3120)
  - Fixed [`Utilities.get_fallback`](@ref) to [`DualObjectiveValue`](@ref) to
    linear programs (#3121)
  - Added a test of sum with `; init` (#3122)
+ - Fixed precompilation of `MOI.delete(model, x)` (#3126)
 
 ### Other
 
