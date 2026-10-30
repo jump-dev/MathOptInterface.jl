@@ -35,8 +35,10 @@ Utilities.ObjectiveContainer
 ### `.variables`
 
 ```@docs
+Utilities.AbstractVectorBounds
 Utilities.VariablesContainer
 Utilities.FreeVariables
+Utilities.variable_bounds
 ```
 
 ### `.constraints`
@@ -127,6 +129,7 @@ Utilities.load_constants
 Utilities.function_constants
 Utilities.set_from_constants
 Utilities.modify_constants
+Utilities.constraint_bounds
 ```
 
 ```@docs

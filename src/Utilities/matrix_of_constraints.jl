@@ -304,15 +304,28 @@ this set.
 function add_set end
 
 """
-    rows(sets, ci::MOI.ConstraintIndex)::Union{Int,UnitRange{Int}}
+    rows(sets_or_model, ci::MOI.ConstraintIndex)::Union{Int,UnitRange{Int}}
 
-Return the rows in `1:MOI.dimension(sets)` corresponding to the set of id
-`ci.value`.
+Return the row or rows corresponding to `ci`. For a constraint model, these are
+the rows of its flattened constraint representation and use the same ordering
+as [`constraint_bounds`](@ref).
 
 For scalar sets, this returns an `Int`. For vector sets, this returns an
-`UnitRange{Int}`.
+`UnitRange{Int}`; therefore the rows of each vector constraint must be
+contiguous.
 """
 function rows end
+
+"""
+    constraint_bounds(model)
+
+Return the constants container describing the constraint rows of `model`. Its
+row order is the one used by [`rows`](@ref), and it contains one entry per row.
+
+For models whose constraints are represented by lower and upper bounds, return
+a [`Hyperrectangle`](@ref).
+"""
+function constraint_bounds end
 
 ###
 ### MatrixOfConstraints
@@ -346,6 +359,8 @@ For scalar sets, this returns an `Int`. For vector sets, this returns an
 `UnitRange{Int}`.
 """
 rows(model::MatrixOfConstraints, ci::MOI.ConstraintIndex) = rows(model.sets, ci)
+
+constraint_bounds(model::MatrixOfConstraints) = model.constants
 
 function _affine_function_type(
     ::Type{T},
