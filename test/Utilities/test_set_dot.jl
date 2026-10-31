@@ -53,6 +53,15 @@ function test_set_dot(T = Int)
     end
 end
 
+function test_set_dot_complex_triangle()
+    x = ComplexF64[1+2im, 3-4im, -2+5im]
+    y = ComplexF64[2-3im, -1+2im, 4+1im]
+    set = MOI.PositiveSemidefiniteConeTriangle(2)
+    @test MOI.Utilities.set_dot(x, y, set) == -29 - 25im
+    @test MOI.Utilities.set_dot(x, x, set) == 84
+    return
+end
+
 end
 
 TestSetDot.runtests()
