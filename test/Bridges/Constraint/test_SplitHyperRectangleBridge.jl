@@ -95,6 +95,7 @@ function test_runtests_free_row()
         [1.0 * z + -3.0, 3.3 + -1.0 * z] in Nonnegatives(2)
         """;
         constraint_start = 3.0,
+        dual = [0.0, 3.0],
     )
     return
 end
@@ -108,7 +109,8 @@ function test_runtests_all_free_rows()
         """,
         """
         variables: x
-        """,
+        """;
+        dual = [0.0],
     )
     return
 end

@@ -284,7 +284,7 @@ julia> MOI.Bridges.runtests(
            end,
        )
 Test Summary:    | Pass  Total  Time
-Bridges.runtests |   32     32  0.8s
+Bridges.runtests |   32     32  0.0s
 ```
 """
 function runtests(args...; kwargs...)
@@ -294,12 +294,100 @@ function runtests(args...; kwargs...)
     return
 end
 
+# This function tests that ConstraintDual is implemented correctly for a bridge
+# by comparing Lagrangian values of the inner and outer models at corresponding
+# primal points. Evaluating the functions also works for nonlinear expressions.
+#
+# For this test to be enabled, the bridge should implement `MOI.supports` and
+# `MOI.set` for `ConstraintDual`. The easiest way to achieve this is with
+# `Union{ConstraintDual,ConstraintDualStart}`.
+function _test_dual(
+    Bridge::Type{<:AbstractBridge},
+    input_fn::Function;
+    dual,
+    eltype,
+    model_eltype,
+)
+    if Bridge <: Objective.AbstractBridge
+        return
+    end
+    inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
+    mock = MOI.Utilities.MockOptimizer(
+        inner;
+        eval_variable_constraint_dual = false,
+    )
+    model = _bridged_model(Bridge{eltype}, mock)
+    input_fn(model)
+    final_touch(model)
+    final_touch(model)
+    MOI.set(mock, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    # Use an integer point so integer-coefficient vector functions can be
+    # evaluated without inexact conversions. Keep auxiliary primals at zero.
+    primal = 2 * one(model_eltype)
+    x = MOI.get(mock, MOI.ListOfVariableIndices())
+    MOI.set(mock, MOI.VariablePrimal(), x, fill(zero(primal), length(x)))
+    if Bridge <: Variable.AbstractBridge
+        MOI.set(mock, MOI.VariablePrimal(), x, fill(primal, length(x)))
+    else
+        x = MOI.get(model, MOI.ListOfVariableIndices())
+        MOI.set(model, MOI.VariablePrimal(), x, fill(primal, length(x)))
+    end
+    MOI.set(mock, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    # Some bridges leave auxiliary constraint duals unspecified.
+    for (F, S) in MOI.get(mock, MOI.ListOfConstraintTypesPresent())
+        for ci in MOI.get(mock, MOI.ListOfConstraintIndices{F,S}())
+            set = MOI.get(mock, MOI.ConstraintSet(), ci)
+            MOI.set(
+                mock,
+                MOI.ConstraintDual(),
+                ci,
+                _fake_start(zero(model_eltype), set),
+            )
+        end
+    end
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if !MOI.supports(model, MOI.ConstraintDual(), MOI.ConstraintIndex{F,S})
+            return
+        end
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            value = _fake_start(dual, set)
+            MOI.set(model, MOI.ConstraintDual(), ci, value)
+            Test.@test MOI.get(model, MOI.ConstraintDual(), ci) ≈ value
+        end
+    end
+    Test.@test isapprox(
+        _test_lagrangian_value(model),
+        _test_lagrangian_value(mock);
+        atol = 1e-6,
+    )
+    return
+end
+
+function _test_lagrangian_value(model::MOI.ModelLike)
+    value = MOI.Utilities.get_fallback(model, MOI.ObjectiveValue())
+    sign = MOI.get(model, MOI.ObjectiveSense()) == MOI.MAX_SENSE ? 1 : -1
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        for ci in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+            f = MOI.get(model, MOI.ConstraintFunction(), ci)
+            primal = MOI.Utilities.eval_variables(model, f) do vi
+                return MOI.get(model, MOI.VariablePrimal(), vi)
+            end
+            set = MOI.get(model, MOI.ConstraintSet(), ci)
+            dual = MOI.get(model, MOI.ConstraintDual(), ci)
+            value += sign * MOI.Utilities._dual_objective_dot(primal, dual, set)
+        end
+    end
+    return value
+end
+
 function _runtests(
     Bridge::Type{<:AbstractBridge},
     input_fn::Function,
     output_fn::Function;
     variable_start = 1.2,
     constraint_start = 1.2,
+    dual = constraint_start,
     eltype = Float64,
     model_eltype = eltype,
     print_inner_model::Bool = false,
@@ -403,6 +491,11 @@ function _runtests(
     end
     Test.@testset "Test delete" begin                                           # COV_EXCL_LINE
         _test_delete(Bridge, model, inner)
+    end
+    if !isnothing(dual) && !cannot_unbridge
+        Test.@testset "Test ConstraintDual" begin                               # COV_EXCL_LINE
+            _test_dual(Bridge, input_fn; dual, eltype, model_eltype)
+        end
     end
     return
 end

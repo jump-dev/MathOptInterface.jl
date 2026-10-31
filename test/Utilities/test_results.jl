@@ -291,6 +291,62 @@ function test_get_fallback_DualObjectiveValue()
     return
 end
 
+function test_get_fallback_DualObjectiveValue_complex()
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    x = MOI.add_variable(model)
+    c1 = MOI.add_constraint(
+        model,
+        (1.0 + 2.0im) * x + (3.0 + 4.0im),
+        MOI.EqualTo(1.0 - 2.0im),
+    )
+    c2 = MOI.add_constraint(
+        model,
+        MOI.Utilities.vectorize([
+            (1.0 + 2.0im) * x + (3.0 + 4.0im),
+            -1.0im * x + (-2.0 + 5.0im),
+        ]),
+        MOI.Zeros(2),
+    )
+    MOI.set(model, MOI.ConstraintDual(), c1, 2.0 - 3.0im)
+    MOI.set(model, MOI.ConstraintDual(), c2, [2.0 - 3.0im, -1.0 + 4.0im])
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    for (sense, expected) in ((MOI.MIN_SENSE, -2.0), (MOI.MAX_SENSE, 2.0))
+        MOI.set(model, MOI.ObjectiveSense(), sense)
+        @test MOI.Utilities.get_fallback(
+            model,
+            MOI.DualObjectiveValue(),
+            Float64,
+        ) == expected
+    end
+    return
+end
+
+function test_get_fallback_DualObjectiveValue_Parameter()
+    model = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}());
+        eval_variable_constraint_dual = false,
+    )
+    x, ci = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        1.0 * x + 5.0,
+    )
+    MOI.set(model, MOI.ConstraintDual(), ci, 3.0)
+    MOI.set(model, MOI.DualStatus(), MOI.FEASIBLE_POINT)
+    for (sense, expected) in ((MOI.MIN_SENSE, 11.0), (MOI.MAX_SENSE, -1.0))
+        MOI.set(model, MOI.ObjectiveSense(), sense)
+        @test MOI.Utilities.get_fallback(
+            model,
+            MOI.DualObjectiveValue(),
+            Float64,
+        ) == expected
+    end
+    return
+end
+
 function test_get_fallback_DualObjectiveValue_Quadratic()
     T = Float64
     model = MOI.Utilities.MockOptimizer(

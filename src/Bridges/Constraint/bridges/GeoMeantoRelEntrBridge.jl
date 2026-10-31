@@ -198,7 +198,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{GeoMeantoRelEntrBridge{T,F,G,H}},
 ) where {T,F,G,H}
     ci_1 = MOI.ConstraintIndex{F,MOI.Nonnegatives}
@@ -277,28 +281,23 @@ end
 # Note log.(w/geomean(w)) = log.(w) .- sum(log, w) / n.
 function MOI.set(
     model::MOI.ModelLike,
-    ::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::GeoMeantoRelEntrBridge,
     value,
 )
     d = length(value) - 1
     u = value[1]
     w = value[2:end]
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, [-u])
+    MOI.set(model, attr, bridge.nn_index, [-u])
     relentr_dual =
         vcat(-u / d, value[2:end], u / d * (log.(w) .+ (1 - sum(log, w) / d)))
-    MOI.set(
-        model,
-        MOI.ConstraintDualStart(),
-        bridge.relentr_index,
-        relentr_dual,
-    )
+    MOI.set(model, attr, bridge.relentr_index, relentr_dual)
     return
 end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::GeoMeantoRelEntrBridge,
     ::Nothing,
 )
