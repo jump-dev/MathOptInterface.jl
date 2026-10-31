@@ -72,14 +72,6 @@ function MOI.get(
 end
 
 function MOI.supports(
-    ::MOI.ModelLike,
-    ::MOI.ConstraintDual,
-    ::Type{<:AbstractFunctionConversionBridge{F,S}},
-) where {F,S}
-    return false
-end
-
-function MOI.supports(
     model::MOI.ModelLike,
     attr::MOI.AbstractConstraintAttribute,
     ::Type{<:AbstractFunctionConversionBridge{F,S}},
