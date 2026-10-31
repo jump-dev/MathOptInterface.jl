@@ -191,6 +191,26 @@ function test_DualObjectiveValue()
     return
 end
 
+function test_ConstraintDual_discrete_sets()
+    mock = MOIU.MockOptimizer(
+        MOIU.UniversalFallback(MOIU.Model{Float64}());
+        eval_variable_constraint_dual = false,
+    )
+    x, y = MOI.add_variables(mock, 2)
+    for (f, set, dual) in (
+        (x, MOI.ZeroOne(), 1.2),
+        (y, MOI.Integer(), -2.3),
+        (MOI.VectorOfVariables([x, y]), MOI.SOS1([1.0, 2.0]), [1.2, -2.3]),
+        (MOI.VectorOfVariables([x, y]), MOI.SOS2([1.0, 2.0]), [-2.3, 1.2]),
+    )
+        ci = MOI.add_constraint(mock, f, set)
+        @test MOI.supports(mock, MOI.ConstraintDual(), typeof(ci))
+        MOI.set(mock, MOI.ConstraintDual(), ci, dual)
+        @test MOI.get(mock, MOI.ConstraintDual(), ci) == dual
+    end
+    return
+end
+
 function test_add_con_allowed_false()
     model = MOI.Utilities.MockOptimizer(
         MOI.Utilities.Model{Float64}();
