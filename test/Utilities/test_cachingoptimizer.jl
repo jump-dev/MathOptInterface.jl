@@ -757,6 +757,7 @@ function test_status_codes()
         optimizer,
     )
     MOI.Utilities.attach_optimizer(model)
+    MOI.set(optimizer, MOI.ResultCount(), 1)
     MOI.set(optimizer, MOI.TerminationStatus(), MOI.OPTIMAL)
     MOI.set(optimizer, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
     @test MOI.get(model, MOI.TerminationStatus()) == MOI.OPTIMAL
