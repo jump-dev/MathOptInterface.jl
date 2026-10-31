@@ -144,7 +144,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{NormOneBridge{T,F,G}},
 ) where {T,F,G}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.Nonnegatives})
@@ -219,7 +223,7 @@ end
 # depending on the sense of `value[1 + i]`.
 function MOI.set(
     model::MOI.ModelLike,
-    ::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::NormOneBridge,
     value,
 )
@@ -233,16 +237,16 @@ function MOI.set(
             nn_dual[1+d+i] = value[1+i]
         end
     end
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nn_dual)
+    MOI.set(model, attr, bridge.nn_index, nn_dual)
     return
 end
 
 function MOI.set(
     model::MOI.ModelLike,
-    ::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::NormOneBridge,
     ::Nothing,
 )
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.nn_index, nothing)
+    MOI.set(model, attr, bridge.nn_index, nothing)
     return
 end

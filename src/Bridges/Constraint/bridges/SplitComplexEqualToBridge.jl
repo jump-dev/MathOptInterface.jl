@@ -160,7 +160,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{<:SplitComplexEqualToBridge{T,F}},
 ) where {T,F}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.EqualTo{T}})
@@ -194,7 +198,11 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     bridge::SplitComplexEqualToBridge{T},
     value,
 ) where {T}
@@ -209,7 +217,11 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     bridge::SplitComplexEqualToBridge,
     ::Nothing,
 )
