@@ -315,7 +315,13 @@ function _test_dual(
         return
     end
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{model_eltype}())
-    mock = MOI.Utilities.MockOptimizer(inner)
+    # Variable bridges may shift variables, so the dual objective comparison
+    # requires stationarity. Constraint bridges should use the supplied duals,
+    # even when a variable has multiple bounds after bridging.
+    mock = MOI.Utilities.MockOptimizer(
+        inner;
+        eval_variable_constraint_dual = Bridge <: Variable.AbstractBridge,
+    )
     model = _bridged_model(Bridge{eltype}, mock)
     input_fn(model)
     final_touch(model)
