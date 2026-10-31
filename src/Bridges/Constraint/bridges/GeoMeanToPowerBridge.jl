@@ -259,7 +259,7 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     ::Type{GeoMeanToPowerBridge{T,F}},
 ) where {T,F}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,MOI.PowerCone{T}})
@@ -293,7 +293,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::GeoMeanToPowerBridge{T,F},
     start::AbstractVector{T},
 ) where {T,F}
@@ -327,7 +327,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::GeoMeanToPowerBridge,
     ::Nothing,
 )
