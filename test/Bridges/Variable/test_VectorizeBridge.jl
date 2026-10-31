@@ -287,6 +287,39 @@ function test_runtests()
     return
 end
 
+function test_ConstraintDual_lagrangian_shift()
+    mock = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.Model{Float64}();
+        eval_variable_constraint_dual = false,
+    )
+    model = MOI.Bridges.Variable.Vectorize{Float64}(mock)
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(2.0))
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(
+        model,
+        MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}(),
+        1.0 * x,
+    )
+    y = only(MOI.get(mock, MOI.ListOfVariableIndices()))
+    ci = only(
+        MOI.get(
+            mock,
+            MOI.ListOfConstraintIndices{
+                MOI.VectorOfVariables,
+                MOI.Nonnegatives,
+            }(),
+        ),
+    )
+    MOI.set(mock, MOI.VariablePrimal(), y, 3.0)
+    MOI.set(mock, MOI.ConstraintDual(), ci, [1.2])
+    MOI.set(mock, MOI.PrimalStatus(), MOI.FEASIBLE_POINT)
+    # The dual is deliberately nonstationary: the coefficient of y in the
+    # Lagrangian is 1 - 1.2. Both models should nevertheless give 5 - 3 * 1.2.
+    @test MOI.Bridges._test_lagrangian_value(model) ≈ 1.4
+    @test MOI.Bridges._test_lagrangian_value(mock) ≈ 1.4
+    return
+end
+
 function test_list_of_constraint_indices()
     inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
     model = MOI.Bridges.Variable.Vectorize{Float64}(inner)
