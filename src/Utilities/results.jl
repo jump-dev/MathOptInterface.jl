@@ -137,6 +137,8 @@ _variable_set_in_dual_objective(::Type{<:MOI.AbstractSet}) = false
 
 _variable_set_in_dual_objective(::Type{<:MOI.EqualTo}) = true
 
+_variable_set_in_dual_objective(::Type{<:MOI.Parameter}) = true
+
 _variable_set_in_dual_objective(::Type{<:MOI.GreaterThan}) = true
 
 _variable_set_in_dual_objective(::Type{<:MOI.LessThan}) = true
@@ -145,9 +147,11 @@ _variable_set_in_dual_objective(::Type{<:MOI.Interval}) = true
 
 _variable_set_in_dual_objective(::Type{<:MOI.HyperRectangle}) = true
 
-_dual_objective_dot(x, y, set) = set_dot(x, y, set)
+_dual_objective_dot(x, y, set) = real(set_dot(x, y, set))
 
-_dual_objective_dot(x, y, set::MOI.EqualTo) = (x - set.value) * y
+function _dual_objective_dot(x, y, set::Union{MOI.EqualTo,MOI.Parameter})
+    return real(set_dot(x - set.value, y, set))
+end
 
 _dual_objective_dot(x, y, set::MOI.LessThan) = (x - set.upper) * y
 
