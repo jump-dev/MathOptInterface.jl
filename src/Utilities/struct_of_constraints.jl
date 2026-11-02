@@ -33,12 +33,15 @@ function final_touch(model::StructOfConstraints, index_map)
 end
 
 function _throw_if_cannot_delete(model::StructOfConstraints, vis, fast_in_vis)
-    broadcastcall(model) do constrs
-        if constrs !== nothing
-            _throw_if_cannot_delete(constrs, vis, fast_in_vis)
-        end
-        return
+    # constrs is not specialized because of MathOptInterface#3124
+    #
+    # The inner _throw_if_cannot_delete will be specialized, so the runtime
+    # penalty for this is very small. It's just the dispatch in broadcastcall.
+    function inner(@nospecialize constrs)
+        return _throw_if_cannot_delete(constrs, vis, fast_in_vis)
     end
+    inner(::Nothing) = nothing
+    broadcastcall(inner, model)
     return
 end
 
@@ -47,12 +50,13 @@ function _deleted_constraints(
     model::StructOfConstraints,
     vi,
 )
-    broadcastcall(model) do constrs
-        if constrs !== nothing
-            _deleted_constraints(callback, constrs, vi)
-        end
-        return
-    end
+    # constrs is not specialized because of MathOptInterface#3124
+    #
+    # The inner _deleted_constraints will be specialized, so the runtime penalty
+    # for this is very small. It's just the dispatch in broadcastcall.
+    inner(@nospecialize constrs) = _deleted_constraints(callback, constrs, vi)
+    inner(::Nothing) = nothing
+    broadcastcall(inner, model)
     return
 end
 

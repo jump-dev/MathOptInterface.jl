@@ -108,6 +108,35 @@ function MOI.Bridges.inverse_adjoint_map_function(
     return _scale(T, S, func)
 end
 
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::SetDotScalingBridge{T,S},
+    change::MOI.MultirowChange{T},
+) where {T,S}
+    set = MOI.get(model, MOI.ConstraintSet(), bridge.constraint).set
+    scale = MOI.Utilities.SetDotScalingVector{T}(set)
+    new_coefficients = Tuple{Int64,T}[
+        (row, scale[row] * coef) for (row, coef) in change.new_coefficients
+    ]
+    MOI.modify(
+        model,
+        bridge.constraint,
+        MOI.MultirowChange(change.variable, new_coefficients),
+    )
+    return
+end
+
+function MOI.modify(
+    model::MOI.ModelLike,
+    bridge::SetDotScalingBridge,
+    change::MOI.VectorConstantChange,
+)
+    new_constant = MOI.Bridges.map_function(bridge, change.new_constant)
+    new_change = MOI.VectorConstantChange(new_constant)
+    MOI.modify(model, bridge.constraint, new_change)
+    return
+end
+
 """
     SetDotInverseScalingBridge{T,S,F,G} <: Bridges.Constraint.AbstractBridge
 

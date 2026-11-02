@@ -465,6 +465,8 @@ PrecompileTools.@setup_workload begin
         )
         set(model, Silent(), true)
         x = add_variables(model, 3)
+        y = add_variable(model)
+        delete(model, y)
         add_constraint(model, x[1], ZeroOne())
         add_constraint(model, x[2], Integer())
         add_constraint(model, x[1], GreaterThan(0.0))

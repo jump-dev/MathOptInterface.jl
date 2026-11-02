@@ -308,6 +308,22 @@ function test_empty_constructor()
     return
 end
 
+function test_empty_result_count()
+    optimizer = MOIU.MockOptimizer(MOIU.Model{Float64}())
+    for result_count in (0, 1, 2)
+        MOI.add_variable(optimizer)
+        MOI.set(optimizer, MOI.ResultCount(), result_count)
+        MOI.empty!(optimizer)
+        @test MOI.is_empty(optimizer)
+        @test MOI.get(optimizer, MOI.ResultCount()) == 0
+        @test_throws(
+            MOI.ResultIndexBoundsError(MOI.ObjectiveValue(1), 0),
+            MOI.get(optimizer, MOI.ObjectiveValue(1)),
+        )
+    end
+    return
+end
+
 function test_delete_mock_variable()
     model = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
     x = MOI.add_variables(model, 3)

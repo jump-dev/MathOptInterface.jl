@@ -821,6 +821,7 @@ function MOI.empty!(mock::MockOptimizer)
     empty!(mock.mock_constraint_attribute)
     mock.optimize_called = false
     mock.termination_status = MOI.OPTIMIZE_NOT_CALLED
+    mock.result_count = 0
     mock.compute_conflict_called = false
     mock.conflict_status = MOI.COMPUTE_CONFLICT_NOT_CALLED
     empty!(mock.constraint_conflict_status)
