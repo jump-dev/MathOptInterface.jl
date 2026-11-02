@@ -42,4 +42,10 @@ include("evaluator.jl")
 include("ReverseAD/ReverseAD.jl")
 include("SymbolicAD/SymbolicAD.jl")
 
+include("layers/QPBlockData.jl")
+include("layers/ModelWithQuad.jl")
+include("layers/EvaluatorWithQuad.jl")
+include("layers/ModelWithOracles.jl")
+include("layers/EvaluatorWithOracles.jl")
+
 end  # module
