@@ -24,7 +24,9 @@ function _function_type_to_func(::Type{T}, k::_FunctionType) where {T}
 end
 
 _function_info(::MOI.VariableIndex) = _kFunctionTypeVariableIndex
+
 _function_info(::MOI.ScalarAffineFunction) = _kFunctionTypeScalarAffine
+
 _function_info(::MOI.ScalarQuadraticFunction) = _kFunctionTypeScalarQuadratic
 
 @enum(
@@ -36,8 +38,11 @@ _function_info(::MOI.ScalarQuadraticFunction) = _kFunctionTypeScalarQuadratic
 )
 
 _set_info(s::MOI.LessThan) = _kBoundTypeLessThan, -Inf, s.upper
+
 _set_info(s::MOI.GreaterThan) = _kBoundTypeGreaterThan, s.lower, Inf
+
 _set_info(s::MOI.EqualTo) = _kBoundTypeEqualTo, s.value, s.value
+
 _set_info(s::MOI.Interval) = _kBoundTypeInterval, s.lower, s.upper
 
 function _bound_type_to_set(::Type{T}, k::_BoundType) where {T}
