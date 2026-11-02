@@ -8,11 +8,64 @@
 ### Re-naming utilities
 ###
 
+# Visit non-variable constraint types in storage order. Walking concrete
+# storage preserves F and S for callers, unlike ListOfConstraintTypesPresent.
+function _for_each_constraint_type(f::T, model::MOI.ModelLike) where {T}
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        if F != MOI.VariableIndex
+            f(F, S)
+        end
+    end
+    return
+end
+
+function _for_each_constraint_type(
+    f::T,
+    model::MOI.Utilities.GenericModel,
+) where {T}
+    _for_each_constraint_type(f, model.constraints)
+    return
+end
+
+function _for_each_constraint_type(
+    f::T,
+    model::MOI.Utilities.StructOfConstraints,
+) where {T}
+    MOI.Utilities.broadcastcall(model) do inner
+        if inner !== nothing
+            _for_each_constraint_type(f, inner)
+        end
+        return
+    end
+    return
+end
+
+function _for_each_constraint_type(
+    f::T,
+    model::MOI.Utilities.VectorOfConstraints{F,S},
+) where {T,F,S}
+    if F != MOI.VariableIndex && !MOI.is_empty(model)
+        f(F, S)
+    end
+    return
+end
+
+function _for_each_constraint_type(
+    f::T,
+    model::MOI.Utilities.UniversalFallback,
+) where {T}
+    _for_each_constraint_type(f, model.model)
+    for inner in values(model.constraints)
+        _for_each_constraint_type(f, inner)
+    end
+    return
+end
+
 """
     create_unique_names(
         model::MOI.ModelLike;
         warn::Bool = false,
-        replacements::Vector{Function} = Function[],
+        replacements = (),
     )
 
 Rename variables in `model` to ensure that all variables and constraints have
@@ -24,7 +77,7 @@ If `warn`, print a warning if a variable or constraint is renamed.
 function create_unique_names(
     model::MOI.ModelLike;
     warn::Bool = false,
-    replacements::Vector{Function} = Function[],
+    replacements = (),
 )
     create_unique_variable_names(model, warn, replacements)
     create_unique_constraint_names(model, warn, replacements)
@@ -52,11 +105,9 @@ function create_generic_variable_names(model::MOI.ModelLike)
 end
 
 function create_generic_constraint_names(model::MOI.ModelLike)
-    i = 1
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        if F != MOI.VariableIndex
-            i = create_generic_constraint_names(model, F, S, i)
-        end
+    i = Ref(1)
+    _for_each_constraint_type(model) do F, S
+        return i[] = create_generic_constraint_names(model, F, S, i[])
     end
     return
 end
@@ -74,7 +125,7 @@ function create_generic_constraint_names(
     return i
 end
 
-function _replace(s::String, replacements::Vector{Function})
+function _replace(s::String, replacements)
     for f in replacements
         s = f(s)
     end
@@ -170,15 +221,21 @@ end
 function create_unique_constraint_names(
     model::MOI.ModelLike,
     warn::Bool,
-    replacements::Vector{Function},
+    replacements,
 )
     original_names = Set{String}()
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _get_original_names_inner(model, replacements, original_names, F, S)
+    _for_each_constraint_type(model) do F, S
+        return _get_original_names_inner(
+            model,
+            replacements,
+            original_names,
+            F,
+            S,
+        )
     end
     added_names = Set{String}()
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        _create_unique_constraint_names_inner(
+    _for_each_constraint_type(model) do F, S
+        return _create_unique_constraint_names_inner(
             model,
             warn,
             replacements,
@@ -194,7 +251,7 @@ end
 function create_unique_variable_names(
     model::MOI.ModelLike,
     warn::Bool,
-    replacements::Vector{Function},
+    replacements,
 )
     variables = MOI.get(model, MOI.ListOfVariableIndices())
     # This is a list of all of the names currently in the model. We're going to

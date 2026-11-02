@@ -30,7 +30,7 @@ function compile()
     image_recipe = JuliaC.ImageRecipe(
         output_type = "--output-exe",
         file = joinpath(@__DIR__, "MyApp"),
-        trim_mode = "no",
+        trim_mode = "unsafe-warn",
         add_ccallables = false,
         verbose = true,
     )
@@ -76,15 +76,17 @@ function test_mathoptformat(output_dir)
     con_c = Dict(
         "name" => "c",
         "function" => Dict(
-            "type" => "ScalarNonlinearFunction",
-            "root" => Dict("type" => "node", "index" => 2),
-            "node_list" => [
-                Dict("type" => "sin", "args" => ["x"]),
+            "type" => "ScalarQuadraticFunction",
+            "affine_terms" =>
+                [Dict("coefficient" => 1.0, "variable" => "x")],
+            "quadratic_terms" => [
                 Dict(
-                    "type" => "+",
-                    "args" => [Dict("type" => "node", "index" => 1), 2, 3.0],
+                    "coefficient" => 2.0,
+                    "variable_1" => "x",
+                    "variable_2" => "x",
                 ),
             ],
+            "constant" => 0.0,
         ),
         "set" => Dict("type" => "LessThan", "upper" => 7.0),
     )

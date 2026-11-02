@@ -129,7 +129,7 @@ function get_options(m::Model)
             nothing,
             false,
         ),
-    )
+    )::Options
 end
 
 """
