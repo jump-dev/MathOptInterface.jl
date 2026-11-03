@@ -2131,6 +2131,23 @@ function test_canonical_copy_if_modifiable()
     return
 end
 
+function test_is_canonical_ScalarNonlinearFunction_common_subexpressions()
+    x = MOI.VariableIndex(1)
+    # The tree has 2^N leaves, the expression graph has N nodes
+    N = 100
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0*x])
+    for _ in 1:N
+        f = MOI.ScalarNonlinearFunction(:+, Any[f, f])
+    end
+    @test MOI.Utilities.is_canonical(f)
+    g = MOI.ScalarNonlinearFunction(:log, Any[1.0*x+1.0*x])
+    for _ in 1:N
+        g = MOI.ScalarNonlinearFunction(:+, Any[g, g])
+    end
+    @test !MOI.Utilities.is_canonical(g)
+    return
+end
+
 function test_vector_type()
     for T in (Int, Float64)
         @test MOI.Utilities.vector_type(T) == Vector{T}
