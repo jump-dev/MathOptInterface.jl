@@ -179,6 +179,7 @@ The following functions can be used to canonicalize a function:
 ```@docs
 Utilities.is_canonical
 Utilities.canonical
+Utilities.copy_if_modifiable
 Utilities.canonicalize!
 ```
 

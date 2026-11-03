@@ -619,6 +619,30 @@ end
 
 MOI.Utilities.@model(EmptyModel, (), (), (), (), (), (), (), ())
 
+function test_ScalarNonlinearFunction_not_copied()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    sin_x = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    f = MOI.ScalarNonlinearFunction(:+, Any[sin_x, sin_x])
+    g = MOI.ScalarNonlinearFunction(:*, Any[sin_x, x])
+    cf = MOI.add_constraint(model, f, MOI.EqualTo(0.0))
+    cg = MOI.add_constraint(model, g, MOI.EqualTo(0.0))
+    h = MOI.VectorNonlinearFunction([f, g])
+    ch = MOI.add_constraint(model, h, MOI.Zeros(2))
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    @test MOI.get(model, MOI.ConstraintFunction(), cf) === f
+    @test MOI.get(model, MOI.ConstraintFunction(), cg) === g
+    @test MOI.get(model, MOI.ConstraintFunction(), ch) === h
+    @test MOI.get(model, MOI.ObjectiveFunction{typeof(f)}()) === f
+    dest = MOI.Utilities.Model{Float64}()
+    index_map = MOI.copy_to(dest, model)
+    f_dest = MOI.get(dest, MOI.ConstraintFunction(), index_map[cf])
+    g_dest = MOI.get(dest, MOI.ConstraintFunction(), index_map[cg])
+    @test f_dest.args[1] === f_dest.args[2]
+    @test f_dest.args[1] === g_dest.args[1]
+    return
+end
+
 function test_empty_model()
     model = EmptyModel{Float64}()
     @test MOI.is_empty(model)

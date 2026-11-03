@@ -167,7 +167,7 @@ function MOI.set(
 )
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.single_variable = copy(f)
+    o.single_variable = copy_if_modifiable(f)
     return
 end
 
@@ -178,7 +178,7 @@ function MOI.set(
 ) where {T}
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.scalar_affine = copy(f)
+    o.scalar_affine = copy_if_modifiable(f)
     return
 end
 
@@ -189,7 +189,7 @@ function MOI.set(
 ) where {T}
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.scalar_quadratic = copy(f)
+    o.scalar_quadratic = copy_if_modifiable(f)
     return
 end
 
@@ -200,7 +200,7 @@ function MOI.set(
 )
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.scalar_nonlinear = copy(f)
+    o.scalar_nonlinear = copy_if_modifiable(f)
     return
 end
 
@@ -211,7 +211,7 @@ function MOI.set(
 )
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.vector_variables = copy(f)
+    o.vector_variables = copy_if_modifiable(f)
     return
 end
 
@@ -222,7 +222,7 @@ function MOI.set(
 ) where {T}
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.vector_affine = copy(f)
+    o.vector_affine = copy_if_modifiable(f)
     return
 end
 
@@ -233,7 +233,7 @@ function MOI.set(
 ) where {T}
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.vector_quadratic = copy(f)
+    o.vector_quadratic = copy_if_modifiable(f)
     return
 end
 
@@ -244,7 +244,7 @@ function MOI.set(
 )
     _empty_keeping_sense(o)
     o.is_function_set = true
-    o.vector_nonlinear = copy(f)
+    o.vector_nonlinear = copy_if_modifiable(f)
     return
 end
 
