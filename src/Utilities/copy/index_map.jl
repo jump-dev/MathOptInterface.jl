@@ -33,6 +33,10 @@ The dictionary-like object returned by [`MOI.copy_to`](@ref).
 function IndexMap()
     var_map = CleverDicts.CleverDict{MOI.VariableIndex,MOI.VariableIndex}()
     con_map = DoubleDicts.IndexDoubleDict()
+    return IndexMap(var_map, con_map)
+end
+
+function IndexMap(var_map, con_map)
     nl_cache = IdDict{MOI.ScalarNonlinearFunction,MOI.ScalarNonlinearFunction}()
     return IndexMap(var_map, con_map, nl_cache)
 end
