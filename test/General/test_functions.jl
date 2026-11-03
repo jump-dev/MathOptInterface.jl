@@ -583,6 +583,26 @@ function test_copy_ScalarNonlinearFunction()
     return
 end
 
+function test_copy_ScalarNonlinearFunction_common_subexpressions()
+    x = MOI.VariableIndex(1)
+    # The tree has 2^N leaves, the copy should have N nodes
+    N = 100
+    f = MOI.ScalarNonlinearFunction(:sin, Any[x])
+    for _ in 1:N
+        f = MOI.ScalarNonlinearFunction(:+, Any[f, f])
+    end
+    g = @inferred copy(f)
+    @test g !== f
+    for _ in 1:N
+        @test g.args[1] === g.args[2]
+        @test g.args[1] !== f.args[1]
+        f, g = f.args[1], g.args[1]
+    end
+    @test g ≈ MOI.ScalarNonlinearFunction(:sin, Any[x])
+    @test g !== f
+    return
+end
+
 function test_copy_ScalarNonlinearFunction_with_arg()
     N = 10_000
     x = MOI.VariableIndex.(1:N)

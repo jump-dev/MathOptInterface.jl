@@ -2101,6 +2101,24 @@ function test_ScalarNonlinearFunction_is_canonical()
     return
 end
 
+function test_canonicalize_ScalarNonlinearFunction_common_subexpressions()
+    x = MOI.VariableIndex(1)
+    # The tree has 2^N leaves, the expression graph has N nodes
+    N = 100
+    f = MOI.ScalarNonlinearFunction(:log, Any[1.0*x+1.0*x])
+    for _ in 1:N
+        f = MOI.ScalarNonlinearFunction(:+, Any[f, f])
+    end
+    g = MOI.Utilities.canonicalize!(copy(f))
+    for _ in 1:N
+        @test g.args[1] === g.args[2]
+        f, g = f.args[1], g.args[1]
+    end
+    @test f ≈ MOI.ScalarNonlinearFunction(:log, Any[1.0*x+1.0*x])
+    @test g ≈ MOI.ScalarNonlinearFunction(:log, Any[2.0*x])
+    return
+end
+
 function test_vector_type()
     for T in (Int, Float64)
         @test MOI.Utilities.vector_type(T) == Vector{T}

@@ -352,16 +352,25 @@ end
 
 # copy() doesn't recursively copy the children, and deepcopy seems to have a
 # performance problem for deeply nested structs.
+#
+# Like `deepcopy`, this preserves the aliases between subexpressions so that the
+# size of the copy is proportional to the number of distinct subexpressions.
 function Base.copy(f::ScalarNonlinearFunction)
     result = ScalarNonlinearFunction(f.head, similar(f.args))
+    copies =
+        IdDict{ScalarNonlinearFunction,ScalarNonlinearFunction}(f => result)
     stack = Tuple{ScalarNonlinearFunction,ScalarNonlinearFunction}[(f, result)]
     while !isempty(stack)
         source, destination = pop!(stack)
         for (i, arg) in enumerate(source.args)
             if arg isa ScalarNonlinearFunction
-                child = ScalarNonlinearFunction(arg.head, similar(arg.args))
+                child = Base.get(copies, arg, nothing)
+                if child === nothing
+                    child = ScalarNonlinearFunction(arg.head, similar(arg.args))
+                    copies[arg] = child
+                    push!(stack, (arg, child))
+                end
                 destination.args[i] = child
-                push!(stack, (arg, child))
             else
                 destination.args[i] = copy(arg)
             end

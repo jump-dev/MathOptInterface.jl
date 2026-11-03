@@ -1125,12 +1125,18 @@ end
 function canonicalize!(f::MOI.ScalarNonlinearFunction)
     # Don't use recursion here. This gets called for all scalar nonlinear
     # constraints.
+    # A subexpression may appear several times in the expression graph, we
+    # visit it only once.
+    visited = Base.IdSet{MOI.ScalarNonlinearFunction}()
     stack = MOI.ScalarNonlinearFunction[f]
     while !isempty(stack)
         g = pop!(stack)
         for (i, arg) in enumerate(g.args)
             if arg isa MOI.ScalarNonlinearFunction
-                push!(stack, arg)
+                if !(arg in visited)
+                    push!(visited, arg)
+                    push!(stack, arg)
+                end
             elseif !is_canonical(arg)
                 g.args[i] = canonicalize!(arg)
             end
