@@ -94,10 +94,15 @@ function is_bridged(
     #  * the variable is not bridged but the constraint was added with a
     #    constraint bridge: it lives in `Constraint.bridges(b)`.
     #  * otherwise it passes through to `b.model` and is not bridged.
+    # If the constraint was deleted, it can still be identified as bridged if
+    # `b.model` can create neither `VariableIndex`-in-`S` constraints nor
+    # variables constrained in `S`.
     if is_bridged(b, MOI.VariableIndex(ci.value))
         return true
+    elseif haskey(Constraint.bridges(b), ci)
+        return true
     end
-    return haskey(Constraint.bridges(b), ci)
+    return is_bridged(b, MOI.VariableIndex, S) && is_bridged(b, S)
 end
 
 function is_bridged(
@@ -497,8 +502,7 @@ function outer_to_inner(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if Variable.has_bridges(map) &&
-       Variable.is_constraint_mapping_active(map, F, S)
+    if Variable.is_constraint_mapping_active(map, F, S)
         return Variable.outer_to_inner(map, ci)
     end
     return ci
@@ -535,8 +539,7 @@ function inner_to_outer(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if Variable.has_bridges(map) &&
-       Variable.is_constraint_mapping_active(map, F, S)
+    if Variable.is_constraint_mapping_active(map, F, S)
         return Variable.inner_to_outer(map, ci)
     end
     return ci
@@ -692,8 +695,7 @@ function _record_inner_constraint!(
     inner_ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if Variable.has_bridges(map) &&
-       Variable.is_constraint_mapping_active(map, F, S)
+    if Variable.is_constraint_mapping_active(map, F, S)
         return Variable.allocate_constraint!(map, F, S, inner_ci)
     end
     # Only `VectorOfVariables` constraints can be force-bridged, so the
@@ -791,8 +793,7 @@ function _inner_index_or_nothing(
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if Variable.has_bridges(map) &&
-       Variable.is_constraint_mapping_active(map, F, S)
+    if Variable.is_constraint_mapping_active(map, F, S)
         return Variable.outer_to_inner(map, ci, nothing)
     end
     return ci
@@ -1083,7 +1084,7 @@ function _remove_inner_constraint_mapping!(
     inner_ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
     map = Variable.bridges(b)
-    if map isa Variable.Map && Variable.is_constraint_mapping_active(map, F, S)
+    if Variable.is_constraint_mapping_active(map, F, S)
         Variable.remove_mapping!(
             Variable.index_space(map, outer_ci),
             outer_ci.value,
@@ -2524,7 +2525,10 @@ function add_bridged_constraint(b, BridgeType, f, s)
     end
     index = nothing
     v_map = Variable.bridges(b)
-    if f isa MOI.VectorOfVariables && Variable.has_bridges(v_map)
+    if f isa MOI.VectorOfVariables && v_map isa Variable.Map
+        # Even without variable bridges, `b.model` may create `CI{F,S}` with
+        # `add_constrained_variables`, so the outer index is allocated from the
+        # `(F, S)` constraint space to avoid aliasing an inner index.
         index = Variable.allocate_constraint!(
             v_map,
             typeof(f),

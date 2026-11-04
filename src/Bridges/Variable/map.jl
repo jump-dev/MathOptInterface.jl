@@ -918,6 +918,10 @@ Base.iterate(::EmptyMap) = nothing
 
 has_bridges(::EmptyMap) = false
 
+is_bridged_variable(::EmptyMap, ::MOI.VariableIndex) = false
+
+is_constraint_mapping_active(::EmptyMap, ::Type, ::Type) = false
+
 number_of_variables(::EmptyMap) = 0
 
 number_with_set(::EmptyMap, ::Type{<:MOI.AbstractSet}) = 0

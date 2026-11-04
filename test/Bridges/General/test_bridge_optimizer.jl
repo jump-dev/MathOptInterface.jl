@@ -1940,6 +1940,89 @@ function test_variable_mapping_unbridged_function_single_bridge()
     return
 end
 
+MOI.Utilities.@model(
+    ConstrainedVariablesModel,
+    (),
+    (MOI.GreaterThan, MOI.LessThan),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    (),
+)
+
+function MOI.supports_constraint(
+    ::ConstrainedVariablesModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.Semicontinuous{T}},
+) where {T}
+    return false
+end
+
+function MOI.supports_constraint(
+    ::ConstrainedVariablesModel,
+    ::Type{MOI.VectorOfVariables},
+    ::Type{MOI.Nonnegatives},
+)
+    return false
+end
+
+function MOI.supports_add_constrained_variables(
+    ::ConstrainedVariablesModel,
+    ::Type{MOI.Nonnegatives},
+)
+    return true
+end
+
+function MOI.add_constrained_variables(
+    model::ConstrainedVariablesModel,
+    set::MOI.Nonnegatives,
+)
+    x = MOI.add_variables(model, MOI.dimension(set))
+    f = MOI.VectorOfVariables(x)
+    return x, MOI.add_constraint(model.constraints, f, set)
+end
+
+function test_constraint_bridged_vector_of_variables_index()
+    inner = ConstrainedVariablesModel{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x, cx = MOI.add_constrained_variables(model, MOI.Nonnegatives(2))
+    y = MOI.add_variables(model, 2)
+    c = MOI.add_constraint(model, MOI.VectorOfVariables(y), MOI.Nonnegatives(2))
+    @test c != cx
+    @test MOI.get(model, MOI.ConstraintFunction(), cx) ==
+          MOI.VectorOfVariables(x)
+    @test MOI.get(model, MOI.ConstraintFunction(), c) ==
+          MOI.VectorOfVariables(y)
+    F, S = MOI.VectorOfVariables, MOI.Nonnegatives
+    @test Set(MOI.get(model, MOI.ListOfConstraintIndices{F,S}())) ==
+          Set([cx, c])
+    MOI.delete(model, c)
+    @test !MOI.is_valid(model, c)
+    @test_throws MOI.InvalidIndex(c) MOI.delete(model, c)
+    @test MOI.is_valid(model, cx)
+    z, cz = MOI.add_constrained_variables(model, MOI.Nonnegatives(1))
+    @test cz != cx && cz != c
+    @test MOI.get(model, MOI.ConstraintFunction(), cz) ==
+          MOI.VectorOfVariables(z)
+    return
+end
+
+function test_deleted_constraint_bridged_variable_index()
+    inner = ConstrainedVariablesModel{Float64}()
+    model = MOI.Bridges.full_bridge_optimizer(inner, Float64)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.Semicontinuous(1.0, 2.0))
+    @test MOI.Bridges.is_bridged(model, c)
+    MOI.delete(model, c)
+    # `inner` does not support this constraint so the bridge optimizer must
+    # not forward the deleted index to `inner`.
+    @test MOI.Bridges.is_bridged(model, c)
+    @test_throws MOI.InvalidIndex(c) MOI.delete(model, c)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
