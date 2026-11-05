@@ -2034,6 +2034,40 @@ function test_invalid_constraint_on_unmapped_variable()
     return
 end
 
+function test_internal_variable_bridge_constraint_is_not_valid()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Variable.Free{Float64}(inner)
+    x = MOI.add_variable(model)
+    attr = MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}()
+    internal = only(MOI.get(inner, attr))
+    @test MOI.is_valid(inner, internal)
+    @test isempty(MOI.get(model, attr))
+    @test !MOI.is_valid(model, internal)
+    MOI.delete(model, x)
+    @test !MOI.is_valid(inner, internal)
+    return
+end
+
+function test_internal_objective_bridge_constraint_is_not_valid()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Objective.Slack{Float64}(inner)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    f = 1.0 * x
+    MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    attr = MOI.ListOfConstraintIndices{typeof(f),MOI.LessThan{Float64}}()
+    internal = only(MOI.get(inner, attr))
+    @test MOI.is_valid(inner, internal)
+    @test isempty(MOI.get(model, attr))
+    @test !MOI.is_valid(model, internal)
+    user = MOI.add_constraint(model, 2.0 * x, MOI.LessThan(3.0))
+    @test MOI.is_valid(model, user)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
+    @test !MOI.is_valid(inner, internal)
+    @test MOI.is_valid(model, user)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()

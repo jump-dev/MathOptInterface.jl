@@ -766,7 +766,22 @@ function MOI.is_valid(
         if inner_ci === nothing
             return false
         end
-        return MOI.is_valid(b.model, inner_ci)
+        if !MOI.is_valid(b.model, inner_ci)
+            return false
+        end
+        # Match ListOfConstraintIndices: hide constraints created by bridges.
+        # Bridge indices use the recursive model's namespace.
+        index = recursive_model(b) === b ? ci : inner_ci
+        attr = MOI.ListOfConstraintIndices{F,S}()
+        for map in
+            (Variable.bridges(b), Constraint.bridges(b), Objective.bridges(b))
+            for bridge in values(map)
+                if index in MOI.get(bridge, attr)
+                    return false
+                end
+            end
+        end
+        return true
     end
 end
 
