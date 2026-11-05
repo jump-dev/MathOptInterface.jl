@@ -192,6 +192,12 @@ function test_internal_integer_is_not_valid()
             ),
         )
         @test !MOI.is_valid(model, internal_integer)
+        internal_interval = MOI.Bridges.bridge(model, binary).interval_index
+        @test !MOI.is_valid(model, internal_interval)
+        @test_throws MOI.InvalidIndex(internal_interval) MOI.delete(
+            model,
+            internal_interval,
+        )
         @test !MOI.is_valid(model, typeof(internal_integer)(y.value))
         integer = MOI.add_constraint(model, y, MOI.Integer())
         @test MOI.is_valid(model, integer)
@@ -199,6 +205,7 @@ function test_internal_integer_is_not_valid()
         @test MOI.get(model, MOI.ConstraintSet(), binary) == MOI.ZeroOne()
         # Removing and restoring the binary must remove its internal integer.
         MOI.delete(model, binary)
+        @test model.bridge_context.constraints === nothing
         @test !MOI.is_valid(model.model, internal_integer)
         @test MOI.is_valid(model, integer)
         fixed = MOI.add_constraint(model, x, MOI.EqualTo(0.0))

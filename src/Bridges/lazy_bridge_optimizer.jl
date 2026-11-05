@@ -36,6 +36,7 @@ true
 mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     # Internal model
     model::OT
+    bridge_context::BridgeContext
     # Bridged variables
     variable_map::Variable.Map
     var_to_name::Dict{MOI.VariableIndex,String}
@@ -67,6 +68,7 @@ mutable struct LazyBridgeOptimizer{OT<:MOI.ModelLike} <: AbstractBridgeOptimizer
     function LazyBridgeOptimizer(model::MOI.ModelLike)
         return new{typeof(model)}(
             model,
+            BridgeContext(),
             Variable.Map(),
             Dict{MOI.VariableIndex,String}(),
             nothing,
@@ -665,3 +667,5 @@ function bridging_cost(b::LazyBridgeOptimizer, args...)
 end
 
 recursive_model(b::LazyBridgeOptimizer) = b
+
+bridge_context(b::LazyBridgeOptimizer) = b.bridge_context

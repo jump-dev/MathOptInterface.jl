@@ -2045,6 +2045,7 @@ function test_internal_variable_bridge_constraint_is_not_valid()
     @test !MOI.is_valid(model, internal)
     MOI.delete(model, x)
     @test !MOI.is_valid(inner, internal)
+    @test model.bridge_context.constraints === nothing
     return
 end
 
@@ -2065,6 +2066,7 @@ function test_internal_objective_bridge_constraint_is_not_valid()
     MOI.set(model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)
     @test !MOI.is_valid(inner, internal)
     @test MOI.is_valid(model, user)
+    @test model.bridge_context.constraints === nothing
     return
 end
 

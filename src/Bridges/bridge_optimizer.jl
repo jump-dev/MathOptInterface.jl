@@ -16,6 +16,8 @@ the optimizer must implement [`MOI.optimize!`](@ref).
 """
 abstract type AbstractBridgeOptimizer <: MOI.AbstractOptimizer end
 
+include("bridge_context.jl")
+
 # AbstractBridgeOptimizer interface
 
 """
@@ -289,7 +291,13 @@ function call_in_context(
     vi::MOI.VariableIndex,
     f::Function,
 )
-    return Variable.call_in_context(Variable.bridges(b)::Variable.Map, vi, f)
+    return _in_bridge_context(b) do
+        return Variable.call_in_context(
+            Variable.bridges(b)::Variable.Map,
+            vi,
+            f,
+        )
+    end
 end
 
 """
@@ -311,11 +319,13 @@ function call_in_context(
         map = Variable.bridges(b)::Variable.Map
         return call_in_context(b, Variable.first_variable(map, ci), f)
     else
-        return Variable.call_in_context(
-            Variable.bridges(b),
-            ci,
-            () -> f(Constraint.bridges(b)[ci]),
-        )
+        return _in_bridge_context(b) do
+            return Variable.call_in_context(
+                Variable.bridges(b),
+                ci,
+                () -> f(Constraint.bridges(b)[ci]),
+            )
+        end
     end
 end
 
@@ -329,7 +339,9 @@ function call_in_context(
     return call_in_context(
         b,
         index,
-        bridge -> f(recursive_model(b), attr, bridge, args...),
+        bridge -> _with_bridge(b, bridge; update = f === MOI.set) do
+            return f(recursive_model(b), attr, bridge, args...)
+        end,
     )
 end
 
@@ -342,7 +354,14 @@ function call_in_context(
     return call_in_context(
         b,
         index,
-        bridge -> f(recursive_model(b), bridge, args...),
+        bridge -> _with_bridge(
+            b,
+            bridge;
+            update = f === MOI.delete || f === MOI.modify,
+            deleted = f === MOI.delete && isempty(args),
+        ) do
+            return f(recursive_model(b), bridge, args...)
+        end,
     )
 end
 
@@ -401,6 +420,10 @@ function MOI.empty!(b::AbstractBridgeOptimizer)
     empty!(Variable.bridges(b))
     empty!(Constraint.bridges(b))
     empty!(Objective.bridges(b))
+    context = bridge_context(b)
+    if context !== nothing
+        context.constraints = nothing
+    end
     return
 end
 
@@ -461,7 +484,14 @@ function MOI.supports_incremental_interface(b::AbstractBridgeOptimizer)
 end
 
 function final_touch(b::AbstractBridgeOptimizer)
-    final_touch(Constraint.bridges(b), recursive_model(b))
+    map = Constraint.bridges(b)
+    if map isa Constraint.Map
+        for bridge in map.needs_final_touch
+            _with_bridge(b, bridge; update = true) do
+                return final_touch(bridge, recursive_model(b))
+            end
+        end
+    end
     return
 end
 
@@ -728,61 +758,18 @@ function MOI.is_valid(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F,S},
 ) where {F,S}
+    if _is_hidden(b, ci)
+        return false
+    end
     if is_bridged(b, ci)
         if is_variable_bridged(b, ci)
             v_map = Variable.bridges(b)::Variable.Map
             return MOI.is_valid(v_map, ci)
-        else
-            # This return value has the potential to be a false positive: it
-            # doesn't discriminate between constraints that the user added, and
-            # constraints that a bridge added that were themselves bridged.
-            #
-            # "Fixing" this particular call has a number of wide reaching
-            # effects because bridges need this to be "true" so that they can
-            # query attributes of the constraint from `b`.
-            #
-            # In most cases a false positive doesn't matter, because we really
-            # do support querying stuff about it. And also the user needs some
-            # way of obtaining the correct index, which they won't have except
-            # by luck/enumeration.
-            #
-            # The main place that this is problematic is when we come to delete
-            # constraints, and in particular VariableIndex constraints, because we
-            # triviallly have their `.value` field from the `.value` of the
-            # VariableIndex.
-            #
-            # Instead of fixing everything though, we implement some extra
-            # checks when deleting, and we leave the false-positive as-is for
-            # now. If you, future reader, hit this comment while debugging, we
-            # might need to revisit this decision.
-            #
-            # x-ref https://github.com/jump-dev/MathOptInterface.jl/issues/2696
-            # x-ref https://github.com/jump-dev/MathOptInterface.jl/issues/2817
-            # x-ref https://github.com/jump-dev/MathOptInterface.jl/pull/2818
-            return haskey(Constraint.bridges(b), ci)
         end
-    else
-        inner_ci = _inner_index_or_nothing(b, ci)
-        if inner_ci === nothing
-            return false
-        end
-        if !MOI.is_valid(b.model, inner_ci)
-            return false
-        end
-        # Match ListOfConstraintIndices: hide constraints created by bridges.
-        # Bridge indices use the recursive model's namespace.
-        index = recursive_model(b) === b ? ci : inner_ci
-        attr = MOI.ListOfConstraintIndices{F,S}()
-        for map in
-            (Variable.bridges(b), Constraint.bridges(b), Objective.bridges(b))
-            for bridge in values(map)
-                if index in MOI.get(bridge, attr)
-                    return false
-                end
-            end
-        end
-        return true
+        return haskey(Constraint.bridges(b), ci)
     end
+    inner_ci = _inner_index_or_nothing(b, ci)
+    return inner_ci !== nothing && MOI.is_valid(b.model, inner_ci)
 end
 
 """
@@ -1120,8 +1107,8 @@ function MOI.delete(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F},
 ) where {F}
+    MOI.throw_if_not_valid(b, ci)
     if is_bridged(b, ci)
-        MOI.throw_if_not_valid(b, ci)
         br = bridge(b, ci)
         if is_variable_bridged(b, ci)
             throw(
@@ -1143,7 +1130,9 @@ function MOI.delete(
         Variable.call_in_context(
             Variable.bridges(b),
             ci,
-            () -> MOI.delete(recursive_model(b), br),
+            () -> _with_bridge(b, br; update = true, deleted = true) do
+                return MOI.delete(recursive_model(b), br)
+            end,
         )
         b.name_to_con = nothing
         delete!(b.con_to_name, ci)
@@ -1159,6 +1148,11 @@ function MOI.delete(
     b::AbstractBridgeOptimizer,
     ci::Vector{<:MOI.ConstraintIndex},
 )
+    for c in ci
+        if _is_hidden(b, c)
+            throw(MOI.InvalidIndex(c))
+        end
+    end
     if any(c -> is_bridged(b, c), ci)
         # This is a potentially complicated case, so default to the slow case of
         # deleting each constraint one-by-one.
@@ -1581,7 +1575,9 @@ function _bridged_function(
     attr::MOI.ObjectiveFunction,
 )
     if is_bridged(b, attr)
-        return MOI.get(recursive_model(b), attr, bridge(b, attr))
+        return _with_bridge(b, bridge(b, attr)) do
+            return MOI.get(recursive_model(b), attr, bridge(b, attr))
+        end
     else
         return MOI.get(b.model, attr)
     end
@@ -1624,7 +1620,10 @@ said to be bridged if the value of `MOI.ObjectiveFunctionType` is different for
 is_objective_bridged(b) = !isempty(Objective.bridges(b))
 
 function _delete_objective_bridges(b)
-    MOI.delete(b, Objective.root_bridge(Objective.bridges(b)::Objective.Map))
+    bridge = Objective.root_bridge(Objective.bridges(b)::Objective.Map)
+    _with_bridge(b, bridge; update = true, deleted = true) do
+        return MOI.delete(recursive_model(b), bridge)
+    end
     empty!(Objective.bridges(b))
     return
 end
@@ -1664,7 +1663,9 @@ function MOI.get(
 ) where {F<:MOI.AbstractFunction} # Need `<:` to avoid ambiguity
     obj_attr = MOI.ObjectiveFunction{F}()
     if is_bridged(b, obj_attr)
-        return MOI.get(recursive_model(b), attr, bridge(b, obj_attr))
+        return _with_bridge(b, bridge(b, obj_attr)) do
+            return MOI.get(recursive_model(b), attr, bridge(b, obj_attr))
+        end
     else
         return MOI.get(b.model, MOI.ObjectiveValue(attr.result_index))
     end
@@ -1693,7 +1694,9 @@ end
 
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     if is_bridged(b, attr)
-        value = MOI.get(recursive_model(b), attr, bridge(b, attr))
+        value = _with_bridge(b, bridge(b, attr)) do
+            return MOI.get(recursive_model(b), attr, bridge(b, attr))
+        end
         return _unbridged_result_from_bridge(b, value)
     end
     return _unbridged_result_from_inner(b, MOI.get(b.model, attr))
@@ -1710,7 +1713,9 @@ function MOI.set(
             _delete_objective_bridges(b)
         else
             for bridge in values(Objective.bridges(b))
-                MOI.set(recursive_model(b), attr, bridge, value)
+                _with_bridge(b, bridge; update = true) do
+                    return MOI.set(recursive_model(b), attr, bridge, value)
+                end
             end
         end
     end
@@ -1718,7 +1723,9 @@ function MOI.set(
 end
 
 function _bridge_objective(b, BridgeType, f)
-    bridge = Objective.bridge_objective(BridgeType, recursive_model(b), f)
+    bridge = _create_bridge(b) do
+        return Objective.bridge_objective(BridgeType, recursive_model(b), f)
+    end
     Objective.add_key_for_bridge(Objective.bridges(b)::Objective.Map, bridge, f)
     return
 end
@@ -1834,7 +1841,10 @@ function _modify_bridged_function(
     change::MOI.AbstractFunctionModification,
 )
     if is_bridged(b, ci_or_obj)
-        MOI.modify(recursive_model(b), bridge(b, ci_or_obj), change)
+        br = bridge(b, ci_or_obj)
+        _with_bridge(b, br; update = true) do
+            return MOI.modify(recursive_model(b), br, change)
+        end
     else
         MOI.modify(b.model, ci_or_obj, _to_inner_change(b, change))
     end
@@ -2305,7 +2315,9 @@ function MOI.get(
         if MOI.supports(b, MOI.VariableName(), typeof(bridge_))
             # The bridge's indices live in `recursive_model(b)`'s index
             # space, so its attribute getters must be called with it.
-            return MOI.get(recursive_model(b), MOI.VariableName(), bridge_)
+            return _with_bridge(b, bridge_) do
+                return MOI.get(recursive_model(b), MOI.VariableName(), bridge_)
+            end
         end
         return get(b.var_to_name, vi, "")
     else
@@ -2324,7 +2336,14 @@ function MOI.set(
         if MOI.supports(b, MOI.VariableName(), typeof(bridge_))
             # The bridge's indices live in `recursive_model(b)`'s index
             # space, so its attribute setters must be called with it.
-            MOI.set(recursive_model(b), MOI.VariableName(), bridge_, name)
+            _with_bridge(b, bridge_; update = true) do
+                return MOI.set(
+                    recursive_model(b),
+                    MOI.VariableName(),
+                    bridge_,
+                    name,
+                )
+            end
         else
             b.var_to_name[vi] = name
             b.name_to_var = nothing # Invalidate the name map.
@@ -2534,7 +2553,9 @@ function add_bridged_constraint(b, BridgeType, f, s)
     # themselves need final touch. Good examples are the ToMILP bridges that
     # need variable bounds.)
     n_final_touch = length(map.needs_final_touch)
-    bridge = Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
+    bridge = _create_bridge(b) do
+        return Constraint.bridge_constraint(BridgeType, recursive_model(b), f, s)
+    end
     if MOI.Bridges.needs_final_touch(bridge)
         insert!(map.needs_final_touch, n_final_touch + 1, bridge)
     end
@@ -3016,11 +3037,13 @@ function MOI.add_constrained_variables(
         end
         return Variable.add_keys_for_bridge(
             v_map,
-            () -> Variable.bridge_constrained_variable(
-                BridgeType,
-                recursive_model(b),
-                set,
-            ),
+            () -> _create_bridge(b) do
+                return Variable.bridge_constrained_variable(
+                    BridgeType,
+                    recursive_model(b),
+                    set,
+                )
+            end,
             set;
             constraint_index = iszero(MOI.dimension(set)) ? nothing :
                                Variable.allocate_constraint!(
@@ -3067,11 +3090,13 @@ function MOI.add_constrained_variable(
         Variable.activate_variable_mapping!(Variable.bridges(b)::Variable.Map)
         return Variable.add_key_for_bridge(
             Variable.bridges(b)::Variable.Map,
-            () -> Variable.bridge_constrained_variable(
-                BridgeType,
-                recursive_model(b),
-                set,
-            ),
+            () -> _create_bridge(b) do
+                return Variable.bridge_constrained_variable(
+                    BridgeType,
+                    recursive_model(b),
+                    set,
+                )
+            end,
             set,
         )
     else
