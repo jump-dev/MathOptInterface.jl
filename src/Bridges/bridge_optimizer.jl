@@ -895,15 +895,16 @@ function _delete_variables_in_variables_constraints(
 )
     c_map = Constraint.bridges(b)::Constraint.Map
     cache = Dict{Any,Set{Int64}}()
+    # Hidden children belong to their parent bridge, which handles deletion.
     for vi in vis
         for ci in Constraint.variable_constraints(c_map, vi)
-            if !_is_added_by_bridge(c_map, cache, ci)
+            if !_is_hidden(b, ci) && !_is_added_by_bridge(c_map, cache, ci)
                 MOI.delete(b, ci)
             end
         end
     end
     for ci in Constraint.vector_of_variables_constraints(c_map)
-        if !_is_added_by_bridge(c_map, cache, ci)
+        if !_is_hidden(b, ci) && !_is_added_by_bridge(c_map, cache, ci)
             _delete_variables_in_vector_of_variables_constraint(b, vis, ci)
         end
     end
