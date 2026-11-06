@@ -340,6 +340,80 @@ function test_constraint_list_fallback()
     return
 end
 
+function test_context_fallback()
+    model = UntrackedOptimizer(
+        BoundsModel{Float64}(),
+        (TrackingBridge[], TrackingBridge[], TrackingBridge[]),
+    )
+    calls = Ref(0)
+    result = MOI.Bridges._in_bridge_context(model) do
+        calls[] += 1
+        return :result
+    end
+    @test result === :result
+    @test calls[] == 1
+    @test_throws ErrorException("callback failed") MOI.Bridges._in_bridge_context(
+        model,
+    ) do
+        error("callback failed")
+    end
+    return
+end
+
+MOI.Utilities.@model(
+    VariableObjectiveModel,
+    (),
+    (MOI.GreaterThan, MOI.LessThan),
+    (MOI.Nonnegatives,),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (MOI.VectorOfVariables,),
+    ()
+)
+
+function MOI.supports(
+    ::VariableObjectiveModel,
+    ::MOI.ObjectiveFunction{F},
+) where {F<:MOI.AbstractFunction}
+    return F == MOI.VariableIndex
+end
+
+function MOI.supports_constraint(
+    ::VariableObjectiveModel{T},
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.GreaterThan{T}},
+) where {T}
+    return false
+end
+
+function test_modify_bridged_objective_constant_error()
+    inner = VariableObjectiveModel{Float64}()
+    model = MOI.Bridges.LazyBridgeOptimizer(inner)
+    MOI.Bridges.add_bridge(model, MOI.Bridges.Variable.VectorizeBridge{Float64})
+    MOI.Bridges.add_bridge(model, MOI.Bridges.Objective.SlackBridge{Float64})
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
+    f = 2.0 * x + 3.0
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, attr, f)
+    bridge = MOI.Bridges.bridge(model, attr)
+    child_attr = MOI.ListOfConstraintIndices{typeof(f),MOI.LessThan{Float64}}()
+    child = only(MOI.get(bridge, child_attr))
+    @test !MOI.is_valid(model, child)
+    @test MOI.get(model, attr) ≈ f
+    children = deepcopy(model.bridge_context.constraints)
+    @test_throws MOI.Bridges.ModifyBridgeNotAllowed MOI.modify(
+        model,
+        attr,
+        MOI.ScalarConstantChange(5.0),
+    )
+    @test model.bridge_context.constraints == children
+    @test !MOI.is_valid(model, child)
+    @test model.bridge_context.depth == 0
+    return
+end
+
 end
 
 TestBridgeContext.runtests()
