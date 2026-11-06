@@ -40,6 +40,18 @@ function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, index_map)
     return
 end
 
+"""
+    UnsafeObjectiveFunction{F}()
+
+Same as [`MOI.ObjectiveFunction{F}`](@ref) except that the returned function
+may be the object stored by the model, even if it can be modified, see
+[`copy_if_modifiable`](@ref). The caller must not modify it, nor keep it after
+the model is modified.
+
+The fallback calls `MOI.ObjectiveFunction{F}`. A model that stores the
+objective function should implement this attribute and implement
+`MOI.ObjectiveFunction{F}` by calling `copy_if_modifiable` on its result.
+"""
 struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} <:
        MOI.AbstractModelAttribute end
 
@@ -47,6 +59,18 @@ function MOI.get(model::MOI.ModelLike, ::UnsafeObjectiveFunction{F}) where {F}
     return MOI.get(model, MOI.ObjectiveFunction{F}())
 end
 
+"""
+    UnsafeConstraintFunction()
+
+Same as [`MOI.ConstraintFunction`](@ref) except that the returned function may
+be the object stored by the model, even if it can be modified, see
+[`copy_if_modifiable`](@ref). The caller must not modify it, nor keep it after
+the model is modified.
+
+The fallback calls `MOI.ConstraintFunction`. A model that stores the constraint
+functions should implement this attribute and implement `MOI.ConstraintFunction`
+by calling `copy_if_modifiable` on its result.
+"""
 struct UnsafeConstraintFunction <: MOI.AbstractConstraintAttribute end
 
 function MOI.get_fallback(
