@@ -1515,7 +1515,7 @@ end
 
 function MOI.get(
     b::AbstractBridgeOptimizer,
-    attr::MOI.ConstraintFunction,
+    attr::Union{MOI.ConstraintFunction,MOI.Utilities.UnsafeConstraintFunction},
     ci::MOI.ConstraintIndex,
 )
     if is_bridged(b, ci)

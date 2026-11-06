@@ -149,6 +149,40 @@ function MOI.get(
     return throw(MOI.GetAttributeNotAllowed(attr, message))
 end
 
+"""
+    MOI.get(
+        model::MOI.ModelLike,
+        ::MOI.ConstraintFunction,
+        bridge::AbstractBridge,
+    )
+
+Return a copy of the function of the constraint bridged by `bridge` if it can
+be modified, see [`MOI.Utilities.copy_if_modifiable`](@ref).
+
+A bridge that stores the function of the constraint it bridges only needs to
+implement [`MOI.Utilities.UnsafeConstraintFunction`](@ref) and return the
+stored function. A bridge that builds a new function should implement
+`MOI.ConstraintFunction` instead. A bridge needs to implement at least one of
+the two as each one falls back to the other.
+"""
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.ConstraintFunction,
+    bridge::AbstractBridge,
+)
+    return MOI.Utilities.copy_if_modifiable(
+        MOI.get(model, MOI.Utilities.UnsafeConstraintFunction(), bridge),
+    )
+end
+
+function MOI.get(
+    model::MOI.ModelLike,
+    ::MOI.Utilities.UnsafeConstraintFunction,
+    bridge::AbstractBridge,
+)
+    return MOI.get(model, MOI.ConstraintFunction(), bridge)
+end
+
 function MOI.get(
     model::MOI.ModelLike,
     ::MOI.CanonicalConstraintFunction,
