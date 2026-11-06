@@ -1081,8 +1081,9 @@ Returns the function in a canonical form, that is,
  * For a `AbstractVectorFunction`, the terms are sorted in ascending order of
    output index.
 
-The output of `canonical` can be assumed to be a copy of `f`, even for
-`VectorOfVariables`.
+If `f` can be modified in-place through the MOI API, the output of `canonical`
+can be assumed to be a copy of `f`. Otherwise, `f` is returned if it is already
+canonical, see [`copy_if_modifiable`](@ref).
 
 ## Example
 
@@ -1100,14 +1101,49 @@ julia> MOI.Utilities.canonical(f)
 ```
 """
 function canonical(f::MOI.AbstractFunction)
-    g = copy(f)
-    if !is_canonical(g)
-        canonicalize!(g)
+    if is_canonical(f)
+        return copy_if_modifiable(f)
     end
-    return g
+    return canonicalize!(copy(f))
 end
 
 canonicalize!(f::Union{MOI.VectorOfVariables,MOI.VariableIndex}) = f
+
+"""
+    copy_if_modifiable(f::MOI.AbstractFunction)
+
+Return a copy of `f` if `f` can be modified in-place through the MOI API, for
+example, with [`MOI.modify`](@ref). Otherwise, return `f`.
+
+A model should call this function when it stores a function given by the user,
+for example, in [`MOI.add_constraint`](@ref), and when it returns a function that
+it stores, for example, for [`MOI.ConstraintFunction`](@ref). Otherwise,
+modifying the function of the model through the MOI API would also modify the
+function of the user.
+
+The default implementation returns `copy(f)`. Functions that cannot be modified
+in-place through the MOI API, such as `MOI.VariableIndex`,
+`MOI.VectorOfVariables`, `MOI.ScalarNonlinearFunction` and
+`MOI.VectorNonlinearFunction`, return `f`. If you define a new function type `F`
+that cannot be modified in-place through the MOI API, implement
+`copy_if_modifiable(f::F) = f`.
+
+Not copying is important for `MOI.ScalarNonlinearFunction`: the same object may
+be used several times as a common subexpression, and a copy would turn these
+aliases into distinct objects.
+"""
+copy_if_modifiable(f::MOI.AbstractFunction) = copy(f)
+
+function copy_if_modifiable(
+    f::Union{
+        MOI.VariableIndex,
+        MOI.VectorOfVariables,
+        MOI.ScalarNonlinearFunction,
+        MOI.VectorNonlinearFunction,
+    },
+)
+    return f
+end
 
 """
     canonicalize!(f::Union{ScalarAffineFunction, VectorAffineFunction})

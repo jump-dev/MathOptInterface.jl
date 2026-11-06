@@ -311,6 +311,21 @@ Each element must be one of the following:
  * A [`ScalarQuadraticFunction`](@ref)
  * A [`ScalarNonlinearFunction`](@ref)
 
+## Copies
+
+A `ScalarNonlinearFunction` cannot be modified in-place through the MOI API, so
+models do not copy it when it is passed to [`add_constraint`](@ref) or set as
+the [`ObjectiveFunction`](@ref), and they may return the same object when it is
+queried with [`ConstraintFunction`](@ref) or [`ObjectiveFunction`](@ref), see
+[`Utilities.copy_if_modifiable`](@ref). Therefore, do not modify a
+`ScalarNonlinearFunction` after giving it to a model or getting it from a model.
+
+This allows sharing a common subexpression by using the same
+`ScalarNonlinearFunction` object several times, in the expression graph of one
+function or of several functions of the model. Copying would replace these
+aliases by distinct objects, which would prevent `Nonlinear.ReverseAD`
+from detecting them as common subexpressions.
+
 ## Unsupported operators
 
 If the optimizer does not support `head`, an [`UnsupportedNonlinearOperator`](@ref)
@@ -681,6 +696,11 @@ following:
  * A [`ScalarAffineFunction`](@ref)
  * A [`ScalarQuadraticFunction`](@ref)
  * A [`ScalarNonlinearFunction`](@ref)
+
+## Copies
+
+Like [`ScalarNonlinearFunction`](@ref), models do not copy a
+`VectorNonlinearFunction`, see [`Utilities.copy_if_modifiable`](@ref).
 
 ## Example
 

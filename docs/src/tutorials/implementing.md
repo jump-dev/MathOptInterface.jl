@@ -712,6 +712,13 @@ This applies, for example, to the `terms` vector in
 afterwards. The in-place version of [`get!`](@ref) can be used by users to avoid
 extra copies in this case.
 
+Functions that cannot be modified in-place through the MOI API, such as
+[`ScalarNonlinearFunction`](@ref) and [`VectorNonlinearFunction`](@ref), do not
+need to be copied. Avoid copying them: the same
+[`ScalarNonlinearFunction`](@ref) object may be used several times as a common
+subexpression, and a copy would turn these aliases into distinct objects. Use
+[`Utilities.copy_if_modifiable`](@ref) to copy a function only if needed.
+
 ### Column Generation
 
 There is no special interface for column generation. If the solver has a special

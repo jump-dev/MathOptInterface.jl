@@ -582,7 +582,7 @@ function MOI.set(
         # Clear any fallback objective
         uf.objective = nothing
     else
-        uf.objective = copy(func)
+        uf.objective = copy_if_modifiable(func)
         # Clear any `model` objective
         sense = MOI.get(uf.model, MOI.ObjectiveSense())
         MOI.set(uf.model, MOI.ObjectiveSense(), MOI.FEASIBILITY_SENSE)

@@ -2101,6 +2101,36 @@ function test_ScalarNonlinearFunction_is_canonical()
     return
 end
 
+function test_canonical_copy_if_modifiable()
+    x = MOI.VariableIndex(1)
+    for f in (
+        1.0 * x + 2.0,
+        1.0 * x * x + 2.0,
+        MOI.Utilities.vectorize([1.0 * x + 2.0]),
+        MOI.Utilities.vectorize([1.0 * x * x + 2.0]),
+    )
+        @test MOI.Utilities.is_canonical(f)
+        g = MOI.Utilities.canonical(f)
+        @test g ≈ f
+        @test g !== f
+        g = MOI.Utilities.copy_if_modifiable(f)
+        @test g ≈ f
+        @test g !== f
+    end
+    for f in (
+        x,
+        MOI.VectorOfVariables([x]),
+        MOI.ScalarNonlinearFunction(:sin, Any[x]),
+        MOI.VectorNonlinearFunction([
+            MOI.ScalarNonlinearFunction(:sin, Any[x]),
+        ]),
+    )
+        @test MOI.Utilities.canonical(f) === f
+        @test MOI.Utilities.copy_if_modifiable(f) === f
+    end
+    return
+end
+
 function test_vector_type()
     for T in (Int, Float64)
         @test MOI.Utilities.vector_type(T) == Vector{T}

@@ -19,6 +19,18 @@ All functions must implement:
 
 Abstract subtypes of `AbstractFunction` may require additional methods to be
 implemented.
+
+## Copies
+
+Models only copy the functions that can be modified in-place through the MOI
+API, for example, with [`modify`](@ref), using
+[`Utilities.copy_if_modifiable`](@ref). For example,
+[`ScalarAffineFunction`](@ref) is copied but [`ScalarNonlinearFunction`](@ref)
+is not.
+
+If you define a new function type that cannot be modified in-place through the
+MOI API, implement [`Utilities.copy_if_modifiable`](@ref) so that it is not
+copied.
 """
 abstract type AbstractFunction <: MA.AbstractMutable end
 
