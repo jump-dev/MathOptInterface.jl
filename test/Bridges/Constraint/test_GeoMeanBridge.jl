@@ -519,6 +519,43 @@ function test_runtests()
     return
 end
 
+function test_two_dimensional_child_constraint_types()
+    for H in (
+        MOI.VectorOfVariables,
+        MOI.VectorAffineFunction{Float64},
+        MOI.VectorQuadraticFunction{Float64},
+    )
+        inner = MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}())
+        model = MOI.Bridges.Constraint.GeoMean{Float64}(inner)
+        x = MOI.add_variables(model, 2)
+        f = if H == MOI.VectorQuadraticFunction{Float64}
+            convert(
+                H,
+                convert(
+                    MOI.VectorAffineFunction{Float64},
+                    MOI.VectorOfVariables(x),
+                ),
+            )
+        else
+            convert(H, MOI.VectorOfVariables(x))
+        end
+        ci = MOI.add_constraint(model, f, MOI.GeometricMeanCone(2))
+        bridge = MOI.Bridges.bridge(model, ci)
+        types = MOI.Bridges.added_constraint_types(typeof(bridge))
+        @test (H, MOI.Nonnegatives) in types
+        attr = MOI.ListOfConstraintIndices{H,MOI.Nonnegatives}()
+        child = only(MOI.get(bridge, attr))
+        @test MOI.is_valid(inner, child)
+        @test !MOI.is_valid(model, child)
+        @test isempty(MOI.get(model, attr))
+        @test MOI.get(model, MOI.NumberOfConstraints{H,MOI.Nonnegatives}()) == 0
+        MOI.delete(model, ci)
+        @test !MOI.is_valid(inner, child)
+        @test model.bridge_context.constraints === nothing
+    end
+    return
+end
+
 function test_with_constant_d2()
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.GeoMeanBridge,

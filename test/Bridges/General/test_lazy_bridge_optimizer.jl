@@ -1537,12 +1537,24 @@ function _test_context_substitution(T)
     )
     x, cx =
         MOI.add_constrained_variables(bridged, MOI.RotatedSecondOrderCone(4))
+    # Deleting an unrelated user variable must leave bridge-owned constraints
+    # to their parent bridge, including children that are themselves bridged.
+    attr =
+        MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.SecondOrderCone}()
+    child = only(MOI.get(MOI.Bridges.bridge(bridged, first(x)), attr))
+    @test !MOI.is_valid(bridged, child)
+    MOI.Bridges.add_bridge(
+        bridged,
+        MOI.Bridges.Constraint.ScalarFunctionizeBridge{T},
+    )
     y = MOI.add_variable(bridged)
+    bound = MOI.add_constraint(bridged, y, MOI.GreaterThan(zero(T)))
     @test MOI.get(bridged, MOI.NumberOfVariables()) == 5
     @test MOI.is_valid(bridged, y)
     MOI.delete(bridged, y)
     @test MOI.get(bridged, MOI.NumberOfVariables()) == 4
     @test !MOI.is_valid(bridged, y)
+    @test !MOI.is_valid(bridged, bound)
     _test_delete_bridged_variables(
         bridged,
         x,
