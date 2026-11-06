@@ -7,9 +7,11 @@
 module ReverseAD
 
 import ForwardDiff
+import LinearAlgebra
 import MathOptInterface as MOI
 import ..Nonlinear
 import SparseArrays
+import SparseMatrixColorings as SMC
 
 # Override basic math functions to return NaN instead of throwing errors.
 # This is what NLP solvers expect, and sometimes the results aren't needed
@@ -31,6 +33,7 @@ import NaNMath:
     sqrt
 
 include("Coloring/Coloring.jl")
+include("coloring.jl")
 include("graph_tools.jl")
 include("types.jl")
 include("utils.jl")
