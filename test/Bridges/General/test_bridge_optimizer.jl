@@ -2023,6 +2023,17 @@ function test_deleted_constraint_bridged_variable_index()
     return
 end
 
+function test_invalid_constraint_on_unmapped_variable()
+    model =
+        MOI.Bridges.Variable.Vectorize{Float64}(MOI.Utilities.Model{Float64}())
+    x, _ = MOI.add_constrained_variable(model, MOI.GreaterThan(0.0))
+    missing = MOI.VariableIndex(x.value + 100)
+    @test !MOI.is_valid(model, missing)
+    ci = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(missing.value)
+    @test !MOI.is_valid(model, ci)
+    return
+end
+
 end  # module
 
 TestBridgeOptimizer.runtests()
