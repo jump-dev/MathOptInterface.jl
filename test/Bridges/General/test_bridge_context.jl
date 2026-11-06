@@ -83,6 +83,15 @@ function MOI.get(
 end
 
 function MOI.get(
+    bridge::TrackingBridge,
+    ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}},
+)
+    attr =
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.GreaterThan{Float64}}()
+    return length(MOI.get(bridge, attr))
+end
+
+function MOI.get(
     model::MOI.ModelLike,
     ::InternalValidity,
     bridge::TrackingBridge,
@@ -223,6 +232,111 @@ function test_sparse_registry()
     MOI.empty!(outer)
     @test outer.bridge_context.constraints === nothing
     @test model.bridge_context.constraints === nothing
+    return
+end
+
+MOI.Utilities.@model(
+    BoundsModel,
+    (),
+    (MOI.GreaterThan,),
+    (),
+    (),
+    (),
+    (),
+    (),
+    ()
+)
+
+function test_constraint_lists_without_bridge_queries()
+    for lazy in (false, true)
+        inner = BoundsModel{Float64}()
+        model = if lazy
+            b = MOI.Bridges.LazyBridgeOptimizer(inner)
+            MOI.Bridges.add_bridge(b, TrackingBridge)
+            b
+        else
+            MOI.Bridges.Constraint.SingleBridgeOptimizer{TrackingBridge}(inner)
+        end
+        x = MOI.add_variables(model, 3)
+        F, S = MOI.VariableIndex, MOI.GreaterThan{Float64}
+        attr = MOI.ListOfConstraintIndices{F,S}()
+        count_attr = MOI.NumberOfConstraints{F,S}()
+        user = MOI.add_constraint(model, x[3], MOI.GreaterThan(0.0))
+        @test MOI.get(model, attr) == [user]
+        @test MOI.get(model, count_attr) == 1
+        @test model.bridge_context.constraints === nothing
+        parent = MOI.add_constraint(
+            model,
+            MOI.VectorOfVariables(x[1:2]),
+            MOI.Nonnegatives(2),
+        )
+        bridge = MOI.Bridges.bridge(model, parent)
+        queries = bridge.list_queries
+        @test MOI.get(model, attr) == [user]
+        @test MOI.get(model, count_attr) == 1
+        @test MOI.Bridges.call_in_context(
+            model,
+            parent,
+            _ -> MOI.get(model, attr),
+        ) == [user]
+        empty_attr = MOI.ListOfConstraintIndices{F,MOI.EqualTo{Float64}}()
+        @test isempty(MOI.get(model, empty_attr))
+        parent_attr =
+            MOI.ListOfConstraintIndices{MOI.VectorOfVariables,MOI.Nonnegatives}()
+        @test MOI.get(model, parent_attr) == [parent]
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VectorOfVariables,MOI.Nonnegatives}(),
+        ) == 1
+        @test MOI.get(
+            model,
+            MOI.NumberOfConstraints{MOI.VariableIndex,MOI.EqualTo{Float64}}(),
+        ) == 0
+        @test Set(MOI.get(model, MOI.ListOfConstraintTypesPresent())) ==
+              Set([(F, S), (MOI.VectorOfVariables, MOI.Nonnegatives)])
+        @test bridge.list_queries == queries
+        # Refreshing children must keep the list filter in sync.
+        MOI.set(model, ReplaceBounds(), parent, 2.0)
+        queries = bridge.list_queries
+        @test MOI.get(model, attr) == [user]
+        @test MOI.get(model, count_attr) == 1
+        @test bridge.list_queries == queries
+        MOI.delete(model, parent)
+        @test MOI.get(model, attr) == [user]
+        @test MOI.get(model, count_attr) == 1
+        @test model.bridge_context.constraints === nothing
+    end
+    return
+end
+
+struct UntrackedOptimizer{M} <: MOI.Bridges.AbstractBridgeOptimizer
+    model::M
+    bridges::NTuple{3,Vector{TrackingBridge}}
+end
+
+MOI.Bridges.Variable.bridges(b::UntrackedOptimizer) = b.bridges[1]
+MOI.Bridges.Constraint.bridges(b::UntrackedOptimizer) = b.bridges[2]
+MOI.Bridges.Objective.bridges(b::UntrackedOptimizer) = b.bridges[3]
+MOI.Bridges.is_bridged(::UntrackedOptimizer, ::Type, ::Type) = false
+MOI.Bridges.is_bridged(::UntrackedOptimizer, ::Type) = false
+MOI.Bridges.supports_constraint_bridges(::UntrackedOptimizer) = false
+
+function test_constraint_list_fallback()
+    inner = BoundsModel{Float64}()
+    x = MOI.add_variables(inner, 4)
+    bounds = MOI.add_constraints(inner, x, fill(MOI.GreaterThan(0.0), 4))
+    bridges = ntuple(i -> [TrackingBridge([x[i]], [bounds[i]], 0)], 3)
+    model = UntrackedOptimizer(inner, bridges)
+    list = copy(bounds)
+    attr =
+        MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.GreaterThan{Float64}}()
+    MOI.Bridges._remove_bridge_constraints!(model, list, attr)
+    @test list == bounds[4:4]
+    @test MOI.get(
+        model,
+        MOI.NumberOfConstraints{MOI.VariableIndex,MOI.GreaterThan{Float64}}(),
+    ) == 1
+    @test all(b -> only(b).list_queries == 2, bridges)
     return
 end
 

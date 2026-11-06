@@ -1282,15 +1282,7 @@ function _get_all_including_bridged(
         if recursive_model(b) !== b
             # SingleBridgeOptimizer bridges return inner indices. Filter
             # those before translating and appending outer bridge keys.
-            for bridges in (
-                Variable.bridges(b),
-                Constraint.bridges(b),
-                Objective.bridges(b),
-            )
-                for bridge in values(bridges)
-                    _remove_bridged(list, bridge, attr)
-                end
-            end
+            _remove_bridge_constraints!(b, list, attr)
             if Variable.has_bridges(Variable.bridges(b))
                 map!(ci -> inner_to_outer(b, ci), list, list)
             end
@@ -1314,14 +1306,32 @@ function _get_all_including_bridged(
     if recursive_model(b) === b
         # Lazy bridges can create further bridged constraints. Their outer
         # keys have just been appended, so filter them in the outer space.
+        _remove_bridge_constraints!(b, list, attr)
+    end
+    return list
+end
+
+function _remove_bridge_constraints!(
+    b::AbstractBridgeOptimizer,
+    list,
+    attr::MOI.ListOfConstraintIndices{F,S},
+) where {F,S}
+    context = bridge_context(b)
+    if context === nothing
+        # Custom optimizers can opt into tracking by providing a BridgeContext.
         for bridges in
             (Variable.bridges(b), Constraint.bridges(b), Objective.bridges(b))
             for bridge in values(bridges)
                 _remove_bridged(list, bridge, attr)
             end
         end
+    elseif context.constraints !== nothing
+        indices = get(context.constraints, (F, S), nothing)
+        if indices !== nothing
+            filter!(ci -> !haskey(indices, ci.value), list)
+        end
     end
-    return list
+    return
 end
 
 function _remove_bridged(list, bridge, attr)
@@ -1395,14 +1405,22 @@ function MOI.get(
             MOI.ConstraintIndex{F,S},
         )
     end
-    for bridge in values(Variable.bridges(b))
-        num -= MOI.get(bridge, attr)
-    end
-    for bridge in values(Constraint.bridges(b))
-        num -= MOI.get(bridge, attr)
-    end
-    for bridge in values(Objective.bridges(b))
-        num -= MOI.get(bridge, attr)
+    context = bridge_context(b)
+    if context === nothing
+        for bridge in values(Variable.bridges(b))
+            num -= MOI.get(bridge, attr)
+        end
+        for bridge in values(Constraint.bridges(b))
+            num -= MOI.get(bridge, attr)
+        end
+        for bridge in values(Objective.bridges(b))
+            num -= MOI.get(bridge, attr)
+        end
+    elseif context.constraints !== nothing
+        indices = get(context.constraints, (F, S), nothing)
+        if indices !== nothing
+            num -= length(indices)
+        end
     end
     return num
 end
