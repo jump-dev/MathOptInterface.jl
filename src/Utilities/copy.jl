@@ -88,9 +88,11 @@ function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
     index_map,
-    ::MOI.ConstraintFunction,
-)
-    return _pass_attribute(dest, src, index_map, UnsafeConstraintFunction())
+    attr::MOI.ObjectiveFunction{F},
+) where {F}
+    value = MOI.get(src, UnsafeObjectiveFunction{F}())
+    MOI.set(dest, attr, map_indices(index_map, attr, value))
+    return
 end
 
 function _pass_attribute(

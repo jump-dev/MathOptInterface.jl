@@ -1199,6 +1199,55 @@ function test_UnsafeObjectiveFunction_fallback()
     return
 end
 
+struct _UnsafeObjectiveFunctionOnlyModel{F} <: MOI.ModelLike
+    f::F
+end
+
+function MOI.get(
+    model::_UnsafeObjectiveFunctionOnlyModel{F},
+    ::MOIU.UnsafeObjectiveFunction{F},
+) where {F}
+    return model.f
+end
+
+function MOI.get(
+    ::_UnsafeObjectiveFunctionOnlyModel{F},
+    ::MOI.ListOfModelAttributesSet,
+) where {F}
+    return MOI.AbstractModelAttribute[MOI.ObjectiveFunction{F}()]
+end
+
+function test_pass_attributes_UnsafeObjectiveFunction()
+    x, y = MOI.VariableIndex.(1:2)
+    for f in (
+        1.0 * x + 2.0,
+        1.0 * x * x + 2.0,
+        MOI.ScalarNonlinearFunction(:sin, Any[x]),
+    )
+        original = copy(f)
+        src = _UnsafeObjectiveFunctionOnlyModel(f)
+        attr = MOI.ObjectiveFunction{typeof(f)}()
+        for variables in ((x, y), (y, x))
+            dest = MOIU.Model{Float64}()
+            MOI.add_variables(dest, 2)
+            index_map = MOIU.IndexMap()
+            index_map[x], index_map[y] = variables
+            MOIU.pass_attributes(dest, src, index_map)
+            expected = MOIU.map_indices(index_map, f)
+            @test MOI.get(dest, attr) ≈ expected
+            if !(f isa MOI.ScalarNonlinearFunction)
+                @test MOI.get(
+                    dest,
+                    MOIU.UnsafeObjectiveFunction{typeof(f)}(),
+                ) !== f
+                MOI.modify(dest, attr, MOI.ScalarConstantChange(3.0))
+            end
+            @test f ≈ original
+        end
+    end
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
