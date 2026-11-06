@@ -492,6 +492,18 @@ function test_NonnegToNonpos_modify()
     @test MOI.get(inner, MOI.ConstraintSet(), c_inner) == MOI.Nonpositives(1)
     return
 end
+function test_UnsafeConstraintFunction()
+    # GreaterToLess only implements `ConstraintFunction` so this tests that the
+    # bridge optimizer gets `ConstraintFunction` from the bridge
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.GreaterToLess{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, 1.0 * x, MOI.GreaterThan(1.0))
+    @test MOI.Bridges.is_bridged(model, c)
+    f = MOI.get(model, MOI.Utilities.UnsafeConstraintFunction(), c)
+    @test f ≈ 1.0 * x
+    return
+end
 
 end  # module
 

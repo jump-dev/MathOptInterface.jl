@@ -619,6 +619,21 @@ end
 
 MOI.Utilities.@model(EmptyModel, (), (), (), (), (), (), (), ())
 
+function test_UnsafeConstraintFunction()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    f = 1.0 * x + 2.0
+    c = MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    unsafe = MOI.get(model, MOI.Utilities.UnsafeConstraintFunction(), c)
+    @test unsafe ≈ f
+    @test unsafe !== f
+    @test unsafe === MOI.get(model, MOI.Utilities.UnsafeConstraintFunction(), c)
+    g = MOI.get(model, MOI.ConstraintFunction(), c)
+    @test g ≈ f
+    @test g !== unsafe
+    return
+end
+
 function test_ScalarNonlinearFunction_not_copied()
     model = MOI.Utilities.Model{Float64}()
     x = MOI.add_variable(model)

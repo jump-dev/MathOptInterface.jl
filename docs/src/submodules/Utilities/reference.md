@@ -180,6 +180,8 @@ The following functions can be used to canonicalize a function:
 Utilities.is_canonical
 Utilities.canonical
 Utilities.copy_if_modifiable
+Utilities.UnsafeConstraintFunction
+Utilities.UnsafeObjectiveFunction
 Utilities.canonicalize!
 ```
 
