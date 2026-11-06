@@ -130,7 +130,7 @@ function map_indices(map::IndexMap, x::X)::X where {X<:_OnlyVariableIndices}
     return map_indices(Base.Fix1(getindex, map), x)
 end
 
-# Common subexpressions, i.e., `MOI.ScalarNonlinearFunction` objects that are
+# Common subexpressions, that is, `MOI.ScalarNonlinearFunction` objects that are
 # shared between functions, are mapped only once, and the mapped functions
 # share the corresponding mapped subexpressions.
 function map_indices(map::IndexMap, f::MOI.ScalarNonlinearFunction)
