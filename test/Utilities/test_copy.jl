@@ -1144,6 +1144,40 @@ function test_map_indices_identity_index_map()
     return
 end
 
+function test_map_indices_common_subexpressions()
+    x = MOI.VariableIndex.(1:2)
+    index_map = MOI.Utilities.IndexMap()
+    index_map[x[1]] = x[2]
+    index_map[x[2]] = x[1]
+    sin_x = MOI.ScalarNonlinearFunction(:sin, Any[x[1]])
+    f = MOI.ScalarNonlinearFunction(:+, Any[sin_x, sin_x, x[2]])
+    g = MOI.ScalarNonlinearFunction(:*, Any[2.0, sin_x])
+    f_dest = MOI.Utilities.map_indices(index_map, f)
+    @test f_dest ≈ MOI.ScalarNonlinearFunction(
+        :+,
+        Any[
+            MOI.ScalarNonlinearFunction(:sin, Any[x[2]]),
+            MOI.ScalarNonlinearFunction(:sin, Any[x[2]]),
+            x[1],
+        ],
+    )
+    @test f_dest.args[1] === f_dest.args[2]
+    g_dest = MOI.Utilities.map_indices(index_map, g)
+    @test g_dest.args[2] === f_dest.args[1]
+    @test MOI.Utilities.map_indices(index_map, f) === f_dest
+    h = MOI.VectorNonlinearFunction([f, g])
+    h_dest = MOI.Utilities.map_indices(index_map, h)
+    @test h_dest.rows[1] === f_dest
+    @test h_dest.rows[2] === g_dest
+    # The cache is not used if the variable map is the identity.
+    identity_map = MOI.Utilities.IndexMap()
+    identity_map[x[1]] = x[1]
+    identity_map[x[2]] = x[2]
+    @test MOI.Utilities.map_indices(identity_map, f) === f
+    @test MOI.Utilities.map_indices(identity_map, h) === h
+    return
+end
+
 end  # module
 
 TestCopy.runtests()

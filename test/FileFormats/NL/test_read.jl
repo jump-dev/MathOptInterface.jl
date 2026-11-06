@@ -648,8 +648,10 @@ function test_hs071()
     end
     model_print = sprint(print, model)
     _in_ = @static Sys.iswindows() ? "in" : "∈"
+    # Julia versions differ in how they print unary operators.
+    unary_plus = Expr(:call, :+, 2.0)
     for line in [
-        "(1.1 * v[1] + 1.4 * v[2] + 1.2 * v[3] + 1.3 * v[4]) + +2.0",
+        "(1.1 * v[1] + 1.4 * v[2] + 1.2 * v[3] + 1.3 * v[4]) + $unary_plus",
         "v[1] >= 1.1",
         "v[2] >= 1.4",
         "v[3] >= 1.2",
