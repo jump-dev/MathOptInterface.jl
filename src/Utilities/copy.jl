@@ -55,7 +55,10 @@ objective function should implement this attribute and implement
 struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} <:
        MOI.AbstractModelAttribute end
 
-function MOI.get(model::MOI.ModelLike, ::UnsafeObjectiveFunction{F}) where {F}
+function MOI.get_fallback(
+    model::MOI.ModelLike,
+    ::UnsafeObjectiveFunction{F},
+) where {F}
     return MOI.get(model, MOI.ObjectiveFunction{F}())
 end
 

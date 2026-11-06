@@ -19,6 +19,36 @@ function MOI.get(
     attr::MOI.AbstractConstraintAttribute,
     bridge::AbstractFunctionConversionBridge,
 )
+    return _get_invariant(model, attr, bridge)
+end
+
+# Needed to avoid an ambiguity with the getter for
+# MOI.AbstractConstraintAttribute and the fallback in `bridge.jl`. Subtypes have
+# to implement `MOI.ConstraintFunction` as it is not invariant under function
+# conversion.
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::AbstractFunctionConversionBridge,
+)
+    return _get_invariant(model, attr, bridge)
+end
+
+# Needed to avoid an ambiguity with the getter for
+# MOI.AbstractConstraintAttribute and the fallback in `bridge.jl`.
+function MOI.get(
+    ::MOI.ModelLike,
+    ::MOI.Utilities.UnsafeConstraintFunction,
+    bridge::AbstractFunctionConversionBridge,
+)
+    return MOI.Bridges._throw_constraint_function_not_allowed(bridge)
+end
+
+function _get_invariant(
+    model::MOI.ModelLike,
+    attr::MOI.AbstractConstraintAttribute,
+    bridge::AbstractFunctionConversionBridge,
+)
     if !invariant_under_function_conversion(attr)
         throw(
             MOI.UnsupportedAttribute(

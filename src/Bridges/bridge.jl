@@ -162,8 +162,12 @@ be modified, see [`MOI.Utilities.copy_if_modifiable`](@ref).
 A bridge that stores the function of the constraint it bridges only needs to
 implement [`MOI.Utilities.UnsafeConstraintFunction`](@ref) and return the
 stored function. A bridge that builds a new function should implement
-`MOI.ConstraintFunction` instead. A bridge needs to implement at least one of
-the two as each one falls back to the other.
+`MOI.ConstraintFunction` instead.
+
+There is no fallback of `MOI.Utilities.UnsafeConstraintFunction` to
+`MOI.ConstraintFunction` for bridges as it would create an infinite recursion
+for bridges implementing neither of them. The bridge optimizer therefore always
+gets `MOI.ConstraintFunction` from the bridges.
 """
 function MOI.get(
     model::MOI.ModelLike,
@@ -175,12 +179,21 @@ function MOI.get(
     )
 end
 
+# A bridge that implements neither `MOI.ConstraintFunction` nor
+# `MOI.Utilities.UnsafeConstraintFunction` should throw the same error as before
+# `MOI.Utilities.UnsafeConstraintFunction` was introduced.
 function MOI.get(
-    model::MOI.ModelLike,
+    ::MOI.ModelLike,
     ::MOI.Utilities.UnsafeConstraintFunction,
     bridge::AbstractBridge,
 )
-    return MOI.get(model, MOI.ConstraintFunction(), bridge)
+    return _throw_constraint_function_not_allowed(bridge)
+end
+
+function _throw_constraint_function_not_allowed(bridge::AbstractBridge)
+    attr = MOI.ConstraintFunction()
+    message = _attribute_error_message(attr, typeof(bridge), "accessing")
+    return throw(MOI.GetAttributeNotAllowed(attr, message))
 end
 
 function MOI.get(

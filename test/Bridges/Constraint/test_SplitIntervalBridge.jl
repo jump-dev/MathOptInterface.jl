@@ -552,8 +552,14 @@ function test_UnsafeConstraintFunction()
     x = MOI.add_variable(model)
     for set in sets
         c = MOI.add_constraint(model, 1.0 * x, set)
-        f = MOI.get(model, unsafe, c)
-        @test f === MOI.get(model, unsafe, c)
+        if MOI.Bridges.is_bridged(model, c)
+            bridge = MOI.Bridges.bridge(model, c)
+            f = MOI.get(inner, unsafe, bridge)
+            @test f === MOI.get(inner, unsafe, bridge)
+        else
+            f = MOI.get(model, unsafe, c)
+            @test f === MOI.get(model, unsafe, c)
+        end
         @test f ≈ 1.0 * x
         g = MOI.get(model, MOI.ConstraintFunction(), c)
         @test g ≈ 1.0 * x

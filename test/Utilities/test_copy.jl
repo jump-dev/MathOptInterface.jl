@@ -1178,6 +1178,27 @@ function test_map_indices_common_subexpressions()
     return
 end
 
+struct _ObjectiveFunctionOnlyModel <: MOI.ModelLike
+    f::MOI.ScalarAffineFunction{Float64}
+end
+
+function MOI.get(
+    model::_ObjectiveFunctionOnlyModel,
+    ::MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}},
+)
+    return copy(model.f)
+end
+
+function test_UnsafeObjectiveFunction_fallback()
+    x = MOI.VariableIndex(1)
+    model = _ObjectiveFunctionOnlyModel(1.0 * x + 2.0)
+    F = MOI.ScalarAffineFunction{Float64}
+    f = MOI.get(model, MOI.Utilities.UnsafeObjectiveFunction{F}())
+    @test f ≈ model.f
+    @test f !== model.f
+    return
+end
+
 end  # module
 
 TestCopy.runtests()
