@@ -281,7 +281,7 @@ function conversion_cost(
     # This is most useful for conic solvers, which often support
     # VectorAffineFunction-in-S, but not VectorOfVariables-in-S.
     #
-    # The value in this function controls the cost of the transformation 
+    # The value in this function controls the cost of the transformation
     # VectorOfVariables-in-S -> VectorAffineFunction-in-S. When we had the
     # previous cost of `1.0`, there might be an alternative bridge
     # VectorOfVariables-in-S -> VectorAffineFunction-in-S2 which also has a cost

@@ -155,7 +155,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::SetMapBridge,
     value,
 )
@@ -272,7 +272,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{<:SetMapBridge{T,S1}},
 ) where {T,S1<:MOI.AbstractScalarSet}
     return MOI.supports(model, attr, MOI.ConstraintIndex{MOI.VariableIndex,S1})
@@ -351,7 +355,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{<:SetMapBridge{T,S1}},
 ) where {T,S1<:MOI.AbstractVectorSet}
     CI = MOI.ConstraintIndex{MOI.VectorOfVariables,S1}

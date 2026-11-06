@@ -108,7 +108,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{VectorizeBridge{T,F,S,G}},
 ) where {T,F,S,G}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
@@ -183,7 +187,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::VectorizeBridge,
     value,
 )

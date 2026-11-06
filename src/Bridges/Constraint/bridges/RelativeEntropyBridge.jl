@@ -185,7 +185,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{RelativeEntropyBridge{T,F,G,H}},
 ) where {T,F,G,H}
     ci_1 = MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
@@ -275,7 +279,7 @@ end
 # r_i = exp(W(-w_i / (-v_i * e))) * (-v_i * e), but this is more complicated.
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::RelativeEntropyBridge,
     value,
 )
@@ -289,7 +293,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::RelativeEntropyBridge,
     ::Nothing,
 )

@@ -246,17 +246,19 @@ function test_runtests()
         1.0 * x <= 1.0
         """,
     )
-    MOI.Bridges.runtests(
-        MOI.Bridges.Constraint.ScalarFunctionizeBridge,
-        """
-        variables: x
-        x in ZeroOne()
-        """,
-        """
-        variables: x
-        1.0 * x in ZeroOne()
-        """,
-    )
+    for set in ("ZeroOne()", "Integer()")
+        MOI.Bridges.runtests(
+            MOI.Bridges.Constraint.ScalarFunctionizeBridge,
+            """
+            variables: x
+            x in $set
+            """,
+            """
+            variables: x
+            1.0 * x in $set
+            """,
+        )
+    end
     MOI.Bridges.runtests(
         MOI.Bridges.Constraint.VectorFunctionizeBridge,
         """
@@ -290,6 +292,19 @@ function test_runtests()
         [1.0 * t, 1.0 * x] in SecondOrderCone(2)
         """,
     )
+    for set in ("SOS1([1.0, 2.0])", "SOS2([1.0, 2.0])")
+        MOI.Bridges.runtests(
+            MOI.Bridges.Constraint.VectorFunctionizeBridge,
+            """
+            variables: x, y
+            [x, y] in $set
+            """,
+            """
+            variables: x, y
+            [1.0 * x, 1.0 * y] in $set
+            """,
+        )
+    end
     return
 end
 
@@ -330,6 +345,27 @@ function test_FunctionConversionBridge()
         [0.0 * t * t + 1.0 * t, 0.0 * t * t + 1.0 * x] in SecondOrderCone(2)
         """,
     )
+    return
+end
+
+function test_FunctionConversionBridge_ConstraintDual()
+    inner = MOI.Utilities.MockOptimizer(
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+    model = MOI.Bridges.Constraint.ToScalarNonlinear{Float64}(inner)
+    x, y = MOI.add_variables(model, 2)
+    f = 1.0 * x * x + 2.0 * x * y + 3.0 * y + 4.0
+    ci = MOI.add_constraint(model, f, MOI.GreaterThan(1.0))
+    bridge = MOI.get(model, MOI.Bridges.FirstBridge(), ci)
+    @test MOI.get(model, MOI.ConstraintFunction(), ci) ≈ f
+    @test MOI.get(inner, MOI.ConstraintFunction(), bridge.constraint) ≈
+          convert(MOI.ScalarNonlinearFunction, f)
+    @test MOI.supports(model, MOI.ConstraintDual(), typeof(ci))
+    for dual in (-1.2, 0.0, 1.2)
+        MOI.set(model, MOI.ConstraintDual(), ci, dual)
+        @test MOI.get(model, MOI.ConstraintDual(), ci) == dual
+        @test MOI.get(inner, MOI.ConstraintDual(), bridge.constraint) == dual
+    end
     return
 end
 

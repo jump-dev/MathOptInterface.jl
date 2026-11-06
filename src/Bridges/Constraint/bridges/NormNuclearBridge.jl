@@ -137,7 +137,7 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintPrimalStart,
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDual},
     ::Type{NormSpectralBridge{T,F,G}},
 ) where {T,F,G}
     return MOI.supports(
@@ -213,6 +213,28 @@ function MOI.get(
             i in (column_dim+1):side_dim
         ]]
     return vcat(t, X)
+end
+
+function MOI.set(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintDual,
+    bridge::NormSpectralBridge{T},
+    value::AbstractVector,
+) where {T}
+    column_dim = bridge.column_dim
+    side_dim = bridge.row_dim + column_dim
+    dual = zeros(T, div(side_dim * (side_dim + 1), 2))
+    # Invert the trace and the doubled off-diagonal entries in the getter.
+    for i in 1:side_dim
+        dual[MOI.Utilities.trimap(i, i)] = value[1] / side_dim
+    end
+    k = 2
+    for j in 1:column_dim, i in (column_dim+1):side_dim
+        dual[MOI.Utilities.trimap(i, j)] = value[k] / 2
+        k += 1
+    end
+    MOI.set(model, attr, bridge.psd_index, dual)
+    return
 end
 
 """
@@ -444,7 +466,7 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     ::Type{NormNuclearBridge{T,F,G,H}},
 ) where {T,F,G,H}
     ci_1 = MOI.ConstraintIndex{F,MOI.GreaterThan{T}}
@@ -494,11 +516,11 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    ::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::NormNuclearBridge{T},
     value,
 ) where {T}
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, value[1])
+    MOI.set(model, attr, bridge.ge_index, value[1])
     column_dim = bridge.column_dim
     side_dim = bridge.row_dim + column_dim
     dual = zeros(T, div(side_dim * (side_dim + 1), 2))
@@ -510,17 +532,17 @@ function MOI.set(
         dual[MOI.Utilities.trimap(i, j)] = value[X_idx] / 2
         X_idx += 1
     end
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.psd_index, dual)
+    MOI.set(model, attr, bridge.psd_index, dual)
     return
 end
 
 function MOI.set(
     model::MOI.ModelLike,
-    ::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::NormNuclearBridge{T},
     ::Nothing,
 ) where {T}
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.ge_index, nothing)
-    MOI.set(model, MOI.ConstraintDualStart(), bridge.psd_index, nothing)
+    MOI.set(model, attr, bridge.ge_index, nothing)
+    MOI.set(model, attr, bridge.psd_index, nothing)
     return
 end

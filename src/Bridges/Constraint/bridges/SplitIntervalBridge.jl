@@ -211,7 +211,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{SplitIntervalBridge{T,F,S,LS,US}},
 ) where {T,F,S,LS,US}
     ci_1 = MOI.ConstraintIndex{F,LS}
@@ -296,7 +300,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::SplitIntervalBridge{T},
     value,
 ) where {T}
