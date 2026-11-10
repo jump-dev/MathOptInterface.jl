@@ -228,7 +228,7 @@ function runtests(
     warn_unsupported::Bool = false,
     verbose::Bool = false,
     exclude_tests_after::VersionNumber = v"999.0.0",
-    test_module = @__MODULE__
+    test_module = @__MODULE__,
 )
     tests = filter(names(test_module; all = true)) do name
         return startswith("$name", "test_")
@@ -502,7 +502,7 @@ end
 function _test_attribute_value_type(
     @nospecialize(model::MOI.ModelLike),
     @nospecialize(attribute::MOI.AbstractConstraintAttribute),
-    @nospecialize(ci::MOI.ConstraintIndex)
+    @nospecialize(ci::MOI.ConstraintIndex),
 )
     T = MOI.attribute_value_type(attribute)
     @test @inferred(T, MOI.get(model, attribute, ci)) isa T
