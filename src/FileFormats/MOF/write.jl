@@ -9,8 +9,19 @@
 
 Write `model` to `io` in the MathOptFormat file format.
 """
-function Base.write(io::IO, model::Model)
-    options = get_options(model)
+Base.write(io::IO, model::Model) = Base.write(io, model, get_options(model))
+
+"""
+    Base.write(io::IO, model::MOI.ModelLike, options::FileFormats.MOF.Options)
+
+Write `model` to `io` in the MathOptFormat file format with the given
+[`FileFormats.MOF.Options`](@ref), without copying it into a
+[`FileFormats.MOF.Model`](@ref) first.
+
+As when writing a [`FileFormats.MOF.Model`](@ref), the variables and
+constraints of `model` are renamed if their names are blank or not unique.
+"""
+function Base.write(io::IO, model::MOI.ModelLike, options::Options)
     if options.generic_names
         FileFormats.create_generic_names(model)
     else
@@ -41,7 +52,7 @@ function Base.write(io::IO, model::Model)
     return
 end
 
-function _write_variables(variables::Vector{NamedTuple}, model::Model)
+function _write_variables(variables::Vector{NamedTuple}, model::MOI.ModelLike)
     name_map = Dict{MOI.VariableIndex,String}()
     for index in MOI.get(model, MOI.ListOfVariableIndices())
         variable = moi_to_object(index, model)
@@ -91,9 +102,12 @@ end
 
 function _write_nlpblock(
     constraints::Vector{NamedTuple},
-    model::Model,
+    model::MOI.ModelLike,
     name_map::Dict{MOI.VariableIndex,String},
 )
+    if !MOI.supports(model, MOI.NLPBlock())
+        return
+    end
     nlp_block = MOI.get(model, MOI.NLPBlock())
     if nlp_block === nothing
         return
@@ -125,7 +139,7 @@ function _write_nlpblock(
 end
 
 function _write_objective(
-    model::Model,
+    model::MOI.ModelLike,
     name_map::Dict{MOI.VariableIndex,String},
 )
     sense = MOI.get(model, MOI.ObjectiveSense())
@@ -143,7 +157,7 @@ end
 
 function _write_constraints(
     constraints::Vector{NamedTuple},
-    model::Model,
+    model::MOI.ModelLike,
     name_map::Dict{MOI.VariableIndex,String},
 )
     has_scalar_nonlinear = false
@@ -157,15 +171,23 @@ function _write_constraints(
 end
 
 """
-    moi_to_object(x, model::Model)
+    moi_to_object(x, model::MOI.ModelLike)
 
 Convert `x` into a NamedTuple representation.
 """
 function moi_to_object end
 
-function moi_to_object(index::MOI.VariableIndex, model::Model)
+# A model that is not a `Model` may not store the starting values.
+function _start(model::MOI.ModelLike, attr, index::MOI.Index)
+    if !MOI.supports(model, attr, typeof(index))
+        return nothing
+    end
+    return MOI.get(model, attr, index)
+end
+
+function moi_to_object(index::MOI.VariableIndex, model::MOI.ModelLike)
     name = MOI.get(model, MOI.VariableName(), index)
-    primal_start = MOI.get(model, MOI.VariablePrimalStart(), index)
+    primal_start = _start(model, MOI.VariablePrimalStart(), index)
     if name == ""
         error("Variable name for $(index) cannot be blank in an MOF file.")
     elseif isnothing(primal_start)
@@ -177,13 +199,13 @@ end
 
 function moi_to_object(
     index::MOI.ConstraintIndex{F,S},
-    model::Model,
+    model::MOI.ModelLike,
     name_map::Dict{MOI.VariableIndex,String},
 ) where {F,S}
     func = MOI.get(model, MOI.ConstraintFunction(), index)
     set = MOI.get(model, MOI.ConstraintSet(), index)
-    dual_start = MOI.get(model, MOI.ConstraintDualStart(), index)
-    primal_start = MOI.get(model, MOI.ConstraintPrimalStart(), index)
+    dual_start = _start(model, MOI.ConstraintDualStart(), index)
+    primal_start = _start(model, MOI.ConstraintPrimalStart(), index)
     pairs = Pair{Symbol,Any}[]
     if F != MOI.VariableIndex
         name = MOI.get(model, MOI.ConstraintName(), index)

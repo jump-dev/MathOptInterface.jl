@@ -21,6 +21,7 @@ FileFormats.FORMAT_LP
 FileFormats.LP.Model
 FileFormats.FORMAT_MOF
 FileFormats.MOF.Model
+FileFormats.MOF.Options
 FileFormats.FORMAT_MPS
 FileFormats.MPS.Model
 FileFormats.FORMAT_NL

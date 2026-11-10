@@ -110,6 +110,20 @@ MOI.Utilities.@model(
 
 const Model{T} = MOI.Utilities.UniversalFallback{InnerModel{T}}
 
+"""
+    Options(;
+        print_compact::Bool = false,
+        warn::Bool = false,
+        differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation =
+            MOI.Nonlinear.SparseReverseMode(),
+        use_nlp_block::Union{Bool,Nothing} = nothing,
+        generic_names::Bool = false,
+    )
+
+The options of a [`FileFormats.MOF.Model`](@ref), see its keyword arguments.
+They are also passed to `Base.write(io, model, options)` to write a model that
+is not a [`FileFormats.MOF.Model`](@ref).
+"""
 struct Options
     print_compact::Bool
     warn::Bool
@@ -118,19 +132,23 @@ struct Options
     generic_names::Bool
 end
 
-function get_options(m::Model)
-    return get(
-        m.model.ext,
-        :MOF_OPTIONS,
-        Options(
-            false,
-            false,
-            MOI.Nonlinear.SparseReverseMode(),
-            nothing,
-            false,
-        ),
+function Options(;
+    print_compact::Bool = false,
+    warn::Bool = false,
+    differentiation_backend::MOI.Nonlinear.AbstractAutomaticDifferentiation = MOI.Nonlinear.SparseReverseMode(),
+    use_nlp_block::Union{Bool,Nothing} = nothing,
+    generic_names::Bool = false,
+)
+    return Options(
+        print_compact,
+        warn,
+        differentiation_backend,
+        use_nlp_block,
+        generic_names,
     )
 end
+
+get_options(m::Model) = get(m.model.ext, :MOF_OPTIONS, Options())
 
 """
     Model(;
@@ -183,7 +201,7 @@ function Model(;
         )
     end
     model = MOI.Utilities.UniversalFallback(InnerModel{T}())
-    model.model.ext[:MOF_OPTIONS] = Options(
+    model.model.ext[:MOF_OPTIONS] = Options(;
         print_compact,
         warn,
         differentiation_backend,
