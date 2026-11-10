@@ -258,7 +258,14 @@ function MOI.set(
         obj_attr = MOI.ObjectiveFunction{function_type(bridges(b))}()
         if MOI.Bridges.is_bridged(b, obj_attr)
             bridge = MOI.Bridges.bridge(b, obj_attr)
-            MOI.set(MOI.Bridges.recursive_model(b), attr, bridge, nothing)
+            MOI.Bridges._with_bridge(b, bridge) do
+                return MOI.set(
+                    MOI.Bridges.recursive_model(b),
+                    attr,
+                    bridge,
+                    nothing,
+                )
+            end
         end
     end
     return

@@ -414,6 +414,127 @@ function test_modify_bridged_objective_constant_error()
     return
 end
 
+# Some solvers support native deletion without implementing is_valid.
+struct DeleteOnlyModel{M} <: MOI.AbstractOptimizer
+    model::M
+end
+
+MOI.add_variable(m::DeleteOnlyModel) = MOI.add_variable(m.model)
+
+function MOI.supports_constraint(
+    m::DeleteOnlyModel,
+    ::Type{F},
+    ::Type{S},
+) where {F<:MOI.AbstractFunction,S<:MOI.AbstractSet}
+    if S <: MOI.LessThan
+        return MOI.supports_constraint(m.model, F, S)
+    end
+    return false
+end
+
+function MOI.add_constraint(
+    m::DeleteOnlyModel,
+    f::MOI.AbstractFunction,
+    s::MOI.AbstractSet,
+)
+    return MOI.add_constraint(m.model, f, s)
+end
+
+function MOI.delete(m::DeleteOnlyModel, ci::MOI.ConstraintIndex)
+    return MOI.delete(m.model, ci)
+end
+
+function test_native_delete_without_validity()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.LazyBridgeOptimizer(DeleteOnlyModel(inner))
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.GreaterToLessBridge{Float64},
+    )
+    x = MOI.add_variable(model)
+    native = MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+    @test !MOI.is_valid(model, native)
+    MOI.delete(model, native)
+    @test !MOI.is_valid(inner, native)
+    parent = MOI.add_constraint(model, 2.0 * x, MOI.GreaterThan(0.0))
+    bridge = MOI.Bridges.bridge(model, parent)
+    attr = MOI.ListOfConstraintIndices{
+        MOI.ScalarAffineFunction{Float64},
+        MOI.LessThan{Float64},
+    }()
+    child = only(MOI.get(bridge, attr))
+    @test MOI.is_valid(inner, child)
+    @test_throws MOI.InvalidIndex(child) MOI.delete(model, child)
+    MOI.delete(model, parent)
+    @test !MOI.is_valid(inner, child)
+    @test model.bridge_context.constraints === nothing
+    return
+end
+
+function MOI.supports(
+    model::MOI.Utilities.UniversalFallback{<:VariableObjectiveModel},
+    attr::MOI.ObjectiveFunction{F},
+) where {F<:MOI.AbstractFunction}
+    return MOI.supports(model.model, attr)
+end
+
+function MOI.supports_constraint(
+    ::MOI.Utilities.UniversalFallback{<:VariableObjectiveModel},
+    ::Type{MOI.ScalarAffineFunction{Float64}},
+    ::Type{MOI.LessThan{Float64}},
+)
+    return false
+end
+
+function test_objective_start_in_bridge_context()
+    inner = MOI.Utilities.UniversalFallback(VariableObjectiveModel{Float64}())
+    model = MOI.Bridges.LazyBridgeOptimizer(inner)
+    MOI.Bridges.add_bridge(model, MOI.Bridges.Objective.SlackBridge{Float64})
+    MOI.Bridges.add_bridge(
+        model,
+        MOI.Bridges.Constraint.LessToGreaterBridge{Float64},
+    )
+    x = MOI.add_variable(model)
+    f = 2.0 * x + 3.0
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    attr = MOI.ObjectiveFunction{typeof(f)}()
+    MOI.set(model, attr, f)
+    bridge = MOI.Bridges.bridge(model, attr)
+    child_attr = MOI.ListOfConstraintIndices{typeof(f),MOI.LessThan{Float64}}()
+    child = only(MOI.get(bridge, child_attr))
+    @test !MOI.is_valid(model, child)
+    @test MOI.Bridges.call_in_context(
+        model,
+        attr,
+        b -> (b === bridge, MOI.is_valid(model, child)),
+    ) == (true, true)
+    @test_throws ErrorException("objective callback failed") MOI.Bridges.call_in_context(
+        model,
+        attr,
+        _ -> error("objective callback failed"),
+    )
+    @test model.bridge_context.depth == 0
+    @test MOI.Bridges.is_bridged(model, child)
+    @test_throws MOI.InvalidIndex(child) MOI.set(
+        model,
+        MOI.ConstraintDualStart(),
+        child,
+        -1.0,
+    )
+    child_bridge = MOI.Bridges.bridge(model, child)
+    native_attr =
+        MOI.ListOfConstraintIndices{typeof(f),MOI.GreaterThan{Float64}}()
+    native_child = only(MOI.get(child_bridge, native_attr))
+    MOI.set(model, MOI.VariablePrimalStart(), x, 4.0)
+    MOI.set(model, MOI.Bridges.Objective.SlackBridgePrimalDualStart(), nothing)
+    @test MOI.get(inner, MOI.VariablePrimalStart(), bridge.slack) == 11.0
+    @test MOI.get(inner, MOI.ConstraintPrimalStart(), native_child) == 0.0
+    @test MOI.get(inner, MOI.ConstraintDualStart(), native_child) == 1.0
+    @test !MOI.is_valid(model, child)
+    @test model.bridge_context.depth == 0
+    return
+end
+
 end
 
 TestBridgeContext.runtests()

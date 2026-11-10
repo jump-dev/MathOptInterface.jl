@@ -303,11 +303,11 @@ end
 """
     call_in_context(
         b::AbstractBridgeOptimizer,
-        ci::MOI.ConstraintIndex,
+        index::Union{MOI.ConstraintIndex,MOI.ObjectiveFunction},
         f::Function,
     )
 
-Call `f(bridge)` where `ci` is bridged by `bridge` in its context, see
+Call `f(bridge)` where `index` is bridged by `bridge` in its context, see
 [`Variable.call_in_context`](@ref).
 """
 function call_in_context(
@@ -326,6 +326,16 @@ function call_in_context(
                 () -> f(Constraint.bridges(b)[ci]),
             )
         end
+    end
+end
+
+function call_in_context(
+    b::AbstractBridgeOptimizer,
+    attr::MOI.ObjectiveFunction,
+    f::Function,
+)
+    return _in_bridge_context(b) do
+        return f(bridge(b, attr))
     end
 end
 
@@ -1108,8 +1118,11 @@ function MOI.delete(
     b::AbstractBridgeOptimizer,
     ci::MOI.ConstraintIndex{F},
 ) where {F}
-    MOI.throw_if_not_valid(b, ci)
+    if _is_hidden(b, ci)
+        throw(MOI.InvalidIndex(ci))
+    end
     if is_bridged(b, ci)
+        MOI.throw_if_not_valid(b, ci)
         br = bridge(b, ci)
         if is_variable_bridged(b, ci)
             throw(
