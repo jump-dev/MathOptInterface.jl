@@ -1756,6 +1756,47 @@ function test_v1_9()
     return
 end
 
+function _write_model_like(model, options)
+    io = IOBuffer()
+    write(io, model, options)
+    return String(take!(io))
+end
+
+function test_write_model_like()
+    for model in (
+        MOI.Utilities.Model{Float64}(),
+        MOI.Utilities.UniversalFallback(MOI.Utilities.Model{Float64}()),
+    )
+        x = MOI.add_variables(model, 2)
+        MOI.set(model, MOI.VariableName(), x[1], "x")
+        c = MOI.add_constraint(
+            model,
+            1.0 * x[1] + 2.0 * x[2],
+            MOI.LessThan(3.0),
+        )
+        MOI.add_constraint(model, x[2], MOI.ZeroOne())
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x[1])
+        has_starts =
+            MOI.supports(model, MOI.VariablePrimalStart(), MOI.VariableIndex)
+        if has_starts
+            MOI.set(model, MOI.VariablePrimalStart(), x[1], 1.0)
+            MOI.set(model, MOI.ConstraintDualStart(), c, -1.0)
+        end
+        text = _write_model_like(model, MOF.Options())
+        @test MOI.get(model, MOI.VariableName(), x[2]) == "x2"
+        mof = MOF.Model()
+        MOI.copy_to(mof, model)
+        @test sprint(write, mof) == text
+        @test occursin("primal_start", text) == has_starts
+        @test occursin("dual_start", text) == has_starts
+        generic = _write_model_like(model, MOF.Options(generic_names = true))
+        @test occursin("\"C1\"", generic)
+        @test MOI.get(model, MOI.VariableName(), x[1]) == "C1"
+    end
+    return
+end
+
 end
 
 TestMOF.runtests()
