@@ -429,16 +429,6 @@ function foreach_constraint_type(
     return
 end
 
-function foreach_constraint_type(f::Fn, model::StructOfConstraints) where {Fn}
-    broadcastcall(model) do constraints
-        if constraints !== nothing
-            foreach_constraint_type(f, constraints)
-        end
-        return
-    end
-    return
-end
-
 # A tuple of the set types would erase them, so each one is visited directly.
 function foreach_constraint_type(f::Fn, b::VariablesContainer{T}) where {Fn,T}
     _foreach_constraint_type(f, b, MOI.EqualTo{T})

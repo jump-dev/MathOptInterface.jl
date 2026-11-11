@@ -240,6 +240,18 @@ end
 
 _callfield(f, s::Union{SymbolFS,_UnionSymbolFS}) = :($f(model.$(_field(s))))
 
+# A closure capturing `f` would be allocated if `broadcastcall` is not inlined,
+# so each field is visited directly.
+function _foreach_constraint_type_field(s::Union{SymbolFS,_UnionSymbolFS})
+    return quote
+        let constraints = model.$(_field(s))
+            if constraints !== nothing
+                $MOI.Utilities.foreach_constraint_type(f, constraints)
+            end
+        end
+    end
+end
+
 function _parse_expr(::Type{S}, expr::Symbol) where {S<:SymbolFS}
     return S(expr, false)
 end
@@ -297,6 +309,14 @@ function struct_of_constraint_code(struct_name, types, field_types = nothing)
 
         function $MOI.Utilities.broadcastcall(f::Function, model::$struct_name)
             $(Expr(:block, _callfield.(Ref(:f), types)...))
+            return
+        end
+
+        function $MOI.Utilities.foreach_constraint_type(
+            f::Fn,
+            model::$struct_name,
+        ) where {Fn}
+            $(Expr(:block, _foreach_constraint_type_field.(types)...))
             return
         end
 
