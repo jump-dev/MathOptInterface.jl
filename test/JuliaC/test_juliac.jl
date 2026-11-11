@@ -24,27 +24,12 @@ using Test
 import JSON
 import JuliaC
 
-# Trace the methods that MyApp reaches through dynamic dispatch, so that
-# `entry.jl` keeps them in the trimmed image.
-function trace(output_dir)
-    project = joinpath(@__DIR__, "MyApp")
-    trace = joinpath(output_dir, "dispatch.trace")
-    output = joinpath(output_dir, "trace.mof.json")
-    run(
-        `$(Base.julia_cmd()) --project=$project --trace-dispatch=$trace -m MyApp --mathoptformat $output`,
-    )
-    entry = joinpath(output_dir, "entry.jl")
-    cp(joinpath(@__DIR__, "entry.jl"), entry)
-    return entry
-end
-
 function compile()
     output_dir = mktempdir()
     outname = joinpath(output_dir, "MyApp")
     image_recipe = JuliaC.ImageRecipe(
         output_type = "--output-exe",
-        file = trace(output_dir),
-        project = joinpath(@__DIR__, "MyApp"),
+        file = joinpath(@__DIR__, "MyApp"),
         trim_mode = "unsafe-warn",
         add_ccallables = false,
         verbose = true,
