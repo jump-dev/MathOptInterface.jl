@@ -219,6 +219,11 @@ The following utility calls a function for each type of constraint in a model:
 Utilities.foreach_constraint_type
 ```
 
+The following utility calls a function with the type of the objective function:
+```@docs
+Utilities.with_objective_function_type
+```
+
 The following utilities are useful when working with symmetric matrix cones.
 ```@docs
 Utilities.is_diagonal_vectorized_index

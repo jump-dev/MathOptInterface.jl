@@ -677,6 +677,27 @@ function test_foreach_constraint_type_allocations()
     return
 end
 
+function test_with_objective_function_type_allocations()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x)
+    count = Ref(0)
+    visit = function (F)
+        count[] += 1
+        return
+    end
+    @test (@inferred MOI.Utilities.with_objective_function_type(
+        visit,
+        model,
+    )) === nothing
+    @test count[] == 1
+    @test (@allocated MOI.Utilities.with_objective_function_type(
+        visit,
+        model,
+    )) == 0
+    return
+end
+
 end  # module
 
 TestModel.runtests()

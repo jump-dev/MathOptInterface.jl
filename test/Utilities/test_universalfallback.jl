@@ -572,6 +572,37 @@ function test_bridging_cost_consistent_with_supports()
     return
 end
 
+function test_with_objective_function_type()
+    for inner in
+        (MOI.Utilities.Model{Float64}(), ModelForUniversalFallback{Float64}())
+        model = MOI.Utilities.UniversalFallback(inner)
+        mock = MOI.Utilities.MockOptimizer(model)
+        x = MOI.add_variable(model)
+        sin_x = MOI.ScalarNonlinearFunction(:sin, Any[x])
+        for f in (
+            nothing,
+            x,
+            1.0 * x,
+            1.0 * x * x,
+            sin_x,
+            MOI.VectorOfVariables([x]),
+            MOI.Utilities.vectorize([1.0 * x]),
+            MOI.Utilities.vectorize([1.0 * x * x]),
+            MOI.VectorNonlinearFunction([sin_x]),
+        )
+            if f !== nothing
+                MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+            end
+            F = MOI.get(model, MOI.ObjectiveFunctionType())
+            for m in (model, mock)
+                @test MOI.Utilities.with_objective_function_type(identity, m) ==
+                      F
+            end
+        end
+    end
+    return
+end
+
 struct _UnknownVectorSet <: MOI.AbstractVectorSet
     dimension::Int
 end

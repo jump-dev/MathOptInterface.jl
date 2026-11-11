@@ -575,6 +575,13 @@ function MOI.get(uf::UniversalFallback, attr::MOI.ObjectiveFunctionType)
     return typeof(uf.objective)
 end
 
+function with_objective_function_type(f::Fn, uf::UniversalFallback) where {Fn}
+    if uf.objective === nothing
+        return with_objective_function_type(f, uf.model)
+    end
+    return f(typeof(uf.objective))
+end
+
 function MOI.get(
     uf::UniversalFallback,
     attr::MOI.ObjectiveFunction{F},

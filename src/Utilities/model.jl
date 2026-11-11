@@ -583,6 +583,10 @@ function MOI.get(model::AbstractModel, attr::MOI.ObjectiveFunctionType)
     return MOI.get(model.objective, attr)
 end
 
+function with_objective_function_type(f::Fn, model::AbstractModel) where {Fn}
+    return with_objective_function_type(f, model.objective)
+end
+
 # MOI.ObjectiveSense
 
 function MOI.supports(model::AbstractModel, attr::MOI.ObjectiveSense)
