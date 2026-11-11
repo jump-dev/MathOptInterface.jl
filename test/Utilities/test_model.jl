@@ -651,6 +651,32 @@ function test_empty_model()
     return
 end
 
+function test_foreach_constraint_type_allocations()
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(model)
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0))
+    MOI.add_constraint(model, 1.0 * x, MOI.EqualTo(1.0))
+    deleted = MOI.add_constraint(model, 1.0 * x, MOI.Interval(0.0, 1.0))
+    MOI.delete(model, deleted)
+    count = Ref(0)
+    visit = function (F, S)
+        count[] += 1
+        return
+    end
+    @test (@inferred MOI.Utilities.foreach_constraint_type(visit, model)) ===
+          nothing
+    @test count[] == 3
+    count[] = 0
+    @test (@allocated MOI.Utilities.foreach_constraint_type(visit, model)) == 0
+    @test count[] == 3
+    MOI.empty!(model)
+    count[] = 0
+    MOI.Utilities.foreach_constraint_type(visit, model)
+    @test count[] == 0
+    return
+end
+
 end  # module
 
 TestModel.runtests()
