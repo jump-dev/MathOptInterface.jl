@@ -572,6 +572,44 @@ function test_bridging_cost_consistent_with_supports()
     return
 end
 
+struct _UnknownVectorSet <: MOI.AbstractVectorSet
+    dimension::Int
+end
+
+MOI.dimension(set::_UnknownVectorSet) = set.dimension
+
+function _constraint_types(model)
+    types = Tuple{Type,Type}[]
+    MOI.Utilities.foreach_constraint_type(model) do F, S
+        push!(types, (F, S))
+        return
+    end
+    return types
+end
+
+function test_foreach_constraint_type()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Utilities.UniversalFallback(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    MOI.add_constraint(model, x[2], MOI.GreaterThan(0.0))
+    MOI.add_constraint(model, 1.0 * x[1], MOI.LessThan(1.0))
+    c = MOI.add_constraint(model, 1.0 * x[2], MOI.EqualTo(1.0))
+    MOI.delete(model, c)
+    MOI.add_constraint(model, x[1], MOI.Test.UnknownScalarSet(1.0))
+    c = MOI.add_constraint(model, x[2], MOI.Test.UnknownScalarSet(1.0))
+    MOI.add_constraint(model, MOI.VectorOfVariables(x), _UnknownVectorSet(2))
+    c = MOI.add_constraint(model, 1.0 * x[1], MOI.Test.UnknownScalarSet(1.0))
+    MOI.delete(model, c)
+    mock = MOI.Utilities.MockOptimizer(model)
+    for m in (inner, model, mock)
+        types = MOI.get(m, MOI.ListOfConstraintTypesPresent())
+        @test _constraint_types(m) == types
+    end
+    @test length(_constraint_types(model)) == 5
+    return
+end
+
 end  # module
 
 TestUniversalFallback.runtests()

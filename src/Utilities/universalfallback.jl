@@ -485,6 +485,19 @@ function MOI.get(
     return list
 end
 
+function foreach_constraint_type(f::Fn, uf::UniversalFallback) where {Fn}
+    foreach_constraint_type(f, uf.model)
+    for (S, constraints) in uf.single_variable_constraints
+        if !isempty(constraints)
+            f(MOI.VariableIndex, S)
+        end
+    end
+    for constraints in values(uf.constraints)
+        foreach_constraint_type(f, constraints)
+    end
+    return
+end
+
 function MOI.get(
     uf::UniversalFallback,
     listattr::MOI.ListOfOptimizerAttributesSet,

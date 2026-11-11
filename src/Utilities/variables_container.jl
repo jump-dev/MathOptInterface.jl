@@ -360,13 +360,20 @@ function MOI.get(
     return count(mask -> !iszero(flag & mask), b.set_mask)
 end
 
+function _has_constraint_type(
+    b::VariablesContainer,
+    S::Type{<:MOI.AbstractScalarSet},
+)
+    flag = _single_variable_flag(S)::UInt16
+    return any(mask -> !iszero(flag & mask), b.set_mask)
+end
+
 function _add_constraint_type(
     list,
     b::VariablesContainer,
     S::Type{<:MOI.AbstractScalarSet},
 )
-    flag = _single_variable_flag(S)::UInt16
-    if any(mask -> !iszero(flag & mask), b.set_mask)
+    if _has_constraint_type(b, S)
         push!(list, (MOI.VariableIndex, S))
     end
     return

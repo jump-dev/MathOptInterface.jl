@@ -382,6 +382,94 @@ function MOI.get(
     )
 end
 
+"""
+    foreach_constraint_type(f::Function, model::MOI.ModelLike)
+
+Call `f(F, S)` for each pair `(F, S)` of
+`MOI.get(model, MOI.ListOfConstraintTypesPresent())`, in the same order.
+
+The default implementation iterates over `MOI.ListOfConstraintTypesPresent`, so
+`F` and `S` are only known at run time. The models of `MOI.Utilities` and
+[`UniversalFallback`](@ref) instead walk their storage, so `F` and `S` are known
+at compile time when `f` dispatches on `::Type{F}` and `::Type{S}`. This avoids
+dynamic dispatch, for instance when compiling with `--trim`.
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.add_constraint(model, x, MOI.ZeroOne());
+
+julia> MOI.add_constraint(model, 1.0 * x, MOI.LessThan(1.0));
+
+julia> MOI.Utilities.foreach_constraint_type(model) do F, S
+           println(F, " in ", S)
+       end
+MathOptInterface.ScalarAffineFunction{Float64} in MathOptInterface.LessThan{Float64}
+MathOptInterface.VariableIndex in MathOptInterface.ZeroOne
+```
+"""
+function foreach_constraint_type(f::Fn, model::MOI.ModelLike) where {Fn}
+    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
+        f(F, S)
+    end
+    return
+end
+
+function foreach_constraint_type(
+    f::Fn,
+    v::VectorOfConstraints{F,S},
+) where {Fn,F,S}
+    if !MOI.is_empty(v)
+        f(F, S)
+    end
+    return
+end
+
+function foreach_constraint_type(f::Fn, model::StructOfConstraints) where {Fn}
+    broadcastcall(model) do constraints
+        if constraints !== nothing
+            foreach_constraint_type(f, constraints)
+        end
+        return
+    end
+    return
+end
+
+# A tuple of the set types would erase them, so each one is visited directly.
+function foreach_constraint_type(f::Fn, b::VariablesContainer{T}) where {Fn,T}
+    _foreach_constraint_type(f, b, MOI.EqualTo{T})
+    _foreach_constraint_type(f, b, MOI.GreaterThan{T})
+    _foreach_constraint_type(f, b, MOI.LessThan{T})
+    _foreach_constraint_type(f, b, MOI.Interval{T})
+    _foreach_constraint_type(f, b, MOI.Semicontinuous{T})
+    _foreach_constraint_type(f, b, MOI.Semiinteger{T})
+    _foreach_constraint_type(f, b, MOI.Integer)
+    _foreach_constraint_type(f, b, MOI.ZeroOne)
+    _foreach_constraint_type(f, b, MOI.Parameter{T})
+    return
+end
+
+function _foreach_constraint_type(
+    f::Fn,
+    b::VariablesContainer,
+    ::Type{S},
+) where {Fn,S}
+    if _has_constraint_type(b, S)
+        f(MOI.VariableIndex, S)
+    end
+    return
+end
+
+function foreach_constraint_type(f::Fn, model::AbstractModel) where {Fn}
+    foreach_constraint_type(f, model.constraints)
+    foreach_constraint_type(f, model.variables)
+    return
+end
+
 # MOI.ListOfConstraintIndices
 
 function MOI.get(
