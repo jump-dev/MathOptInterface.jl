@@ -217,6 +217,11 @@ variable, and returns those bound values:
 Utilities.get_bounds
 ```
 
+The following utility calls a function with the type of the objective function:
+```@docs
+Utilities.with_objective_function_type
+```
+
 The following utilities are useful when working with symmetric matrix cones.
 ```@docs
 Utilities.is_diagonal_vectorized_index

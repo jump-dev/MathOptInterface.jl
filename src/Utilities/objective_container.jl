@@ -94,6 +94,61 @@ function MOI.get(
     return MOI.ScalarAffineFunction{T}
 end
 
+"""
+    with_objective_function_type(f::Function, model::MOI.ModelLike)
+
+Return `f(F)` where `F` is `MOI.get(model, MOI.ObjectiveFunctionType())`.
+
+The default implementation gets `MOI.ObjectiveFunctionType`, so `F` is only
+known at run time. The models of `MOI.Utilities` and
+[`UniversalFallback`](@ref) instead check which objective function they store,
+so `F` is known at compile time when `f` dispatches on `::Type{F}`. This avoids
+dynamic dispatch, for instance when compiling with `--trim`.
+
+## Example
+
+```jldoctest
+julia> model = MOI.Utilities.Model{Float64}();
+
+julia> x = MOI.add_variable(model);
+
+julia> MOI.set(model, MOI.ObjectiveFunction{MOI.VariableIndex}(), x);
+
+julia> MOI.Utilities.with_objective_function_type(model) do F
+           return MOI.get(model, MOI.ObjectiveFunction{F}())
+       end
+MOI.VariableIndex(1)
+```
+"""
+function with_objective_function_type(f::Fn, model::MOI.ModelLike) where {Fn}
+    return f(MOI.get(model, MOI.ObjectiveFunctionType()))
+end
+
+function with_objective_function_type(
+    f::Fn,
+    o::ObjectiveContainer{T},
+) where {Fn,T}
+    if o.scalar_affine !== nothing
+        return f(MOI.ScalarAffineFunction{T})
+    elseif o.single_variable !== nothing
+        return f(MOI.VariableIndex)
+    elseif o.scalar_quadratic !== nothing
+        return f(MOI.ScalarQuadraticFunction{T})
+    elseif o.scalar_nonlinear !== nothing
+        return f(MOI.ScalarNonlinearFunction)
+    elseif o.vector_variables !== nothing
+        return f(MOI.VectorOfVariables)
+    elseif o.vector_affine !== nothing
+        return f(MOI.VectorAffineFunction{T})
+    elseif o.vector_quadratic !== nothing
+        return f(MOI.VectorQuadraticFunction{T})
+    elseif o.vector_nonlinear !== nothing
+        return f(MOI.VectorNonlinearFunction)
+    end
+    # The default if no objective is set.
+    return f(MOI.ScalarAffineFunction{T})
+end
+
 ###
 ### ObjectiveFunction
 ###
