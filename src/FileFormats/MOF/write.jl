@@ -81,16 +81,7 @@ end
         array = Any[]
         sizehint!(array, length(value))
         for i in eachindex(value)
-            # Like JSON, write undefined array entries as null.
-            item = try
-                @inline @inbounds value[i]
-            catch err
-                if !(err isa UndefRefError)
-                    rethrow()
-                end
-                nothing
-            end
-            push!(array, _json_tree(item))
+            push!(array, _json_tree(@inline @inbounds value[i]))
         end
         return array
     end

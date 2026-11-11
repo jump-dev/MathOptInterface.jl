@@ -538,10 +538,12 @@ end
 function test_json_tree_vector_edge_cases()
     values = Vector{Any}(undef, 2)
     values[2] = (value = 3,)
+    # MOF never writes undefined entries
+    @test_throws UndefRefError MOF._json_tree(values)
+    values[1] = nothing
     tree = MOF._json_tree(values)
     @test tree[1] === nothing
     @test tree[2] isa JSON.Object{String,Any}
-    @test !isassigned(values, 1)
     @test JSON.json(tree) == JSON.json(values) == "[null,{\"value\":3}]"
     pairs = ["z" => (b = 1,), "a" => (value = 2,)]
     @test MOF._json_tree(pairs) === pairs
