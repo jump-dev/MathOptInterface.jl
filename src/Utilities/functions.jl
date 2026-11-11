@@ -1024,6 +1024,9 @@ function is_canonical(f::MOI.ScalarNonlinearFunction)
             for a in arg.args
                 push!(stack, a)
             end
+        elseif arg isa Union{Int,Float64,MOI.VariableIndex}
+            # Common canonical arguments, checked without dynamic dispatch
+            continue
         else
             if !is_canonical(arg)
                 return false
