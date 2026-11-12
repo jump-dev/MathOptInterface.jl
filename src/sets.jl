@@ -109,7 +109,7 @@ MathOptInterface.DualExponentialCone
 ```
 """
 function dual_set_type(S::Type{<:AbstractSet})
-    return error("Dual type of $S is not implemented.")
+    return error(LazyString("Dual type of ", S, " is not implemented."))
 end
 
 """

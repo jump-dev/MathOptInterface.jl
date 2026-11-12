@@ -362,6 +362,30 @@ function test_sets_dual_nonimplemented()
     @test_throws err MOI.dual_set_type(MOI.LogDetConeTriangle)
 end
 
+struct SetWithCountedTypeDisplay <: MOI.AbstractVectorSet end
+
+const _type_display_calls = Ref(0)
+
+function Base.show(io::IO, ::Type{SetWithCountedTypeDisplay})
+    _type_display_calls[] += 1
+    return print(io, "SetWithCountedTypeDisplay")
+end
+
+function test_sets_dual_nonimplemented_lazy()
+    _type_display_calls[] = 0
+    err = try
+        MOI.dual_set_type(SetWithCountedTypeDisplay)
+    catch exception
+        exception
+    end
+    @test err isa ErrorException
+    @test _type_display_calls[] == 0
+    @test sprint(showerror, err) ==
+          "Dual type of SetWithCountedTypeDisplay is not implemented."
+    @test _type_display_calls[] > 0
+    return
+end
+
 function test_sets_Interval()
     @test MOI.Interval(MOI.GreaterThan(1.0)) === MOI.Interval(1.0, Inf)
     @test MOI.Interval(MOI.LessThan(2.0)) === MOI.Interval(-Inf, 2.0)
