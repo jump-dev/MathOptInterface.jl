@@ -102,9 +102,51 @@ function test_bridged()
     return
 end
 
+function test_objective_value()
+    for stacked in (false, true)
+        inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+        slack = MOI.Bridges.Objective.Slack{Float64}(inner)
+        model = if stacked
+            MOI.Bridges.Objective.SingleBridgeOptimizer{
+                MOI.Bridges.Objective.FunctionConversionBridge{
+                    Float64,
+                    MOI.ScalarQuadraticFunction{Float64},
+                },
+            }(
+                slack,
+            )
+        else
+            slack
+        end
+        x = MOI.add_variable(model)
+        f = 2.0 * x + 3.0
+        MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+        MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+        MOI.set(inner, MOI.ResultCount(), 2)
+        MOI.set(inner, MOI.TerminationStatus(), MOI.OPTIMAL)
+        variables = MOI.get(inner, MOI.ListOfVariableIndices())
+        for (i, values) in enumerate(([2.0, 1.0], [4.0, 1.0]))
+            MOI.set(inner, MOI.PrimalStatus(i), MOI.FEASIBLE_POINT)
+            MOI.set(inner, MOI.VariablePrimal(i), variables, values)
+        end
+        @test MOI.get(model, MOI.ObjectiveValue(1)) ≈ 7.0
+        @test MOI.get(model, MOI.ObjectiveValue(2)) ≈ 11.0
+        @test MOI.get(model, MOI.Bridges.ObjectiveFunctionValue{typeof(f)}(2)) ≈
+              11.0
+        @test MOI.get(
+            model,
+            MOI.Bridges.ObjectiveFunctionAttribute{MOI.ObjectiveValue,typeof(f)}(
+                MOI.ObjectiveValue(2),
+            ),
+        ) ≈ 11.0
+    end
+    return
+end
+
 @testset "ObjectiveFunctionAttribute" begin
     test_unbridged()
     test_bridged()
+    test_objective_value()
 end
 
 end
