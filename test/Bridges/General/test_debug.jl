@@ -373,6 +373,11 @@ function MOI.get(
     return ret
 end
 
+function MOI.get(model::ModelPOIIssue201, ::MOI.ListOfVariableIndices)
+    n = length(model.parameter) + length(model.equal_to)
+    return MOI.VariableIndex.(1:n)
+end
+
 function MOI.get(
     model::ModelPOIIssue201{T},
     ::MOI.NumberOfConstraints{MOI.VariableIndex,MOI.Parameter{T}},
@@ -392,7 +397,7 @@ function MOI.add_constrained_variable(
     set::MOI.Parameter{T},
 ) where {T}
     push!(model.parameter, set.value)
-    x = MOI.VariableIndex(length(model.parameter))
+    x = MOI.VariableIndex(length(model.parameter) + length(model.equal_to))
     return x, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x.value)
 end
 
@@ -401,7 +406,7 @@ function MOI.add_constrained_variable(
     set::MOI.EqualTo{T},
 ) where {T}
     push!(model.equal_to, set.value)
-    x = MOI.VariableIndex(length(model.equal_to))
+    x = MOI.VariableIndex(length(model.parameter) + length(model.equal_to))
     return x, MOI.ConstraintIndex{MOI.VariableIndex,typeof(set)}(x.value)
 end
 
