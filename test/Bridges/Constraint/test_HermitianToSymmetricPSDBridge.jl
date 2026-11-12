@@ -98,6 +98,40 @@ function test_inverse_adjoint_preserves_psd()
     return
 end
 
+function test_adjoint_symbolic()
+    BT = MOI.Bridges.Constraint.HermitianToSymmetricPSDBridge{Float64}
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 10)
+    affine = MOI.Utilities.operate(*, Float64, 2.0, MOI.VectorOfVariables(x))
+    affine.constants .= 1:10
+    quadratic = convert(MOI.VectorQuadraticFunction{Float64}, affine)
+    push!(
+        quadratic.quadratic_terms,
+        MOI.VectorQuadraticTerm(1, MOI.ScalarQuadraticTerm(3.0, x[1], x[2])),
+    )
+    push!(
+        quadratic.quadratic_terms,
+        MOI.VectorQuadraticTerm(5, MOI.ScalarQuadraticTerm(4.0, x[3], x[4])),
+    )
+    value = Dict(x .=> collect(1.0:10.0))
+    for f in (affine, quadratic)
+        mapped = MOI.Bridges.adjoint_map_function(BT, f)
+        numeric = MOI.Utilities.eval_variables(x -> value[x], f)
+        expected = MOI.Bridges.adjoint_map_function(BT, numeric)
+        @test MOI.Utilities.eval_variables(x -> value[x], mapped) ≈ expected
+        for i in 1:4
+            component = MOI.Bridges.adjoint_map_function(
+                BT,
+                f,
+                MOI.Bridges.IndexInVector(i),
+            )
+            @test MOI.Utilities.eval_variables(x -> value[x], component) ≈
+                  expected[i]
+        end
+    end
+    return
+end
+
 end  # module
 
 TestConstraintHermitianToSymmetricPSD.runtests()

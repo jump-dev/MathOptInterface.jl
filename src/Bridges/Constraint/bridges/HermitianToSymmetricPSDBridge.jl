@@ -191,7 +191,7 @@ function MOI.Bridges.adjoint_map_function(
     BT::Type{<:HermitianToSymmetricPSDBridge{T}},
     func,
 ) where {T}
-    real_dim = length(MOI.Utilities.eachscalar(func))
+    real_dim = MOI.Utilities.output_dim(T, func)
     real_set = MOI.Utilities.set_with_dimension(
         MOI.PositiveSemidefiniteConeTriangle,
         real_dim,
@@ -200,10 +200,11 @@ function MOI.Bridges.adjoint_map_function(
     n = div(real_set.side_dimension, 2)
     S = MOI.Utilities.scalar_type(_promote_minus_vcat(T, typeof(func)))
     scalars = Vector{S}(undef, n^2)
+    real_scalars = MOI.Utilities.eachscalar(func)
     for i in eachindex(scalars)
         scalars[i] = MOI.Bridges.adjoint_map_function(
             BT,
-            func,
+            real_scalars,
             MOI.Bridges.IndexInVector(i),
         )
     end
