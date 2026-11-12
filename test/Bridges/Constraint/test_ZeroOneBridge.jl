@@ -155,6 +155,96 @@ function test_runtests()
     return
 end
 
+MOI.Utilities.@model(
+    IntegerOnlyModel,
+    (MOI.Integer,),
+    (MOI.EqualTo, MOI.GreaterThan, MOI.LessThan),
+    (),
+    (),
+    (),
+    (MOI.ScalarAffineFunction,),
+    (),
+    (),
+)
+
+function MOI.supports_constraint(
+    ::IntegerOnlyModel,
+    ::Type{MOI.VariableIndex},
+    ::Type{MOI.ZeroOne},
+)
+    return false
+end
+
+function test_internal_integer_is_not_valid()
+    for model in (
+        MOI.Bridges.Constraint.ZeroOne{Float64}(MOI.Utilities.Model{Float64}()),
+        MOI.Bridges.full_bridge_optimizer(IntegerOnlyModel{Float64}(), Float64),
+    )
+        x, y = MOI.add_variables(model, 2)
+        binary = MOI.add_constraint(model, x, MOI.ZeroOne())
+        internal_integer =
+            MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(x.value)
+        @test MOI.is_valid(model.model, internal_integer)
+        @test isempty(
+            MOI.get(
+                model,
+                MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
+            ),
+        )
+        @test !MOI.is_valid(model, internal_integer)
+        internal_interval = MOI.Bridges.bridge(model, binary).interval_index
+        @test !MOI.is_valid(model, internal_interval)
+        @test_throws MOI.InvalidIndex(internal_interval) MOI.delete(
+            model,
+            internal_interval,
+        )
+        @test !MOI.is_valid(model, typeof(internal_integer)(y.value))
+        integer = MOI.add_constraint(model, y, MOI.Integer())
+        @test MOI.is_valid(model, integer)
+        @test MOI.get(model, MOI.ConstraintFunction(), binary) == x
+        @test MOI.get(model, MOI.ConstraintSet(), binary) == MOI.ZeroOne()
+        # Removing and restoring the binary must remove its internal integer.
+        MOI.delete(model, binary)
+        @test model.bridge_context.constraints === nothing
+        @test !MOI.is_valid(model.model, internal_integer)
+        @test MOI.is_valid(model, integer)
+        fixed = MOI.add_constraint(model, x, MOI.EqualTo(0.0))
+        MOI.delete(model, fixed)
+        binary = MOI.add_constraint(model, x, MOI.ZeroOne())
+        @test MOI.is_valid(model, binary)
+        @test !MOI.is_valid(model, internal_integer)
+        @test MOI.is_valid(model.model, internal_integer)
+        MOI.delete(model, x)
+        @test !MOI.is_valid(model, binary)
+        @test MOI.is_valid(model, integer)
+    end
+    return
+end
+
+function test_internal_integer_after_variable_bridge()
+    model =
+        MOI.Bridges.full_bridge_optimizer(IntegerOnlyModel{Float64}(), Float64)
+    MOI.add_variable(model)
+    MOI.add_constrained_variables(model, MOI.Zeros(1))
+    @test MOI.Bridges.Variable.has_bridges(MOI.Bridges.Variable.bridges(model))
+    x = MOI.add_variable(model)
+    binary = MOI.add_constraint(model, x, MOI.ZeroOne())
+    integer = MOI.ConstraintIndex{MOI.VariableIndex,MOI.Integer}(x.value)
+    @test MOI.is_valid(model, binary)
+    @test !MOI.is_valid(model, integer)
+    @test MOI.get(model, MOI.ConstraintFunction(), binary) == x
+    @test isempty(
+        MOI.get(
+            model,
+            MOI.ListOfConstraintIndices{MOI.VariableIndex,MOI.Integer}(),
+        ),
+    )
+    MOI.delete(model, binary)
+    @test !MOI.is_valid(model, binary)
+    @test !MOI.is_valid(model, integer)
+    return
+end
+
 end  # module
 
 TestConstraintZeroOne.runtests()

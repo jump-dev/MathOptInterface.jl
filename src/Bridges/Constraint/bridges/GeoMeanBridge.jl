@@ -54,7 +54,7 @@ constraint between ``t`` and ``y_1``.
 
   * `F` in [`MOI.LessThan{T}`](@ref)
   * `G` in [`MOI.RotatedSecondOrderCone`](@ref)
-  * `G` in [`MOI.Nonnegatives`](@ref)
+  * `H` in [`MOI.Nonnegatives`](@ref)
 """
 struct GeoMeanBridge{T,F,G,H} <: AbstractBridge
     d::Int
@@ -177,12 +177,12 @@ function MOI.Bridges.added_constrained_variable_types(::Type{<:GeoMeanBridge})
 end
 
 function MOI.Bridges.added_constraint_types(
-    ::Type{<:GeoMeanBridge{T,F,G}},
-) where {T,F,G}
+    ::Type{<:GeoMeanBridge{T,F,G,H}},
+) where {T,F,G,H}
     return Tuple{Type,Type}[
         (F, MOI.LessThan{T}),
         (G, MOI.RotatedSecondOrderCone),
-        (G, MOI.Nonnegatives),
+        (H, MOI.Nonnegatives),
     ]
 end
 

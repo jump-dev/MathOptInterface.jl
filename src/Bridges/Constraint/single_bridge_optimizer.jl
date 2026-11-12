@@ -45,6 +45,7 @@ julia> MyNewBridgeModel{Float64}(MOI.Utilities.Model{Float64}());
 mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
                MOI.Bridges.AbstractBridgeOptimizer
     model::OT
+    bridge_context::MOI.Bridges.BridgeContext
     map::Map # index of bridged constraint -> constraint bridge
     con_to_name::Dict{MOI.ConstraintIndex,String}
     name_to_con::Union{Dict{String,MOI.ConstraintIndex},Nothing}
@@ -52,6 +53,7 @@ mutable struct SingleBridgeOptimizer{BT<:AbstractBridge,OT<:MOI.ModelLike} <:
     function SingleBridgeOptimizer{BT}(model::OT) where {BT,OT<:MOI.ModelLike}
         return new{BT,OT}(
             model,
+            MOI.Bridges.BridgeContext(),
             Map(),
             Dict{MOI.ConstraintIndex,String}(),
             nothing,
@@ -136,3 +138,5 @@ end
 MOI.Bridges.bridging_cost(::SingleBridgeOptimizer, args...) = 1.0
 
 MOI.Bridges.recursive_model(b::SingleBridgeOptimizer) = b.model
+
+MOI.Bridges.bridge_context(b::SingleBridgeOptimizer) = b.bridge_context
