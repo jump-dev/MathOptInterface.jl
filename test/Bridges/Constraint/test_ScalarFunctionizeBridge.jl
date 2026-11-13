@@ -424,6 +424,36 @@ function test_issue_2838()
     return
 end
 
+struct _NoConstraintFunctionBridge <:
+       MOI.Bridges.Constraint.AbstractFunctionConversionBridge{
+    MOI.VariableIndex,
+    MOI.ZeroOne,
+} end
+
+function test_ConstraintFunction_not_implemented()
+    model = MOI.Utilities.Model{Float64}()
+    bridge = _NoConstraintFunctionBridge()
+    @test_throws(
+        MOI.UnsupportedAttribute,
+        MOI.get(model, MOI.ConstraintFunction(), bridge),
+    )
+    @test_throws(
+        MOI.GetAttributeNotAllowed{MOI.ConstraintFunction},
+        MOI.get(model, MOI.Utilities.UnsafeConstraintFunction(), bridge),
+    )
+    return
+end
+
+function test_UnsafeConstraintFunction()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.ScalarFunctionize{Float64}(inner)
+    x = MOI.add_variable(model)
+    c = MOI.add_constraint(model, x, MOI.GreaterThan(1.0))
+    @test MOI.Bridges.is_bridged(model, c)
+    @test MOI.get(model, MOI.Utilities.UnsafeConstraintFunction(), c) == x
+    return
+end
+
 end  # module
 
 TestConstraintFunctionize.runtests()

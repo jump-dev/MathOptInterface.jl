@@ -191,6 +191,22 @@ function test_modify_VectorOfVariables()
     return
 end
 
+function test_UnsafeObjectiveFunction()
+    o = MOI.Utilities.ObjectiveContainer{Float64}()
+    x = MOI.VariableIndex(1)
+    f = 1.0 * x + 2.0
+    F = typeof(f)
+    MOI.set(o, MOI.ObjectiveFunction{F}(), f)
+    unsafe = MOI.get(o, MOI.Utilities.UnsafeObjectiveFunction{F}())
+    @test unsafe ≈ f
+    @test unsafe !== f
+    @test unsafe === MOI.get(o, MOI.Utilities.UnsafeObjectiveFunction{F}())
+    g = MOI.get(o, MOI.ObjectiveFunction{F}())
+    @test g ≈ f
+    @test g !== unsafe
+    return
+end
+
 end  # module
 
 TestObjectiveContainer.runtests()

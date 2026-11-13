@@ -77,11 +77,24 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::Union{
-        MOI.ConstraintFunction,
-        MOI.ConstraintPrimal,
-        MOI.ConstraintPrimalStart,
-    },
+    attr::Union{MOI.ConstraintPrimal,MOI.ConstraintPrimalStart},
+    bridge::SetMapBridge,
+)
+    return _get_mapped(model, attr, bridge)
+end
+
+# Separate method to avoid an ambiguity with the fallback in `bridge.jl`.
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.ConstraintFunction,
+    bridge::SetMapBridge,
+)
+    return _get_mapped(model, attr, bridge)
+end
+
+function _get_mapped(
+    model::MOI.ModelLike,
+    attr::MOI.AbstractConstraintAttribute,
     bridge::SetMapBridge,
 )
     value = MOI.get(model, attr, bridge.constraint)

@@ -421,7 +421,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintFunction,
+    attr::MOI.Utilities.UnsafeConstraintFunction,
     bridge::SplitIntervalBridge,
 )
     if bridge.lower !== nothing
@@ -430,7 +430,7 @@ function MOI.get(
     if bridge.upper !== nothing
         return MOI.get(model, attr, bridge.upper)
     end
-    return MOI.Utilities.copy_if_modifiable(bridge.func)
+    return bridge.func
 end
 
 function MOI.get(

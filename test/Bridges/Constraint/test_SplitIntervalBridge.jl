@@ -535,6 +535,39 @@ function test_split_interval_free_modify()
     return
 end
 
+function test_UnsafeConstraintFunction()
+    unsafe = MOI.Utilities.UnsafeConstraintFunction()
+    sets = [MOI.LessThan(1.0), MOI.Interval(-Inf, Inf), MOI.Interval(1.0, 2.0)]
+    # MockOptimizer maps the indices
+    inner = MOI.Utilities.MockOptimizer(MOI.Utilities.Model{Float64}())
+    model = MOI.Bridges.Constraint.SplitInterval{Float64}(inner)
+    x = MOI.add_variable(model)
+    for set in sets
+        c = MOI.add_constraint(model, 1.0 * x, set)
+        @test MOI.get(model, unsafe, c) ≈ 1.0 * x
+    end
+    # Utilities.Model returns the function it stores
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Constraint.SplitInterval{Float64}(inner)
+    x = MOI.add_variable(model)
+    for set in sets
+        c = MOI.add_constraint(model, 1.0 * x, set)
+        if MOI.Bridges.is_bridged(model, c)
+            bridge = MOI.Bridges.bridge(model, c)
+            f = MOI.get(inner, unsafe, bridge)
+            @test f === MOI.get(inner, unsafe, bridge)
+        else
+            f = MOI.get(model, unsafe, c)
+            @test f === MOI.get(model, unsafe, c)
+        end
+        @test f ≈ 1.0 * x
+        g = MOI.get(model, MOI.ConstraintFunction(), c)
+        @test g ≈ 1.0 * x
+        @test g !== f
+    end
+    return
+end
+
 end  # module
 
 TestConstraintSplitInterval.runtests()
