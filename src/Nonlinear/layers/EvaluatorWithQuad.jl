@@ -10,6 +10,10 @@
         inner::MOI.AbstractNLPEvaluator,
     ) <: MOI.AbstractNLPEvaluator
 
+!!! warning
+    This API is experimental. Until this message is removed, breaking changes
+    may be introduced in any minor or patch release of MathOptInterface.
+
 The evaluator of a [`ModelWithQuad`](@ref) layer. It implements the
 [`MOI.AbstractNLPEvaluator`](@ref) interface: the rows of the QP block come
 first, followed by the rows of `inner`, and the Jacobian and Hessian product

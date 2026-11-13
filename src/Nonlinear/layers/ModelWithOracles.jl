@@ -7,6 +7,10 @@
 """
     ModelWithOracles{T}(inner::M) where {T,M}
 
+!!! warning
+    This API is experimental. Until this message is removed, breaking changes
+    may be introduced in any minor or patch release of MathOptInterface.
+
 A nonlinear model that wraps `inner` and supports
 [`MOI.VectorNonlinearOracle`](@ref).
 """

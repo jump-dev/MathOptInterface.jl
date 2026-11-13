@@ -20,6 +20,10 @@ const _QPSet{T} =
         objective_sink::_ObjectiveSink = _NONE,
     ) where {T,M}
 
+!!! warning
+    This API is experimental. Until this message is removed, breaking changes
+    may be introduced in any minor or patch release of MathOptInterface.
+
 A model layer that owns the variables of the model, stores affine and
 quadratic objectives and constraints in a [`QPBlockData`](@ref), and forwards
 everything else to the `inner` model, typically a [`Model`](@ref).

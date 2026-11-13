@@ -61,6 +61,10 @@ end
 """
     QPBlockData{T}()
 
+!!! warning
+    This API is experimental. Until this message is removed, breaking changes
+    may be introduced in any minor or patch release of MathOptInterface.
+
 A data structure holding an affine or quadratic objective and a block of
 affine and quadratic constraints, together with methods to evaluate them
 following the [`MOI.AbstractNLPEvaluator`](@ref) callback conventions.

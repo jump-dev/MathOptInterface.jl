@@ -89,6 +89,10 @@ end
 """
     model(backend::AbstractAutomaticDifferentiation)
 
+!!! warning
+    This API is experimental. Until this message is removed, breaking changes
+    may be introduced in any minor or patch release of MathOptInterface.
+
 Return a new MOI model appropriate for the automatic-differentiation
 `backend`. Custom backends may overload this method to provide a model that
 stores functions in a backend-specific representation.

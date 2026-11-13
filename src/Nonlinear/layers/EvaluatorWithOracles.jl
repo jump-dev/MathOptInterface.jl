@@ -11,6 +11,10 @@
         ordered_variables::Vector{MOI.VariableIndex},
     ) where {T,M,E}
 
+!!! warning
+    This API is experimental. Until this message is removed, breaking changes
+    may be introduced in any minor or patch release of MathOptInterface.
+
 An [`MOI.AbstractNLPEvaluator`](@Ref) that wraps `ModelWithOracles`.
 """
 mutable struct EvaluatorWithOracles{T,M,E<:MOI.AbstractNLPEvaluator} <:
