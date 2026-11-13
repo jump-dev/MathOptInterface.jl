@@ -538,8 +538,10 @@ function substitute_variables(
 ) where {T,F<:Function}
     g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], MOI.constant(f))
     for term in f.terms
-        mapped =
-            convert(MOI.ScalarAffineFunction{T}, variable_map(term.variable))
+        mapped = variable_map(term.variable)
+        if !(mapped isa ScalarAffineLike{T})
+            mapped = convert(MOI.ScalarAffineFunction{T}, mapped)
+        end
         # Fuse scaling and addition without copying the mapped function.
         MA.operate!(MA.add_mul, g, term.coefficient, mapped)
     end

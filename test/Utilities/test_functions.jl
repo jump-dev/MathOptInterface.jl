@@ -347,6 +347,18 @@ function test_substitute_variables()
     return
 end
 
+function test_substitute_variables_affine_variables_and_constants()
+    for T in (Float64, ComplexF64, BigFloat)
+        f = T(2) * x - T(3) * y + T(4)
+        @test MOI.Utilities.substitute_variables(identity, f) ≈ f
+        @test MOI.Utilities.substitute_variables(v -> v == x ? y : x, f) ≈
+              T(2) * y - T(3) * x + T(4)
+        expected = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], T(2))
+        @test MOI.Utilities.substitute_variables(_ -> T(2), f) ≈ expected
+    end
+    return
+end
+
 function test_substitute_variables_shared_affine()
     for T in (Float64, ComplexF64, BigFloat)
         replacement = T(2) * x + T(3)
