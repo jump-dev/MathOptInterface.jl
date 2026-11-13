@@ -1017,15 +1017,19 @@ is_canonical(::Union{MOI.VariableIndex,MOI.VectorOfVariables}) = true
 function is_canonical(f::MOI.ScalarNonlinearFunction)
     # Don't use recursion here. This gets called for all scalar nonlinear
     # constraints.
-    stack = Any[arg for arg in f.args]
+    # A subexpression may appear several times in the expression graph, we
+    # visit it only once.
+    visited = Base.IdSet{MOI.ScalarNonlinearFunction}()
+    stack = MOI.ScalarNonlinearFunction[f]
     while !isempty(stack)
-        arg = pop!(stack)
-        if arg isa MOI.ScalarNonlinearFunction
-            for a in arg.args
-                push!(stack, a)
-            end
-        else
-            if !is_canonical(arg)
+        g = pop!(stack)
+        for arg in g.args
+            if arg isa MOI.ScalarNonlinearFunction
+                if !(arg in visited)
+                    push!(visited, arg)
+                    push!(stack, arg)
+                end
+            elseif !is_canonical(arg)
                 return false
             end
         end
