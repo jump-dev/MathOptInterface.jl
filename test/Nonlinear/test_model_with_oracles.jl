@@ -173,6 +173,47 @@ function test_derivatives_and_offsets()
     return
 end
 
+function test_hessian_product_off_diagonal()
+    model = MOI.Nonlinear.ModelWithOracles(MOI.Nonlinear.Model())
+    x, y = MOI.VariableIndex.(1:2)
+    # x * y^2, whose Hessian has the off-diagonal entry (2, 1)
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 2,
+        l = [0.0],
+        u = [1.0],
+        eval_f = (g, z) -> (g[1] = z[1] * z[2]^2),
+        jacobian_structure = [(1, 1), (1, 2)],
+        eval_jacobian = (J, z) -> (J[1] = z[2]^2; J[2] = 2z[1] * z[2]),
+        hessian_lagrangian_structure = [(2, 1), (2, 2)],
+        eval_hessian_lagrangian = (H, z, μ) ->
+            (H[1] = 2μ[1] * z[2]; H[2] = 2μ[1] * z[1]),
+    )
+    MOI.add_constraint(model, MOI.VectorOfVariables([x, y]), set)
+    d = MOI.Nonlinear.Evaluator(
+        model,
+        MOI.Nonlinear.SparseReverseMode(),
+        [y, x],
+    )
+    MOI.initialize(d, [:Hess, :HessVec])
+    point, μ = [3.0, 2.0], [5.0]
+    structure = MOI.hessian_lagrangian_structure(d)
+    values = zeros(length(structure))
+    MOI.eval_hessian_lagrangian(d, values, point, 1.0, μ)
+    H = zeros(2, 2)
+    for ((i, j), v) in zip(structure, values)
+        H[i, j] += v
+        if i != j
+            H[j, i] += v
+        end
+    end
+    @test H == [20.0 30.0; 30.0 0.0]
+    w = [5.0, 7.0]
+    Hw = zeros(2)
+    MOI.eval_hessian_lagrangian_product(d, Hw, point, w, 1.0, μ)
+    @test Hw ≈ H * w
+    return
+end
+
 function test_feature_filtering()
     model = MOI.Nonlinear.ModelWithOracles(MOI.Nonlinear.Model())
     x = MOI.VariableIndex(1)
