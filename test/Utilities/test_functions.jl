@@ -347,6 +347,20 @@ function test_substitute_variables()
     return
 end
 
+function test_substitute_variables_shared_affine()
+    for T in (Float64, ComplexF64, BigFloat)
+        replacement = T(2) * x + T(3)
+        f = T(2) * y - T(3) * z + T(1)
+        original_replacement = deepcopy(replacement)
+        original_f = deepcopy(f)
+        result = MOI.Utilities.substitute_variables(_ -> replacement, f)
+        @test result ≈ -T(2) * x - T(2)
+        @test replacement ≈ original_replacement
+        @test f ≈ original_f
+    end
+    return
+end
+
 function test_substitute_variables_vector_of_variables()
     w, x, y, z = MOI.VariableIndex.(1:4)
     f1 = MOI.VectorOfVariables([w, x])
