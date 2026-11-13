@@ -4,6 +4,11 @@
 # Use of this source code is governed by an MIT-style license that can be found
 # in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
+"""
+    AbstractVectorBounds
+
+An abstract container of vector bounds with `lower` and `upper` fields.
+"""
 abstract type AbstractVectorBounds end
 
 function set_from_constants(
@@ -464,6 +469,18 @@ struct Hyperrectangle{T} <: AbstractVectorBounds
 end
 
 Hyperrectangle{T}() where {T} = Hyperrectangle{T}(T[], T[])
+
+"""
+    variable_bounds(model)
+
+Return an [`AbstractVectorBounds`](@ref) containing the bounds of the variables
+of `model`. Variable indices must be `MOI.VariableIndex.(1:n)` and correspond
+in that order to the entries of the returned bounds container.
+
+The returned bounds may alias storage owned by `model`; callers must not modify
+them.
+"""
+function variable_bounds end
 
 function Base.:(==)(a::Hyperrectangle, b::Hyperrectangle)
     return a.lower == b.lower && a.upper == b.upper
