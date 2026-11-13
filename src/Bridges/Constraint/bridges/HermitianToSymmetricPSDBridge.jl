@@ -188,7 +188,7 @@ function MOI.Bridges.inverse_map_function(
 end
 
 function MOI.Bridges.adjoint_map_function(
-    BT::Type{<:HermitianToSymmetricPSDBridge{T}},
+    ::Type{<:HermitianToSymmetricPSDBridge{T}},
     func,
 ) where {T}
     real_dim = MOI.Utilities.output_dim(T, func)
@@ -201,12 +201,41 @@ function MOI.Bridges.adjoint_map_function(
     S = MOI.Utilities.scalar_type(_promote_minus_vcat(T, typeof(func)))
     scalars = Vector{S}(undef, n^2)
     real_scalars = MOI.Utilities.eachscalar(func)
-    for i in eachindex(scalars)
-        scalars[i] = MOI.Bridges.adjoint_map_function(
-            BT,
-            real_scalars,
-            MOI.Bridges.IndexInVector(i),
-        )
+    # Traverse the full triangle sequentially; inverse index lookups are only
+    # needed when requesting an individual component.
+    complex_index = 0
+    half_real_dim = MOI.dimension(MOI.PositiveSemidefiniteConeTriangle(n))
+    real_index_1 = 0
+    real_index_2 = half_real_dim + n
+    for j in 1:n
+        for i in 1:j
+            complex_index += 1
+            real_index_1 += 1
+            real_index_2 += 1
+            scalars[complex_index] = MOI.Utilities.operate(
+                +,
+                T,
+                real_scalars[real_index_1],
+                real_scalars[real_index_2],
+            )
+            if i == j
+                real_index_2 += n
+            end
+        end
+    end
+    real_index_1 = half_real_dim
+    for j in 1:n
+        for i in 1:(j-1)
+            complex_index += 1
+            real_index_1 += 1
+            scalars[complex_index] = MOI.Utilities.operate(
+                -,
+                T,
+                real_scalars[real_index_1],
+                real_scalars[MOI.Utilities.trimap(j, i + n)],
+            )
+        end
+        real_index_1 += n + 1
     end
     return MOI.Utilities.vectorize(scalars)
 end

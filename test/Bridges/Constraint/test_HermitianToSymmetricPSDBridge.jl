@@ -114,7 +114,7 @@ function test_adjoint_symbolic()
         MOI.VectorQuadraticTerm(5, MOI.ScalarQuadraticTerm(4.0, x[3], x[4])),
     )
     value = Dict(x .=> collect(1.0:10.0))
-    for f in (affine, quadratic)
+    for f in (MOI.VectorOfVariables(x), affine, quadratic)
         mapped = MOI.Bridges.adjoint_map_function(BT, f)
         numeric = MOI.Utilities.eval_variables(x -> value[x], f)
         expected = MOI.Bridges.adjoint_map_function(BT, numeric)
