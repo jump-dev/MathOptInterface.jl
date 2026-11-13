@@ -1210,12 +1210,75 @@ function MOI.supports(
 end
 
 """
+    ObjectiveFunctionAttribute{A,F}(attr::A)
+
+Wrap the model attribute `attr` to associate it with the objective function of
+type `F`. Bridge optimizers forward this attribute to the objective bridge for
+`F`, or forward `attr` to the underlying model if that objective is not bridged.
+
+Extensions implement `MOI.get(model, attr, bridge)` and
+`MOI.set(model, attr, bridge, value)` for the wrapped attribute and the objective
+bridges they support. The bridge optimizer handles dispatch to these methods;
+bridge implementations do not need to manage the optimizer's bridge context.
+
+The function type tracks the position in a chain of objective bridges. When
+forwarding to another objective bridge, wrap the attribute with the target
+objective function type.
+"""
+struct ObjectiveFunctionAttribute{
+    A<:MOI.AbstractModelAttribute,
+    F<:MOI.AbstractFunction,
+}
+    attr::A
+end
+
+function MOI.get(model::MOI.ModelLike, attr::ObjectiveFunctionAttribute)
+    return MOI.get(model, attr.attr)
+end
+
+function MOI.set(model::MOI.ModelLike, attr::ObjectiveFunctionAttribute, value)
+    MOI.set(model, attr.attr, value)
+    return
+end
+
+function MOI.get(
+    b::AbstractBridgeOptimizer,
+    attr::ObjectiveFunctionAttribute{A,F},
+) where {A<:MOI.AbstractModelAttribute,F<:MOI.AbstractFunction}
+    obj_attr = MOI.ObjectiveFunction{F}()
+    if is_bridged(b, obj_attr)
+        return MOI.get(recursive_model(b), attr, bridge(b, obj_attr))
+    else
+        return MOI.get(b.model, attr.attr)
+    end
+end
+
+function MOI.set(
+    b::AbstractBridgeOptimizer,
+    attr::ObjectiveFunctionAttribute{A,F},
+    value,
+) where {A<:MOI.AbstractModelAttribute,F<:MOI.AbstractFunction}
+    obj_attr = MOI.ObjectiveFunction{F}()
+    if is_bridged(b, obj_attr)
+        MOI.set(recursive_model(b), attr, bridge(b, obj_attr), value)
+    else
+        MOI.set(b.model, attr.attr, value)
+    end
+    return
+end
+
+"""
     struct ObjectiveFunctionValue{F<:MOI.AbstractFunction} end
 
 Attribute for the value of the objective function of type `F`. If the objective
 of the objective function does not depend on `F`, the type `F` determines
 whether the computation is redirected to an objective bridge or to the
 underlying model.
+
+Bridge optimizer dispatch uses
+[`ObjectiveFunctionAttribute{MOI.ObjectiveValue,F}`](@ref ObjectiveFunctionAttribute).
+This wrapper is retained for compatibility with existing objective bridge
+implementations.
 """
 struct ObjectiveFunctionValue{F<:MOI.AbstractFunction}
     result_index::Int
@@ -1231,18 +1294,21 @@ function MOI.get(
     b::AbstractBridgeOptimizer,
     attr::ObjectiveFunctionValue{F},
 ) where {F<:MOI.AbstractFunction} # Need `<:` to avoid ambiguity
-    obj_attr = MOI.ObjectiveFunction{F}()
-    if is_bridged(b, obj_attr)
-        return MOI.get(recursive_model(b), attr, bridge(b, obj_attr))
-    else
-        return MOI.get(b.model, MOI.ObjectiveValue(attr.result_index))
-    end
+    return MOI.get(
+        b,
+        ObjectiveFunctionAttribute{MOI.ObjectiveValue,F}(
+            MOI.ObjectiveValue(attr.result_index),
+        ),
+    )
 end
 
 function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveValue)
     if is_objective_bridged(b)
         F = Objective.function_type(Objective.bridges(b))
-        return MOI.get(b, ObjectiveFunctionValue{F}(attr.result_index))
+        return MOI.get(
+            b,
+            ObjectiveFunctionAttribute{MOI.ObjectiveValue,F}(attr),
+        )
     else
         return MOI.get(b.model, attr)
     end

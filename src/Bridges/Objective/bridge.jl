@@ -20,6 +20,20 @@ additionally implement:
 """
 abstract type AbstractBridge <: MOI.Bridges.AbstractBridge end
 
+# Preserve the existing extension point for objective bridges while using the
+# generic objective attribute routing in the bridge optimizer.
+function MOI.get(
+    model::MOI.ModelLike,
+    attr::MOI.Bridges.ObjectiveFunctionAttribute{MOI.ObjectiveValue,F},
+    bridge::AbstractBridge,
+) where {F<:MOI.AbstractFunction}
+    return MOI.get(
+        model,
+        MOI.Bridges.ObjectiveFunctionValue{F}(attr.attr.result_index),
+        bridge,
+    )
+end
+
 """
     supports_objective_function(
         BT::Type{<:MOI.Bridges.Objective.AbstractBridge},
