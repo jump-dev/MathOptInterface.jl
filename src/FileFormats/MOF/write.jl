@@ -160,14 +160,27 @@ function _write_constraints(
     model::MOI.ModelLike,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    has_scalar_nonlinear = false
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        has_scalar_nonlinear |= (F == MOI.ScalarNonlinearFunction)
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            push!(constraints, moi_to_object(index, model, name_map))
-        end
+    has_scalar_nonlinear = Ref(false)
+    MOI.Utilities.foreach_constraint_type(model) do F, S
+        has_scalar_nonlinear[] |=
+            _write_constraints(constraints, model, name_map, F, S)
+        return
     end
-    return has_scalar_nonlinear
+    return has_scalar_nonlinear[]
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::MOI.ModelLike,
+    name_map::Dict{MOI.VariableIndex,String},
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    for index in indices
+        push!(constraints, moi_to_object(index, model, name_map))
+    end
+    return F == MOI.ScalarNonlinearFunction && !isempty(indices)
 end
 
 """
@@ -270,10 +283,30 @@ function _convert_nonlinear_to_mof(
 )
     node = (type = string(f.head), args = Any[])
     for arg in f.args
-        push!(node[:args], _convert_nonlinear_to_mof(arg, node_list, name_map))
+        push!(
+            node[:args],
+            _convert_nonlinear_argument_to_mof(arg, node_list, name_map),
+        )
     end
     push!(node_list, node)
     return (type = "node", index = length(node_list))
+end
+
+@inline function _convert_nonlinear_argument_to_mof(
+    arg,
+    node_list::Vector{Any},
+    name_map::Dict{MOI.VariableIndex,String},
+)
+    # Nonlinear arguments are stored as Any. Keep common dispatch targets
+    # visible to the compiler without restricting the supported arguments.
+    if arg isa MOI.VariableIndex
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    elseif arg isa MOI.ScalarNonlinearFunction
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    elseif arg isa Union{Int,Float64}
+        return _convert_nonlinear_to_mof(arg, node_list, name_map)
+    end
+    return _convert_nonlinear_to_mof(arg, node_list, name_map)
 end
 
 function _convert_nonlinear_to_mof(
@@ -466,11 +499,9 @@ function moi_to_object(
     set::SetType,
     ::Dict{MOI.VariableIndex,String},
 ) where {SetType}
-    pairs = Pair{Symbol,Any}[:type=>head_name(SetType)]
-    for key in fieldnames(SetType)
-        push!(pairs, Symbol(string(key)) => getfield(set, key))
-    end
-    return NamedTuple(pairs)
+    names = fieldnames(SetType)
+    values = map(name -> getfield(set, name), names)
+    return NamedTuple{(:type, names...)}((head_name(SetType), values...))
 end
 
 # ========== Non-typed scalar sets ==========
