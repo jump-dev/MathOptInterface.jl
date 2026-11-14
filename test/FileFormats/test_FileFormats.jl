@@ -178,6 +178,21 @@ function test_unique_names()
     return
 end
 
+function test_unique_names_replacements()
+    replace_spaces = s -> replace(s, " " => "_")
+    @test (@inferred MOI.FileFormats._replace("a b", ())) == "a b"
+    @test (@inferred MOI.FileFormats._replace("a b", (replace_spaces,))) ==
+          "a_b"
+    # A vector of functions is still supported, without inference.
+    @test MOI.FileFormats._replace("a b", Function[replace_spaces]) == "a_b"
+    model = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variables(model, 2)
+    MOI.set.(model, MOI.VariableName(), x, ["x a", "x_a"])
+    MOI.FileFormats.create_unique_names(model; replacements = (replace_spaces,))
+    @test MOI.get.(model, MOI.VariableName(), x) == ["x_a", "x_a_1"]
+    return
+end
+
 end
 
 TestFileFormats.runtests()
