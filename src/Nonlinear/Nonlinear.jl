@@ -10,6 +10,7 @@ import ForwardDiff
 import ..MathOptInterface as MOI
 import OrderedCollections: OrderedDict
 import SparseArrays
+import SparseMatrixColorings as SMC
 
 using SpecialFunctions
 

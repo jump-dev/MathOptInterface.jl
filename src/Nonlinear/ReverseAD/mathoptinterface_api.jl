@@ -19,7 +19,10 @@ function MOI.features_available(d::NLPEvaluator)
     return [:Grad, :Jac, :JacVec, :Hess, :HessVec]
 end
 
-function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
+function MOI.initialize(
+    d::NLPEvaluator{R},
+    requested_features::Vector{Symbol},
+) where {R}
     # Check that we support the features requested by the user.
     available_features = MOI.features_available(d)
     for feature in requested_features
@@ -38,7 +41,7 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     d.objective = nothing
     d.user_output_buffer = zeros(largest_user_input_dimension)
     d.jac_storage = zeros(max(N, largest_user_input_dimension))
-    d.constraints = _FunctionStorage[]
+    d.constraints = _FunctionStorage{R}[]
     d.last_x = fill(NaN, N)
     d.want_hess = :Hess in requested_features
     want_hess_storage = (:HessVec in requested_features) || d.want_hess
@@ -101,12 +104,12 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
     end
     max_chunk = 1
     if d.data.objective !== nothing
-        objective = _FunctionStorage(
+        objective = _FunctionStorage{R}(
             main_expressions[1],
             something(d.data.objective).values,
             N,
             coloring_storage,
-            d.want_hess,
+            d.want_hess ? d.coloring_algorithm : nothing,
             d.subexpressions,
             individual_order[1],
             d.subexpression_linearity,
@@ -122,12 +125,12 @@ function MOI.initialize(d::NLPEvaluator, requested_features::Vector{Symbol})
         idx = d.data.objective !== nothing ? k + 1 : k
         push!(
             d.constraints,
-            _FunctionStorage(
+            _FunctionStorage{R}(
                 main_expressions[idx],
                 constraint.expression.values,
                 N,
                 coloring_storage,
-                d.want_hess,
+                d.want_hess ? d.coloring_algorithm : nothing,
                 d.subexpressions,
                 individual_order[idx],
                 d.subexpression_linearity,
