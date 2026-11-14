@@ -244,7 +244,22 @@ function moi_to_object(
     return (type = "Variable", name = name_map[foo])
 end
 
-function _convert_nonlinear_to_mof(
+"""
+    moi_to_object(
+        x,
+        node_list::Vector{Any},
+        name_map::Dict{MOI.VariableIndex,String},
+    )
+
+Convert `x`, an argument of a `MOI.ScalarNonlinearFunction`, into its
+representation in the MathOptFormat nonlinear expression graph.
+
+A number or a variable is returned as is. A node is pushed to `node_list` and a
+reference `(type = "node", index = length(node_list))` to it is returned. A
+package can add methods for the types of argument that it defines, and read
+them back with [`nonlinear_node_to_moi`](@ref).
+"""
+function moi_to_object(
     expr::Expr,
     node_list::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
@@ -254,29 +269,26 @@ function _convert_nonlinear_to_mof(
     end
     node = (type = string(expr.args[1]), args = Any[])
     for i in 2:length(expr.args)
-        push!(
-            node[:args],
-            _convert_nonlinear_to_mof(expr.args[i], node_list, name_map),
-        )
+        push!(node[:args], moi_to_object(expr.args[i], node_list, name_map))
     end
     push!(node_list, node)
     return (type = "node", index = length(node_list))
 end
 
-function _convert_nonlinear_to_mof(
+function moi_to_object(
     f::MOI.ScalarNonlinearFunction,
     node_list::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
 )
     node = (type = string(f.head), args = Any[])
     for arg in f.args
-        push!(node[:args], _convert_nonlinear_to_mof(arg, node_list, name_map))
+        push!(node[:args], moi_to_object(arg, node_list, name_map))
     end
     push!(node_list, node)
     return (type = "node", index = length(node_list))
 end
 
-function _convert_nonlinear_to_mof(
+function moi_to_object(
     variable::MOI.VariableIndex,
     ::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
@@ -284,19 +296,19 @@ function _convert_nonlinear_to_mof(
     return name_map[variable]
 end
 
-function _convert_nonlinear_to_mof(
+function moi_to_object(
     f::MOI.AbstractScalarFunction,
     node_list::Vector{Any},
     name_map::Dict{MOI.VariableIndex,String},
 )
-    return _convert_nonlinear_to_mof(
+    return moi_to_object(
         convert(MOI.ScalarNonlinearFunction, f),
         node_list,
         name_map,
     )
 end
 
-function _convert_nonlinear_to_mof(
+function moi_to_object(
     value::Real,
     ::Vector{Any},
     ::Dict{MOI.VariableIndex,String},
@@ -304,7 +316,7 @@ function _convert_nonlinear_to_mof(
     return value
 end
 
-function _convert_nonlinear_to_mof(
+function moi_to_object(
     value::Complex,
     ::Vector{Any},
     ::Dict{MOI.VariableIndex,String},
@@ -314,7 +326,7 @@ end
 
 function moi_to_object(foo::Nonlinear, name_map::Dict{MOI.VariableIndex,String})
     node_list = Any[]
-    root = _convert_nonlinear_to_mof(foo.expr, node_list, name_map)
+    root = moi_to_object(foo.expr, node_list, name_map)
     return (
         type = "ScalarNonlinearFunction",
         root = root,
@@ -327,7 +339,7 @@ function moi_to_object(
     name_map::Dict{MOI.VariableIndex,String},
 )
     node_list = Any[]
-    root = _convert_nonlinear_to_mof(foo, node_list, name_map)
+    root = moi_to_object(foo, node_list, name_map)
     return (
         type = "ScalarNonlinearFunction",
         root = root,
@@ -396,7 +408,7 @@ function moi_to_object(
 )
     node_list = Any[]
     rows = map(foo.rows) do f
-        return _convert_nonlinear_to_mof(f, node_list, name_map)
+        return moi_to_object(f, node_list, name_map)
     end
     return (
         type = "VectorNonlinearFunction",
