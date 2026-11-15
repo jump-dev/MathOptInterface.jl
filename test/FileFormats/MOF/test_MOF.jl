@@ -528,6 +528,13 @@ function test_json_tree_vector_edge_cases()
     return
 end
 
+function test_set_object_inferred()
+    name_map = Dict{MOI.VariableIndex,String}()
+    object = @inferred MOF.moi_to_object(MOI.SecondOrderCone(3), name_map)
+    @test object == (type = "SecondOrderCone", dimension = 3)
+    return
+end
+
 function test_empty_function_term()
     model = MOF.Model()
     x = MOI.add_variable(model)

@@ -146,6 +146,16 @@ function test_constraints(output_dir)
     return
 end
 
+function test_sets(output_dir)
+    compiled, reference = _run(output_dir, "--sets")
+    @test compiled == reference
+    object = JSON.parse(compiled)
+    sets = [c["set"] for c in object["constraints"]]
+    @test Dict("type" => "SecondOrderCone", "dimension" => 3) in sets
+    @test Dict("type" => "Nonnegatives", "dimension" => 1) in sets
+    return
+end
+
 end # module TestJuliaC
 
 TestJuliaC.runtests()

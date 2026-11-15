@@ -30,6 +30,9 @@ function @main(args::Vector{String})::Cint
     if head == "--constraints"
         return run_constraints(args)
     end
+    if head == "--sets"
+        return run_sets(args)
+    end
     return 1  # Incorrect head
 end
 
@@ -95,6 +98,21 @@ function run_constraints(args::Vector{String})::Cint
     g = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     a = MOI.add_constraint(model, g, MOI.GreaterThan(1.0))
     MOI.set(model, MOI.ConstraintName(), a, "a")
+    return _write(model, args)
+end
+
+# A set written by the generic writer of sets, with its fields.
+function run_sets(args::Vector{String})::Cint
+    model, x = _model()
+    f = MOI.VectorOfVariables([x, x, x])
+    s = MOI.add_constraint(model, f, MOI.SecondOrderCone(3))
+    MOI.set(model, MOI.ConstraintName(), s, "s")
+    g = MOI.VectorAffineFunction(
+        [MOI.VectorAffineTerm(1, MOI.ScalarAffineTerm(1.0, x))],
+        [0.0],
+    )
+    v = MOI.add_constraint(model, g, MOI.Nonnegatives(1))
+    MOI.set(model, MOI.ConstraintName(), v, "v")
     return _write(model, args)
 end
 
