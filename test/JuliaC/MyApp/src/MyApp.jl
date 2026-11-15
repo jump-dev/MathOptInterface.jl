@@ -19,11 +19,14 @@ function @main(args::Vector{String})::Cint
     if head == "--mathoptformat"
         return run_mathoptformat(args)
     end
+    # The following commands are not traced by `test_juliac.jl`: the compiled
+    # binary must run them with the methods resolved at compile time.
     return 1  # Incorrect head
 end
 
-function run_mathoptformat(args::Vector{String})::Cint
-    filename = only(args)
+# The model of the traced command. Each command that is not traced writes this
+# model with one difference, so that it tests one code path that is not traced.
+function _model()
     model = MOI.FileFormats.MOF.Model()
     x = MOI.add_variable(model)
     MOI.set(model, MOI.VariableName(), x, "x")
@@ -37,8 +40,18 @@ function run_mathoptformat(args::Vector{String})::Cint
     objective = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
     MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
     MOI.set(model, MOI.ObjectiveFunction{typeof(objective)}(), objective)
+    return model, x
+end
+
+function _write(model, args::Vector{String})::Cint
+    filename = only(args)
     open(io -> write(io, model), filename, "w")
     return 0
 end
 
-end # module MOFWriter
+function run_mathoptformat(args::Vector{String})::Cint
+    model, _ = _model()
+    return _write(model, args)
+end
+
+end # module MyApp

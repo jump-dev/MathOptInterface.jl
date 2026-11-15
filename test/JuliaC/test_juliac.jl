@@ -25,7 +25,8 @@ import JSON
 import JuliaC
 
 # Trace the methods that MyApp reaches through dynamic dispatch, so that
-# `entry.jl` keeps them in the trimmed image.
+# `entry.jl` keeps them in the trimmed image. Only `--mathoptformat` is traced,
+# the other commands test the methods that are resolved at compile time.
 function trace(output_dir)
     project = joinpath(@__DIR__, "MyApp")
     trace = joinpath(output_dir, "dispatch.trace")
@@ -60,25 +61,32 @@ end
 function runtests()
     output_dir = compile()
     is_test(name) = startswith("$name", "test_")
-    @testset "$name" for name in filter(is_test, names(@__MODULE__; all = true))
-        getfield(@__MODULE__, name)(output_dir)
+    # The outer testset runs every command, even after one fails.
+    @testset "JuliaC" begin
+        @testset "$name" for name in
+                             filter(is_test, names(@__MODULE__; all = true))
+            getfield(@__MODULE__, name)(output_dir)
+        end
     end
     return
 end
 
-function test_mathoptformat(output_dir)
-    # Run via the compiled binary
-    output = joinpath(output_dir, "compiled.mof.json")
-    run(`$(output_dir)/bin/MyApp --mathoptformat $output`)
-    # Compare against running as `-m`
-    reference = joinpath(output_dir, "reference.mof.json")
+# Run the command `head` of MyApp with the compiled binary and with Julia, and
+# return both outputs.
+function _run(output_dir, head)
+    output = joinpath(output_dir, "compiled$head.mof.json")
+    run(`$(output_dir)/bin/MyApp $head $output`)
+    reference = joinpath(output_dir, "reference$head.mof.json")
     project = joinpath(@__DIR__, "MyApp")
-    run(
-        `$(Base.julia_cmd()) --project=$project -m MyApp --mathoptformat $reference`,
-    )
-    @test read(output, String) == read(reference, String)
+    run(`$(Base.julia_cmd()) --project=$project -m MyApp $head $reference`)
+    return read(output, String), read(reference, String)
+end
+
+function test_mathoptformat(output_dir)
+    compiled, reference = _run(output_dir, "--mathoptformat")
+    @test compiled == reference
     # Manually test the output
-    object = JSON.parsefile(output)
+    object = JSON.parse(compiled)
     @test object["variables"] == [Dict("name" => "x")]
     @test object["objective"] == Dict(
         "sense" => "min",
