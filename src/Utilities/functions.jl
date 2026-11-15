@@ -540,6 +540,8 @@ function substitute_variables(
     for term in f.terms
         mapped = variable_map(term.variable)
         if !(mapped isa ScalarAffineLike{T})
+            # The mapped affine function may have a different coefficient
+            # type, e.g., Float64 when T is ComplexF64.
             mapped = convert(MOI.ScalarAffineFunction{T}, mapped)
         end
         # Fuse scaling and addition without copying the mapped function.
