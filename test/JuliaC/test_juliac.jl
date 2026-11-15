@@ -136,6 +136,16 @@ function test_linear(output_dir)
     return
 end
 
+function test_constraints(output_dir)
+    compiled, reference = _run(output_dir, "--constraints")
+    @test compiled == reference
+    object = JSON.parse(compiled)
+    types = [c["function"]["type"] for c in object["constraints"]]
+    @test "ScalarQuadraticFunction" in types
+    @test "ScalarAffineFunction" in types
+    return
+end
+
 end # module TestJuliaC
 
 TestJuliaC.runtests()

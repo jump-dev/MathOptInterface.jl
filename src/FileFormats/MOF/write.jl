@@ -185,14 +185,27 @@ function _write_constraints(
     model::MOI.ModelLike,
     name_map::Dict{MOI.VariableIndex,String},
 )
-    has_scalar_nonlinear = false
-    for (F, S) in MOI.get(model, MOI.ListOfConstraintTypesPresent())
-        has_scalar_nonlinear |= (F == MOI.ScalarNonlinearFunction)
-        for index in MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
-            push!(constraints, moi_to_object(index, model, name_map))
-        end
+    has_scalar_nonlinear = Ref(false)
+    MOI.Utilities.foreach_constraint_type(model) do F, S
+        has_scalar_nonlinear[] |=
+            _write_constraints(constraints, model, name_map, F, S)
+        return
     end
-    return has_scalar_nonlinear
+    return has_scalar_nonlinear[]
+end
+
+function _write_constraints(
+    constraints::Vector{NamedTuple},
+    model::MOI.ModelLike,
+    name_map::Dict{MOI.VariableIndex,String},
+    ::Type{F},
+    ::Type{S},
+) where {F,S}
+    indices = MOI.get(model, MOI.ListOfConstraintIndices{F,S}())
+    for index in indices
+        push!(constraints, moi_to_object(index, model, name_map))
+    end
+    return F == MOI.ScalarNonlinearFunction && !isempty(indices)
 end
 
 """
