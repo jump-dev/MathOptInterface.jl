@@ -148,7 +148,7 @@ function Options(;
     )
 end
 
-get_options(m::Model) = get(m.model.ext, :MOF_OPTIONS, Options())
+get_options(m::Model) = get(m.model.ext, :MOF_OPTIONS, Options())::Options
 
 """
     Model(;
