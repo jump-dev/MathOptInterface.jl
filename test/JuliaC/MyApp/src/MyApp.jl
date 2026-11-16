@@ -21,6 +21,9 @@ function @main(args::Vector{String})::Cint
     end
     # The following commands are not traced by `test_juliac.jl`: the compiled
     # binary must run them with the methods resolved at compile time.
+    if head == "--names"
+        return run_names(args)
+    end
     return 1  # Incorrect head
 end
 
@@ -51,6 +54,14 @@ end
 
 function run_mathoptformat(args::Vector{String})::Cint
     model, _ = _model()
+    return _write(model, args)
+end
+
+# A second variable named `x`, which is renamed.
+function run_names(args::Vector{String})::Cint
+    model, _ = _model()
+    y = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), y, "x")
     return _write(model, args)
 end
 

@@ -119,6 +119,14 @@ function test_mathoptformat(output_dir)
     return
 end
 
+function test_names(output_dir)
+    compiled, reference = _run(output_dir, "--names")
+    @test compiled == reference
+    object = JSON.parse(compiled)
+    @test object["variables"] == [Dict("name" => "x"), Dict("name" => "x_1")]
+    return
+end
+
 end # module TestJuliaC
 
 TestJuliaC.runtests()
