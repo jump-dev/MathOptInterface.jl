@@ -538,9 +538,14 @@ function substitute_variables(
 ) where {T,F<:Function}
     g = MOI.ScalarAffineFunction(MOI.ScalarAffineTerm{T}[], MOI.constant(f))
     for term in f.terms
-        # This works because substitute_variables actually returns a function,
-        # not a term.
-        g = operate!(+, T, g, substitute_variables(variable_map, term))
+        mapped = variable_map(term.variable)
+        if !(mapped isa ScalarAffineLike{T})
+            # The mapped affine function may have a different coefficient
+            # type, for example, Float64 when T is ComplexF64.
+            mapped = convert(MOI.ScalarAffineFunction{T}, mapped)
+        end
+        # Fuse scaling and addition without copying the mapped function.
+        MA.operate!(MA.add_mul, g, term.coefficient, mapped)
     end
     return g
 end
