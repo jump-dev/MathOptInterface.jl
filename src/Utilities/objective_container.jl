@@ -116,22 +116,21 @@ function MOI.supports(
     return true
 end
 
+const _ObjectiveFunctions = Union{
+    MOI.VariableIndex,
+    MOI.ScalarAffineFunction,
+    MOI.ScalarQuadraticFunction,
+    MOI.ScalarNonlinearFunction,
+    MOI.VectorOfVariables,
+    MOI.VectorAffineFunction,
+    MOI.VectorQuadraticFunction,
+    MOI.VectorNonlinearFunction,
+}
+
 function MOI.get(
     o::ObjectiveContainer{T},
-    attr::MOI.ObjectiveFunction{F},
-) where {
-    T,
-    F<:Union{
-        MOI.VariableIndex,
-        MOI.ScalarAffineFunction,
-        MOI.ScalarQuadraticFunction,
-        MOI.ScalarNonlinearFunction,
-        MOI.VectorOfVariables,
-        MOI.VectorAffineFunction,
-        MOI.VectorQuadraticFunction,
-        MOI.VectorNonlinearFunction,
-    },
-}
+    ::UnsafeObjectiveFunction{F},
+) where {T,F<:_ObjectiveFunctions}
     if o.scalar_affine !== nothing
         return convert(F, something(o.scalar_affine))
     elseif o.single_variable !== nothing
@@ -151,6 +150,13 @@ function MOI.get(
     end
     # The default if no objective is set.
     return convert(F, zero(MOI.ScalarAffineFunction{T}))
+end
+
+function MOI.get(
+    o::ObjectiveContainer,
+    ::MOI.ObjectiveFunction{F},
+) where {F<:_ObjectiveFunctions}
+    return copy_if_modifiable(MOI.get(o, UnsafeObjectiveFunction{F}()))
 end
 
 function _empty_keeping_sense(o::ObjectiveContainer)

@@ -83,7 +83,11 @@ end
 
 function MOI.get(
     model::StructOfConstraints,
-    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    attr::Union{
+        UnsafeConstraintFunction,
+        MOI.ConstraintFunction,
+        MOI.ConstraintSet,
+    },
     ci::MOI.ConstraintIndex,
 )
     return MOI.get(constraints(model, ci), attr, ci)

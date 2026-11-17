@@ -109,10 +109,10 @@ end
 
 function MOI.get(
     ::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
+    ::MOI.Utilities.UnsafeConstraintFunction,
     bridge::CountAtLeastToCountBelongsBridge,
 )
-    return MOI.Utilities.copy_if_modifiable(bridge.f)
+    return bridge.f
 end
 
 function MOI.get(

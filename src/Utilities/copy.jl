@@ -40,6 +40,61 @@ function pass_attributes(dest::MOI.ModelLike, src::MOI.ModelLike, index_map)
     return
 end
 
+"""
+    UnsafeObjectiveFunction{F}()
+
+Same as [`MOI.ObjectiveFunction{F}`](@ref) except that the returned function
+may be the object stored by the model, even if it can be modified, see
+[`copy_if_modifiable`](@ref). The caller must not modify it, nor keep it after
+the model is modified.
+
+The fallback calls `MOI.ObjectiveFunction{F}`. A model that stores the
+objective function should implement this attribute and implement
+`MOI.ObjectiveFunction{F}` by calling `copy_if_modifiable` on its result.
+"""
+struct UnsafeObjectiveFunction{F<:MOI.AbstractFunction} <:
+       MOI.AbstractModelAttribute end
+
+function MOI.get_fallback(
+    model::MOI.ModelLike,
+    ::UnsafeObjectiveFunction{F},
+) where {F}
+    return MOI.get(model, MOI.ObjectiveFunction{F}())
+end
+
+"""
+    UnsafeConstraintFunction()
+
+Same as [`MOI.ConstraintFunction`](@ref) except that the returned function may
+be the object stored by the model, even if it can be modified, see
+[`copy_if_modifiable`](@ref). The caller must not modify it, nor keep it after
+the model is modified.
+
+The fallback calls `MOI.ConstraintFunction`. A model that stores the constraint
+functions should implement this attribute and implement `MOI.ConstraintFunction`
+by calling `copy_if_modifiable` on its result.
+"""
+struct UnsafeConstraintFunction <: MOI.AbstractConstraintAttribute end
+
+function MOI.get_fallback(
+    model::MOI.ModelLike,
+    ::UnsafeConstraintFunction,
+    ci::MOI.ConstraintIndex,
+)
+    return MOI.get(model, MOI.ConstraintFunction(), ci)
+end
+
+function _pass_attribute(
+    dest::MOI.ModelLike,
+    src::MOI.ModelLike,
+    index_map,
+    attr::MOI.ObjectiveFunction{F},
+) where {F}
+    value = MOI.get(src, UnsafeObjectiveFunction{F}())
+    MOI.set(dest, attr, map_indices(index_map, attr, value))
+    return
+end
+
 function _pass_attribute(
     dest::MOI.ModelLike,
     src::MOI.ModelLike,
@@ -175,7 +230,10 @@ function _copy_constraints(
     cis_src::Vector{<:MOI.ConstraintIndex},
 )
     for ci in cis_src
-        f = MOI.get(src, MOI.ConstraintFunction(), ci)
+        # MOI does not allows the implementation of `MOI.constraint`
+        # to modify it or hold a copy of it.
+        # `map_indices` is also often going to copy it anyway
+        f = MOI.get(src, UnsafeConstraintFunction(), ci)
         s = MOI.get(src, MOI.ConstraintSet(), ci)
         index_map_FS[ci] =
             MOI.add_constraint(dest, map_indices(index_map, f), s)

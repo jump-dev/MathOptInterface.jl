@@ -120,10 +120,10 @@ end
 
 function MOI.get(
     ::MOI.ModelLike,
-    ::MOI.ConstraintFunction,
+    ::MOI.Utilities.UnsafeConstraintFunction,
     bridge::SOS1ToMILPBridge,
 )
-    return MOI.Utilities.copy_if_modifiable(bridge.f)
+    return bridge.f
 end
 
 function MOI.get(::MOI.ModelLike, ::MOI.ConstraintSet, bridge::SOS1ToMILPBridge)

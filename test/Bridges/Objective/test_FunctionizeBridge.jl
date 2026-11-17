@@ -98,6 +98,18 @@ function test_runtests()
     return
 end
 
+function test_UnsafeObjectiveFunction()
+    inner = MOI.Utilities.Model{Float64}()
+    model = MOI.Bridges.Objective.Functionize{Float64}(inner)
+    x = MOI.add_variable(model)
+    attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
+    MOI.set(model, attr, x)
+    @test MOI.Bridges.is_objective_bridged(model)
+    unsafe = MOI.Utilities.UnsafeObjectiveFunction{MOI.VariableIndex}()
+    @test MOI.get(model, unsafe) == x
+    return
+end
+
 end  # module
 
 TestObjectiveFunctionize.runtests()

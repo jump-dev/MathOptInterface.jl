@@ -1330,6 +1330,15 @@ function MOI.get(b::AbstractBridgeOptimizer, attr::MOI.ObjectiveFunction)
     return unbridged_function(b, _bridged_function(b, attr))
 end
 
+# The objective function of `b.model` may be bridged so we cannot forward
+# `UnsafeObjectiveFunction` to `b.model`.
+function MOI.get(
+    b::AbstractBridgeOptimizer,
+    ::MOI.Utilities.UnsafeObjectiveFunction{F},
+) where {F}
+    return MOI.get(b, MOI.ObjectiveFunction{F}())
+end
+
 function MOI.set(
     b::AbstractBridgeOptimizer,
     attr::MOI.ObjectiveSense,
@@ -1581,7 +1590,7 @@ end
 
 function MOI.get(
     b::AbstractBridgeOptimizer,
-    attr::MOI.ConstraintFunction,
+    attr::Union{MOI.ConstraintFunction,MOI.Utilities.UnsafeConstraintFunction},
     ci::MOI.ConstraintIndex,
 )
     if is_bridged(b, ci)
@@ -1592,8 +1601,9 @@ function MOI.get(
             return Variable.function_for(Variable.bridges(b)::Variable.Map, ci)
         else
             # Otherwise, we need to query ConstraintFunction in the context of
-            # the bridge...
-            func = call_in_context(MOI.get, b, ci, attr)
+            # the bridge. We don't forward `UnsafeConstraintFunction` as bridges
+            # building a new function only implement `ConstraintFunction`...
+            func = call_in_context(MOI.get, b, ci, MOI.ConstraintFunction())
             # and then unbridge this function (because it may contain variables
             # that are themselves bridged).
             return unbridged_constraint_function(b, func)

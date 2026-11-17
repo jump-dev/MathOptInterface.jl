@@ -418,6 +418,24 @@ function test_issue_2867()
     )
     return
 end
+function test_UnsafeConstraintFunction()
+    inner = MOI.Utilities.Model{Int}()
+    model = MOI.Bridges.Constraint.IndicatorToMILP{Int}(inner)
+    x = MOI.add_variables(model, 2)
+    MOI.add_constraint(model, x[1], MOI.ZeroOne())
+    MOI.add_constraint(model, x[2], MOI.Interval(1, 2))
+    f = MOI.Utilities.vectorize([1 * x[1], 2 * x[2]])
+    set = MOI.Indicator{MOI.ACTIVATE_ON_ONE}(MOI.LessThan(2))
+    c = MOI.add_constraint(model, f, set)
+    bridge = MOI.Bridges.bridge(model, c)
+    unsafe = MOI.get(inner, MOI.Utilities.UnsafeConstraintFunction(), bridge)
+    @test unsafe ≈ f
+    @test unsafe === bridge.f
+    g = MOI.get(inner, MOI.ConstraintFunction(), bridge)
+    @test g ≈ f
+    @test g !== unsafe
+    return
+end
 
 end  # module
 

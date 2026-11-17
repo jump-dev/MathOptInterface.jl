@@ -564,12 +564,16 @@ end
 
 function MOI.get(
     uf::UniversalFallback,
-    attr::MOI.ObjectiveFunction{F},
+    attr::UnsafeObjectiveFunction{F},
 )::F where {F}
     if uf.objective === nothing
         return MOI.get(uf.model, attr)
     end
     return something(uf.objective)
+end
+
+function MOI.get(uf::UniversalFallback, ::MOI.ObjectiveFunction{F}) where {F}
+    return copy_if_modifiable(MOI.get(uf, UnsafeObjectiveFunction{F}()))
 end
 
 function MOI.set(
@@ -896,7 +900,11 @@ end
 
 function MOI.get(
     uf::UniversalFallback,
-    attr::Union{MOI.ConstraintFunction,MOI.ConstraintSet},
+    attr::Union{
+        UnsafeConstraintFunction,
+        MOI.ConstraintFunction,
+        MOI.ConstraintSet,
+    },
     ci::MOI.ConstraintIndex,
 )
     return MOI.get(constraints(uf, ci), attr, ci)

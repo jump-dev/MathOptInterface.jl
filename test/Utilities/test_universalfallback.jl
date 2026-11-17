@@ -237,6 +237,24 @@ function test_unsupported_objective_attributes()
     return
 end
 
+function test_unsupported_objective_UnsafeObjectiveFunction()
+    model = ModelForUniversalFallback{Float64}()
+    uf = MOI.Utilities.UniversalFallback(model)
+    x = MOI.add_variable(uf)
+    f = 1.0 * x + 2.0
+    F = typeof(f)
+    attr = MOI.ObjectiveFunction{F}()
+    @test !MOI.supports(model, attr)
+    MOI.set(uf, attr, f)
+    unsafe = MOI.get(uf, MOI.Utilities.UnsafeObjectiveFunction{F}())
+    @test unsafe ≈ f
+    @test unsafe === MOI.get(uf, MOI.Utilities.UnsafeObjectiveFunction{F}())
+    g = MOI.get(uf, attr)
+    @test g ≈ f
+    @test g !== unsafe
+    return
+end
+
 function test_supported_constraint_attributes()
     model = ModelForUniversalFallback{Float64}()
     uf = MOI.Utilities.UniversalFallback(model)
