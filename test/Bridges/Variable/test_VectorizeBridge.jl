@@ -107,7 +107,10 @@ function test_exp3_with_add_constrained_variable_y()
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 1
     xc = MOI.add_constraint(bridged_mock, 2.0x, MOI.LessThan(4.0))
     y, yc = MOI.add_constrained_variable(bridged_mock, MOI.LessThan(5.0))
-    @test yc.value == y.value == -1
+    # `y` is a bridged variable: its (positive) outer index is allocated
+    # independently of the inner model, and the `VariableIndex` constraint
+    # `yc` shares its value.
+    @test yc.value == y.value
     @test MOI.get(bridged_mock, MOI.NumberOfVariables()) == 2
     @test length(MOI.get(bridged_mock, MOI.ListOfVariableIndices())) == 2
     @test Set(MOI.get(bridged_mock, MOI.ListOfVariableIndices())) == Set([x, y])
@@ -130,7 +133,7 @@ function test_exp3_with_add_constrained_variable_y()
 
     err = MOI.AddConstraintNotAllowed{MOI.VariableIndex,MOI.LessThan{Float64}}(
         "Cannot add two `VariableIndex`-in-`MathOptInterface.LessThan{Float64}`" *
-        " on the same variable MOI.VariableIndex(-1).",
+        " on the same variable $(y).",
     )
     @test_throws err MOI.add_constraint(bridged_mock, y, MOI.LessThan(4.0))
 
@@ -170,7 +173,7 @@ function test_exp3_with_add_constrained_variable_y()
     change = MOI.ScalarCoefficientChange(y, 0.0)
     attr = MOI.ObjectiveFunction{MOI.ScalarAffineFunction{Float64}}()
     message =
-        "The change MathOptInterface.ScalarCoefficientChange{Float64}(MOI.VariableIndex(-1), 0.0)" *
+        "The change $(change)" *
         " contains variables bridged into a function with nonzero constant."
     err = MOI.ModifyObjectiveNotAllowed(change, message)
     @test_throws err MOI.modify(bridged_mock, attr, change)

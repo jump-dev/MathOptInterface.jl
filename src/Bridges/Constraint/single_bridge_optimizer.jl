@@ -77,8 +77,6 @@ function MOI.Bridges.is_bridged(
     return MOI.Bridges.supports_bridging_constrained_variable(b, S)
 end
 
-MOI.Bridges.is_bridged(::SingleBridgeOptimizer, ::MOI.VariableIndex) = false
-
 function MOI.Bridges.is_bridged(
     b::SingleBridgeOptimizer,
     ci::MOI.ConstraintIndex{MOI.VariableIndex,S},
