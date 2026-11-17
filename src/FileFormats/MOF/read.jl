@@ -321,7 +321,38 @@ function _parse_scalar_nonlinear_function(
             name_map,
         )
     end
-    f = MOI.ScalarNonlinearFunction(Symbol(head), Any[])
+    return nonlinear_node_to_moi(
+        Val(Symbol(head)),
+        T,
+        node,
+        node_list,
+        name_map,
+    )
+end
+
+"""
+    nonlinear_node_to_moi(
+        ::Val{head},
+        ::Type{T},
+        node::Dict,
+        node_list::Vector,
+        name_map::Dict{String,MOI.VariableIndex},
+    ) where {head,T}
+
+Convert `node`, a node of type `head` in the MathOptFormat nonlinear expression
+graph `node_list`, into an argument of a `MOI.ScalarNonlinearFunction`.
+
+The default returns `MOI.ScalarNonlinearFunction(head, args)`. A package can
+add methods for the nodes written by its methods of [`moi_to_object`](@ref).
+"""
+function nonlinear_node_to_moi(
+    ::Val{head},
+    ::Type{T},
+    node::Dict,
+    node_list::Vector,
+    name_map::Dict{String,MOI.VariableIndex},
+) where {head,T}
+    f = MOI.ScalarNonlinearFunction(head, Any[])
     for arg in node["args"]
         push!(
             f.args,
