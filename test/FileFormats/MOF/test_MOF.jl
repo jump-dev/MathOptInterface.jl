@@ -332,7 +332,7 @@ function test_nonempty_model()
         model,
         joinpath(@__DIR__, "empty_model.mof.json"),
     )
-    options = MOF.get_options(model)
+    options = @inferred MOF.get_options(model)
     @test options.warn
     MOI.empty!(model)
     @test MOI.is_empty(model)
