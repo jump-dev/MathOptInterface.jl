@@ -42,7 +42,7 @@ struct _SubexpressionStorage
     end
 end
 
-struct _FunctionStorage
+struct _FunctionStorage{R<:SMC.AbstractColoringResult}
     nodes::Vector{Nonlinear.Node}
     adj::SparseArrays.SparseMatrixCSC{Bool,Int}
     const_values::Vector{Float64}
@@ -51,27 +51,28 @@ struct _FunctionStorage
     reverse_storage::Vector{Float64}
     grad_sparsity::Vector{Int}
     # Nonzero pattern of Hessian matrix
+    hess_colptr::Vector{Int}
     hess_I::Vector{Int}
     hess_J::Vector{Int}
-    rinfo::Coloring.RecoveryInfo # coloring info for hessians
+    rinfo::Union{Nothing,ColoringResult{R}}
     seed_matrix::Matrix{Float64}
     linearity::Linearity
     # subexpressions which this function depends on, ordered for forward pass.
     dependent_subexpressions::Vector{Int}
 
-    function _FunctionStorage(
+    function _FunctionStorage{R}(
         nodes::Vector{Nonlinear.Node},
         const_values,
         num_variables,
         coloring_storage::Coloring.IndexedSet,
-        want_hess::Bool,
+        coloring_algorithm::Union{Nothing,SMC.GreedyColoringAlgorithm},
         subexpressions::Vector{_SubexpressionStorage},
         dependent_subexpressions,
         subexpression_linearity,
         subexpression_edgelist,
         subexpression_variables,
         moi_index_to_consecutive_index,
-    )
+    ) where {R<:SMC.AbstractColoringResult}
         nodes = _replace_moi_variables(nodes, moi_index_to_consecutive_index)
         adj = Nonlinear.adjacency_matrix(nodes)
         N = length(nodes)
@@ -85,7 +86,7 @@ struct _FunctionStorage
         end
         grad_sparsity = sort!(collect(coloring_storage))
         empty!(coloring_storage)
-        if want_hess
+        if !isnothing(coloring_algorithm)
             linearity = _classify_linearity(nodes, adj, subexpression_linearity)
             edgelist = _compute_hessian_sparsity(
                 nodes,
@@ -94,13 +95,14 @@ struct _FunctionStorage
                 subexpression_edgelist,
                 subexpression_variables,
             )
-            hess_I, hess_J, rinfo = Coloring.hessian_color_preprocess(
+            hess_colptr, hess_I, hess_J, rinfo = _hessian_color_preprocess(
                 edgelist,
                 num_variables,
+                coloring_algorithm,
                 coloring_storage,
             )
-            seed_matrix = Coloring.seed_matrix(rinfo)
-            return new(
+            seed_matrix = _seed_matrix(rinfo)
+            return new{R}(
                 nodes,
                 adj,
                 const_values,
@@ -108,6 +110,7 @@ struct _FunctionStorage
                 zeros(N),  # partials_storage,
                 zeros(N),  # reverse_storage,
                 grad_sparsity,
+                hess_colptr,
                 hess_I,
                 hess_J,
                 rinfo,
@@ -116,7 +119,7 @@ struct _FunctionStorage
                 dependent_subexpressions,
             )
         else
-            return new(
+            return new{R}(
                 nodes,
                 adj,
                 const_values,
@@ -126,7 +129,8 @@ struct _FunctionStorage
                 grad_sparsity,
                 Int[],
                 Int[],
-                Coloring.RecoveryInfo(),
+                Int[],
+                nothing,
                 Array{Float64}(undef, 0, 0),
                 NONLINEAR,
                 dependent_subexpressions,
@@ -147,12 +151,14 @@ interface.
 !!! warning
     Before using, you must initialize the evaluator using `MOI.initialize`.
 """
-mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
+mutable struct NLPEvaluator{R,C<:SMC.GreedyColoringAlgorithm} <:
+               MOI.AbstractNLPEvaluator
     data::Nonlinear.Model
     ordered_variables::Vector{MOI.VariableIndex}
+    coloring_algorithm::C
 
-    objective::Union{Nothing,_FunctionStorage}
-    constraints::Vector{_FunctionStorage}
+    objective::Union{Nothing,_FunctionStorage{R}}
+    constraints::Vector{_FunctionStorage{R}}
     subexpressions::Vector{_SubexpressionStorage}
     subexpression_order::Vector{Int}
     # Storage for the subexpressions in reverse-mode automatic differentiation.
@@ -187,7 +193,17 @@ mutable struct NLPEvaluator <: MOI.AbstractNLPEvaluator
     function NLPEvaluator(
         data::Nonlinear.Model,
         ordered_variables::Vector{MOI.VariableIndex},
+        coloring_algorithm::SMC.GreedyColoringAlgorithm = SMC.GreedyColoringAlgorithm(;
+            decompression = :substitution,
+        ),
     )
-        return new(data, ordered_variables)
+        problem =
+            SMC.ColoringProblem(; structure = :symmetric, partition = :column)
+        C = typeof(coloring_algorithm)
+        _S = SMC.SparsityPatternCSC(
+            SparseArrays.sparse([1], [1], Bool[true], 1, 1),
+        )
+        R = typeof(SMC.coloring(_S, problem, coloring_algorithm))
+        return new{R,C}(data, ordered_variables, coloring_algorithm)
     end
 end
