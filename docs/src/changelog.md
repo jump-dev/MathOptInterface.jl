@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Various improvements for MathOptFormat:
    - support writing any `MOI.ModelLike` with given options (#3135)
    - assert the type of the options of MOF.Model (#3149)
-   - accept a tuple of replacements in create_unique_names (#3147)
+   - accept a tuple of replacements in `create_unique_names` (#3147)
 - Added generic routing for objective function attributes (#3142)
 
 ### Fixed
