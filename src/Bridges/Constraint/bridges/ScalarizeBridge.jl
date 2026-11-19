@@ -153,7 +153,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{ScalarizeBridge{T,F,S}},
 ) where {T,F,S}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,S})
@@ -211,7 +215,7 @@ end
 
 function MOI.get(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::ScalarizeBridge,
 )
     values = MOI.get.(model, attr, bridge.scalar_constraints)
@@ -223,7 +227,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::ScalarizeBridge,
     value,
 )

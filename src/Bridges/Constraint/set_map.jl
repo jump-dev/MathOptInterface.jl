@@ -24,7 +24,7 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart,MOI.ConstraintDual},
     ::Type{<:BridgeType{T,F2,F3}},
 ) where {T,F2,F3}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F2,S2}) ||
@@ -205,7 +205,7 @@ end
 
 function MOI.set(
     model::MOI.ModelLike,
-    attr::MOI.ConstraintDualStart,
+    attr::Union{MOI.ConstraintDualStart,MOI.ConstraintDual},
     bridge::BT,
     value,
 ) where {BT<:MultiSetMapBridge}
@@ -263,7 +263,11 @@ end
 
 function MOI.supports(
     model::MOI.ModelLike,
-    attr::Union{MOI.ConstraintPrimalStart,MOI.ConstraintDualStart},
+    attr::Union{
+        MOI.ConstraintPrimalStart,
+        MOI.ConstraintDualStart,
+        MOI.ConstraintDual,
+    },
     ::Type{<:SetMapBridge{T,S2,S1,F}},
 ) where {T,S2,S1,F}
     return MOI.supports(model, attr, MOI.ConstraintIndex{F,S2})
