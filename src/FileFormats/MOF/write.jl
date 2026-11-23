@@ -13,6 +13,10 @@ const _Object = JSON.Object{String,Any}
 function _object(pairs::Pair{String}...)
     object = _Object()
     for (key, value) in pairs
+        # The type of `value` can vary so the dispatch to
+        # `setindex!` would be at runtime. To avoid this, we
+        # use `Base.inferencebarrier` so that the compiler just
+        # use the generic `setindex!` with `::Any` value.
         object[key] = Base.inferencebarrier(value)
     end
     return object
@@ -205,7 +209,6 @@ function moi_to_object(index::MOI.VariableIndex, model::MOI.ModelLike)
     end
     object = _object("name" => name)
     if !isnothing(primal_start)
-        # Inserting the value does not depend on its type, unlike `=>`.
         object["primal_start"] = primal_start
     end
     return object
