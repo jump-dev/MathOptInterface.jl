@@ -1168,6 +1168,50 @@ function test_unable_to_parse_bound()
     return
 end
 
+function test_floating_coefficient_round_trip()
+    for T in (Float16, Float32, BigFloat)
+        @testset "$T" begin
+            model = LP.Model(; coefficient_type = T)
+            x, y = MOI.add_variables(model, 2)
+            MOI.set(model, MOI.VariableName(), x, "x")
+            MOI.set(model, MOI.VariableName(), y, "y")
+            a, b, c = nextfloat(T(1)), nextfloat(T(3)), nextfloat(T(7))
+            F = MOI.ScalarQuadraticFunction{T}
+            obj = F(
+                [MOI.ScalarQuadraticTerm(b, x, y)],
+                [MOI.ScalarAffineTerm(-a, x)],
+                c,
+            )
+            MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+            MOI.set(model, MOI.ObjectiveFunction{F}(), obj)
+            MOI.add_constraint(model, x, MOI.Interval(-a, b))
+            f = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(a, y)], zero(T))
+            MOI.add_constraint(model, f, MOI.LessThan(c))
+            written = sprint(write, model)
+
+            copy = LP.Model(; coefficient_type = T)
+            read!(IOBuffer(written), copy)
+            @test sprint(write, copy) == written
+            v = MOI.get(copy, MOI.VariableIndex, "x")
+            w = MOI.get(copy, MOI.VariableIndex, "y")
+            copy_obj = MOI.get(copy, MOI.ObjectiveFunction{F}())
+            @test copy_obj.constant == c
+            @test only(copy_obj.affine_terms).coefficient == -a
+            quadratic = only(copy_obj.quadratic_terms)
+            @test quadratic.coefficient == b
+            @test Set((quadratic.variable_1, quadratic.variable_2)) == Set((v, w))
+            @test MOI.Utilities.get_bounds(copy, T, v) == (-a, b)
+            G, S = typeof(f), MOI.LessThan{T}
+            row = only(MOI.get(copy, MOI.ListOfConstraintIndices{G,S}()))
+            term = only(MOI.get(copy, MOI.ConstraintFunction(), row).terms)
+            @test term.coefficient == a
+            @test term.variable == w
+            @test MOI.get(copy, MOI.ConstraintSet(), row) == MOI.LessThan(c)
+        end
+    end
+    return
+end
+
 function test_unsupported_variable_types()
     model = LP.Model()
     @test_throws(
