@@ -185,8 +185,7 @@ end
 """
     moi_to_object(x, model::MOI.ModelLike)
 
-Convert `x` into its representation in the MathOptFormat document, for
-instance a `JSON.Object{String,Any}`.
+Convert `x` into a `JSON.Object{String,Any}`.
 """
 function moi_to_object end
 
