@@ -63,14 +63,21 @@ function run_mathoptformat(args::Vector{String})::Cint
     return _write(model, args)
 end
 
-# A starting value, which adds a field to the object of the variable.
+# A starting value for `x`, so the object of the variable in the document has a
+# `primal_start` field, which the traced model does not have. When the objects
+# were `NamedTuple`s, JSON needed methods for each combination of fields, so
+# this failed without a trace, see
+# https://github.com/jump-dev/MathOptInterface.jl/pull/3151.
 function run_starts(args::Vector{String})::Cint
     model, x = _model()
     MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
     return _write(model, args)
 end
 
-# Without the nonlinear constraint, the model has another layout.
+# The traced model without its nonlinear constraint, so the document has no
+# `has_scalar_nonlinear` field: its top-level object has other fields than the
+# one of the traced model, see
+# https://github.com/jump-dev/MathOptInterface.jl/pull/3151.
 function run_linear(args::Vector{String})::Cint
     model = MOI.FileFormats.MOF.Model()
     x = MOI.add_variable(model)
