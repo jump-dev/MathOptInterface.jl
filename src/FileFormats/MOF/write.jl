@@ -8,16 +8,21 @@
 # JSON writes all of them with the same methods, whatever their fields.
 const _Object = JSON.Object{String,Any}
 
-# The values are inserted as `Any`, otherwise the `JSON.Object` constructor would
-# need a method for each type of value.
+# Create a `JSON.Object{String,Any}` with the `key => value` pairs.
+#
+# Julia compiles a function taking a variable number of arguments, such as this
+# one, without specializing on the type of each argument, so the type of `value`
+# is unknown below. Because the keys are declared as `String`, `object[key] =
+# value` still matches only one method of `setindex!`, so the call is resolved
+# at compile time and the same compiled code inserts values of any type. With
+# keys of unknown type, as in `JSON.Object(pairs...)`, the methods for `String`
+# and `Symbol` keys would both match and the method would be selected at run
+# time: this is slower and, in an executable compiled with `juliac --trim`, it
+# fails for the types of values whose method was not compiled.
 function _object(pairs::Pair{String}...)
     object = _Object()
     for (key, value) in pairs
-        # The type of `value` can vary so the dispatch to
-        # `setindex!` would be at runtime. To avoid this, we
-        # use `Base.inferencebarrier` so that the compiler just
-        # use the generic `setindex!` with `::Any` value.
-        object[key] = Base.inferencebarrier(value)
+        object[key] = value
     end
     return object
 end
