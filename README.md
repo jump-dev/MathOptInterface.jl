@@ -16,6 +16,15 @@ An abstraction layer for mathematical optimization solvers.
 [codecov-img]: https://codecov.io/gh/JuMP-dev/MathOptInterface.jl/branch/master/graph/badge.svg
 [codecov-url]: https://codecov.io/gh/JuMP-dev/MathOptInterface.jl/branch/master
 
+## Agent skills
+
+Install the skills for writing MOI solver wrappers with the
+[GitHub CLI](https://cli.github.com/manual/gh_skill).
+
+```sh
+gh skill install jump-dev/MathOptInterface.jl --all --allow-hidden-dirs
+```
+
 ## Citing MathOptInterface
 
 If you find MathOptInterface useful in your work, we kindly request that you cite the
