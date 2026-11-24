@@ -34,6 +34,6 @@ When testing support, query the raw optimizer for the function-in-set pair.
 Use a bridged model to test the user's formulation and its returned dual.
 If a reformulation is missing, implement it as a reusable MOI bridge.
 
-See the [solver-wrapper tutorial](../../../docs/src/tutorials/implementing.md#define-supports_constraint),
-the [constraint bridge tutorial](../../../docs/src/tutorials/bridging_constraint.md),
-and the [MatrixOfConstraints guide](../../../docs/src/submodules/Utilities/overview.md#utilitiesmatrixofconstraints).
+See the [solver-wrapper tutorial](https://jump.dev/MathOptInterface.jl/stable/tutorials/implementing/#Define-supports_constraint),
+the [constraint bridge tutorial](https://jump.dev/MathOptInterface.jl/stable/tutorials/bridging_constraint/),
+and the [MatrixOfConstraints guide](https://jump.dev/MathOptInterface.jl/stable/submodules/Utilities/overview/#Utilities.MatrixOfConstraints).
