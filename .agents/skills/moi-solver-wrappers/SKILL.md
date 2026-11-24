@@ -8,7 +8,7 @@ description: Use when implementing or reviewing a Julia solver wrapper for MathO
 Implement `MOI.supports_constraint(optimizer, F, S)` for the function-in-set
 pairs the underlying solver handles natively. When support depends on the
 selected algorithm, report the capabilities of that configuration. Leave
-unsupported pairs to MOI's bridge system.
+unsupported pairs to MOI's bridge system, especially for conic solvers.
 
 Choose a set that matches the solver's cone convention, including coordinate
 order and scaling. If no existing MOI set matches, define a solver-specific
@@ -17,12 +17,13 @@ set and a custom bridge from the standard set. Return the bridge type from
 this pattern for the triangular ordering of scaled PSD matrices. ECOS.jl
 uses it to swap the second and third coordinates of the exponential cone.
 
-With `MOI.Utilities.MatrixOfConstraints`, configure the cache's product of sets
-to include the solver-specific set. The bridge transforms each affine function
-before the cache assembles its coefficients and constants into cone blocks.
-The wrapper can then pass the assembled data to the solver in its native row
-order. Deferring the conversion to the solver call would require reordering or
-rescaling those rows after assembly.
+With `MOI.Utilities.MatrixOfConstraints`, include the solver-specific set in
+the cache's product of sets. SCS.jl uses `MOI.default_cache` to supply the
+cache inside the bridge layer. The bridge applies the cone's coordinate order
+and scaling before the cache assembles the sparse constraint matrix. SCS can
+then reuse the cached row indices and column pointers directly. Permuting rows
+at solve time would require a reordered copy of the matrix to preserve the
+cached model.
 
 Keeping reformulations in bridges lets users inspect the chosen path with
 `JuMP.print_active_bridges(model)`. The bridge also maps results such as
