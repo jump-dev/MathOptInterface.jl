@@ -27,5 +27,5 @@ natively.
 `JuMP.direct_model(optimizer)` bypasses this cache. Use a regular JuMP model to
 test behavior supplied by the cache and the raw optimizer to test native support.
 
-See the [solver-wrapper tutorial](../../../docs/src/tutorials/implementing.md#the-big-decision-incremental-modification)
-and the [CachingOptimizer guide](../../../docs/src/submodules/Utilities/overview.md#utilitiescachingoptimizer).
+See the [solver-wrapper tutorial](https://jump.dev/MathOptInterface.jl/stable/tutorials/implementing/#The-big-decision:-incremental-modification?)
+and the [CachingOptimizer guide](https://jump.dev/MathOptInterface.jl/stable/submodules/Utilities/overview/#Utilities.CachingOptimizer).
