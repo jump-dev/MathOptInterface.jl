@@ -1199,7 +1199,8 @@ function test_floating_coefficient_round_trip()
             @test only(copy_obj.affine_terms).coefficient == -a
             quadratic = only(copy_obj.quadratic_terms)
             @test quadratic.coefficient == b
-            @test Set((quadratic.variable_1, quadratic.variable_2)) == Set((v, w))
+            @test Set((quadratic.variable_1, quadratic.variable_2)) ==
+                  Set((v, w))
             @test MOI.Utilities.get_bounds(copy, T, v) == (-a, b)
             G, S = typeof(f), MOI.LessThan{T}
             row = only(MOI.get(copy, MOI.ListOfConstraintIndices{G,S}()))
