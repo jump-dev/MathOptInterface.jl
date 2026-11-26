@@ -9,7 +9,7 @@
 # To avoid adding Grisu as a dependency, use the following printing heuristic.
 # TODO(odow): consider printing 1.0 as 1.0 instead of 1, that is, without the
 # rounding branch.
-function _print_shortest(io::IO, x::Float64)
+function _print_shortest(io::IO, x::AbstractFloat)
     if x == -Inf
         print(io, "-inf")
     elseif x == Inf
