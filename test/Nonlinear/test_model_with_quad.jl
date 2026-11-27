@@ -469,7 +469,9 @@ function test_qp_attribute_types()
 end
 
 function test_quad_only_with_empty_inner()
+    @test MOI.supports_incremental_interface(Nonlinear.Model())
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    @test MOI.supports_incremental_interface(model)
     x = MOI.add_variable(model)
     Nonlinear.add_constraint(
         model,
@@ -486,9 +488,60 @@ function test_quad_only_with_empty_inner()
     return
 end
 
+function test_copy_to()
+    src = MOI.Utilities.Model{Float64}()
+    x, y = MOI.add_variables(src, 2)
+    p, _ = MOI.add_constrained_variable(src, MOI.Parameter(2.0))
+    MOI.add_constraint(src, x, MOI.GreaterThan(-1.0))
+    MOI.add_constraint(src, y, MOI.Interval(0.0, 3.0))
+    f = 1.0 * x * x + 1.0 * p * y
+    c_quad = MOI.add_constraint(src, f, MOI.LessThan(4.0))
+    g = MOI.ScalarNonlinearFunction(:sin, Any[y])
+    c_nl = MOI.add_constraint(src, g, MOI.EqualTo(0.5))
+    obj = MOI.ScalarNonlinearFunction(:exp, Any[x])
+    MOI.set(src, MOI.ObjectiveFunction{MOI.ScalarNonlinearFunction}(), obj)
+    MOI.set(src, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    dest = Nonlinear.model(Nonlinear.SparseReverseMode())
+    index_map = MOI.copy_to(dest, src)
+    @test index_map[x] == MOI.VariableIndex(1)
+    @test index_map[y] == MOI.VariableIndex(2)
+    @test MOI.is_valid(dest, index_map[p])
+    @test MOI.is_valid(dest, index_map[c_quad])
+    @test MOI.is_valid(dest, index_map[c_nl])
+    bounds = MOI.Utilities.variable_bounds(dest)
+    @test bounds.lower == [-1.0, 0.0]
+    @test bounds.upper == [Inf, 3.0]
+    vars = [index_map[x], index_map[y]]
+    d = Nonlinear.Evaluator(dest, Nonlinear.SparseReverseMode(), vars)
+    MOI.initialize(d, [:Grad, :Jac])
+    xv = [1.5, 0.25]
+    @test MOI.eval_objective(d, xv) ≈ exp(1.5)
+    cons = fill(NaN, 2)
+    MOI.eval_constraint(d, cons, xv)
+    @test cons ≈ [1.5^2 + 2.0 * 0.25, sin(0.25)]
+    @test MOI.NLPBlockData(d).constraint_bounds ==
+          [MOI.NLPBoundsPair(-Inf, 4.0), MOI.NLPBoundsPair(0.5, 0.5)]
+    # Copying into a non-empty model replaces its content.
+    MOI.set(
+        src,
+        MOI.ConstraintSet(),
+        MOI.ConstraintIndex{MOI.VariableIndex,MOI.Parameter{Float64}}(p.value),
+        MOI.Parameter(3.0),
+    )
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.get(dest, MOI.NumberOfVariables()) == 3
+    vars = [index_map[x], index_map[y]]
+    d = Nonlinear.Evaluator(dest, Nonlinear.SparseReverseMode(), vars)
+    MOI.initialize(d, [:Grad, :Jac])
+    MOI.eval_constraint(d, cons, xv)
+    @test cons ≈ [1.5^2 + 3.0 * 0.25, sin(0.25)]
+    @test length(MOI.NLPBlockData(d).constraint_bounds) == 2
+    return
+end
+
 function test_moi_bounds_and_objectives()
     model = Nonlinear.model(Nonlinear.SparseReverseMode())
-    @test !MOI.supports_incremental_interface(model)
+    @test MOI.supports_incremental_interface(model)
     @test MOI.supports(model, MOI.ObjectiveSense())
     @test MOI.get(model, MOI.ObjectiveFunctionType()) ==
           MOI.ScalarAffineFunction{Float64}

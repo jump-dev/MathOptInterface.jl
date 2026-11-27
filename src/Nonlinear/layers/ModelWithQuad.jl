@@ -83,6 +83,10 @@ function MOI.supports_incremental_interface(model::ModelWithQuad)
     return MOI.supports_incremental_interface(model.inner)
 end
 
+function MOI.copy_to(dest::ModelWithQuad, src::MOI.ModelLike)
+    return MOI.Utilities.default_copy_to(dest, src)
+end
+
 # Model attributes not owned by this layer, including `ObjectiveSense`, are
 # deliberately forwarded through the MOI API.
 function MOI.supports(model::ModelWithQuad, attr::MOI.AbstractModelAttribute)
@@ -110,6 +114,16 @@ function MOI.is_empty(model::ModelWithQuad)
            iszero(length(model.qp)) &&
            model.objective_sink == _NONE &&
            MOI.is_empty(model.inner)
+end
+
+function MOI.empty!(model::ModelWithQuad{T}) where {T}
+    MOI.empty!(model.variables)
+    empty!(model.list_of_variable_indices)
+    MOI.empty!(model.inner)
+    model.qp = QPBlockData{T}()
+    model.qp.parameters = _parameter_values(model.inner)
+    model.objective_sink = _NONE
+    return
 end
 
 function ModelWithQuad{T}(inner) where {T}

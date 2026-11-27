@@ -232,6 +232,35 @@ function test_feature_filtering()
     return
 end
 
+function test_copy_to()
+    src = MOI.Utilities.Model{Float64}()
+    x = MOI.add_variable(src)
+    MOI.add_constraint(src, x, MOI.LessThan(2.0))
+    set = MOI.VectorNonlinearOracle(;
+        dimension = 1,
+        l = [0.0],
+        u = [1.0],
+        eval_f = (g, x) -> (g[1] = x[1]^2),
+        jacobian_structure = [(1, 1)],
+        eval_jacobian = (J, x) -> (J[1] = 2 * x[1]),
+    )
+    c = MOI.add_constraint(src, MOI.VectorOfVariables([x]), set)
+    dest = MOI.Nonlinear.model(MOI.Nonlinear.SparseReverseMode())
+    index_map = MOI.copy_to(dest, src)
+    @test MOI.is_valid(dest, index_map[c])
+    @test MOI.Utilities.variable_bounds(dest).upper == [2.0]
+    d = MOI.Nonlinear.Evaluator(
+        dest,
+        MOI.Nonlinear.SparseReverseMode(),
+        [index_map[x]],
+    )
+    MOI.initialize(d, [:Jac])
+    g = fill(NaN, 1)
+    MOI.eval_constraint(d, g, [3.0])
+    @test g == [9.0]
+    return
+end
+
 function test_forwarding()
     inner = MOI.Utilities.Model{Float64}()
     model = MOI.Nonlinear.ModelWithOracles(inner)
