@@ -119,6 +119,13 @@ function MOI.is_valid(model::ModelWithOracles, x::MOI.VariableIndex)
     return MOI.is_valid(model.inner, x)
 end
 
+function MOI.delete(
+    model::ModelWithOracles,
+    ci::MOI.ConstraintIndex{MOI.VariableIndex},
+)
+    return MOI.delete(model.inner, ci)
+end
+
 function MOI.get(
     model::ModelWithOracles,
     attr::MOI.AbstractVariableAttribute,

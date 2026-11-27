@@ -524,7 +524,16 @@ function test_moi_bounds_and_objectives()
     end
     @test Nonlinear.constraint_dual_starts(model) == [2.0, 2.0, 2.0, nothing]
     oracles = Nonlinear.ModelWithOracles(model)
-    @test MOI.Utilities.variable_bounds(oracles) === model.variables
+    lower = MOI.add_constraint(model, x, MOI.GreaterThan(3.0))
+    MOI.delete(oracles, b)
+    @test !MOI.is_valid(model, b)
+    @test MOI.is_valid(model, lower)
+    @test MOI.is_valid(model, x)
+    bounds = MOI.Utilities.variable_bounds(oracles)
+    @test bounds === model.variables
+    @test bounds.lower == [3.0]
+    @test bounds.upper == [Inf]
+    @test_throws MOI.InvalidIndex(b) MOI.delete(model, b)
     return
 end
 

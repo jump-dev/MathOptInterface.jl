@@ -184,6 +184,13 @@ function MOI.set(
     return MOI.set(model.variables, attr, ci, set)
 end
 
+function MOI.delete(
+    model::ModelWithQuad{T},
+    ci::MOI.ConstraintIndex{MOI.VariableIndex,<:_QPSet{T}},
+) where {T}
+    return MOI.delete(model.variables, ci)
+end
+
 function MOI.add_constrained_variable(
     model::ModelWithQuad{T},
     set::MOI.Parameter{T},
