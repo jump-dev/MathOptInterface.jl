@@ -7,7 +7,21 @@ CurrentModule = MathOptInterface
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## v1.55.0 (November 19, 2026)
+## v1.56 (November 27, 2026)
+
+### Added
+
+ -  Added hooks for custom arguments of nonlinear functions
+    in `FileFormats.MOF` (#3143)
+
+### Fixed
+
+ -  Support `copy_to` into `ModelWithQuad` and `ModelWithOracles` (#3157)
+ -  Validate variable indices before storing QP functions in `ModelWithQuad` (#3156)
+ -  Forward variable-bound deletion through nonlinear model layers (#3155)
+ -  Preserve coefficient types in LP export (#3152)
+
+## v1.55.0 (November 25, 2026)
 
 ### Added
 
