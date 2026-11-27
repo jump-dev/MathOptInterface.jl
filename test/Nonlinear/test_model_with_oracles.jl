@@ -245,7 +245,9 @@ function test_copy_to()
         eval_jacobian = (J, x) -> (J[1] = 2 * x[1]),
     )
     c = MOI.add_constraint(src, MOI.VectorOfVariables([x]), set)
-    dest = MOI.Nonlinear.model(MOI.Nonlinear.SparseReverseMode())
+    # The oracle layer is outermost, as when it wraps a custom backend model.
+    inner = MOI.Nonlinear.ModelWithQuad(MOI.Nonlinear.Model())
+    dest = MOI.Nonlinear.ModelWithOracles(inner)
     index_map = MOI.copy_to(dest, src)
     @test MOI.is_valid(dest, index_map[c])
     @test MOI.Utilities.variable_bounds(dest).upper == [2.0]
