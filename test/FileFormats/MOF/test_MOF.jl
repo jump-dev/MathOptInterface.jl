@@ -151,37 +151,37 @@ function test_nonlinear_error_handling()
     string_to_variable = Dict{String,MOI.VariableIndex}()
     variable_to_string = Dict{MOI.VariableIndex,String}()
     # Test unsupported function for Expr -> MOF.
-    @test_throws Exception MOF._convert_nonlinear_to_mof(
+    @test_throws Exception MOF.moi_to_object(
         :(not_supported_function(x)),
         node_list,
         variable_to_string,
     )
     # Test n-ary function with no arguments.
-    @test_throws Exception MOF._convert_nonlinear_to_mof(
+    @test_throws Exception MOF.moi_to_object(
         :(min()),
         node_list,
         variable_to_string,
     )
     # Test unary function with two arguments.
-    @test_throws Exception MOF._convert_nonlinear_to_mof(
+    @test_throws Exception MOF.moi_to_object(
         :(sin(x, y)),
         node_list,
         variable_to_string,
     )
     # Test binary function with one arguments.
-    @test_throws Exception MOF._convert_nonlinear_to_mof(
+    @test_throws Exception MOF.moi_to_object(
         :(^(x)),
         node_list,
         variable_to_string,
     )
     # An expression with something other than :call as the head.
-    @test_throws Exception MOF._convert_nonlinear_to_mof(
+    @test_throws Exception MOF.moi_to_object(
         :(a <= b <= c),
         node_list,
         variable_to_string,
     )
     # Hit the default fallback with an un-interpolated complex number.
-    @test_throws Exception MOF._convert_nonlinear_to_mof(
+    @test_throws Exception MOF.moi_to_object(
         :(1 + 2im),
         node_list,
         variable_to_string,
@@ -246,6 +246,48 @@ function _convert_mof_to_expr(
     end
 end
 
+# An argument of nonlinear functions defined by another package.
+struct _CustomArgument
+    value::Int
+end
+
+function MOF.moi_to_object(
+    x::_CustomArgument,
+    node_list::Vector{Any},
+    ::Dict{MOI.VariableIndex,String},
+)
+    push!(node_list, (type = "CustomArgument", value = x.value))
+    return (type = "node", index = length(node_list))
+end
+
+function MOF.nonlinear_node_to_moi(
+    ::Val{:CustomArgument},
+    ::Type{T},
+    node::Dict,
+    ::Vector,
+    ::Dict{String,MOI.VariableIndex},
+) where {T}
+    return _CustomArgument(node["value"])
+end
+
+function test_nonlinear_custom_argument()
+    model = MOF.Model(; use_nlp_block = false)
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    f = MOI.ScalarNonlinearFunction(:+, Any[x, _CustomArgument(2)])
+    MOI.add_constraint(model, f, MOI.LessThan(1.0))
+    text = sprint(write, model)
+    @test occursin("CustomArgument", text)
+    restored = MOF.Model(; use_nlp_block = false)
+    read!(IOBuffer(text), restored)
+    F, S = MOI.ScalarNonlinearFunction, MOI.LessThan{Float64}
+    c = only(MOI.get(restored, MOI.ListOfConstraintIndices{F,S}()))
+    g = MOI.get(restored, MOI.ConstraintFunction(), c)
+    @test g.head == :+
+    @test g.args[2] == _CustomArgument(2)
+    return
+end
+
 function test_Roundtrip_nonlinear_expressions()
     x = MOI.VariableIndex(123)
     y = MOI.VariableIndex(456)
@@ -288,7 +330,7 @@ function test_Roundtrip_nonlinear_expressions()
         :(ifelse($x > 0, 1, $y)),
     ]
         node_list = Any[]
-        object = MOF._convert_nonlinear_to_mof(expr, node_list, var_to_string)
+        object = MOF.moi_to_object(expr, node_list, var_to_string)
         @test _convert_mof_to_expr(object, node_list, string_to_var) == expr
     end
     return
