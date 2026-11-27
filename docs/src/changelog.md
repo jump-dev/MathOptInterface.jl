@@ -11,15 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
- -  Added hooks for custom arguments of nonlinear functions
-    in `FileFormats.MOF` (#3143)
+ - Write the document with JSON.Object in `FileFormats.MOF` (#3151)
+ - Added hooks for custom arguments of nonlinear functions
+   in `FileFormats.MOF` (#3143)
 
 ### Fixed
 
- -  Support `copy_to` into `ModelWithQuad` and `ModelWithOracles` (#3157)
- -  Validate variable indices before storing QP functions in `ModelWithQuad` (#3156)
- -  Forward variable-bound deletion through nonlinear model layers (#3155)
- -  Preserve coefficient types in LP export (#3152)
+ - Support `copy_to` into `ModelWithQuad` and `ModelWithOracles` (#3157)
+ - Validate variable indices before storing QP functions in `ModelWithQuad` (#3156)
+ - Forward variable-bound deletion through nonlinear model layers (#3155)
+ - Preserve coefficient types in LP export (#3152)
 
 ## v1.55.0 (November 25, 2026)
 
