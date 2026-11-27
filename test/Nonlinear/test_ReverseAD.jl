@@ -104,15 +104,15 @@ function test_objective_quadratic_multivariate()
     g = [NaN, NaN]
     MOI.eval_objective_gradient(evaluator, g, [1.2, 2.3])
     @test g == [2 * 1.2 + 2.3, 1.2 + 2 * 2.3]
-    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
+    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 1), (2, 2)]
     H = [NaN, NaN, NaN]
     MOI.eval_hessian_objective(evaluator, H, [1.2, 2.3])
-    @test H == [2.0, 2.0, 1.0]
+    @test H == [2.0, 1.0, 2.0]
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (2, 1)]
+          [(1, 1), (2, 1), (2, 2)]
     H = [NaN, NaN, NaN]
     MOI.eval_hessian_lagrangian(evaluator, H, [1.2, 2.3], 1.5, Float64[])
-    @test H == 1.5 .* [2.0, 2.0, 1.0]
+    @test H == 1.5 .* [2.0, 1.0, 2.0]
     v = [0.3, 0.4]
     hv = [NaN, NaN]
     MOI.eval_hessian_lagrangian_product(
@@ -145,19 +145,19 @@ function test_objective_quadratic_multivariate_subexpressions()
     MOI.eval_objective_gradient(evaluator, g, val)
     @test g == [2 * 1.2 + 2.3, 1.2 + 2 * 2.3]
     @test 0 == @allocated MOI.eval_objective_gradient(evaluator, g, val)
-    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 2), (2, 1)]
+    @test MOI.hessian_objective_structure(evaluator) == [(1, 1), (2, 1), (2, 2)]
     H = [NaN, NaN, NaN]
     MOI.eval_hessian_objective(evaluator, H, val)
-    @test H == [2.0, 2.0, 1.0]
+    @test H == [2.0, 1.0, 2.0]
     @test evaluator.backend.max_chunk == 2
     @test 0 == @allocated MOI.eval_hessian_objective(evaluator, H, val)
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (2, 1)]
+          [(1, 1), (2, 1), (2, 2)]
     H = [NaN, NaN, NaN]
     μ = Float64[]
     MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, μ)
     @test 0 == @allocated MOI.eval_hessian_lagrangian(evaluator, H, val, 1.5, μ)
-    @test H == 1.5 .* [2.0, 2.0, 1.0]
+    @test H == 1.5 .* [2.0, 1.0, 2.0]
     v = [0.3, 0.4]
     hv = [NaN, NaN]
     MOI.eval_hessian_lagrangian_product(evaluator, hv, val, v, 1.5, μ)
@@ -281,10 +281,10 @@ function test_constraint_quadratic_multivariate()
     MOI.eval_constraint_jacobian(evaluator, J, x_val)
     @test J == [2 * x_val[1] + x_val[2], x_val[1] + 2 * x_val[2]]
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (2, 1)]
+          [(1, 1), (2, 1), (2, 2)]
     H = [NaN, NaN, NaN]
     MOI.eval_hessian_lagrangian(evaluator, H, x_val, 0.0, [1.5])
-    @test H == 1.5 .* [2.0, 2.0, 1.0]
+    @test H == 1.5 .* [2.0, 1.0, 2.0]
     return
 end
 
@@ -319,10 +319,10 @@ function test_constraint_quadratic_multivariate_subexpressions()
     @test y ≈ wJ[:]
     # Hessian-Lagrangian
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (2, 1)]
+          [(1, 1), (2, 1), (2, 2)]
     H = [NaN, NaN, NaN]
     MOI.eval_hessian_lagrangian(evaluator, H, x_val, 0.0, [1.5])
-    @test H ≈ 1.5 .* [2.0, 2.0, 1.0]
+    @test H ≈ 1.5 .* [2.0, 1.0, 2.0]
     return
 end
 
@@ -349,10 +349,10 @@ function test_hessian_sparsity_registered_function()
     @test :Hess in MOI.features_available(evaluator)
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (3, 3), (3, 1)]
+          [(1, 1), (3, 1), (2, 2), (3, 3)]
     H = fill(NaN, 4)
     MOI.eval_hessian_lagrangian(evaluator, H, rand(3), 1.5, Float64[])
-    @test H == 1.5 .* [2.0, 2.0, 2.0, 0.0]
+    @test H == 1.5 .* [2.0, 0.0, 2.0, 2.0]
     return
 end
 
@@ -380,10 +380,10 @@ function test_hessian_sparsity_registered_rosenbrock()
     @test :Hess in MOI.features_available(evaluator)
     MOI.initialize(evaluator, [:Grad, :Jac, :Hess])
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (2, 1)]
+          [(1, 1), (2, 1), (2, 2)]
     H = fill(NaN, 3)
     MOI.eval_hessian_lagrangian(evaluator, H, [1.0, 1.0], 1.5, Float64[])
-    @test H == 1.5 .* [802.0, 200.0, -400.0]
+    @test H == 1.5 .* [802.0, -400.0, 200.0]
     return
 end
 
@@ -417,85 +417,187 @@ function test_hessian_registered_error()
     return
 end
 
-struct _ColoringGraph
-    num_vertices::Int
-    edges::Vector{Tuple{Int,Int}}
-end
-
-function to_adjlist(graph::_ColoringGraph)
-    I = [i for (i, _) in graph.edges]
-    J = [j for (_, j) in graph.edges]
-    return Coloring.UndirectedGraph(I, J, graph.num_vertices)
-end
-
-function test_coloring_edge_free_graph()
-    graph = _ColoringGraph(10, [])
-    _, numcolors = Coloring.acyclic_coloring(to_adjlist(graph))
-    @test numcolors == 1
-    return
-end
-
-function test_coloring_one_edge_graph()
-    graph = _ColoringGraph(10, [(2, 4)])
-    color, numcolors = Coloring.acyclic_coloring(to_adjlist(graph))
-    @test numcolors == 2
-    @test color[2] != color[4]
-    return
-end
-
-function test_coloring_two_edge_graph()
-    graph = _ColoringGraph(10, [(2, 4), (2, 3)])
-    color, numcolors = Coloring.acyclic_coloring(to_adjlist(graph))
-    @test numcolors == 2
-    @test color[3] == color[4]
-    return
-end
-
-function test_coloring_three_edge_graph()
-    graph = _ColoringGraph(10, [(2, 4), (2, 3), (3, 4)])
-    color, numcolors = Coloring.acyclic_coloring(to_adjlist(graph))
-    @test numcolors == 3
-    # TODO: What is this testing?
-    Coloring.recovery_preprocess(to_adjlist(graph), color, numcolors, Int[])
-    return
-end
-
-function test_coloring_two_edge_three_vertex_graph()
-    graph = _ColoringGraph(3, [(1, 3), (2, 3)])
-    _, numcolors = Coloring.acyclic_coloring(to_adjlist(graph))
-    @test numcolors == 2
-    return
-end
-
-function test_coloring_four_edge_four_vertex_graph()
-    graph = _ColoringGraph(4, [(1, 2), (2, 3), (3, 4), (4, 1)])
-    _, numcolors = Coloring.acyclic_coloring(to_adjlist(graph))
-    @test numcolors == 3
-    return
-end
-
-function test_coloring_topological_sort()
-    # graph = _ColoringGraph(6, [(1, 2), (1, 3), (1, 6), (2, 4), (2, 5)])
-    vec = [3, 6, 2, 1, 4, 5, 1, 2, 2, 1]
-    offset = [1, 4, 7, 8, 9, 10, 11]
-    v = Coloring.reverse_topological_sort_by_dfs(vec, offset, 6, zeros(Int, 6))
-    @test v[1] == [3, 6, 4, 5, 2, 1]
-    @test v[2] == [0, 1, 1, 2, 2, 1]
+function test_mode_coloring()
+    algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(
+        ReverseAD.SMC.LargestFirst();
+        decompression = :substitution,
+    )
+    for mode in
+        (Nonlinear.SparseReverseMode(), Nonlinear.SparseReverseMode(algorithm))
+        model = Nonlinear.Model()
+        x, y = MOI.VariableIndex.(1:2)
+        Nonlinear.set_objective(model, :($x * $y + $y^3))
+        evaluator = Nonlinear.Evaluator(model, mode, [x, y])
+        MOI.initialize(evaluator, [:Grad])
+        @test evaluator.backend.coloring_algorithm === mode.coloring_algorithm
+        @test evaluator.backend.objective.rinfo === nothing
+        @test MOI.eval_objective(evaluator, [3.0, 2.0]) == 14.0
+        g = zeros(2)
+        MOI.eval_objective_gradient(evaluator, g, [3.0, 2.0])
+        @test g == [2.0, 15.0]
+        MOI.initialize(evaluator, [:Hess])
+        @test MOI.hessian_objective_structure(evaluator) == [(2, 1), (2, 2)]
+        H = zeros(2)
+        MOI.eval_hessian_objective(evaluator, H, [3.0, 2.0])
+        @test H == [1.0, 12.0]
+    end
     return
 end
 
 function test_coloring_end_to_end_hessian_coloring_and_recovery()
-    I, J, rinfo = Coloring.hessian_color_preprocess(Set([(1, 2)]), 2)
-    R = Coloring.seed_matrix(rinfo)
-    Coloring.prepare_seed_matrix!(R, rinfo)
-    @test I == [1, 2, 2]
-    @test J == [1, 2, 1]
-    @test R == [1.0 0.0; 0.0 1.0]
-    hess = [3.4 2.1; 2.1 1.3]
-    matmat = hess * R
-    V = zeros(3)
-    Coloring.recover_from_matmat!(V, matmat, rinfo, zeros(3))
-    @test V == [3.4, 1.3, 2.1]
+    # Test the new coloring API through the compatibility layer
+    coloring_algorithm =
+        ReverseAD.SMC.GreedyColoringAlgorithm(; decompression = :substitution)
+    for (edges, hess, expected_I, expected_J, expected_V) in (
+        (
+            Set([(1, 1), (1, 2), (2, 2)]),
+            [3.4 2.1; 2.1 1.3],
+            [1, 2, 2],
+            [1, 1, 2],
+            [3.4, 2.1, 1.3],
+        ),
+        (Set([(1, 2)]), [0.0 2.1; 2.1 0.0], [2], [1], [2.1]),
+        (Set([(1, 2), (2, 2)]), [0.0 2.1; 2.1 1.3], [2, 2], [1, 2], [2.1, 1.3]),
+    )
+        colptr, I, J, rinfo = ReverseAD._hessian_color_preprocess(
+            edges,
+            2,
+            coloring_algorithm,
+            MOI.Nonlinear.ReverseAD.Coloring.IndexedSet(0),
+        )
+        R = ReverseAD._seed_matrix(rinfo)
+        ReverseAD._prepare_seed_matrix!(R, rinfo)
+        @test I == expected_I
+        @test J == expected_J
+        @test R == [1.0 0.0; 0.0 1.0]
+        matmat = hess * R
+        V = zeros(length(I))
+        ReverseAD._recover_from_matmat!(colptr, V, matmat, rinfo)
+        @test V == expected_V
+    end
+    return
+end
+
+function test_hessian_structurally_zero_diagonal()
+    variables = MOI.VariableIndex.(1:4)
+    x, y = variables[2], variables[4]
+    for decompression in (:direct, :substitution),
+        (expr, structure) in (
+            (:($x * $y), [(4, 2)]),
+            (:($x * $y + $y^3), [(4, 2), (4, 4)]),
+            (:($x + $y), Tuple{Int,Int}[]),
+            (:(3.0), Tuple{Int,Int}[]),
+            (:(ifelse($x < 0, $x, $y)), Tuple{Int,Int}[]),
+        )
+
+        model = Nonlinear.Model()
+        Nonlinear.set_objective(model, expr)
+        algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(; decompression)
+        evaluator = Nonlinear.Evaluator(
+            model,
+            Nonlinear.SparseReverseMode(algorithm),
+            variables,
+        )
+        MOI.initialize(evaluator, [:Hess])
+        @test MOI.hessian_objective_structure(evaluator) == structure
+        @test MOI.hessian_lagrangian_structure(evaluator) == structure
+        for y_value in (0.0, 2.0)
+            values = [0.0, 3.0, 0.0, y_value]
+            expected = if isempty(structure)
+                Float64[]
+            elseif length(structure) == 1
+                [1.0]
+            else
+                [1.0, 6 * y_value]
+            end
+            H = fill(NaN, length(structure))
+            MOI.eval_hessian_objective(evaluator, H, values)
+            @test H == expected
+            MOI.eval_hessian_lagrangian(evaluator, H, values, 1.5, Float64[])
+            @test H == 1.5 .* expected
+        end
+    end
+    return
+end
+
+function test_coloring_lower_triangular_recovery()
+    for (T, decompression) in
+        ((Float32, :direct), (Float64, :direct), (Float64, :substitution)),
+        order in (ReverseAD.SMC.NaturalOrder(), ReverseAD.SMC.LargestFirst())
+
+        algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(order; decompression)
+        for edges in (
+            Set([(2, 4), (4, 7), (7, 9)]),
+            Set([(4, 2), (2, 7), (9, 2), (7, 7)]),
+            Set([(4, 2), (4, 7), (7, 9), (9, 2), (4, 4), (9, 9)]),
+            Set([(2, 4), (4, 2), (2, 2)]),
+            Set([(2, 2), (9, 9)]),
+            Set{Tuple{Int,Int}}(),
+        )
+            H = zeros(T, 9, 9)
+            for (i, j) in edges
+                H[i, j] = H[j, i] = 10 * min(i, j) + max(i, j)
+            end
+            colptr, I, J, result =
+                ReverseAD._hessian_color_preprocess(edges, 9, algorithm)
+            expected_structure = sort!(
+                unique([(max(i, j), min(i, j)) for (i, j) in edges]);
+                by = reverse,
+            )
+            @test collect(zip(I, J)) == expected_structure
+            R = Matrix{T}(ReverseAD._seed_matrix(result))
+            if isempty(expected_structure)
+                @test result === nothing
+                @test colptr == [1]
+                @test size(R) == (0, 0)
+                continue
+            end
+            ReverseAD._prepare_seed_matrix!(R, result)
+            local_indices = result.local_indices
+            compressed = H[local_indices, local_indices] * R
+            V = fill(T(NaN), length(I))
+            ReverseAD._recover_from_matmat!(colptr, V, compressed, result)
+            @test V == [H[i, j] for (i, j) in expected_structure]
+            @test 0 == @allocated ReverseAD._recover_from_matmat!(
+                colptr,
+                V,
+                compressed,
+                result,
+            )
+        end
+    end
+    return
+end
+
+function test_hessian_star_coloring()
+    x, y = MOI.VariableIndex.(1:2)
+    model = Nonlinear.Model()
+    Nonlinear.set_objective(model, :((1 - $x)^2 + 100 * ($y - $x^2)^2))
+    Nonlinear.add_constraint(model, :($x * $y), MOI.LessThan(2.0))
+    Nonlinear.add_constraint(model, :($y^2), MOI.LessThan(2.0))
+    algorithm = ReverseAD.SMC.GreedyColoringAlgorithm(; decompression = :direct)
+    evaluator = Nonlinear.Evaluator(
+        model,
+        Nonlinear.SparseReverseMode(algorithm),
+        [x, y],
+    )
+    MOI.initialize(evaluator, [:Hess])
+    @test MOI.hessian_lagrangian_structure(evaluator) ==
+          [(1, 1), (2, 1), (2, 2), (2, 1), (2, 2)]
+    H = zeros(5)
+    μ = [2.0, 3.0]
+    for xv in ([1.0, 1.0], [-1.2, 1.0])
+        MOI.eval_hessian_lagrangian(evaluator, H, xv, 1.5, μ)
+        @test H ≈ [
+            1.5 * (2 + 1200 * xv[1]^2 - 400 * xv[2]),
+            1.5 * (-400 * xv[1]),
+            300.0,
+            2.0,
+            6.0,
+        ]
+        @test 0 ==
+              @allocated MOI.eval_hessian_lagrangian(evaluator, H, xv, 1.5, μ)
+    end
     return
 end
 
@@ -1415,46 +1517,27 @@ function test_hessian_reinterpret_unsafe()
     H = zeros(length(H_s))
     x_v = ones(5)
     MOI.eval_hessian_lagrangian(evaluator, H, x_v, 0.0, [1.0, 1.0])
-    @test count(isapprox.(H, 1.0; atol = 1e-8)) == 3
-    @test count(isapprox.(H, 0.0; atol = 1e-8)) == 5
-    @test sort(H_s[round.(Bool, H)]) == [(3, 1), (3, 2), (5, 4)]
-    return
-end
-
-function test_IntDisjointSet()
-    for case in [
-        [(1, 2) => [1, 1, 3], (1, 3) => [1, 1, 1]],
-        [(1, 2) => [1, 1, 3], (3, 1) => [1, 1, 1]],
-        [(2, 1) => [2, 2, 3], (1, 3) => [2, 2, 2]],
-        [(2, 1) => [2, 2, 3], (3, 1) => [3, 2, 3]],
-        [(1, 3) => [1, 2, 1], (2, 3) => [1, 2, 2]],
-        [(1, 3) => [1, 2, 1], (3, 2) => [1, 1, 1]],
-        [(3, 1) => [3, 2, 3], (2, 3) => [3, 3, 3]],
-        [(3, 1) => [3, 2, 3], (3, 2) => [3, 3, 3]],
-        [(2, 3) => [1, 2, 2], (1, 3) => [1, 2, 1]],
-        [(2, 3) => [1, 2, 2], (3, 1) => [2, 2, 2]],
-        [(3, 2) => [1, 3, 3], (1, 3) => [3, 3, 3]],
-        [(3, 2) => [1, 3, 3], (3, 1) => [3, 3, 3]],
-    ]
-        S = Coloring._IntDisjointSet(3)
-        @test Coloring._find_root!.((S,), [1, 2, 3]) == [1, 2, 3]
-        @test S.number_of_trees == 3
-        for (i, (union, result)) in enumerate(case)
-            Coloring._root_union!(S, union[1], union[2])
-            @test Coloring._find_root!.((S,), [1, 2, 3]) == result
-            @test S.number_of_trees == 3 - i
-        end
-    end
+    @test H ≈ ones(3)
+    @test sort(H_s) == [(3, 1), (3, 2), (5, 4)]
     return
 end
 
 function test_issue_2897()
     I = [4, 5, 4, 6, 5, 6]
     J = [2, 1, 1, 2, 3, 3]
-    g = Coloring.UndirectedGraph(I, J, length(I))
-    color, num_colors = Coloring.acyclic_coloring(g)
-    @test color == [1, 1, 1, 2, 2, 3]
-    @test num_colors == 3
+    algorithm =
+        ReverseAD.SMC.GreedyColoringAlgorithm(; decompression = :substitution)
+    colptr, I, J, result =
+        ReverseAD._hessian_color_preprocess(Set(zip(I, J)), 6, algorithm)
+    H = zeros(6, 6)
+    for (i, j) in zip(I, J)
+        H[i, j] = H[j, i] = 10 * j + i
+    end
+    R = ReverseAD._seed_matrix(result)
+    ReverseAD._prepare_seed_matrix!(R, result)
+    V = zeros(length(I))
+    ReverseAD._recover_from_matmat!(colptr, V, H * R, result)
+    @test V == [H[i, j] for (i, j) in zip(I, J)]
     return
 end
 
@@ -1574,11 +1657,11 @@ function test_hessian_pow_constant_exponent_nonpositive_base()
     )
     MOI.initialize(evaluator, [:Grad, :Hess])
     @test MOI.hessian_lagrangian_structure(evaluator) ==
-          [(1, 1), (2, 2), (2, 1)]
+          [(1, 1), (2, 1), (2, 2)]
     H = zeros(3)
     for x_val in (-1.5, 0.0)
         MOI.eval_hessian_lagrangian(evaluator, H, [x_val, 2.0], 1.0, Float64[])
-        @test isapprox(H, [4.0, 2 * x_val, 2 * x_val + 4.0])
+        @test isapprox(H, [4.0, 2 * x_val + 4.0, 2 * x_val])
     end
     return
 end
