@@ -232,8 +232,6 @@ end
 # available, but model layers and solvers communicate with this model only via
 # these methods.
 
-# The variables are owned by the outer layer, such as `ModelWithQuad`; this
-# model accepts the constraints and the objective incrementally.
 MOI.supports_incremental_interface(::Model) = true
 
 const _ScalarSet{T} =
