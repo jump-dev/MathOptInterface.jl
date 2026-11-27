@@ -232,6 +232,8 @@ end
 # available, but model layers and solvers communicate with this model only via
 # these methods.
 
+MOI.supports_incremental_interface(::Model) = true
+
 const _ScalarSet{T} =
     Union{MOI.GreaterThan{T},MOI.LessThan{T},MOI.EqualTo{T},MOI.Interval{T}}
 

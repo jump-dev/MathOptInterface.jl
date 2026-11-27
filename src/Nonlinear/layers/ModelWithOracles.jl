@@ -68,6 +68,10 @@ function MOI.supports_incremental_interface(model::ModelWithOracles)
     return MOI.supports_incremental_interface(model.inner)
 end
 
+function MOI.copy_to(dest::ModelWithOracles, src::MOI.ModelLike)
+    return MOI.Utilities.default_copy_to(dest, src)
+end
+
 function MOI.supports(model::ModelWithOracles, attr::MOI.AbstractModelAttribute)
     return MOI.supports(model.inner, attr)
 end
