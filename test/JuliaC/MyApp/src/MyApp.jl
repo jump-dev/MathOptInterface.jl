@@ -21,6 +21,12 @@ function @main(args::Vector{String})::Cint
     end
     # The following commands are not traced by `test_juliac.jl`: the compiled
     # binary must run them with the methods resolved at compile time.
+    if head == "--starts"
+        return run_starts(args)
+    end
+    if head == "--linear"
+        return run_linear(args)
+    end
     if head == "--names"
         return run_names(args)
     end
@@ -54,6 +60,32 @@ end
 
 function run_mathoptformat(args::Vector{String})::Cint
     model, _ = _model()
+    return _write(model, args)
+end
+
+# A starting value for `x`, so the object of the variable in the document has a
+# `primal_start` field, which the traced model does not have. When the objects
+# were `NamedTuple`s, JSON needed methods for each combination of fields, so
+# this failed without a trace, see
+# https://github.com/jump-dev/MathOptInterface.jl/pull/3151.
+function run_starts(args::Vector{String})::Cint
+    model, x = _model()
+    MOI.set(model, MOI.VariablePrimalStart(), x, 1.0)
+    return _write(model, args)
+end
+
+# The traced model without its nonlinear constraint, so the document has no
+# `has_scalar_nonlinear` field: its top-level object has other fields than the
+# one of the traced model, see
+# https://github.com/jump-dev/MathOptInterface.jl/pull/3151.
+function run_linear(args::Vector{String})::Cint
+    model = MOI.FileFormats.MOF.Model()
+    x = MOI.add_variable(model)
+    MOI.set(model, MOI.VariableName(), x, "x")
+    MOI.add_constraint(model, x, MOI.GreaterThan(0.0))
+    objective = MOI.ScalarAffineFunction([MOI.ScalarAffineTerm(1.0, x)], 0.0)
+    MOI.set(model, MOI.ObjectiveSense(), MOI.MIN_SENSE)
+    MOI.set(model, MOI.ObjectiveFunction{typeof(objective)}(), objective)
     return _write(model, args)
 end
 
