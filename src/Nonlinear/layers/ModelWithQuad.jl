@@ -411,6 +411,34 @@ function MOI.get(
     return MOI.get(model.inner, attr)
 end
 
+function _check_variable_indices(model::ModelWithQuad, x::MOI.VariableIndex)
+    return MOI.throw_if_not_valid(model, x)
+end
+
+function _check_variable_indices(
+    model::ModelWithQuad,
+    f::MOI.ScalarAffineFunction,
+)
+    for term in f.terms
+        MOI.throw_if_not_valid(model, term.variable)
+    end
+    return
+end
+
+function _check_variable_indices(
+    model::ModelWithQuad,
+    f::MOI.ScalarQuadraticFunction,
+)
+    for term in f.affine_terms
+        MOI.throw_if_not_valid(model, term.variable)
+    end
+    for term in f.quadratic_terms
+        MOI.throw_if_not_valid(model, term.variable_1)
+        MOI.throw_if_not_valid(model, term.variable_2)
+    end
+    return
+end
+
 # The objective.
 
 function set_objective(
@@ -421,6 +449,7 @@ function set_objective(
         MOI.ScalarQuadraticFunction{T},
     },
 ) where {T}
+    _check_variable_indices(model, obj)
     MOI.set(model.qp, MOI.ObjectiveFunction{typeof(obj)}(), obj)
     set_objective(model.inner, nothing)
     model.objective_sink = _QUAD
@@ -507,7 +536,7 @@ function add_constraint(
     func::_QPFunction{T},
     set::_QPSet{T},
 ) where {T}
-    return MOI.add_constraint(model.qp, func, set)
+    return MOI.add_constraint(model, func, set)
 end
 
 function add_constraint(model::ModelWithQuad, func, set)
@@ -522,6 +551,7 @@ function MOI.add_constraint(
     func::_QPFunction{T},
     set::_QPSet{T},
 ) where {T}
+    _check_variable_indices(model, func)
     return MOI.add_constraint(model.qp, func, set)
 end
 

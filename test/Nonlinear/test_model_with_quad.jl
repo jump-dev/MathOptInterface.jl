@@ -351,6 +351,31 @@ function test_quad_parameters()
     return
 end
 
+function test_invalid_qp_variable_indices()
+    model = Nonlinear.ModelWithQuad(Nonlinear.Model())
+    x = MOI.add_variable(model)
+    p, _ = MOI.add_constrained_variable(model, MOI.Parameter(2.0))
+    invalid_x = MOI.VariableIndex(x.value + 1)
+    invalid_p = MOI.VariableIndex(p.value + 1)
+    attr = MOI.ObjectiveFunction{MOI.VariableIndex}()
+    MOI.set(model, attr, x)
+    @test_throws MOI.InvalidIndex(invalid_x) MOI.set(model, attr, invalid_x)
+    for (invalid, f) in (
+        (invalid_x, 1.0 * invalid_x),
+        (invalid_x, 1.0 * x * x + invalid_x),
+        (invalid_p, 1.0 * invalid_p * x),
+        (invalid_p, 1.0 * x * invalid_p),
+    )
+        err = MOI.InvalidIndex(invalid)
+        @test_throws err MOI.add_constraint(model, f, MOI.LessThan(1.0))
+        @test_throws err Nonlinear.add_constraint(model, f, MOI.LessThan(1.0))
+        @test_throws err MOI.set(model, MOI.ObjectiveFunction{typeof(f)}(), f)
+    end
+    @test isempty(MOI.Utilities.constraint_bounds(model).lower)
+    @test MOI.get(model, attr) == x
+    return
+end
+
 function test_attribute_forwarding()
     model = Nonlinear.ModelWithQuad(Nonlinear.Model())
     x = MOI.add_variable(model)
